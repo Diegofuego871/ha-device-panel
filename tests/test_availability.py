@@ -866,3 +866,65 @@ async def test_pulse_end_counts_down_device_in_restart_gap(hass: HomeAssistant, 
     data = next(d for d in result["devices"] if d["id"] == dev.id)
     assert data["online"] is False and data["avail24"]["down"] is True
     assert result["pulse"][-1] == 1
+
+
+async def test_battery_last_for_offline_device(hass: HomeAssistant, setup: AvailabilityLog, freezer) -> None:
+    """Ausgefallen: der Batteriesensor meldet nichts, die Liste liefert den letzten Stand aus dem Verlauf (nur zur Anzeige, keine Warnung)."""
+    from unittest.mock import AsyncMock, patch  # noqa: PLC0415
+
+    dev = _device(hass, "Türsensor Batterie")
+    light = _entity(hass, dev, "light", "l", "on")
+    bat = _entity(hass, dev, "sensor", "b", "18", {"device_class": "battery", "unit_of_measurement": "%"}, original_device_class="battery")
+    setup.evaluate()
+    hass.states.async_set(light, "unavailable")
+    hass.states.async_set(bat, "unavailable", {"device_class": "battery", "unit_of_measurement": "%"})
+    freezer.tick(timedelta(hours=1))
+    setup.evaluate()
+    last = {"level": 18, "at": time.time() - 3600}
+    with patch("custom_components.device_panel.devices.async_last_known", AsyncMock(return_value=last)) as mocked:
+        result = await async_list_devices(hass, setup)
+    data = next(d for d in result["devices"] if d["id"] == dev.id)
+    assert data["online"] is False and data["has_battery"] is True
+    assert data["battery"] is None and data["battery_last"] == last
+    mocked.assert_awaited_once()
+    # Zurück online: wieder der aktuelle Stand, kein alter Wert
+    hass.states.async_set(light, "on")
+    hass.states.async_set(bat, "17", {"device_class": "battery", "unit_of_measurement": "%"})
+    freezer.tick(timedelta(minutes=1))
+    setup.evaluate()
+    with patch("custom_components.device_panel.devices.async_last_known", AsyncMock(return_value=last)) as mocked:
+        result = await async_list_devices(hass, setup)
+    data = next(d for d in result["devices"] if d["id"] == dev.id)
+    assert data["battery"]["level"] == 17 and data["battery_last"] is None
+    mocked.assert_not_awaited()
+
+
+async def test_async_last_known_reads_last_numeric_value(hass: HomeAssistant) -> None:
+    """Der letzte Zahlenwert des Verlaufs gilt; Abfragen werden kurz zwischengespeichert; ohne Wert oder bei Fehler None."""
+    from unittest.mock import patch  # noqa: PLC0415
+
+    from custom_components.device_panel import battery_history  # noqa: PLC0415
+
+    now = time.time()
+    calls = []
+
+    class FakeInstance:
+        async def async_add_executor_job(self, func, *args):
+            calls.append(args[1])
+            return func(*args)
+
+    with (
+        patch("homeassistant.components.recorder.get_instance", return_value=FakeInstance()),
+        patch.object(battery_history, "_history", return_value=[(now - 7200, 40.0), (now - 3600, 22.4)]),
+    ):
+        first = await battery_history.async_last_known(hass, "sensor.bat", now)
+        again = await battery_history.async_last_known(hass, "sensor.bat", now + 60)
+    assert first == {"level": 22, "at": now - 3600} == again
+    assert calls == ["sensor.bat"]
+    with (
+        patch("homeassistant.components.recorder.get_instance", return_value=FakeInstance()),
+        patch.object(battery_history, "_history", return_value=[]),
+    ):
+        assert await battery_history.async_last_known(hass, "sensor.leer", now) is None
+    with patch("homeassistant.components.recorder.get_instance", side_effect=RuntimeError("kein Recorder")):
+        assert await battery_history.async_last_known(hass, "sensor.fehler", now) is None

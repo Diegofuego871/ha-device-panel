@@ -2376,6 +2376,8 @@ dialog.wizard-dlg[open] { display: flex; flex-direction: column; }
 .wz-msg { border-top: 1px solid var(--dp-divider); padding: 2px 0 8px; }
 .wz-msg .wz-li { border-top: 0; }
 /* Werte der Meldungen: keine Umrandung, die Zahl gross in einem ruhigen Feld */
+.st-tile.stale .st-v { opacity: .6; }
+.bat.stale { opacity: .6; }
 .wz-h2b { margin-top: 26px; }
 .wz-vals { display: flex; flex-direction: column; gap: 4px; margin: 0 0 4px 46px; }
 .wz-msg:not(.on) .wz-vals { opacity: .55; }

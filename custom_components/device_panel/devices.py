@@ -25,6 +25,7 @@ from homeassistant.loader import async_get_integration
 from homeassistant.util import dt as dt_util
 
 from . import activity
+from .battery_history import async_last_known, battery_entity
 from .compat import device_entry_ids, device_primary_entry_id, registry_devices
 from .const import (
     CONF_AI_ASSESSMENT,
@@ -1482,6 +1483,12 @@ async def async_list_devices(hass: HomeAssistant, log: Any = None) -> dict[str, 
         if log is not None:
             summary = log.device_summary(device.id, 86400, now_ts)
             avail = {**(summary or {}), "strip": log.device_strip(device.id, now_ts), "down": log.down_now(device.id, now_ts) or online is False} if summary else None
+        bat_fields = _battery_fields(hass, opts, device, entries, primary.domain if primary else None)
+        # Ausgefallen: der Sensor meldet "nicht verfügbar", die Batterie fehlt. Dann der letzte Stand vor dem Ausfall, nur zur Anzeige
+        # (keine Warnung, kein Push daraus).
+        battery_last = None
+        if online is False and bat_fields["battery"] is None and bat_fields["has_battery"] and (bat_entity := battery_entity(hass, entries)):
+            battery_last = await async_last_known(hass, bat_entity, now_ts)
         auto_conn = _connection(device, domains, entries, signal, iot_classes)
         manual_conn = connection_overrides(hass).get(device.id)
         # Pro Integration festgelegt (nach der primären Integration, wie die Batterie).
@@ -1545,7 +1552,8 @@ async def async_list_devices(hass: HomeAssistant, log: Any = None) -> dict[str, 
                 # Herkunft ("integration", "global" oder None = fester Standard).
                 "signal_default": signal_default(opts, primary.domain if primary else None, manual_conn or integ_conn or auto_conn or "unknown", signal),
                 "via": via,
-                **_battery_fields(hass, opts, device, entries, primary.domain if primary else None),
+                **bat_fields,
+                "battery_last": battery_last,
                 # Ausfall- und Online-Meldungen für dieses Gerät aus.
                 "notify_off": device.id in device_settings(hass)["notify_off"],
                 # Lademeldung (seit 1.30.0): am Gerät (None = Integration) und was ohne Wahl gilt.

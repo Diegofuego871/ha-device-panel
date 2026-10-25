@@ -7,6 +7,15 @@ Alle nennenswerten Änderungen an dieser Integration stehen in dieser Datei.
 Das Format folgt [Keep a Changelog](https://keepachangelog.com/de/1.1.0/),
 die Versionsnummern folgen [Semantic Versioning](https://semver.org/lang/de/).
 
+## [2.145.0] - 2026-10-25
+
+Ein ausgefallenes Gerät zeigt weiter seinen letzten Batteriestand.
+
+### Hinzugefügt
+
+- **Batterie eines ausgefallenen Geräts:** fällt ein Gerät aus, meldet sein Batteriesensor "nicht verfügbar", und das Panel zeigte nichts. Jetzt zeigt die Übersicht des Popups eine Kachel "Batterie" mit dem letzten Wert vor dem Ausfall ("22 % · letzter Stand vor 47 Min."), und die Spalte "Batterie" in der Liste ebenso, beides gedämpft. Der Wert kommt aus dem Verlauf des Recorders (die letzten 10 Tage, eine Abfrage gilt 10 Minuten, nur für Geräte, die ausgefallen sind). Er dient nur der Anzeige: daraus entstehen keine Warnung bei schwacher Batterie, kein Push und kein Treffer im Chip "Batterie schwach", und es gibt keine Verlaufskachel. Neues Feld `battery_last` (`level`, `at`) in `list_devices`.
+- **Einrichtungsassistent, Zeilen "Niedrige Batterie" und "Voll geladen":** in der Geräte-Ebene zeigt jedes Gerät seinen aktuellen Batteriestand klein hinter dem Bereich ("Küche · 64 %"), in derselben Zeile, damit sie nicht höher wird. WebSocket `wizard_data`: jedes Gerät trägt neu `battery_level` (Prozent oder `null`).
+
 ## [2.144.0] - 2026-10-25
 
 Ein Stil für jeden Pfeil, der etwas öffnet.
@@ -14,6 +23,8 @@ Ein Stil für jeden Pfeil, der etwas öffnet.
 ### Geändert
 
 - **Pfeile:** jeder Pfeil, der eine Zeile, Kachel oder einen Abschnitt öffnet oder weiterspringt, ist jetzt derselbe kleine runde Knopf (24 px, blauer Rand; in der KI-Zeile violett). Gilt für die Kacheln "Verfügbarkeit" und "Unterbrüche" sowie den Pfeil bei "Warnungen" und "Ausfall-Puls", die obere Zeile im Kopf, die KI-Einschätzung, die Abschnitte der Einstellungen, die Liste "Pro Integration", den Link zu Home Assistant, die Gruppen in den Routinen und in Magic Push sowie die Integrationen und Geräte im Einrichtungsassistenten. Unverändert: Dropdowns und Auswahlfelder (auch die Chips "Integration" und "Bereich") und die Zeilen der langen Protokoll-Liste. Die Regel steht in CLAUDE.md.
+
+Nicht veröffentlicht; enthalten in 2.145.0.
 
 ## [2.143.1] - 2026-10-25
 
@@ -4903,7 +4914,7 @@ Erste Vorabversion.
   GitHub Actions für die Prüfungen von HACS und hassfest sowie die Tests.
 
 [2.6.0]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v2.6.0
-[2.144.0]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v2.144.0
+[2.145.0]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v2.145.0
 [2.143.0]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v2.143.0
 [2.142.0]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v2.142.0
 [2.141.0]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v2.141.0

@@ -95,6 +95,8 @@ async def test_wizard_data(hass: HomeAssistant, setup, hass_ws_client) -> None: 
     assert devices["Lampe"]["id"] == lamp.id and devices["Lampe"]["type"] == "light" and devices["Lampe"]["area"] == ""
     # Batterie (ja/nein) je Gerät, für die Lade- und Batteriemeldung je Integration im Assistenten
     assert devices["Taster"]["battery"] is True and devices["Lampe"]["battery"] is False
+    # Aktueller Stand in Prozent, klein hinter dem Bereich in den Zeilen Batterie und Laden
+    assert devices["Taster"]["battery_level"] == 80 and devices["Lampe"]["battery_level"] is None
     assert [d["name"] for d in data["devices"]] == sorted((d["name"] for d in data["devices"]), key=str.lower)
     # Gerade ausgefallen (für den Hinweis in der Zeile "Ausfall"): ohne Ausfall nie, sonst nach device_status
     # Aktuelle Auslastung für die Systemmeldungen: ohne Sensor kein Wert, mit einem Prozent-Sensor der gerundete Stand

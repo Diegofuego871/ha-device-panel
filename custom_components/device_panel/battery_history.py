@@ -48,6 +48,11 @@ FORECAST_MIN_POINTS = 5
 FORECAST_MIN_DROP = 2.0
 
 
+# Letzter bekannter Stand eines ausgefallenen Geräts (seit 2.145.0): so weit zurück sucht der Verlauf, und so lange gilt eine Abfrage.
+LAST_KNOWN_DAYS = 10
+LAST_KNOWN_TTL = 600
+
+
 def battery_entity(hass: HomeAssistant, entries: list[er.RegistryEntry]) -> str | None:
     """Prozent-Sensor der Batterie (wie devices.battery), sonst None."""
     from .devices import _device_class  # noqa: PLC0415
@@ -339,4 +344,33 @@ async def async_battery_history(
     result["first"] = points[0][0]
     result["changes"] = changes(points, 2 * 86400 + 3600 if period == "day" else CHANGE_WINDOW)
     result["points"] = [[round(t, 1), round(v, 1)] for t, v in thin(points, start, now)]
+    return result
+
+
+async def async_last_known(hass: HomeAssistant, entity_id: str, now: float | None = None) -> dict[str, float] | None:
+    """
+    Letzter Prozentwert der Batterie vor dem Ausfall: {"level": Prozent, "at": Zeitpunkt} aus dem Verlauf des Recorders, sonst None
+    (kein Wert in den letzten LAST_KNOWN_DAYS Tagen oder der Recorder ist nicht bereit). Nur für ausgefallene Geräte gedacht, deren
+    Sensor "nicht verfügbar" meldet. Eine Abfrage gilt LAST_KNOWN_TTL Sekunden, damit der Takt der Liste die Datenbank nicht belastet.
+    """
+    from .const import DOMAIN  # noqa: PLC0415
+
+    now = now if now is not None else time.time()
+    cache: dict[str, tuple[float, dict[str, float] | None]] = hass.data.setdefault(f"{DOMAIN}_battery_last", {})
+    hit = cache.get(entity_id)
+    if hit is not None and now - hit[0] < LAST_KNOWN_TTL:
+        return hit[1]
+    result: dict[str, float] | None = None
+    try:
+        from homeassistant.components.recorder import get_instance  # noqa: PLC0415
+
+        points = await get_instance(hass).async_add_executor_job(
+            _history, hass, entity_id, dt_util.utc_from_timestamp(now - LAST_KNOWN_DAYS * 86400), dt_util.utc_from_timestamp(now)
+        )
+        if points:
+            at, value = points[-1]
+            result = {"level": round(value), "at": at}
+    except Exception as err:  # noqa: BLE001
+        _LOGGER.debug("Letzter Batteriestand für %s nicht lesbar: %s", entity_id, err)
+    cache[entity_id] = (now, result)
     return result

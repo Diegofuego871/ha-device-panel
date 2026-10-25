@@ -159,6 +159,10 @@ for (const lang of ["de", "en"]) {
       const shownDown = await s.ev(`return [...r.querySelectorAll('${s.D} .wz-dsub .wz-down')].map((e) => e.closest(".wz-li").querySelector("[data-wz-md]").dataset.wzId)`);
       check(`[${tag}] "${L.down}": nur ausgefallene Geräte tragen die Marke, Name und Bereich bleiben`, JSON.stringify([...shownDown].sort()) === JSON.stringify([...downIds].sort()) && (await s.ev(`return [...r.querySelectorAll('${s.D} .wz-dsub .wz-li')].every((li) => li.querySelector(".wz-nm").firstChild.textContent.trim().length > 0)`)), JSON.stringify({ shownDown, downIds, dom: outDom2 }));
       await s.shot("4-outage-down");
+      // Batteriestand klein hinter dem Bereich: nur in den Zeilen Batterie und Laden, ohne dass die Zeile höher wird
+      const batLvl = await s.ev(`return r.host._wizard.s.data.devices.filter((x) => typeof x.battery_level === "number" && x.battery).map((x) => x.id)`);
+      check(`[${tag}] Ausfall-Zeile zeigt keinen Batteriestand`, !(await s.ev(`return !!r.querySelector('${s.D} .wz-dsub .wz-bl')`)));
+      check(`[${tag}] Daten: Batteriegeräte tragen battery_level`, batLvl.length >= 1);
       const muteId = outDevs[0].split(":")[0];
       await s.tap(`${s.D} [data-wz-md="outage"][data-wz-id="${muteId}"]`);
       check(`[${tag}] Gerät ausgeschaltet (Entwurf), noch nichts gespeichert`, (await s.ev(`return r.host._wizard.s.d.devOff.outage.has(${JSON.stringify(muteId)})`)) && (await s.p.evaluate(() => (window.__wsCalls || []).filter((m) => m.type === "device_panel/set_device_settings").length)) === 0);
@@ -166,6 +170,11 @@ for (const lang of ["de", "en"]) {
       await s.tap(`${s.D} [data-wz-iopen="charge:${chargeDom}"]`);
       const chDevs = await s.ev(`return [...r.querySelectorAll('${s.D} [data-wz-md="charge"]')].map((i) => i.dataset.wzId + ":" + i.checked)`);
       check(`[${tag}] Voll geladen, Integration aufgeklappt: nur Geräte mit Batterie, alle an`, chDevs.length >= 1 && chDevs.every((x) => x.endsWith(":true")), chDevs.join());
+      // Batteriestand klein hinter dem Bereich ("Küche · 64 %"): in einer Zeile, die Zeile wird nicht höher als ohne Stand
+      const lvl = await s.ev(`const l = [...r.querySelectorAll('${s.D} .wz-dsub .wz-li')].map((li) => ({ id: li.querySelector("[data-wz-md]").dataset.wzId, sub: li.querySelector(".wz-nm small")?.innerText.replace(/\\s+/g, " ").trim() || "", h: li.getBoundingClientRect().height })); return l`);
+      const wantLvl = await s.ev(`const m = new Map(r.host._wizard.s.data.devices.map((x) => [x.id, x.battery_level])); return [...r.querySelectorAll('${s.D} [data-wz-md="charge"]')].map((i) => m.get(i.dataset.wzId))`);
+      check(`[${tag}] Zeilen Voll geladen: Batteriestand hinter dem Bereich, eine Zeile`, lvl.length >= 1 && lvl.every((x, i) => (typeof wantLvl[i] === "number" ? x.sub.endsWith(wantLvl[i] + " %") : !/ %$/.test(x.sub)) && x.h < 70), JSON.stringify(lvl));
+      await s.shot("4b-battery-level");
       const chargeOffId = chDevs.length >= 2 ? chDevs[0].split(":")[0] : null;
       if (chargeOffId) {
         await s.tap(`${s.D} [data-wz-md="charge"][data-wz-id="${chargeOffId}"]`);

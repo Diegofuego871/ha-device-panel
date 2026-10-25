@@ -3539,8 +3539,14 @@ class DevicePanel extends HTMLElement {
     return `<span class="typ">${typeIcon(d.type, 16)}${escape(this._t(typeKey(d.type)))}</span>`;
   }
 
+  // Letzter Stand eines ausgefallenen Geräts (seit 2.145.0): gedämpft, mit Alter; nur zur Anzeige, ohne Warnung
+  _batteryLastAge(d) {
+    return this._duration(new Date(d.battery_last.at * 1000).toISOString());
+  }
+
   _batteryHtml(d) {
     const b = d.battery;
+    if (!b && d.battery_last) return `<span class="bat stale" title="${escape(this._t("batLastSub", this._batteryLastAge(d)))}">${batIcon({ level: d.battery_last.level, low: false }, 14)} ${escape(`${d.battery_last.level} %`)}</span>`;
     if (!b) return `<span class="t3">–</span>`;
     const text = b.level != null ? `${b.level} %` : b.low ? this._t("batteryLow") : "OK";
     // Lädt gerade (seit 1.35.0): Blitz im Symbol, grün.
@@ -3679,7 +3685,7 @@ class DevicePanel extends HTMLElement {
       case "area":
         return escape(d.area || "");
       case "battery":
-        return d.battery ? this._batteryHtml(d) : "";
+        return d.battery || d.battery_last ? this._batteryHtml(d) : "";
       case "avail":
         return d.avail24?.pct != null ? escape(this._t("fieldAvail", this._fmtPct(d.avail24.pct))) : "";
       case "model":
@@ -4077,6 +4083,11 @@ class DevicePanel extends HTMLElement {
       const chg = d.charging ? this._t("chargingSince", this._duration(d.charging.since)) : null;
       if (b.level != null) tiles.push(this._statTile("30d", this._t("tileBattery"), d.charging ? `${mdi("batteryCharging", 18)}${escape(String(b.level))}<small>%</small>` : value, chg || (b.low ? this._t("batteryLow") : this._t("batHistoryHint")), "battery", b.low, b.low, d.charging ? this._chargeBarHtml({ ...d.charging, level: b.level }) : ""));
       else tiles.push(this._staticTile(this._t("tileBattery"), value, "", b.low, b.low));
+    }
+    else if (d.battery_last) {
+      // Ausgefallen: letzter Stand vor dem Ausfall, gedämpft und ohne Verlauf (der Sensor meldet gerade nichts)
+      const l = d.battery_last;
+      tiles.push(this._staticTile(this._t("tileBattery"), `${batIcon({ level: l.level, low: false }, 18)}${escape(String(l.level))}<small>%</small>`, this._t("batLastSub", this._batteryLastAge(d))).replace("st-tile static", "st-tile static stale"));
     }
     return `<div class="st-tiles" style="--n:${tiles.length}">${tiles.join("")}</div>`;
   }

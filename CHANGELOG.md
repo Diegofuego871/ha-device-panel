@@ -7,6 +7,15 @@ All notable changes to this integration are documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/).
 
+## [2.145.0] - 2026-10-25
+
+A device that is down still shows its last battery level.
+
+### Added
+
+- **Battery of a failed device:** when a device is down, its battery sensor reports "unavailable" and the panel showed nothing. Now the overview of the popup shows a tile "Battery" with the last value before the failure ("22 % · last value 47 min ago"), and the column "Battery" in the list the same, both dimmed. The value comes from the history of the recorder (the last 10 days, a query is kept for 10 minutes, only for devices that are down). It is for display only: no low-battery warning, no push and no chip "Battery low" come from it, and there is no history tile. New field `battery_last` (`level`, `at`) in `list_devices`.
+- **Setup wizard, rows "Low battery" and "Fully charged":** in the device level, every device shows its current battery level in small type behind the area ("Kitchen · 64 %"), in the same line, so the row does not get taller. WebSocket `wizard_data`: each device now carries `battery_level` (percent or `null`).
+
 ## [2.144.0] - 2026-10-25
 
 One style for every arrow that opens something.
@@ -14,6 +23,8 @@ One style for every arrow that opens something.
 ### Changed
 
 - **Arrows:** every arrow that opens a row, tile or section, or jumps on, is now the same small round button (24 px, blue border; violet in the AI row). Applies to the tiles "Availability" and "Interruptions" and the arrow of "Warnings" and "Outage pulse", the top strip of the header, the AI assessment, the sections in the settings, the list "Per integration", the link to Home Assistant, the groups in the routines and in Magic Push, and the integrations and devices in the setup wizard. Unchanged: dropdowns and selection fields (including the chips "Integration" and "Area") and the rows of the long log list. The rule is in CLAUDE.md.
+
+Not released; included in 2.145.0.
 
 ## [2.143.1] - 2026-10-25
 
@@ -4802,7 +4813,7 @@ First pre-release.
   GitHub Actions for HACS/hassfest validation and tests.
 
 [2.6.0]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v2.6.0
-[2.144.0]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v2.144.0
+[2.145.0]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v2.145.0
 [2.143.0]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v2.143.0
 [2.142.0]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v2.142.0
 [2.141.0]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v2.141.0

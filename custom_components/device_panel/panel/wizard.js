@@ -404,6 +404,16 @@ export class WizardUi {
       .sort((a, b) => String(a.name).toLowerCase().localeCompare(String(b.name).toLowerCase()));
   }
 
+  // Zeile unter dem Gerätenamen: "gerade ausgefallen" (nur Ausfall), Bereich und Batteriestand (nur Batterie und Laden), alles in einer Zeile
+  devSub(id, x) {
+    const { escape } = this.h;
+    const parts = [];
+    if (x.down && id === "outage") parts.push(`<em class="wz-down">${escape(this.t("wzDown"))}</em>`);
+    if (x.area) parts.push(escape(x.area));
+    if (["battery", "charge"].includes(id) && typeof x.battery_level === "number") parts.push(`<span class="wz-bl">${x.battery_level} %</span>`);
+    return parts.length ? `<small>${parts.join(" · ")}</small>` : "";
+  }
+
   devOn(id, devId) {
     const { d } = this.s;
     return id === "charge" ? d.chargeOn.has(devId) : id === "updates" ? d.updOn.has(devId) : !d.devOff[id].has(devId);
@@ -615,7 +625,7 @@ export class WizardUi {
             // Bei ausgeschalteter Integration (Ausfall, Batterie) gelten die Geräte nicht: ausgegraut
             const off = state === "off" && !["charge", "updates"].includes(id);
             const devs = this.rowDevices(id, i.domain)
-              .map((x) => `<div class="wz-li${off ? " dim" : ""}"><div class="wz-nm">${escape(x.name)}${(x.down && id === "outage") || x.area ? `<small>${x.down && id === "outage" ? `<em class="wz-down">${escape(this.t("wzDown"))}</em>${x.area ? " · " : ""}` : ""}${escape(x.area || "")}</small>` : ""}</div><label class="switch"><input type="checkbox" data-wz-md="${id}" data-wz-id="${escape(x.id)}"${this.devOn(id, x.id) ? " checked" : ""}${none || off ? " disabled" : ""} aria-label="${escape(x.name)}"><span></span></label></div>`)
+              .map((x) => `<div class="wz-li${off ? " dim" : ""}"><div class="wz-nm">${escape(x.name)}${this.devSub(id, x)}</div><label class="switch"><input type="checkbox" data-wz-md="${id}" data-wz-id="${escape(x.id)}"${this.devOn(id, x.id) ? " checked" : ""}${none || off ? " disabled" : ""} aria-label="${escape(x.name)}"><span></span></label></div>`)
               .join("");
             return `${head}<div class="wz-sub wz-dsub">${devs}</div>`;
           })

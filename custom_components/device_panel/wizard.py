@@ -28,6 +28,7 @@ from .devices import (
     device_offline_after,
     live_status,
     effective_type,
+    battery,
     has_battery,
     hub_ids,
 )
@@ -63,6 +64,8 @@ async def ws_wizard_data(hass: HomeAssistant, connection: websocket_api.ActiveCo
                 "area": area.name if area else "",
                 # Für die Lade- und Batteriemeldung je Integration: nur Geräte mit Batterie zählen
                 "battery": has_battery(hass, entries),
+                # Aktueller Stand in Prozent (None ohne Zahl, auch bei ausgefallenen Geräten), klein hinter dem Bereich in den Zeilen Batterie und Laden
+                "battery_level": (battery(hass, entries) or {}).get("level"),
                 "down": online is False,
             }
         )

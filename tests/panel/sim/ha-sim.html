@@ -911,7 +911,7 @@
       }
       if (msg.type === "device_panel/wizard_data") {
         // Wie wizard.ws_wizard_data: alle Kandidaten ohne abgezogene Ausschlüsse
-        const list = candidates().map((d) => ({ id: d.id, name: d.name, domain: d.integration?.domain || "", type: d.type, area: d.area || "", battery: Boolean(d.battery), down: d.online === false })).sort((a, b) => a.name.toLowerCase().localeCompare(b.name.toLowerCase()));
+        const list = candidates().map((d) => ({ id: d.id, name: d.name, domain: d.integration?.domain || "", type: d.type, area: d.area || "", battery: Boolean(d.battery), battery_level: d.battery?.level ?? null, down: d.online === false })).sort((a, b) => a.name.toLowerCase().localeCompare(b.name.toLowerCase()));
         const count = {};
         for (const d of list) if (d.domain) count[d.domain] = (count[d.domain] || 0) + 1;
         const integrations = Object.entries(count).map(([domain, devices]) => ({ domain, name: TITLES[domain] || domain, devices })).sort((a, b) => b.devices - a.devices || a.name.toLowerCase().localeCompare(b.name.toLowerCase()));
