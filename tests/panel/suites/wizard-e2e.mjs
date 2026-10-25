@@ -83,6 +83,7 @@ for (const lang of ["de", "en"]) {
       // Schritt 3: Geräte, nach Integration gruppiert, aufklappbar
       await s.tap(`${s.D} [data-wz="next"]`);
       await s.wait(`return r.host._wizard.s.step === "devices"`);
+      await s.shot("3-devices");
       const groups = await s.ev(`return [...r.querySelectorAll("${s.D} [data-wz-group]")].map((i) => i.dataset.wzGroup)`);
       check(`[${tag}] Geräte nach Integration gruppiert, die abgewählte fehlt`, groups.length >= 2 && !groups.includes(off), groups.join());
       check(`[${tag}] Gruppen zu, keine Geräteschalter sichtbar`, (await s.ev(`return r.querySelectorAll("${s.D} [data-wz-dev]").length`)) === 0);

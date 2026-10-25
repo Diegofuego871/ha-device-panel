@@ -7,6 +7,14 @@ All notable changes to this integration are documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/).
 
+## [2.143.1] - 2026-10-25
+
+The arrows in step 3 of the setup wizard look like those in step 4.
+
+### Changed
+
+- **Setup wizard, step "Devices":** the arrow that opens an integration is now the same round button with a blue border as in the step "Notifications".
+
 ## [2.143.0] - 2026-10-25
 
 The setup wizard also asks about the system load notifications.
@@ -4784,6 +4792,7 @@ First pre-release.
   GitHub Actions for HACS/hassfest validation and tests.
 
 [2.6.0]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v2.6.0
+[2.143.1]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v2.143.1
 [2.143.0]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v2.143.0
 [2.142.0]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v2.142.0
 [2.141.0]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v2.141.0

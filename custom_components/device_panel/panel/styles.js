@@ -2349,6 +2349,8 @@ dialog.wizard-dlg[open] { display: flex; flex-direction: column; }
 .wz-mx { flex: none; display: inline-grid; place-items: center; width: 30px; height: 30px; margin-right: -2px; border: 1.5px solid var(--dp-primary); border-radius: 50%; background: var(--dp-primary-soft); color: var(--dp-primary); cursor: pointer; padding: 0; }
 .wz-mx .wz-chev { color: var(--dp-primary); }
 .wz-mx .wz-chev svg { width: 20px; height: 20px; stroke: currentColor; stroke-width: 1.4px; }
+.wz-gh .wz-chev { place-items: center; width: 30px; height: 30px; border: 1.5px solid var(--dp-primary); border-radius: 50%; background: var(--dp-primary-soft); color: var(--dp-primary); }
+.wz-gh .wz-chev svg { width: 20px; height: 20px; stroke: currentColor; stroke-width: 1.4px; }
 .wz-mx:hover { background: color-mix(in srgb, var(--dp-primary) 26%, transparent); }
 span.wz-mx { border: 0; background: transparent; }
 .wz-msub { margin: 0 0 6px 46px; }
