@@ -8680,6 +8680,13 @@ class DevicePanel extends HTMLElement {
     };
     const sw = (key, label, locked = false) => `<label class="switch"><input type="checkbox" data-opt="${key}" ${d[key] ? "checked" : ""}${locked ? " disabled" : ""} aria-label="${escape(label)}"><span></span></label>`;
     // Automatisch installieren (seit 2.22.0): Panel-Einstellung der Instanz (wie "Vorabversionen"), nur mit der täglichen Prüfung
+    // Vorabversionen (seit 2.153.0 im Reiter "Updates", vorher unter dem Versionskasten): Entwurf in st.extra.prerelease, gilt für die ganze Instanz
+    const prereleaseRow = () => {
+      const on = st.extra ? Boolean(st.extra.prerelease) : Boolean(this._prerelease);
+      const changed = Boolean(st.extra) && st.extra.prerelease !== st.extraBase.prerelease;
+      const control = `<button type="button" class="sw-btn beta${on ? " on" : ""}" role="switch" aria-checked="${on}" data-ver="prerelease" aria-label="${escape(t("verPreToggle"))}" ${st.extra ? "" : "disabled"}><span></span></button>`;
+      return row("prerelease", t("verPreToggle"), control, t("verPreToggleShort"), null).replace('class="opt', changed ? 'class="opt changed' : 'class="opt');
+    };
     const autoUpdateRow = () => {
       const daily = Boolean(d.update_check);
       const on = daily && Boolean(st.extra ? st.extra.auto_update : this._autoUpdate);
@@ -8981,6 +8988,7 @@ class DevicePanel extends HTMLElement {
           : row("update_check", t("optUpdateCheck"), sw("update_check", t("optUpdateCheck")), t("optUpdateCheckShort"), t("optUpdateCheckInfo")) +
             checkTimeRow() +
             autoUpdateRow() +
+            prereleaseRow() +
             updateNotifyRows()),
       // Filter-Chips (seit 2.87.0 im Dialog "Ansicht", Reiter "Filter-Chips"):
       chips:
@@ -10063,17 +10071,7 @@ class DevicePanel extends HTMLElement {
   _versionHtml() {
     const state = this._versionState();
     if (!state.installed && !state.v.data && !state.v.error) return "";
-    return this._versionRowHtml(state) + this._prereleaseOptHtml();
-  }
-
-  // Schalter "Vorabversionen anzeigen" unter dem Versionskasten (ganze Instanz).
-  _prereleaseOptHtml() {
-    const st = this._settings;
-    const on = st && st.extra ? Boolean(st.extra.prerelease) : Boolean(this._prerelease);
-    const changed = st && st.extra && st.extra.prerelease !== st.extraBase.prerelease;
-    return `<div class="ver-opt">
-        <div><div class="ver-opt-l">${escape(this._t("verPreToggle"))}${changed ? `<span class="set-badge">${escape(this._t("settingsChanged"))}</span>` : ""}</div><div class="ver-opt-d">${escape(this._t("verPreToggleShort"))}</div></div>
-        <button type="button" class="sw-btn beta${on ? " on" : ""}" role="switch" aria-checked="${on}" data-ver="prerelease" aria-label="${escape(this._t("verPreToggle"))}" ${st && st.extra ? "" : "disabled"}><span></span></button></div>`;
+    return this._versionRowHtml(state);
   }
 
   _formatRelative(epoch) {

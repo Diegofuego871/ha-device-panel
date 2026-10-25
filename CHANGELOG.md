@@ -7,6 +7,14 @@ All notable changes to this integration are documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/).
 
+## [2.153.0] - 2026-10-25
+
+The switch for pre-releases moves to Panel › Updates.
+
+### Changed
+
+- **"Show pre-releases":** the switch no longer sits at the very top of the settings under the version line, but in Settings › Panel › Updates, below "Install updates automatically", as a normal row (with the "changed" mark until you press "Save"). The version line with search and install stays at the top. Behaviour unchanged: applies to all users.
+
 ## [2.152.0] - 2026-10-25
 
 The titles of the setup wizard carry the accent bar.
@@ -4907,6 +4915,7 @@ First pre-release.
   GitHub Actions for HACS/hassfest validation and tests.
 
 [2.6.0]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v2.6.0
+[2.153.0]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v2.153.0
 [2.152.0]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v2.152.0
 [2.151.0]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v2.151.0
 [2.150.0]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v2.150.0

@@ -1151,9 +1151,6 @@ button.ver-link { border: none; background: none; font: inherit; font-size: 13px
 .ver-hint-acts .ver-btn { color: var(--dp-text); }
 .ver-hint-err { margin-top: 6px; color: var(--dp-error); }
 .ver-hint-link { padding: 0; border: none; background: none; color: inherit; font-weight: 500; text-decoration: underline; cursor: pointer; }
-.ver-opt { display: flex; align-items: center; justify-content: space-between; gap: 12px; margin-top: 8px; padding: 2px 4px 0 14px; }
-.ver-opt-l { font-size: 14px; }
-.ver-opt-d { color: var(--dp-text2); font-size: 12px; }
 .ver.rst { background: color-mix(in srgb, var(--dp-warning) 12%, var(--dp-subtle)); box-shadow: inset 0 0 0 1px color-mix(in srgb, var(--dp-warning) 35%, transparent); }
 .ver.rst .ver-ic { background: var(--dp-warning-soft); color: var(--dp-warning); }
 .ver.err .ver-ic { background: var(--dp-warning-soft); color: var(--dp-warning); }

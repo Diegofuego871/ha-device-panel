@@ -266,6 +266,8 @@ for (const mobile of [false, true]) {
 
   // 9. Vorabversionen aus + Speichern: das Panel lässt den Schalter in HACS, wie er ist
   await p.evaluate(() => { window.__services = []; });
+  await tap('[data-set="section"][data-id="updates"]');
+  await tap('[data-set="subtab"][data-group="panel"][data-key="pupdates"]');
   await tap('[data-ver="prerelease"]');
   await tap('dialog.settings [data-set="save"]');
   await p.waitForTimeout(400);

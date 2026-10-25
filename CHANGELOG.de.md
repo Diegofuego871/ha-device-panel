@@ -7,6 +7,14 @@ Alle nennenswerten Änderungen an dieser Integration stehen in dieser Datei.
 Das Format folgt [Keep a Changelog](https://keepachangelog.com/de/1.1.0/),
 die Versionsnummern folgen [Semantic Versioning](https://semver.org/lang/de/).
 
+## [2.153.0] - 2026-10-25
+
+Der Schalter für Vorabversionen wandert nach Panel › Updates.
+
+### Geändert
+
+- **"Vorabversionen anzeigen":** der Schalter steht nicht mehr ganz oben in den Einstellungen unter der Versionszeile, sondern in Einstellungen › Panel › Updates, unter "Updates automatisch installieren", als normale Zeile (mit der Markierung "geändert", bis du "Speichern" drückst). Die Versionszeile mit Suche und Installation bleibt oben. Verhalten unverändert: gilt für alle Benutzer.
+
 ## [2.152.0] - 2026-10-25
 
 Die Titel des Einrichtungsassistenten tragen den Akzentstrich.
@@ -5008,6 +5016,7 @@ Erste Vorabversion.
   GitHub Actions für die Prüfungen von HACS und hassfest sowie die Tests.
 
 [2.6.0]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v2.6.0
+[2.153.0]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v2.153.0
 [2.152.0]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v2.152.0
 [2.151.0]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v2.151.0
 [2.150.0]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v2.150.0

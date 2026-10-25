@@ -127,7 +127,7 @@ for (const lang of ["de", "en"]) {
     check(`[${tag}] geladen`, await wait(`return !!r.querySelector("dialog.settings .set-sec")`));
     check(`[${tag}] Optionen per WebSocket`, (await calls("device_panel/get_options")).length === 1 && (await calls("device_panel/version")).length >= 1);
     check(`[${tag}] Versionszeile`, (await text("dialog.settings .ver-slot")).includes(T.ver));
-    check(`[${tag}] Schalter Vorabversionen`, (await text("dialog.settings .ver-opt-l")) === T.pre && (await ev(`return r.querySelector('[data-ver="prerelease"]').getAttribute("aria-checked")`)) === "false");
+    check(`[${tag}] Vorabversionen: nicht mehr oben unter der Versionszeile (seit 2.153.0 im Reiter "Updates")`, (await ev(`return !r.querySelector(".ver-slot [data-ver=prerelease], .ver-opt")`)));
     check(`[${tag}] Abschnitt mit Zusammenfassung`, (await text('[data-id="updates"] .set-sec-title')) === T.sec && (await text('[data-id="updates"] .set-sec-sum')) === T.sumOn, await text('[data-id="updates"] .set-sec-sum'));
     check(`[${tag}] Schliessen steht rechts von Speichern`, await ev(`const b = r.querySelector('dialog.settings .dlg-actions [data-set="close"]').getBoundingClientRect(), s = r.querySelector('dialog.settings [data-set="save"]').getBoundingClientRect(); return b.left > s.left`));
     check(`[${tag}] Speichern gesperrt ohne Änderung, Knopf "Schliessen"`, await ev(`return r.querySelector('[data-set="save"]').disabled`) && (await text(".set-count")) === "" && (await text('dialog.settings .dlg-actions [data-set="close"]')) === T.closeBtn);
@@ -149,7 +149,7 @@ for (const lang of ["de", "en"]) {
     await tap('.switch input[data-opt="update_check"]');
     check(`[${tag}] Entwurf: Etikett, Zähler, Zusammenfassung, Knopf "Abbrechen"`, (await text('[data-id="updates"] .set-sec-title .set-badge')) === T.changed && (await text(".set-count")) === T.one && (await text('[data-id="updates"] .set-sec-sum')) === T.sumOff && (await text('dialog.settings .dlg-actions [data-set="close"]')) === T.cancel);
     await tap('[data-ver="prerelease"]');
-    check(`[${tag}] Vorabversionen im Entwurf`, (await text(".set-count")) === T.two && (await text(".ver-opt-l .set-badge")) === T.changed && (await ev(`return r.querySelector('[data-ver="prerelease"]').getAttribute("aria-checked")`)) === "true");
+    check(`[${tag}] Vorabversionen im Entwurf`, (await text(".set-count")) === T.two && (await ev(`return !!r.querySelector('[data-ver="prerelease"]').closest(".opt.changed") && r.querySelector('[data-ver="prerelease"]').closest(".opt").textContent.includes(${JSON.stringify(T.pre)})`)) && (await ev(`return r.querySelector('[data-ver="prerelease"]').getAttribute("aria-checked")`)) === "true");
     check(`[${tag}] noch nichts gespeichert`, (await calls("device_panel/set_options")).length === 0 && (await calls("device_panel/set_panel")).length === 0);
     await p.screenshot({ path: `${outDir}/settings-${lang}-${mobile ? "mobile" : "desktop"}.png` });
 
@@ -188,6 +188,8 @@ for (const lang of ["de", "en"]) {
     check(`[${tag}] "Schliessen" schliesst`, await closeSettings());
     await tap(".gear-btn");
     await wait(`return !!r.querySelector("dialog.settings .set-sec")`);
+    await tap('[data-set="section"][data-id="updates"]');
+    await tap('[data-set="subtab"][data-group="panel"][data-key="pupdates"]');
     check(`[${tag}] neuer Stand nach erneutem Öffnen`, (await text('[data-id="updates"] .set-sec-sum')) === T.sumOff && (await ev(`return r.querySelector('[data-ver="prerelease"]').getAttribute("aria-checked")`)) === "true");
 
     // Escape schliesst (nur Tastatur auf dem Desktop), Hintergrund ebenso
