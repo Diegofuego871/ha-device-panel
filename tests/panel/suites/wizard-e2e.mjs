@@ -9,8 +9,8 @@ let ok = true;
 const check = (l, c, i = "") => { ok &&= !!c; console.log(`${c ? "PASS" : "FAIL"} ${l}${i ? " - " + i : ""}`); };
 const R = `document.querySelector("device-panel").shadowRoot`;
 const T = {
-  de: { start: "Los geht's", later: "Jetzt nicht", never: "Nicht mehr zeigen", next: "Weiter", back: "Zurück", finish: "Fertigstellen", tile: "Einrichtung", pill: "Offen", step2: "Schritt 2 von 5", ttl: "Einrichtungsassistent", startBtn: "Assistent starten", errDelay: "Melden nach darf nicht kürzer sein als \"Ausgefallen nach\" (jetzt 2 Min., einstellbar unter Einstellungen).", testOk: "Gesendet. Prüfe dein Gerät.", testFail: "Nicht gesendet. Prüfe das Ziel.", reset: "Entwurf verwerfen", snack: "Einrichtung gespeichert." },
-  en: { start: "Let's go", later: "Not now", never: "Don't show again", next: "Next", back: "Back", finish: "Finish", tile: "Setup", pill: "Open", step2: "Step 2 of 5", ttl: "Setup wizard", startBtn: "Start wizard", errDelay: "Notify after must not be shorter than \"Failed after\" (now 2 min, adjustable in the settings).", testOk: "Sent. Check your device.", testFail: "Not sent. Check the target.", reset: "Discard draft", snack: "Setup saved." },
+  de: { down: "gerade ausgefallen", start: "Los geht's", later: "Jetzt nicht", never: "Nicht mehr zeigen", next: "Weiter", back: "Zurück", finish: "Fertigstellen", tile: "Einrichtung", pill: "Offen", step2: "Schritt 2 von 5", ttl: "Einrichtungsassistent", startBtn: "Assistent starten", errDelay: "Melden nach darf nicht kürzer sein als \"Ausgefallen nach\" (jetzt 2 Min., einstellbar unter Einstellungen).", testOk: "Gesendet. Prüfe dein Gerät.", testFail: "Nicht gesendet. Prüfe das Ziel.", reset: "Entwurf verwerfen", snack: "Einrichtung gespeichert." },
+  en: { down: "currently down", start: "Let's go", later: "Not now", never: "Don't show again", next: "Next", back: "Back", finish: "Finish", tile: "Setup", pill: "Open", step2: "Step 2 of 5", ttl: "Setup wizard", startBtn: "Start wizard", errDelay: "Notify after must not be shorter than \"Failed after\" (now 2 min, adjustable in the settings).", testOk: "Sent. Check your device.", testFail: "Not sent. Check the target.", reset: "Discard draft", snack: "Setup saved." },
 };
 
 for (const lang of ["de", "en"]) {
@@ -153,6 +153,11 @@ for (const lang of ["de", "en"]) {
       await s.tap(`${s.D} [data-wz-iopen="outage:${outDom2}"]`);
       const outDevs = await s.ev(`return [...r.querySelectorAll('${s.D} [data-wz-md="outage"]')].map((i) => i.dataset.wzId + ":" + i.checked)`);
       check(`[${tag}] Ausgefallene Geräte, Integration aufgeklappt: Geräte mit Schalter, alle an`, outDevs.length >= 1 && outDevs.every((x) => x.endsWith(":true")), outDevs.join());
+      // Gerade ausgefallene Geräte tragen einen kleinen roten Punkt mit Text, nur in der Zeile "Ausfall"; Name und Bereich bleiben
+      const downIds = await s.ev(`return r.host._wizard.s.data.devices.filter((x) => x.down && x.domain === ${JSON.stringify(outDom2)}).map((x) => x.id)`);
+      const shownDown = await s.ev(`return [...r.querySelectorAll('${s.D} .wz-dsub .wz-down')].map((e) => e.closest(".wz-li").querySelector("[data-wz-md]").dataset.wzId)`);
+      check(`[${tag}] "${L.down}": nur ausgefallene Geräte tragen die Marke, Name und Bereich bleiben`, JSON.stringify([...shownDown].sort()) === JSON.stringify([...downIds].sort()) && (await s.ev(`return [...r.querySelectorAll('${s.D} .wz-dsub .wz-li')].every((li) => li.querySelector(".wz-nm").firstChild.textContent.trim().length > 0)`)), JSON.stringify({ shownDown, downIds, dom: outDom2 }));
+      await s.shot("4-outage-down");
       const muteId = outDevs[0].split(":")[0];
       await s.tap(`${s.D} [data-wz-md="outage"][data-wz-id="${muteId}"]`);
       check(`[${tag}] Gerät ausgeschaltet (Entwurf), noch nichts gespeichert`, (await s.ev(`return r.host._wizard.s.d.devOff.outage.has(${JSON.stringify(muteId)})`)) && (await s.p.evaluate(() => (window.__wsCalls || []).filter((m) => m.type === "device_panel/set_device_settings").length)) === 0);

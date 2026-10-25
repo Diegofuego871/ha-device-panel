@@ -7,6 +7,14 @@ All notable changes to this integration are documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/).
 
+## [2.142.0] - 2026-10-25
+
+The setup wizard shows which devices are down right now.
+
+### Changed
+
+- **Setup wizard, row "Failed devices":** in the device level, a device that is down right now carries a small red dot with "currently down" in the line of its area. No extra line, no information lost. Devices that are not monitored show nothing. WebSocket `wizard_data`: each device now carries `down`.
+
 ## [2.141.0] - 2026-10-25
 
 Closing the setup wizard in the middle asks what should happen next.
@@ -4753,6 +4761,7 @@ First pre-release.
   GitHub Actions for HACS/hassfest validation and tests.
 
 [2.6.0]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v2.6.0
+[2.142.0]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v2.142.0
 [2.141.0]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v2.141.0
 [2.140.2]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v2.140.2
 [2.140.1]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v2.140.1

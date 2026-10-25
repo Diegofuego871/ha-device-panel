@@ -17,10 +17,20 @@ import voluptuous as vol
 from homeassistant.components import websocket_api
 from homeassistant.core import HomeAssistant
 from homeassistant.helpers import area_registry as ar
+from homeassistant.util import dt as dt_util
 
 from . import push
 from .const import CONF_SHOW_DISABLED, CONF_SHOW_SERVICE, CONF_TYPE_INTEGRATIONS, DOMAIN
-from .devices import _primary_entry, async_integration_info, candidate_devices, effective_type, has_battery, hub_ids
+from .devices import (
+    _primary_entry,
+    async_integration_info,
+    candidate_devices,
+    device_offline_after,
+    device_status,
+    effective_type,
+    has_battery,
+    hub_ids,
+)
 from .options_api import _NOTIFY_RE, effective
 
 
@@ -32,12 +42,16 @@ async def ws_wizard_data(hass: HomeAssistant, connection: websocket_api.ActiveCo
     opts = effective(hass)
     hubs = hub_ids(hass)
     areas = ar.async_get(hass)
+    now = dt_util.utcnow()
     devices: list[dict[str, Any]] = []
     counts: dict[str, int] = {}
     for device, entries in candidate_devices(hass, service=opts[CONF_SHOW_SERVICE], disabled=opts[CONF_SHOW_DISABLED]):
         primary = _primary_entry(hass, device)
         domain = primary.domain if primary else ""
         area = areas.async_get_area(device.area_id) if device.area_id else None
+        # Gerade ausgefallen (nach "Ausgefallen nach", wie in der Liste); nicht überwachte Geräte haben keinen Status
+        offline_after = device_offline_after(hass, opts, device)
+        online = None if offline_after is None else device_status(hass, entries, now, offline_after)[0]
         devices.append(
             {
                 "id": device.id,
@@ -47,6 +61,7 @@ async def ws_wizard_data(hass: HomeAssistant, connection: websocket_api.ActiveCo
                 "area": area.name if area else "",
                 # Für die Lade- und Batteriemeldung je Integration: nur Geräte mit Batterie zählen
                 "battery": has_battery(hass, entries),
+                "down": online is False,
             }
         )
         counts[domain] = counts.get(domain, 0) + 1

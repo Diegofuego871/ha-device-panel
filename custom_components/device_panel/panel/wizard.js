@@ -586,7 +586,7 @@ export class WizardUi {
             // Bei ausgeschalteter Integration (Ausfall, Batterie) gelten die Geräte nicht: ausgegraut
             const off = state === "off" && !["charge", "updates"].includes(id);
             const devs = this.rowDevices(id, i.domain)
-              .map((x) => `<div class="wz-li${off ? " dim" : ""}"><div class="wz-nm">${escape(x.name)}${x.area ? `<small>${escape(x.area)}</small>` : ""}</div><label class="switch"><input type="checkbox" data-wz-md="${id}" data-wz-id="${escape(x.id)}"${this.devOn(id, x.id) ? " checked" : ""}${none || off ? " disabled" : ""} aria-label="${escape(x.name)}"><span></span></label></div>`)
+              .map((x) => `<div class="wz-li${off ? " dim" : ""}"><div class="wz-nm">${escape(x.name)}${(x.down && id === "outage") || x.area ? `<small>${x.down && id === "outage" ? `<em class="wz-down">${escape(this.t("wzDown"))}</em>${x.area ? " · " : ""}` : ""}${escape(x.area || "")}</small>` : ""}</div><label class="switch"><input type="checkbox" data-wz-md="${id}" data-wz-id="${escape(x.id)}"${this.devOn(id, x.id) ? " checked" : ""}${none || off ? " disabled" : ""} aria-label="${escape(x.name)}"><span></span></label></div>`)
               .join("");
             return `${head}<div class="wz-sub wz-dsub">${devs}</div>`;
           })

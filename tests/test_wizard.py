@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 import time
+from unittest.mock import patch
 from typing import Any
 
 import pytest
@@ -95,6 +96,11 @@ async def test_wizard_data(hass: HomeAssistant, setup, hass_ws_client) -> None: 
     # Batterie (ja/nein) je Gerät, für die Lade- und Batteriemeldung je Integration im Assistenten
     assert devices["Taster"]["battery"] is True and devices["Lampe"]["battery"] is False
     assert [d["name"] for d in data["devices"]] == sorted((d["name"] for d in data["devices"]), key=str.lower)
+    # Gerade ausgefallen (für den Hinweis in der Zeile "Ausfall"): ohne Ausfall nie, sonst nach device_status
+    assert not any(d["down"] for d in data["devices"])
+    with patch("custom_components.device_panel.wizard.device_status", return_value=(False, None)):
+        down = (await _ws(client, 3, type=f"{DOMAIN}/wizard_data"))["result"]
+    assert all(d["down"] is True for d in down["devices"])
 
 
 async def test_wizard_test_message(hass: HomeAssistant, setup, hass_ws_client) -> None:  # noqa: F811

@@ -7,6 +7,14 @@ Alle nennenswerten Änderungen an dieser Integration stehen in dieser Datei.
 Das Format folgt [Keep a Changelog](https://keepachangelog.com/de/1.1.0/),
 die Versionsnummern folgen [Semantic Versioning](https://semver.org/lang/de/).
 
+## [2.142.0] - 2026-10-25
+
+Der Einrichtungsassistent zeigt, welche Geräte gerade ausgefallen sind.
+
+### Geändert
+
+- **Einrichtungsassistent, Zeile "Ausgefallene Geräte":** in der Geräte-Ebene trägt ein Gerät, das gerade ausgefallen ist, einen kleinen roten Punkt mit "gerade ausgefallen" in der Zeile seines Bereichs. Keine zusätzliche Zeile, keine Angabe geht verloren. Nicht überwachte Geräte zeigen nichts. WebSocket `wizard_data`: jedes Gerät trägt neu `down`.
+
 ## [2.141.0] - 2026-10-25
 
 Wer den Einrichtungsassistenten mittendrin schliesst, wird gefragt, wie es weitergehen soll.
@@ -4854,6 +4862,7 @@ Erste Vorabversion.
   GitHub Actions für die Prüfungen von HACS und hassfest sowie die Tests.
 
 [2.6.0]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v2.6.0
+[2.142.0]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v2.142.0
 [2.141.0]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v2.141.0
 [2.140.2]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v2.140.2
 [2.140.1]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v2.140.1
