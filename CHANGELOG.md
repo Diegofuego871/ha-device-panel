@@ -7,6 +7,14 @@ All notable changes to this integration are documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/).
 
+## [2.154.0] - 2026-10-25
+
+Every green in the panel is the same fir green.
+
+### Changed
+
+- **One green:** every green in the panel (online dot of devices, ring and numbers in the availability tile, line of the outage pulse, reception bars, charging, "OK" marks, the "Status" app) is now exactly the fir green (`#2e8b57`) that is also offered as an accent colour. It no longer follows the green of the Home Assistant theme and does not depend on the chosen accent colour; before, the theme green clashed with the accent. The middle reception level (before light green) is now a mix of fir green and amber. Red, orange and violet are unchanged.
+
 ## [2.153.0] - 2026-10-25
 
 The switch for pre-releases moves to Panel › Updates.
@@ -14,6 +22,8 @@ The switch for pre-releases moves to Panel › Updates.
 ### Changed
 
 - **"Show pre-releases":** the switch no longer sits at the very top of the settings under the version line, but in Settings › Panel › Updates, below "Install updates automatically", as a normal row (with the "changed" mark until you press "Save"). The version line with search and install stays at the top. Behaviour unchanged: applies to all users.
+
+Not released; included in 2.154.0.
 
 ## [2.152.0] - 2026-10-25
 
@@ -732,7 +742,6 @@ The reception window of a Bluetooth device shows live which receivers hear it ri
 ### Internal
 
 - `devices._ble_seen` (all receivers with age and RSSI), `_ble_pick` (the choice), new `ble_listeners`; WebSocket `device_panel/signal_listeners` (live line only, no history) and field `listeners` in `device_panel/signal_history`. Tests: `tests/test_ble_best.py`, `tests/test_signal_history.py`, new suite `signallive`.
-
 
 ## [2.108.0] - 2026-10-20
 
@@ -3857,7 +3866,6 @@ A better default prompt for the AI assessment, and more facts.
 - The notes in the settings and in the pop-up name the other offline
   devices of the same area that are sent as well.
 
-
 More context for the AI assessment: the other offline devices of the integration.
 
 ### Changed
@@ -4915,7 +4923,7 @@ First pre-release.
   GitHub Actions for HACS/hassfest validation and tests.
 
 [2.6.0]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v2.6.0
-[2.153.0]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v2.153.0
+[2.154.0]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v2.154.0
 [2.152.0]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v2.152.0
 [2.151.0]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v2.151.0
 [2.150.0]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v2.150.0

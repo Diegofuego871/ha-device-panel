@@ -16,7 +16,8 @@ export const PANEL_CSS = `
   --dp-divider: var(--divider-color, rgba(0,0,0,0.12));
   --dp-primary: var(--primary-color, #03a9f4);
   --dp-on-primary: #fff;
-  --dp-success: var(--success-color, #43a047);
+  /* Grün überall dasselbe Tannengrün (seit 2.154.0), egal welches Farbschema oder welche Akzentfarbe: wie die Akzentfarbe "Tannengrün", sonst beisst sich das Grün von Home Assistant damit */
+  --dp-success: #2e8b57;
   --dp-warning: var(--warning-color, #ff9800);
   --dp-error: var(--error-color, #db4437);
   --dp-hover: color-mix(in srgb, var(--dp-text) 5%, var(--dp-card));
@@ -38,8 +39,8 @@ export const PANEL_CSS = `
   --dp-shadow: 0 10px 30px rgba(0,0,0,0.18);
   --dp-shadow-s: 0 1px 2px rgba(0,0,0,0.08);
   /* Stufen (gut -> schlecht), wie Ping/WLAN in unifi_dynamic */
-  --dp-tier4: #4caf50;
-  --dp-tier3: #8bc34a;
+  --dp-tier4: var(--dp-success);
+  --dp-tier3: color-mix(in srgb, var(--dp-success) 50%, #eba43f);
   --dp-tier2: #eba43f;
   --dp-tier1: #e5625f;
   /* Vorabversionen (Beta), wie unifi_dynamic */

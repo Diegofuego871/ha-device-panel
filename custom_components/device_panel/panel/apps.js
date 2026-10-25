@@ -77,7 +77,7 @@ const HA_LOOK = {
   hist: { c: "#3263C3", p: "M19 3H5C3.9 3 3 3.9 3 5V19C3 20.1 3.9 21 5 21H19C20.1 21 21 20.1 21 19V5C21 3.9 20.1 3 19 3M9 17H7V10H9V17M13 17H11V7H13V17M17 17H15V13H17V17Z" },
   book: { c: "#00838F", p: "M5,9.5L7.5,14H2.5L5,9.5M3,4H7V8H3V4M5,20A2,2 0 0,0 7,18A2,2 0 0,0 5,16A2,2 0 0,0 3,18A2,2 0 0,0 5,20M9,5V7H21V5H9M9,19H21V17H9V19M9,13H21V11H9V13Z" },
 };
-const PANEL_COLOR = { routine: "#00838F", magic: "#8E24AA", log: "#4A5963", status: "#2E7D32", view: "#1E88E5", settings: "#8D6E63" };
+const PANEL_COLOR = { routine: "#00838F", magic: "#8E24AA", log: "#4A5963", status: "#2E8B57", view: "#1E88E5", settings: "#8D6E63" };
 // Symbole für eigene Apps (seit 2.116.0: 40 statt 16, dazu Update, Download, Licht, Schloss, Temperatur, Garage, Wasser, Feuer …); je 8 pro Reihe im Formular
 export const APP_ICONS = [
   "web", "home", "camera", "map", "bolt", "calendar", "bar", "wrench", "store", "desktop", "robot", "palette", "script", "devices", "shape", "tools",

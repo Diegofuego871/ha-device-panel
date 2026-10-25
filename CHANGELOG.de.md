@@ -7,6 +7,14 @@ Alle nennenswerten Änderungen an dieser Integration stehen in dieser Datei.
 Das Format folgt [Keep a Changelog](https://keepachangelog.com/de/1.1.0/),
 die Versionsnummern folgen [Semantic Versioning](https://semver.org/lang/de/).
 
+## [2.154.0] - 2026-10-25
+
+Jedes Grün im Panel ist dasselbe Tannengrün.
+
+### Geändert
+
+- **Ein Grün:** jedes Grün im Panel (Online-Punkt der Geräte, Ring und Zahlen in der Verfügbarkeits-Kachel, Linie des Ausfall-Pulses, Empfangsbalken, Laden, "OK"-Marken, die App "Status") ist jetzt genau das Tannengrün (`#2e8b57`), das es auch als Akzentfarbe gibt. Es folgt nicht mehr dem Grün des Home-Assistant-Themes und hängt nicht von der gewählten Akzentfarbe ab; vorher biss sich das Theme-Grün mit der Akzentfarbe. Die mittlere Empfangsstufe (vorher hellgrün) ist jetzt eine Mischung aus Tannengrün und Bernstein. Rot, Orange und Violett bleiben.
+
 ## [2.153.0] - 2026-10-25
 
 Der Schalter für Vorabversionen wandert nach Panel › Updates.
@@ -14,6 +22,8 @@ Der Schalter für Vorabversionen wandert nach Panel › Updates.
 ### Geändert
 
 - **"Vorabversionen anzeigen":** der Schalter steht nicht mehr ganz oben in den Einstellungen unter der Versionszeile, sondern in Einstellungen › Panel › Updates, unter "Updates automatisch installieren", als normale Zeile (mit der Markierung "geändert", bis du "Speichern" drückst). Die Versionszeile mit Suche und Installation bleibt oben. Verhalten unverändert: gilt für alle Benutzer.
+
+Nicht veröffentlicht; enthalten in 2.154.0.
 
 ## [2.152.0] - 2026-10-25
 
@@ -732,7 +742,6 @@ Das Empfangsfenster eines Bluetooth-Geräts zeigt live, welche Empfänger es ger
 ### Intern
 
 - `devices._ble_seen` (alle Empfänger mit Alter und RSSI), `_ble_pick` (die Wahl), neu `ble_listeners`; WebSocket `device_panel/signal_listeners` (nur die Live-Zeile, ohne Verlauf) und Feld `listeners` in `device_panel/signal_history`. Tests: `tests/test_ble_best.py`, `tests/test_signal_history.py`, neue Suite `signallive`.
-
 
 ## [2.108.0] - 2026-10-20
 
@@ -3915,7 +3924,6 @@ Ein besserer Standard-Prompt für die KI-Einschätzung und mehr Fakten.
 - Die Hinweise in den Einstellungen und im Popup nennen die ausgefallenen
   Geräte desselben Bereichs, die ebenfalls mitgehen.
 
-
 Mehr Zusammenhang für die KI-Einschätzung: die anderen ausgefallenen Geräte der Integration.
 
 ### Geändert
@@ -5016,7 +5024,7 @@ Erste Vorabversion.
   GitHub Actions für die Prüfungen von HACS und hassfest sowie die Tests.
 
 [2.6.0]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v2.6.0
-[2.153.0]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v2.153.0
+[2.154.0]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v2.154.0
 [2.152.0]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v2.152.0
 [2.151.0]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v2.151.0
 [2.150.0]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v2.150.0
