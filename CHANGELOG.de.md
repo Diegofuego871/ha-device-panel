@@ -9,11 +9,12 @@ die Versionsnummern folgen [Semantic Versioning](https://semver.org/lang/de/).
 
 ## [2.154.1] - 2026-10-25
 
-Der Hinweis unter "Systemauslastung" im Einrichtungsassistenten nennt die richtige Stelle.
+Der Hinweis unter "Systemauslastung" nennt die richtige Stelle, und der drehende Pfeil dreht sich um die eigene Achse.
 
 ### Behoben
 
 - **Einrichtungsassistent, Schritt "Ruhezeit und System":** der Text unter "Systemauslastung" sagte "Der Empfänger ist das Ziel von oben", aber oben steht kein Ziel (die Wahl liegt im Schritt "Meldungen"). Jetzt steht dort: "Sie geht an das Ziel, das du im Schritt "Meldungen" gewählt hast."
+- **Kreispfeil eierte beim Drehen:** der Ring des Symbols (App-Logo, laufende Aktionen wie der HACS-Neustart) lag einen Pixel unter der Mitte seines Rahmens und eierte deshalb, statt sich um die eigene Achse zu drehen. Der Ring sitzt jetzt genau in der Mitte.
 
 ## [2.154.0] - 2026-10-25
 

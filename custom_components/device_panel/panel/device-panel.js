@@ -307,8 +307,8 @@ const MDI = {
   flask: "M5,19A1,1 0 0,0 6,20H18A1,1 0 0,0 19,19C19,18.79 18.93,18.59 18.82,18.43L13,8.35V4H11V8.35L5.18,18.43C5.07,18.59 5,18.79 5,19M6,22A3,3 0 0,1 3,19C3,18.4 3.18,17.84 3.5,17.37L9,7.81V6A1,1 0 0,1 8,5V4A2,2 0 0,1 10,2H14A2,2 0 0,1 16,4V5A1,1 0 0,1 15,6V7.81L20.5,17.37C20.82,17.84 21,18.4 21,19A3,3 0 0,1 18,22H6M13,16L14.34,14.66L16.27,18H7.73L10.39,13.39L13,16M12.5,12A0.5,0.5 0 0,1 13,12.5A0.5,0.5 0 0,1 12.5,13A0.5,0.5 0 0,1 12,12.5A0.5,0.5 0 0,1 12.5,12Z",
   power: "M16.56,5.44L15.11,6.89C16.84,7.94 18,9.83 18,12A6,6 0 0,1 12,18A6,6 0 0,1 6,12C6,9.83 7.16,7.94 8.88,6.88L7.44,5.44C5.36,6.88 4,9.28 4,12A8,8 0 0,0 12,20A8,8 0 0,0 20,12C20,9.28 18.64,6.88 16.56,5.44M13,3H11V13H13",
   // "reset" ist das Symbol von mdi:reload waagrecht gespiegelt: der Pfeil läuft im Uhrzeigersinn, wie das Aktualisieren-Symbol und wie er sich dreht (seit 2.130.0)
-  // Kreispfeil: durchgehender Ring, nur ein kurzer Unterbruch direkt hinter der Pfeilspitze (rechts oben, nicht unten; seit 2.147.0)
-  reset: "M18.93,9.00A8,8 0 1 1 12,5L12,7A6,6 0 1 0 17.20,10.00ZM12,2.5L16.5,6L12,9.5Z",
+  // Kreispfeil: durchgehender Ring, nur ein kurzer Unterbruch direkt hinter der Pfeilspitze (rechts oben, nicht unten; seit 2.147.0); Ringmitte genau bei (12,12), sonst eiert die Drehung (seit 2.154.1)
+  reset: "M18.93,8.00A8,8 0 1 1 12,4L12,6A6,6 0 1 0 17.20,9.00ZM12,1.5L16.5,5L12,8.5Z",
   info: "M13,9H11V7H13M13,17H11V11H13M12,2A10,10 0 0,0 2,12A10,10 0 0,0 12,22A10,10 0 0,0 22,12A10,10 0 0,0 12,2Z",
   cols: "M16,5V18H21V5M4,18H9V5H4M10,18H15V5H10V18Z",
   log: "M4,4H20A2,2 0 0,1 22,6V18A2,2 0 0,1 20,20H4A2,2 0 0,1 2,18V6A2,2 0 0,1 4,4M4,6V18H20V6H4M6,8H18V10H6V8M6,11H18V13H6V11M6,14H14V16H6V14Z",

@@ -9,11 +9,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/).
 
 ## [2.154.1] - 2026-10-25
 
-The hint under "System load" in the setup wizard names the right place.
+The hint under "System load" names the right place, and the spinning arrow turns around its own axis.
 
 ### Fixed
 
 - **Setup wizard, step "Quiet hours and system":** the text under "System load" said "The recipient is the target from above", but nothing "above" is a target (that choice is made in the step "Notifications"). It now says: "It goes to the target you chose in the step "Notifications"."
+- **Circular arrow wobbles when spinning:** the ring of the symbol (app logo, running actions such as the HACS restart) sat one pixel below the centre of its box, so it wobbled instead of turning around its own axis. The ring is now exactly centred.
 
 ## [2.154.0] - 2026-10-25
 

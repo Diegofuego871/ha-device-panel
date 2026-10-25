@@ -22,11 +22,11 @@ const res = await page.evaluate(async () => {
   c.width = 240; c.height = 240;
   const g = c.getContext("2d");
   g.drawImage(img, 0, 0);
-  // Punkte auf dem Ring (Mitte 12/13, Radius 7, Skala 10), Winkel im Uhrzeigersinn ab oben: von 75 bis 345 Grad alle 15 Grad gefüllt (auch unten),
+  // Punkte auf dem Ring (Mitte 12/12, Radius 7, Skala 10), Winkel im Uhrzeigersinn ab oben: von 75 bis 345 Grad alle 15 Grad gefüllt (auch unten),
   // bei 45 Grad (hinter der Pfeilspitze) leer
   const at = (a) => {
     const x = Math.round((12 + 7 * Math.sin((a * Math.PI) / 180)) * 10);
-    const y = Math.round((13 - 7 * Math.cos((a * Math.PI) / 180)) * 10);
+    const y = Math.round((12 - 7 * Math.cos((a * Math.PI) / 180)) * 10);
     return g.getImageData(x, y, 1, 1).data[3];
   };
   const miss = [];
@@ -34,6 +34,7 @@ const res = await page.evaluate(async () => {
   return { miss, gap: at(45) };
 });
 check("Ring durchgehend von 75 bis 345 Grad, auch unten (kein Schnitt unten)", res.miss.length === 0, res.miss.join());
+check("Ringmitte genau bei (12,12): der Ring dreht um die eigene Achse, ohne zu eiern (seit 2.154.1)", /^M18\.93,8\.00A8,8 0 1 1 12,4L12,6A6,6 0 1 0 17\.20,9\.00Z/.test(d), d);
 check("kurzer Unterbruch direkt hinter der Pfeilspitze (bei 45 Grad leer)", res.gap < 50, String(res.gap));
 await b.close();
 process.exit(ok ? 0 : 1);
