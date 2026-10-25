@@ -15,6 +15,11 @@ Ein Knopf mit Punkt bekommt eine Sternschnuppe.
 
 - **Sternschnuppe am Punkt:** alle 8 Sekunden läuft ein kleiner Lichtpunkt mit Schweif einmal um den Knopf, der einen Punkt trägt (Launcher-Knopf, angeheftete Apps, Zahnrad: Störung des Status, Neustart steht aus, Debug-Modus, Einrichtung offen). Der Punkt atmet kurz, wenn das Licht ankommt. Das Licht hat die Farbe des Punkts (rot oder orange); die Knöpfe starten zu verschiedenen Zeiten. Bei "Bewegung reduzieren" bewegt sich nichts. Mockup: `docs/mockups/shootingstar-v1`.
 
+### Geändert
+
+- **Symbol "Kreispfeil":** der Ring ist wieder durchgehend, hat aber einen kurzen Unterbruch direkt hinter der Pfeilspitze (rechts oben), wie bei diesem Symbol üblich. Der Schnitt unten bleibt weg. Gilt überall, wo das Symbol steht (App-Logo, "Zurücksetzen", "Entwurf verwerfen", Neustart-Knöpfe).
+- **Akzentfarbe:** die Wahl ist ein Entwurf wie alles in den Einstellungen. Erst "Speichern" ändert die Farbe, "Schliessen" verwirft sie. Vorher schaltete die Farbe sofort um.
+
 ## [2.146.0] - 2026-10-25
 
 Die Akzentfarbe des Panels ist wählbar.

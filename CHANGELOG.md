@@ -15,6 +15,11 @@ A button with a dot gets a shooting star.
 
 - **Shooting star at the dot:** every 8 seconds a small point of light with a tail runs once around the button that carries a dot (launcher button, pinned apps, settings gear: failure of the status, restart pending, debug mode, setup open). The dot breathes briefly when the light arrives. The light has the colour of the dot (red or orange); the buttons start at different times. Nothing moves if the device is set to reduced motion. Mockup: `docs/mockups/shootingstar-v1`.
 
+### Changed
+
+- **Icon "circular arrow":** the ring is continuous again, but with a short gap right behind the arrowhead (top right), as is usual for this symbol. The cut at the bottom stays gone. Applies everywhere the symbol is used (app logo, "Reset", "Discard draft", restart buttons).
+- **Accent colour:** the choice is a draft like everything else in the settings. Nothing changes until you press "Save"; "Close" discards it. Before, the colour switched at once.
+
 ## [2.146.0] - 2026-10-25
 
 The accent colour of the panel can be chosen.

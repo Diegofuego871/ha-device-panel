@@ -2412,6 +2412,7 @@ dialog.wizard-dlg[open] { display: flex; flex-direction: column; }
 .accent-sw { display: flex; align-items: center; gap: 8px; min-height: 40px; padding: 0 12px; border: 1px solid var(--dp-divider); border-radius: 12px; background: var(--dp-card); color: var(--dp-text); font: inherit; font-size: 13.5px; cursor: pointer; text-align: left; }
 .accent-sw i { flex: none; width: 16px; height: 16px; border-radius: 50%; background: var(--a); }
 .accent-sw:hover { background: var(--dp-hover); }
+.accent-grid.changed .accent-sw.on { box-shadow: inset 0 0 0 1px var(--a), 0 0 0 3px color-mix(in srgb, var(--a) 25%, transparent); }
 .accent-sw.on { border-color: var(--a); box-shadow: inset 0 0 0 1px var(--a); font-weight: 600; }
 .accent-sw:focus-visible { outline: 2px solid var(--dp-primary); outline-offset: 2px; }
 .wz-h2b { margin-top: 26px; }
