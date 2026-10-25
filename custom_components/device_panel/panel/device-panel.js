@@ -123,12 +123,22 @@ function setHtml(el, html) {
 }
 
 // Sternschnuppen am Punkt (dp-comet, dp-land) und Messpunkt des Ausfall-Pulses (pd…) laufen im selben 10-Sekunden-Takt und starten zugleich
-// (seit 2.150.0): jede CSS-Animation beginnt beim Aufbau ihres Elements, also zu verschiedenen Zeiten. Alle laufenden auf Startzeit 0 der Zeitleiste
-// gesetzt, sind sie phasengleich, auch wenn ein Punkt oder die Kachel später dazukommt. Pausierte (Tests) bleiben unberührt.
+// (seit 2.150.0, Start-Ausrichtung seit 2.150.1): jede CSS-Animation beginnt beim Aufbau ihres Elements, also zu verschiedenen Zeiten. Jede neue wartet über ihre Verzögerung
+// bis zur nächsten vollen 10 Sekunden der Zeitleiste und beginnt dann am Anfang ihres Laufs; so sind alle phasengleich, und nichts springt mitten
+// in den Lauf (das Aufblitzen des Messpunkts am Linienende beim Aufbau). Pausierte (Tests) bleiben unberührt.
+const BEAT_MS = 10000;
 const BEAT_RE = /^(dp-comet|dp-land|pd[0-9a-z]+)$/;
+function alignBeat(a) {
+  const mod = (x) => ((x % BEAT_MS) + BEAT_MS) % BEAT_MS;
+  const off = mod(a.startTime + (a.effect.getTiming().delay || 0));
+  if (off > 0.5 && off < BEAT_MS - 0.5) a.effect.updateTiming({ delay: mod(-a.startTime) });
+}
 function syncBeats(root) {
   for (const a of root?.getAnimations?.() || []) {
-    if (a.playState === "running" && BEAT_RE.test(a.animationName || "") && a.startTime !== 0) a.startTime = 0;
+    if (a.playState !== "running" || !BEAT_RE.test(a.animationName || "")) continue;
+    // Eine eben angelegte Animation hat noch keine Startzeit (sie wird erst mit dem nächsten Bild gesetzt): dann danach ausrichten
+    if (typeof a.startTime === "number") alignBeat(a);
+    else a.ready.then(() => a.playState === "running" && typeof a.startTime === "number" && alignBeat(a), () => {});
   }
 }
 

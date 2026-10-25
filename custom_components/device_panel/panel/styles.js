@@ -91,7 +91,7 @@ button { font: inherit; color: inherit; }
 .apps-btn.dot-warn::after, .app-pin.dot-warn::after { background: var(--dp-warning); }
 /* Sternschnuppe (seit 2.147.0, docs/mockups/shootingstar-v1, A; seit 2.149.0 ist der Punkt selbst die Sternschnuppe): alle 10 Sekunden löst sich der Punkt vom Knopf mit Punkt
    (Launcher, angeheftete Apps, Zahnrad), huscht mit Schweif und wechselndem Tempo einmal um die Linie und setzt sich kurz vergrössert wieder hin. Farbe wie der Punkt (rot, bei Orange orange).
-   Ohne Bewegung bei "Bewegung reduzieren". Alle Knöpfe laufen im Gleichschritt (seit 2.150.0, syncBeats in device-panel.js; der Messpunkt des Ausfall-Pulses startet im selben Takt). */
+   Ohne Bewegung bei "Bewegung reduzieren". Alle Knöpfe laufen im Gleichschritt (seit 2.150.0, syncBeats in device-panel.js (Start an der nächsten vollen 10 Sekunden); der Messpunkt des Ausfall-Pulses startet im selben Takt). */
 .gear-btn.has-dot, .apps-btn.has-dot, .app-pin.has-dot { --cm: var(--dp-error); --cd: 0s; }
 .apps-btn.has-dot.dot-warn, .app-pin.has-dot.dot-warn { --cm: var(--dp-warning); }
 .gear-btn.has-dot::before, .apps-btn.has-dot::before, .app-pin.has-dot::before { content: ""; position: absolute; inset: -1px; border-radius: 50%; pointer-events: none; opacity: 0;
