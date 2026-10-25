@@ -18,6 +18,7 @@ The outage pulse no longer drops to zero at the right edge after a restart.
 ### Fixed
 
 - **Outage pulse after a restart:** while a device was still down and the log had a gap from the restart (the outage is only entered after the start-up phase), the curve fell to zero at the right edge although the device was down. The right edge now also counts devices that are down right now, in the header and with an area filter, the same as the tile "Down right now".
+- **Setup wizard, "currently down":** right after a restart, a device that was still down was not marked, because the wizard only looked at the live state and not at the log like the list does. The wizard now uses the same rule as the list.
 
 ## [2.142.0] - 2026-10-25
 

@@ -98,7 +98,7 @@ async def test_wizard_data(hass: HomeAssistant, setup, hass_ws_client) -> None: 
     assert [d["name"] for d in data["devices"]] == sorted((d["name"] for d in data["devices"]), key=str.lower)
     # Gerade ausgefallen (für den Hinweis in der Zeile "Ausfall"): ohne Ausfall nie, sonst nach device_status
     assert not any(d["down"] for d in data["devices"])
-    with patch("custom_components.device_panel.wizard.device_status", return_value=(False, None)):
+    with patch("custom_components.device_panel.wizard.live_status", return_value=(False, None)):
         down = (await _ws(client, 3, type=f"{DOMAIN}/wizard_data"))["result"]
     assert all(d["down"] is True for d in down["devices"])
 
@@ -132,3 +132,19 @@ async def test_draft_is_stored_cleared_and_validated(hass: HomeAssistant, setup,
     assert (await _ws(client, 21, type=f"{DOMAIN}/set_options", values={"wizard_draft": None}))["success"]
     assert (await _ws(client, 22, type=f"{DOMAIN}/get_options"))["result"]["values"]["wizard_draft"] is None
     assert "wizard_draft" not in backup._SCHEMA_KEYS
+
+
+async def test_wizard_data_down_in_restart_gap(hass: HomeAssistant, setup, hass_ws_client) -> None:  # noqa: F811
+    """Wie die Liste: kurz nach einem Neustart (unter "Ausgefallen nach", Lücke im Protokoll) gilt ein laufender Ausfall weiter als ausgefallen."""
+    from custom_components.device_panel.const import DATA_AVAILABILITY
+
+    dev = _device(hass, "Eve Türe", "matter", "binary_sensor")
+    entity = next(e for e in er.async_entries_for_device(er.async_get(hass), dev.id))
+    hass.states.async_set(entity.entity_id, "unavailable")
+    now = time.time()
+    client = await hass_ws_client(hass)
+    first = (await _ws(client, 1, type=f"{DOMAIN}/wizard_data"))["result"]
+    assert next(d for d in first["devices"] if d["id"] == dev.id)["down"] is False
+    hass.data[DATA_AVAILABILITY]._events[dev.id] = [[now - 7200, 1], [now - 3600, 0], [now - 60, None]]
+    second = (await _ws(client, 2, type=f"{DOMAIN}/wizard_data"))["result"]
+    assert next(d for d in second["devices"] if d["id"] == dev.id)["down"] is True

@@ -18,6 +18,7 @@ Der Ausfall-Puls fällt nach einem Neustart am rechten Rand nicht mehr auf null.
 ### Behoben
 
 - **Ausfall-Puls nach einem Neustart:** war ein Gerät noch ausgefallen und das Protokoll hatte wegen des Neustarts eine Lücke (der Ausfall wird erst nach der Anlaufphase eingetragen), fiel die Kurve am rechten Rand auf null, obwohl das Gerät ausgefallen war. Der rechte Rand zählt jetzt auch Geräte, die gerade ausgefallen sind, im Kopf wie mit Bereichsfilter, gleich wie die Kachel "Gerade ausgefallen".
+- **Einrichtungsassistent, "gerade ausgefallen":** kurz nach einem Neustart wurde ein Gerät, das noch ausgefallen war, nicht markiert, weil der Assistent nur den Live-Zustand ansah und nicht wie die Liste das Protokoll. Der Assistent nutzt jetzt dieselbe Regel wie die Liste.
 
 ## [2.142.0] - 2026-10-25
 

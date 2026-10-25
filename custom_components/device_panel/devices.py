@@ -187,6 +187,26 @@ def device_status(
     return False, since
 
 
+def live_status(
+    hass: HomeAssistant,
+    entries: list[er.RegistryEntry],
+    now: datetime,
+    offline_after: float,
+    log: Any = None,
+    device_id: str = "",
+) -> tuple[bool | None, datetime | None]:
+    """
+    device_status mit der Regel der Liste: Unter der Schwelle, aber ausgefallen
+    schon vor einer Lücke im Protokoll (z. B. die ersten Minuten nach einem
+    Neustart), läuft der Ausfall weiter.
+    """
+    online, since = device_status(hass, entries, now, offline_after)
+    if online and log is not None and (down := device_down_since(hass, entries)) is not None:
+        if log.open_outage(device_id)[0] is not None:
+            return False, down
+    return online, since
+
+
 def _liveness_states(hass: HomeAssistant, entries: list[er.RegistryEntry]) -> tuple[list[State], list[State]]:
     """Zustände der lebenden Entitäten und die davon, die weg sind."""
     relevant, is_connectivity = liveness_entities(entries)
@@ -1449,12 +1469,7 @@ async def async_list_devices(hass: HomeAssistant, log: Any = None) -> dict[str, 
         offline_after = device_offline_after(hass, opts, device)
         unmonitored = offline_after is None
         # Deaktiviert oder nicht überwacht: kein Status, keine Ausfälle.
-        online, since = (None, None) if disabled or unmonitored else device_status(hass, entries, now, offline_after)
-        if online and log is not None and (down := device_down_since(hass, entries)) is not None:
-            # Unter der Schwelle, aber ausgefallen schon vor einer Lücke (z. B.
-            # die ersten Minuten nach einem Neustart): der Ausfall läuft weiter.
-            if log.open_outage(device.id)[0] is not None:
-                online, since = False, down
+        online, since = (None, None) if disabled or unmonitored else live_status(hass, entries, now, offline_after, log, device.id)
         at_least = False
         if since is not None:
             since, at_least = outage_start(log, device.id, since, started_at, offline_after)
