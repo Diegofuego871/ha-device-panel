@@ -7,6 +7,14 @@ Alle nennenswerten Änderungen an dieser Integration stehen in dieser Datei.
 Das Format folgt [Keep a Changelog](https://keepachangelog.com/de/1.1.0/),
 die Versionsnummern folgen [Semantic Versioning](https://semver.org/lang/de/).
 
+## [2.152.0] - 2026-10-25
+
+Die Titel des Einrichtungsassistenten tragen den Akzentstrich.
+
+### Geändert
+
+- **Einrichtungsassistent, Titel:** jeder Titel (Willkommen, die Fragen der Schritte, "Alles bereit") hat jetzt den Akzentstrich davor, im selben Stil wie die Kapitel in den Einstellungen (4 px Strich in der Akzentfarbe, fett). So hebt sich ein Titel besser vom Text darunter ab. Enthält die Änderungen aus 2.151.1.
+
 ## [2.151.1] - 2026-10-25
 
 Der Messpunkt wird beim Auffrischen der Kacheln nicht mehr abgeschnitten.
@@ -14,6 +22,8 @@ Der Messpunkt wird beim Auffrischen der Kacheln nicht mehr abgeschnitten.
 ### Behoben
 
 - **Messpunkt abgeschnitten:** das Panel frischt seine Daten alle 10 Sekunden auf, und änderte sich dabei eine Zahl in der Kachelreihe (zum Beispiel "2 Warnungen" zu "1 Warnung"), wurde die Kachelreihe neu aufgebaut und der Messpunkt des Ausfall-Pulses verschwand mitten im Lauf (er wartete dann auf den nächsten Takt). Der neu aufgebaute Punkt läuft jetzt im selben Takt weiter, ebenso eine Sternschnuppe in einem neu aufgebauten Bereich. Nur beim ersten Aufbau wartet ein Punkt weiterhin auf die nächsten vollen 10 Sekunden.
+
+Nicht veröffentlicht; enthalten in 2.152.0.
 
 ## [2.151.0] - 2026-10-25
 
@@ -4998,7 +5008,7 @@ Erste Vorabversion.
   GitHub Actions für die Prüfungen von HACS und hassfest sowie die Tests.
 
 [2.6.0]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v2.6.0
-[2.151.1]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v2.151.1
+[2.152.0]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v2.152.0
 [2.151.0]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v2.151.0
 [2.150.0]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v2.150.0
 [2.149.0]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v2.149.0

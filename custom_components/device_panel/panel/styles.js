@@ -2363,8 +2363,11 @@ dialog.wizard-dlg[open] { display: flex; flex-direction: column; }
 .wz-ft2 .dlg-btn:hover { background: var(--dp-hover); }
 .wz-ft2 .wz-reset { grid-column: 1 / -1; }
 .wz-hero { width: 76px; height: 76px; border-radius: 22px; background: var(--dp-primary-soft); color: var(--dp-primary); display: grid; place-items: center; margin: 20px 0 6px; }
-.wz-h { font-size: 23px; font-weight: 500; margin: 12px 0 6px; }
-.wz-h2 { font-size: 20px; font-weight: 500; margin: 12px 0 6px; }
+.wz-h { display: flex; align-items: center; gap: 10px; font-size: 20px; font-weight: 700; line-height: 1.25; margin: 12px 0 6px; }
+.wz-h::before { content: ""; flex: none; width: 4px; height: 1.15em; border-radius: 2px; background: var(--dp-primary); }
+/* Titel der Schritte mit Akzentstrich wie die Kapitel in den Einstellungen (.set-title, seit 2.152.0) */
+.wz-h2 { display: flex; align-items: center; gap: 10px; font-size: 18px; font-weight: 700; line-height: 1.25; margin: 12px 0 6px; }
+.wz-h2::before { content: ""; flex: none; width: 4px; height: 1.15em; border-radius: 2px; background: var(--dp-primary); }
 .wz-p { color: color-mix(in srgb, var(--dp-text) 70%, transparent); font-size: 14px; margin: 0 0 10px; }
 .wz-p.small { font-size: 12.5px; }
 .wz-pts { display: flex; flex-direction: column; gap: 10px; margin: 14px 0; }
