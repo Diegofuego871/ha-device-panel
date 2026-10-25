@@ -23,7 +23,7 @@
 - **Availability per device:** statistics for 24 hours, 7 and 30 days and 3, 6 and 12 months with every outage and its duration, kept for up to 12 months (default) in its own log, also across restarts
 - **Battery overview with notifications:** a colored battery symbol on every device, a warning threshold (default 15 %), push or persistent notification, a history of up to 12 months with a forecast of how long the battery lasts, and a message when a device is fully charged
 - **Signal overview with warnings:** signal strength in dBm or LQI on every device, a warning threshold per connection type, a history with median and range, and for Bluetooth the receiver (adapter or proxy) a device is or was connected through
-- **Notifications on three levels:** set a default once, change it per integration (or per label), override it on a single device; every setting shows where its value comes from (graphic below)
+- **Notifications on up to four levels:** set a default once, change it per integration (or per label), override it on a single device; every setting shows where its value comes from (graphic below)
 - **Labels:** devices that carry a Home Assistant label are set together (for example "often offline" without monitoring); a label sits between the device and the integration, and has its own filter chip
 - **Quiet time:** notifications wait during the night (times per weekday, kinds selectable) and arrive afterwards as one summary or one by one
 - **Magic Push:** your own messages per device without an automation: pick a value, say when it should notify, write the text, done
@@ -112,7 +112,7 @@ Everything that notifies you follows one principle: you set a default once, chan
 
 ### The principle
 
-<p align="center"><img src="https://raw.githubusercontent.com/Diegofuego871/ha-device-panel/main/docs/graphics/en/notification-levels.png" alt="Three levels General, Integration and Device with an example and a table of what can be set where" width="900"></p>
+<p align="center"><img src="https://raw.githubusercontent.com/Diegofuego871/ha-device-panel/main/docs/graphics/en/notification-levels.png" alt="Four levels General, Integration, Label and Device with an example and a table of what can be set where" width="900"></p>
 
 - **General:** in the settings under "Monitoring and notifications", the default for all devices
 - **Integration:** in the same place, tab "Integrations": a list of all integrations with what differs from the default, and a detail page per integration with its own tabs
@@ -152,7 +152,7 @@ Labels are the labels you give devices in Home Assistant (Settings › Areas, la
 
 ### The kinds of notifications
 
-Each kind has its own tab in the settings. Outage, battery, charging, new devices and signal are also tabs of every integration, and outage, battery, charging and signal tabs of every device (a device only shows the tabs it has something for: without a battery there is no battery or charging tab, without a signal reading no signal tab), so the three levels apply to each of them. A label has the same tabs as an integration, plus "Updates" and "Type".
+Each kind has its own tab in the settings. Outage, battery, charging, new devices and signal are also tabs of every integration, and outage, battery, charging and signal tabs of every device (a device only shows the tabs it has something for: without a battery there is no battery or charging tab, without a signal reading no signal tab), so the levels apply to each of them. A label has the same tabs as an integration, plus "Updates" and "Type".
 
 | Outage | Battery | Charging |
 |---|---|---|

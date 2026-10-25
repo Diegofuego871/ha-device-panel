@@ -23,7 +23,7 @@
 - **Verfügbarkeit pro Gerät:** Statistik für 24 Stunden, 7 und 30 Tage sowie 3, 6 und 12 Monate mit jedem Ausfall und seiner Dauer, bis zu 12 Monate (Standard) in einem eigenen Protokoll, auch über Neustarts
 - **Batterie-Übersicht mit Meldungen:** ein farbiges Batteriesymbol bei jedem Gerät, eine Warnschwelle (Standard 15 %), Push oder anhaltende Benachrichtigung, ein Verlauf bis 12 Monate mit Prognose, wie lange die Batterie hält, und eine Meldung, wenn ein Gerät voll geladen ist
 - **Empfangs-Übersicht mit Warnungen:** Empfang in dBm oder LQI bei jedem Gerät, eine Warnschwelle pro Verbindungsart, ein Verlauf mit Median und Spanne, und bei Bluetooth der Empfänger (Adapter oder Proxy), über den ein Gerät verbunden ist oder war
-- **Meldungen auf drei Ebenen:** einmal eine Vorgabe setzen, pro Integration (oder pro Label) ändern, auf einem einzelnen Gerät überschreiben; jede Einstellung zeigt, woher ihr Wert stammt (Grafik unten)
+- **Meldungen auf bis zu vier Ebenen:** einmal eine Vorgabe setzen, pro Integration (oder pro Label) ändern, auf einem einzelnen Gerät überschreiben; jede Einstellung zeigt, woher ihr Wert stammt (Grafik unten)
 - **Labels:** Geräte mit einem Label aus Home Assistant werden gemeinsam eingestellt (zum Beispiel "oft offline" ohne Überwachung); ein Label steht zwischen Gerät und Integration und hat einen eigenen Filter-Chip
 - **Ruhezeit:** Meldungen warten in der Nacht (Zeiten je Wochentag, Arten wählbar) und kommen danach als Zusammenfassung oder einzeln
 - **Magic Push:** eigene Meldungen pro Gerät ohne Automation: einen Wert wählen, sagen, wann gemeldet wird, den Text schreiben, fertig
@@ -112,7 +112,7 @@ Alles, was dich benachrichtigt, folgt einem Prinzip: Du setzt einmal eine Vorgab
 
 ### Das Prinzip
 
-<p align="center"><img src="https://raw.githubusercontent.com/Diegofuego871/ha-device-panel/main/docs/graphics/de/notification-levels.png" alt="Drei Ebenen Allgemein, Integration und Gerät mit einem Beispiel und einer Tabelle, was sich wo einstellen lässt" width="900"></p>
+<p align="center"><img src="https://raw.githubusercontent.com/Diegofuego871/ha-device-panel/main/docs/graphics/de/notification-levels.png" alt="Vier Ebenen Allgemein, Integration, Label und Gerät mit einem Beispiel und einer Tabelle, was sich wo einstellen lässt" width="900"></p>
 
 - **Allgemein:** in den Einstellungen unter "Überwachung und Meldungen", die Vorgabe für alle Geräte
 - **Integration:** am selben Ort, Reiter "Integrationen": eine Liste aller Integrationen mit dem, was von der Vorgabe abweicht, und eine Detailseite pro Integration mit eigenen Reitern
@@ -152,7 +152,7 @@ Labels sind die Labels, die du Geräten in Home Assistant gibst (Einstellungen �
 
 ### Die Arten von Meldungen
 
-Jede Art hat in den Einstellungen einen eigenen Reiter. Ausfall, Batterie, Laden, Neue Geräte und Empfang sind auch Reiter jeder Integration, und Ausfall, Batterie, Laden und Empfang Reiter jedes Geräts (ein Gerät zeigt nur die Reiter, für die es etwas gibt: ohne Batterie entfallen "Batterie" und "Laden", ohne Empfangswert "Empfang"), damit die drei Ebenen für jede davon gelten. Ein Label hat dieselben Reiter wie eine Integration, dazu "Updates" und "Typ".
+Jede Art hat in den Einstellungen einen eigenen Reiter. Ausfall, Batterie, Laden, Neue Geräte und Empfang sind auch Reiter jeder Integration, und Ausfall, Batterie, Laden und Empfang Reiter jedes Geräts (ein Gerät zeigt nur die Reiter, für die es etwas gibt: ohne Batterie entfallen "Batterie" und "Laden", ohne Empfangswert "Empfang"), damit die Ebenen für jede davon gelten. Ein Label hat dieselben Reiter wie eine Integration, dazu "Updates" und "Typ".
 
 | Ausfall | Batterie | Laden |
 |---|---|---|
