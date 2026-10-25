@@ -89,36 +89,31 @@ button { font: inherit; color: inherit; }
 .apps-btn, .app-pin { position: relative; }
 .apps-btn.has-dot::after, .app-pin.has-dot::after { content: ""; position: absolute; top: 3px; right: 3px; width: 10px; height: 10px; box-sizing: border-box; border-radius: 50%; background: var(--dp-error); border: 2px solid var(--dp-bg); }
 .apps-btn.dot-warn::after, .app-pin.dot-warn::after { background: var(--dp-warning); }
-/* Sternschnuppe (seit 2.147.0, docs/mockups/shootingstar-v1, A; seit 2.149.0 ist der Punkt selbst die Sternschnuppe): alle 8 Sekunden löst sich der Punkt vom Knopf mit Punkt
+/* Sternschnuppe (seit 2.147.0, docs/mockups/shootingstar-v1, A; seit 2.149.0 ist der Punkt selbst die Sternschnuppe): alle 10 Sekunden löst sich der Punkt vom Knopf mit Punkt
    (Launcher, angeheftete Apps, Zahnrad), huscht mit Schweif und wechselndem Tempo einmal um die Linie und setzt sich kurz vergrössert wieder hin. Farbe wie der Punkt (rot, bei Orange orange).
-   Ohne Bewegung bei "Bewegung reduzieren". Die Knöpfe starten versetzt, damit nicht alle zugleich laufen. */
-.gear-btn.has-dot, .apps-btn.has-dot, .app-pin.has-dot { --cm: var(--dp-error); --cd: 1s; }
+   Ohne Bewegung bei "Bewegung reduzieren". Alle Knöpfe laufen im Gleichschritt (seit 2.150.0, syncBeats in device-panel.js; der Messpunkt des Ausfall-Pulses startet im selben Takt). */
+.gear-btn.has-dot, .apps-btn.has-dot, .app-pin.has-dot { --cm: var(--dp-error); --cd: 0s; }
 .apps-btn.has-dot.dot-warn, .app-pin.has-dot.dot-warn { --cm: var(--dp-warning); }
-.app-pin.has-dot { --cd: 3.5s; }
-.gear-btn.has-dot { --cd: 5.5s; }
 .gear-btn.has-dot::before, .apps-btn.has-dot::before, .app-pin.has-dot::before { content: ""; position: absolute; inset: -1px; border-radius: 50%; pointer-events: none; opacity: 0;
   background: conic-gradient(from 0deg, transparent 0deg, transparent 240deg, color-mix(in srgb, var(--cm) 14%, transparent) 240deg, color-mix(in srgb, var(--cm) 92%, #fff) 354deg, #fff3e0 358deg, transparent 360deg);
   -webkit-mask: radial-gradient(farthest-side, transparent calc(100% - 3px), #000 calc(100% - 3px)); mask: radial-gradient(farthest-side, transparent calc(100% - 3px), #000 calc(100% - 3px));
-  animation: dp-comet 8s linear var(--cd) infinite; }
-.gear-btn.has-dot::after, .apps-btn.has-dot::after, .app-pin.has-dot::after { animation: dp-land 8s ease-out var(--cd) infinite; }
+  animation: dp-comet 10s linear 0s infinite; }
+.gear-btn.has-dot::after, .apps-btn.has-dot::after, .app-pin.has-dot::after { animation: dp-land 10s linear 0s infinite; }
 @keyframes dp-comet {
-  0% { transform: rotate(45deg); opacity: 0; animation-timing-function: ease-in; }
-  1.5% { transform: rotate(52deg); opacity: 1; animation-timing-function: ease-in; }
-  4% { transform: rotate(95deg); animation-timing-function: ease-out; }
-  8% { transform: rotate(250deg); animation-timing-function: ease-in-out; }
-  9.5% { transform: rotate(262deg); animation-timing-function: ease-in; }
-  12% { transform: rotate(352deg); opacity: 1; animation-timing-function: ease-out; }
-  14.5% { transform: rotate(405deg); opacity: 1; }
-  16%, 100% { transform: rotate(412deg); opacity: 0; }
+  0% { transform: rotate(15deg); opacity: 0; }
+  0.8% { transform: rotate(45deg); opacity: 1; }
+  10.2% { transform: rotate(405deg); opacity: 1; }
+  10.8%, 100% { transform: rotate(428deg); opacity: 0; }
 }
 /* Der Punkt selbst ist die Sternschnuppe: er verschwindet, wenn sie losfliegt (kein zweites Leuchten am alten Platz),
-   erscheint beim Ankommen kurz vergrössert mit Ring und setzt sich dann wieder auf seine Grösse. */
+   erscheint beim Ankommen kurz vergrössert mit Ring und setzt sich dann wieder auf seine Grösse. Der Flug ist eine einzige
+   gleichmässige Bewegung (linear, ohne Halt zwischen Schlüsselbildern). */
 @keyframes dp-land {
   0% { transform: scale(1); opacity: 1; box-shadow: 0 0 0 0 transparent; }
-  1.5%, 14% { transform: scale(0.3); opacity: 0; box-shadow: 0 0 0 0 transparent; }
-  15% { transform: scale(1.6); opacity: 1; box-shadow: 0 0 0 0 color-mix(in srgb, var(--cm) 70%, transparent); }
-  18% { transform: scale(1.3); opacity: 1; }
-  23%, 100% { transform: scale(1); opacity: 1; box-shadow: 0 0 0 8px transparent; }
+  0.8%, 10% { transform: scale(0.3); opacity: 0; box-shadow: 0 0 0 0 transparent; }
+  10.2% { transform: scale(1.6); opacity: 1; box-shadow: 0 0 0 0 color-mix(in srgb, var(--cm) 70%, transparent); }
+  13% { transform: scale(1.3); opacity: 1; }
+  18%, 100% { transform: scale(1); opacity: 1; box-shadow: 0 0 0 8px transparent; }
 }
 @media (prefers-reduced-motion: reduce) {
   .gear-btn.has-dot::before, .apps-btn.has-dot::before, .app-pin.has-dot::before { animation: none; opacity: 0; }
@@ -187,7 +182,7 @@ button.kwarn:focus-visible { outline: 2px solid var(--dp-primary); outline-offse
 .pchart svg { position: absolute; inset: 0; width: 100%; height: 100%; overflow: visible; }
 /* Messpunkt auf der Kurve (seit 2.148.0): alle 15 s einmal von links nach rechts; Keyframes mit den Punkten der Kurve stehen im HTML (device-panel.js) */
 .pchart .pdot { position: absolute; z-index: 2; width: 7px; height: 7px; margin: -3.5px 0 0 -3.5px; border-radius: 50%; background: #fff; box-shadow: 0 0 7px 2px currentColor; pointer-events: none; opacity: 0;
-  animation-duration: 15s; animation-timing-function: linear; animation-iteration-count: infinite; animation-delay: 2s; }
+  animation-duration: 10s; animation-timing-function: linear; animation-iteration-count: infinite; animation-delay: 0s; }
 @media (prefers-reduced-motion: reduce) { .pchart .pdot { display: none; } }
 .pchart .base { stroke: var(--dp-divider); stroke-width: 1; }
 .pchart .area { fill: var(--dp-error-soft); }

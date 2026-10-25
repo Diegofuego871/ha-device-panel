@@ -7,6 +7,15 @@ All notable changes to this integration are documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/).
 
+## [2.150.0] - 2026-10-25
+
+The shooting stars run in step.
+
+### Changed
+
+- **Shooting stars in step:** when several buttons carry a dot (launcher button, pinned apps, settings gear), their shooting stars now start and land at the same moment. Before, each button had its own start time, and a dot that came later ran offset. Nothing moves if the device is set to reduced motion.
+- **Smooth flight, one beat:** the shooting star now circles the button in one even motion (before it slowed down and stopped between stages). The shooting stars and the measuring dot of the outage pulse share one 10-second beat and start at the same moment (before: 8 and 15 seconds). Changed: pulse dot every 10 seconds instead of 15.
+
 ## [2.149.0] - 2026-10-25
 
 The dot itself becomes the shooting star.
@@ -4858,6 +4867,7 @@ First pre-release.
   GitHub Actions for HACS/hassfest validation and tests.
 
 [2.6.0]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v2.6.0
+[2.150.0]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v2.150.0
 [2.149.0]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v2.149.0
 [2.148.0]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v2.148.0
 [2.147.0]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v2.147.0

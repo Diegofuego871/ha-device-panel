@@ -7,6 +7,15 @@ Alle nennenswerten Änderungen an dieser Integration stehen in dieser Datei.
 Das Format folgt [Keep a Changelog](https://keepachangelog.com/de/1.1.0/),
 die Versionsnummern folgen [Semantic Versioning](https://semver.org/lang/de/).
 
+## [2.150.0] - 2026-10-25
+
+Die Sternschnuppen laufen im Gleichschritt.
+
+### Geändert
+
+- **Sternschnuppen im Gleichschritt:** tragen mehrere Knöpfe einen Punkt (Launcher-Knopf, angeheftete Apps, Zahnrad), starten und landen ihre Sternschnuppen jetzt im selben Moment. Vorher hatte jeder Knopf seine eigene Startzeit, und ein später dazugekommener Punkt lief versetzt. Bei "Bewegung reduzieren" bewegt sich nichts.
+- **Flüssiger Flug, ein Takt:** die Sternschnuppe umrundet den Knopf in einer gleichmässigen Bewegung (vorher bremste sie zwischen den Stufen und stand kurz still). Sternschnuppen und Messpunkt des Ausfall-Pulses laufen im selben 10-Sekunden-Takt und starten im selben Moment (vorher 8 und 15 Sekunden). Der Messpunkt fährt damit alle 10 statt alle 15 Sekunden.
+
 ## [2.149.0] - 2026-10-25
 
 Der Punkt selbst wird zur Sternschnuppe.
@@ -4959,6 +4968,7 @@ Erste Vorabversion.
   GitHub Actions für die Prüfungen von HACS und hassfest sowie die Tests.
 
 [2.6.0]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v2.6.0
+[2.150.0]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v2.150.0
 [2.149.0]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v2.149.0
 [2.148.0]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v2.148.0
 [2.147.0]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v2.147.0

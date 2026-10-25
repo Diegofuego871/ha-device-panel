@@ -598,9 +598,16 @@ export class AppLauncher {
           : `<button type="button" class="${cls}" data-app-pin="${escape(a.id)}" title="${label}" aria-label="${label}">${icon}</button>`;
       })
       .join("");
-    if (this._barHtml === html) return;
-    this._barHtml = html;
-    box.innerHTML = html;
+    if (this._barHtml !== html) {
+      this._barHtml = html;
+      box.innerHTML = html;
+    }
+    this._syncComets();
+  }
+
+  // Sternschnuppen im Gleichschritt (seit 2.150.0): siehe syncBeats in device-panel.js
+  _syncComets() {
+    this.host._syncBeats?.();
   }
 
   // --- Fenster ------------------------------------------------------------------

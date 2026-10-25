@@ -33,18 +33,29 @@ for (const reduce of [false, true]) {
       check(`[${tag}] Punkt da: Schweif (dp-comet) und atmender Punkt (dp-land)`, a[0] && a[1] === "dp-comet" && a[2] === "dp-land", JSON.stringify(a));
       check(`[${tag}] orange bei Debug`, /warning/.test(await ev(`return r.querySelector(".apps-btn").classList.contains("dot-warn") + " " + (getComputedStyle(r.querySelector(".apps-btn")).getPropertyValue("--cm") || "")`)) || (await ev(`return r.querySelector(".apps-btn").classList.contains("dot-warn")`)) === true);
       // Mitten im Lauf ist der Schweif sichtbar
-      await ev(`r.getAnimations().filter((x) => x.animationName === "dp-comet").forEach((x) => { x.pause(); x.currentTime = 1000 + 700; })`);
+      await ev(`r.getAnimations().filter((x) => x.animationName === "dp-comet").forEach((x) => { x.pause(); x.currentTime = 700; })`);
       const op = await ev(`return getComputedStyle(r.querySelector(".apps-btn"), "::before").opacity`);
       check(`[${tag}] mitten im Lauf sichtbar (Deckkraft 1)`, Number(op) === 1, op);
       // Der Punkt ist die Sternschnuppe (2.149.0): im Flug unsichtbar, beim Ankommen gross, dann wieder normal
       const dotAt = (t) => ev(`r.getAnimations().filter((x) => x.animationName === "dp-land").forEach((x) => { x.pause(); x.currentTime = ${t}; }); const cs = getComputedStyle(r.querySelector(".apps-btn"), "::after"); return [+cs.opacity, new DOMMatrix(cs.transform).a]`);
-      const fly = await dotAt(1000 + 0.08 * 8000), land = await dotAt(1000 + 0.15 * 8000), rest = await dotAt(1000 + 0.6 * 8000);
+      const fly = await dotAt(0.05 * 10000), land = await dotAt(0.102 * 10000), rest = await dotAt(0.6 * 10000);
       check(`[${tag}] im Flug ist der Punkt weg (leuchtet nicht zugleich)`, fly[0] === 0, JSON.stringify(fly));
       check(`[${tag}] beim Ankommen kurz grösser`, land[0] === 1 && land[1] > 1.5, JSON.stringify(land));
       check(`[${tag}] danach wieder normal gross und sichtbar`, rest[0] === 1 && rest[1] === 1, JSON.stringify(rest));
-      await ev(`r.getAnimations().filter((x) => x.animationName === "dp-comet").forEach((x) => { x.currentTime = 1000 + 0.12 * 8000; })`);
-      await dotAt(1000 + 0.12 * 8000);
+      await ev(`r.getAnimations().filter((x) => x.animationName === "dp-comet").forEach((x) => { x.currentTime = 0.12 * 10000; })`);
+      await dotAt(0.12 * 10000);
       await p.screenshot({ path: `${outDir}/comet-${mobile ? "mobile" : "desktop"}.png` });
+    }
+    // Gleichschritt (2.150.0): kommt ein zweiter Knopf später dazu (Neustart steht aus, Zahnrad), laufen beide Sternschnuppen synchron
+    if (!reduce) {
+      await p.waitForTimeout(1300);
+      await ev(`r.getAnimations().forEach((x) => { if (x.playState === "paused") x.play(); })`);
+      await ev(`r.host._debugOn = true; r.host._gearRestart = true; r.host._apps.paintDots()`);
+      await p.waitForTimeout(1300);
+      await ev(`r.host._apps.paintDots()`);
+      const sync = await ev(`const l = r.getAnimations().filter((x) => /dp-(comet|land)/.test(x.animationName)); const btns = r.querySelectorAll(".has-dot").length; return { n: l.length, btns, starts: [...new Set(l.map((x) => x.startTime))], delays: [...new Set(l.map((x) => getComputedStyle(r.querySelector(".has-dot")).getPropertyValue("--cd").trim()))] }`);
+      check(`[${tag}] Sternschnuppen laufen im Gleichschritt (eine gemeinsame Startzeit, ${sync.btns} Knöpfe)`, sync.n >= 2 && sync.starts.length === 1 && sync.starts[0] === 0, JSON.stringify(sync));
+      await ev(`r.host._gearRestart = false`);
     }
     // Punkt aus: Schweif weg
     await ev(`r.host._debugOn = false; r.host._apps.paintDots()`);

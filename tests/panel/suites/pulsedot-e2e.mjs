@@ -24,7 +24,7 @@ for (const mobile of [false, true]) {
   const ev = (c) => f.evaluate(new Function(`const r=${R};` + c));
 
   const info = await ev(`const d=r.querySelector(".pchart .pdot"); if(!d) return null; const cs=getComputedStyle(d); return {dur: cs.animationDuration, iter: cs.animationIterationCount, name: cs.animationName, delay: cs.animationDelay, hidden: cs.display==="none"}`);
-  check(`[${tag}] Messpunkt vorhanden, 15 s, endlos`, info && info.dur === "15s" && info.iter === "infinite" && info.name.startsWith("pd"), JSON.stringify(info));
+  check(`[${tag}] Messpunkt vorhanden, 10 s, endlos`, info && info.dur === "10s" && info.iter === "infinite" && info.name.startsWith("pd"), JSON.stringify(info));
 
   // Lage: Animation auf Zeit springen und Punkt gegen die Linie messen
   const res = await ev(`
@@ -32,8 +32,8 @@ for (const mobile of [false, true]) {
     const a=d.getAnimations()[0]; a.pause();
     const cb=ch.getBoundingClientRect(); const out=[];
     const svg=ch.querySelector("svg"); const vb=svg.viewBox.baseVal;
-    for (const t of [3000, 3200, 3700, 4200, 4800]) {
-      a.currentTime=t; // 2 s Delay eingerechnet: 1-2.8 s Laufzeit
+    for (const t of [1000, 1200, 1700, 2200, 2800]) {
+      a.currentTime=t; // Fahrt dauert 3,4 s
       const dr=d.getBoundingClientRect(); const cx=dr.left+dr.width/2-cb.left, cy=dr.top+dr.height/2-cb.top;
       out.push({t, o:+getComputedStyle(d).opacity, cx:+(cx/cb.width).toFixed(3), cy:+(cy/cb.height).toFixed(3)});
     }
@@ -46,9 +46,15 @@ for (const mobile of [false, true]) {
   check(`[${tag}] Punkt wandert von links nach rechts`, xs.every((v, i) => i === 0 || v > xs[i - 1]), JSON.stringify(xs));
 
   // Zwischen den Fahrten unsichtbar
-  const idle = await ev(`const d=r.querySelector(".pchart .pdot"); const a=d.getAnimations()[0]; a.pause(); a.currentTime=2000+9000; return +getComputedStyle(d).opacity`);
+  const idle = await ev(`const d=r.querySelector(".pchart .pdot"); const a=d.getAnimations()[0]; a.pause(); a.currentTime=9000; return +getComputedStyle(d).opacity`);
   check(`[${tag}] Punkt zwischen den Fahrten unsichtbar`, idle === 0, String(idle));
 
+  // Im Takt mit der Sternschnuppe: beide starten auf derselben Zeitleistenzeit (Startzeit 0)
+  await ev(`r.getAnimations().forEach((x) => { if (x.playState === "paused") x.play(); }); r.host._debugOn = true; r.host._apps.paintDots()`);
+  await p.waitForTimeout(500);
+  const st = await ev(`return r.getAnimations().filter((x) => /^(dp-comet|dp-land|pd)/.test(x.animationName)).map((x) => [x.animationName.slice(0, 2), x.startTime])`);
+  const kinds = new Set(st.map((x) => x[0]));
+  check(`[${tag}] Punkt-Sternschnuppe und Messpunkt starten gleichzeitig`, kinds.has("dp") && kinds.has("pd") && st.every((x) => x[1] === 0), JSON.stringify(st));
   // Reduzierte Bewegung
   await p.emulateMedia({ reducedMotion: "reduce" });
   const rm = await ev(`return getComputedStyle(r.querySelector(".pchart .pdot")).display`);

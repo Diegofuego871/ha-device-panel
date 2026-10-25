@@ -118,7 +118,18 @@ function setHtml(el, html) {
   if (!el || lastHtml.get(el) === html) return false;
   el.innerHTML = html;
   lastHtml.set(el, html);
+  syncBeats(el.getRootNode?.());
   return true;
+}
+
+// Sternschnuppen am Punkt (dp-comet, dp-land) und Messpunkt des Ausfall-Pulses (pd…) laufen im selben 10-Sekunden-Takt und starten zugleich
+// (seit 2.150.0): jede CSS-Animation beginnt beim Aufbau ihres Elements, also zu verschiedenen Zeiten. Alle laufenden auf Startzeit 0 der Zeitleiste
+// gesetzt, sind sie phasengleich, auch wenn ein Punkt oder die Kachel später dazukommt. Pausierte (Tests) bleiben unberührt.
+const BEAT_RE = /^(dp-comet|dp-land|pd[0-9a-z]+)$/;
+function syncBeats(root) {
+  for (const a of root?.getAnimations?.() || []) {
+    if (a.playState === "running" && BEAT_RE.test(a.animationName || "") && a.startTime !== 0) a.startTime = 0;
+  }
 }
 
 // Fokus nach einem Neuaufbau zurückgeben, aber auf Touch-Geräten nicht an
@@ -1456,6 +1467,10 @@ class DevicePanel extends HTMLElement {
   // Zahlen und Uhrzeit im Format der HA-Sprache des Benutzers (z. B. de-CH).
   _locale() {
     return this._hass?.locale?.language || this._hass?.language || undefined;
+  }
+
+  _syncBeats() {
+    syncBeats(this.shadowRoot);
   }
 
   _t(key, ...args) {
@@ -3129,12 +3144,12 @@ class DevicePanel extends HTMLElement {
       .map((tk) => `<span class="${tk.minor ? "minor" : ""}" style="left:${tk.pos.toFixed(2)}%">${escape(tk.label)}</span>`)
       .join("");
     const beat = !tap && this._heartOn() ? this._heartbeatSvg(W, H) : "";
-    // Messpunkt (seit 2.148.0, wie der Monitor im Spital): alle 15 Sekunden fährt ein kleiner Punkt auf der Linie von links nach rechts (3,4 Sekunden),
+    // Messpunkt (seit 2.148.0, wie der Monitor im Spital): alle 10 Sekunden fährt ein kleiner Punkt (im Takt der Sternschnuppe, startet mit ihr) auf der Linie von links nach rechts (3,4 Sekunden),
     // Farbe wie die Linie; reine CSS-Animation mit den Punkten der Kurve in Prozent (die Kurve ist gestreckt), ohne Bewegung bei reduzierter Bewegung
     let dot = "";
     if (n > 1 && !beat) {
       const RUN = 3.4;
-      const CYCLE = 15;
+      const CYCLE = 10;
       const frames = p.map((v, i) => `${((((i + 0.5) / n) * RUN) / CYCLE * 100).toFixed(2)}%{left:${(((i + 0.5) / n) * 100).toFixed(2)}%;top:${((Number(y(v)) / H) * 100).toFixed(2)}%;color:var(${v > 0 ? "--dp-error" : "--dp-success"})}`);
       const name = `pd${[...frames.join("")].reduce((h, c) => (Math.imul(h, 31) + c.charCodeAt(0)) >>> 0, 7).toString(36)}`;
       const end = (((n - 0.5) / n) * RUN) / CYCLE * 100;

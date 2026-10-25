@@ -41,7 +41,7 @@ The top shows how many devices are online, who is offline right now and the outa
 
 ### Outages at a glance
 
-Offline devices with the time they have been gone, unstable devices (three or more outages in 24 hours) and the outage pulse. Tapping the pulse lists the devices with outages, a point in the pulse shows who was gone then. Every 15 seconds a small measuring dot travels along the line. When three or more devices fail at once, the panel names the likely common cause, for example the integration or its hub.
+Offline devices with the time they have been gone, unstable devices (three or more outages in 24 hours) and the outage pulse. Tapping the pulse lists the devices with outages, a point in the pulse shows who was gone then. Every 10 seconds a small measuring dot travels along the line. When three or more devices fail at once, the panel names the likely common cause, for example the integration or its hub.
 
 <p align="center"><img src="https://raw.githubusercontent.com/Diegofuego871/ha-device-panel/main/docs/screenshots/en/pulse.png" alt="Window with the outage pulse and the devices with outages in 24 hours" width="720"></p>
 

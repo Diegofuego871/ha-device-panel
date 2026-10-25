@@ -41,7 +41,7 @@ Oben steht, wie viele Geräte online sind, wer gerade ausgefallen ist, und der A
 
 ### Ausfälle auf einen Blick
 
-Ausgefallene Geräte mit der Zeit, seit der sie weg sind, instabile Geräte (drei oder mehr Ausfälle in 24 Stunden) und der Ausfall-Puls. Ein Tipp auf den Puls listet die Geräte mit Ausfällen, ein Punkt im Puls zeigt, wer damals weg war. Alle 15 Sekunden fährt ein kleiner Messpunkt der Linie entlang. Fallen drei oder mehr Geräte gleichzeitig aus, nennt das Panel die vermutete gemeinsame Ursache, zum Beispiel die Integration oder ihren Hub.
+Ausgefallene Geräte mit der Zeit, seit der sie weg sind, instabile Geräte (drei oder mehr Ausfälle in 24 Stunden) und der Ausfall-Puls. Ein Tipp auf den Puls listet die Geräte mit Ausfällen, ein Punkt im Puls zeigt, wer damals weg war. Alle 10 Sekunden fährt ein kleiner Messpunkt der Linie entlang. Fallen drei oder mehr Geräte gleichzeitig aus, nennt das Panel die vermutete gemeinsame Ursache, zum Beispiel die Integration oder ihren Hub.
 
 <p align="center"><img src="https://raw.githubusercontent.com/Diegofuego871/ha-device-panel/main/docs/screenshots/de/pulse.png" alt="Fenster mit dem Ausfall-Puls und den Geräten mit Ausfällen in 24 Stunden" width="720"></p>
 
