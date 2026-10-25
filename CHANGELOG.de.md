@@ -7,6 +7,14 @@ Alle nennenswerten Änderungen an dieser Integration stehen in dieser Datei.
 Das Format folgt [Keep a Changelog](https://keepachangelog.com/de/1.1.0/),
 die Versionsnummern folgen [Semantic Versioning](https://semver.org/lang/de/).
 
+## [2.140.2] - 2026-10-25
+
+Nur Testkorrektur; keine funktionale Änderung.
+
+### Behoben
+
+- **Tests:** der Test der Integrations-Reiter kennt den Reiter "Updates" wieder, damit ist die CI-Prüfung "Panel (Playwright)" grün (sie schlug bei 2.140.0 und 2.140.1 fehl).
+
 ## [2.140.1] - 2026-10-24
 
 Die Rakete der offenen Einrichtung bebt leicht.
@@ -4838,6 +4846,7 @@ Erste Vorabversion.
   GitHub Actions für die Prüfungen von HACS und hassfest sowie die Tests.
 
 [2.6.0]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v2.6.0
+[2.140.2]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v2.140.2
 [2.140.1]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v2.140.1
 [2.140.0]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v2.140.0
 [2.139.0]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v2.139.0

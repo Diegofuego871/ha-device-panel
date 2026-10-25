@@ -7,6 +7,14 @@ All notable changes to this integration are documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/).
 
+## [2.140.2] - 2026-10-25
+
+Test fix only; no change in function.
+
+### Fixed
+
+- **Tests:** the test of the integration tabs knows the tab "Updates" again, so the CI check "Panel (Playwright)" is green (it failed for 2.140.0 and 2.140.1).
+
 ## [2.140.1] - 2026-10-24
 
 The rocket of the open setup trembles gently.
@@ -4737,6 +4745,7 @@ First pre-release.
   GitHub Actions for HACS/hassfest validation and tests.
 
 [2.6.0]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v2.6.0
+[2.140.2]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v2.140.2
 [2.140.1]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v2.140.1
 [2.140.0]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v2.140.0
 [2.139.0]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v2.139.0
