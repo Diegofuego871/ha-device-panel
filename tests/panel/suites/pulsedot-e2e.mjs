@@ -61,6 +61,15 @@ for (const mobile of [false, true]) {
   const st = await ev(`return r.getAnimations().filter((x) => /^(dp-comet|dp-land|pd)/.test(x.animationName)).map((x) => [x.animationName.slice(0, 2), (((Math.round(x.startTime + x.effect.getTiming().delay) % 10000) + 10000) % 10000)])`);
   const kinds = new Set(st.map((x) => x[0]));
   check(`[${tag}] Punkt-Sternschnuppe und Messpunkt starten gleichzeitig`, kinds.has("dp") && kinds.has("pd") && st.every((x) => x[1] % 10000 === 0), JSON.stringify(st));
+  // Neuaufbau der Kachelreihe mitten im Lauf (Abfrage alle 10 s, zum Beispiel "2 Warnungen" wird "1 Warnung"): der Messpunkt läuft weiter, statt abzubrechen
+  await ev(`r.getAnimations().forEach((x) => { if (x.playState === "paused") x.play(); }); r.host._syncBeats()`);
+  const probe = `const d = r.querySelector(".pchart .pdot"); const a = d.getAnimations()[0]; const c = r.querySelector(".pchart").getBoundingClientRect(), b = d.getBoundingClientRect(); return [+getComputedStyle(d).opacity, (b.left + b.width / 2 - c.left) / c.width, ((a.currentTime - a.effect.getTiming().delay) % 10000 + 10000) % 10000]`;
+  await f.waitForFunction(new Function(`const r=${R}; const a = r.querySelector(".pchart .pdot")?.getAnimations()[0]; if (!a) return false; const t = ((a.currentTime - a.effect.getTiming().delay) % 10000 + 10000) % 10000; return a.playState === "running" && t > 400 && t < 2500`), null, { timeout: 15000 });
+  const beforeRe = await ev(probe);
+  await ev(`const h = r.host; if (!h.__origHero) { h.__origHero = h._heroHtml; h._heroHtml = function (...a) { return h.__origHero.apply(this, a) + "<!-- " + Math.random() + " -->"; }; } h._render(true)`);
+  await p.waitForTimeout(120);
+  const afterRe = await ev(probe);
+  check(`[${tag}] Kachelreihe neu aufgebaut: Messpunkt läuft im selben Takt weiter (nicht abgebrochen, nicht zurück)`, afterRe[0] > 0 && Math.abs(afterRe[2] - beforeRe[2] - 120) < 400 && afterRe[1] >= beforeRe[1] - 0.01, JSON.stringify([beforeRe, afterRe]));
   // Reduzierte Bewegung
   await p.emulateMedia({ reducedMotion: "reduce" });
   const rm = await ev(`return getComputedStyle(r.querySelector(".pchart .pdot")).display`);

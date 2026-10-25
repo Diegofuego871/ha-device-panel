@@ -116,28 +116,40 @@ const REPO_URL_RE = /^https:\/\/github\.com\/diegofuego871\/ha-device-panel(?:[/
 const lastHtml = new WeakMap();
 function setHtml(el, html) {
   if (!el || lastHtml.get(el) === html) return false;
+  // Läuft darin gerade (aktive Phase, nicht noch wartend auf den Takt) ein Messpunkt oder eine Sternschnuppe und kommt wieder einer, ersetzt der Neuaufbau (zum Beispiel durch die Abfrage alle 10 s)
+  // nur das Element: der neue läuft dann im Takt weiter, statt unterbrochen zu werden (seit 2.151.1)
+  const running = /pdot|has-dot/.test(html) && (el.getAnimations?.({ subtree: true }) || []).some((a) => BEAT_RE.test(a.animationName || "") && beatAligned(a) && a.effect?.getComputedTiming().progress != null);
   el.innerHTML = html;
   lastHtml.set(el, html);
-  syncBeats(el.getRootNode?.());
+  syncBeats(el.getRootNode?.(), running ? el : null);
   return true;
 }
 
 // Sternschnuppen am Punkt (dp-comet, dp-land) und Messpunkt des Ausfall-Pulses (pd…) laufen im selben 10-Sekunden-Takt und starten zugleich
-// (seit 2.150.0, Start-Ausrichtung seit 2.150.1): jede CSS-Animation beginnt beim Aufbau ihres Elements, also zu verschiedenen Zeiten. Jede neue wartet über ihre Verzögerung
+// (seit 2.150.0, Start-Ausrichtung seit 2.150.1, Weiterlauf beim Neuaufbau seit 2.151.1): jede CSS-Animation beginnt beim Aufbau ihres Elements, also zu verschiedenen Zeiten. Jede neue wartet über ihre Verzögerung
 // bis zur nächsten vollen 10 Sekunden der Zeitleiste und beginnt dann am Anfang ihres Laufs; so sind alle phasengleich, und nichts springt mitten
 // in den Lauf (das Aufblitzen des Messpunkts am Linienende beim Aufbau). Pausierte (Tests) bleiben unberührt.
 const BEAT_MS = 10000;
 const BEAT_RE = /^(dp-comet|dp-land|pd[0-9a-z]+)$/;
-function alignBeat(a) {
-  const mod = (x) => ((x % BEAT_MS) + BEAT_MS) % BEAT_MS;
-  const off = mod(a.startTime + (a.effect.getTiming().delay || 0));
-  if (off > 0.5 && off < BEAT_MS - 0.5) a.effect.updateTiming({ delay: mod(-a.startTime) });
+const beatMod = (x) => ((x % BEAT_MS) + BEAT_MS) % BEAT_MS;
+// Ausgerichtet = Start plus Verzögerung liegt auf einem vollen Takt (eine eben angelegte, noch nicht ausgerichtete Animation zählt nicht als laufend)
+function beatAligned(a) {
+  if (typeof a.startTime !== "number") return false;
+  const off = beatMod(a.startTime + (a.effect.getTiming().delay || 0));
+  return off <= 0.5 || off >= BEAT_MS - 0.5;
 }
-function syncBeats(root) {
+function alignBeat(a) {
+  if (!beatAligned(a)) a.effect.updateTiming({ delay: beatMod(-a.startTime) });
+}
+// Ersetzt ein Neuaufbau eine laufende Animation (carry = der neu gesetzte Bereich), läuft die neue in der Phase des Takts weiter (Startzeit 0 der Zeitleiste),
+// sonst wartet sie auf den nächsten vollen Takt
+function syncBeats(root, carry = null) {
   for (const a of root?.getAnimations?.() || []) {
     if (a.playState !== "running" || !BEAT_RE.test(a.animationName || "")) continue;
-    // Eine eben angelegte Animation hat noch keine Startzeit (sie wird erst mit dem nächsten Bild gesetzt): dann danach ausrichten
-    if (typeof a.startTime === "number") alignBeat(a);
+    if (carry && carry.contains(a.effect.target) && typeof a.startTime !== "number") {
+      a.effect.updateTiming({ delay: 0 });
+      a.startTime = 0;
+    } else if (typeof a.startTime === "number") alignBeat(a);
     else a.ready.then(() => a.playState === "running" && typeof a.startTime === "number" && alignBeat(a), () => {});
   }
 }

@@ -7,6 +7,14 @@ All notable changes to this integration are documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/).
 
+## [2.151.1] - 2026-10-25
+
+The measuring dot is no longer cut off when the tiles are refreshed.
+
+### Fixed
+
+- **Measuring dot cut off:** the panel refreshes its data every 10 seconds, and when a number in the tile row changed (for example "2 warnings" becoming "1 warning"), the tile row was rebuilt and the measuring dot of the outage pulse vanished in the middle of its run (it then waited for the next beat). The rebuilt dot now continues in the same beat, and so does a shooting star inside a rebuilt area. Only at the first build does a dot still wait for the next full 10 seconds.
+
 ## [2.151.0] - 2026-10-25
 
 Animations can be switched off.
@@ -4889,6 +4897,7 @@ First pre-release.
   GitHub Actions for HACS/hassfest validation and tests.
 
 [2.6.0]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v2.6.0
+[2.151.1]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v2.151.1
 [2.151.0]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v2.151.0
 [2.150.0]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v2.150.0
 [2.149.0]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v2.149.0
