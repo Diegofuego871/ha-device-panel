@@ -54,7 +54,7 @@ for (const lang of ["de", "en"]) {
     // Reiter "Neu": Karte mit Kapitel und einem Balken (seit 2.96.0 hier statt in der Übersicht), Pillen aus
     check(`[${tag}] Karte "${T.lane}" mit Null "${T.zero}"`, (await ev(`return r.querySelectorAll(".lane").length`)) === 1 && (await text('[data-lane="new"] .lane-t')) === T.lane && (await text('[data-lane="new"] .ptl-zero span')) === T.zero, await text('[data-lane="new"]'));
     check(`[${tag}] Pillen Push und Anhaltend aus`, (await ev(`return [...r.querySelectorAll('[data-lane="new"] .mon-chip')].map(c=>c.textContent.trim()+":"+c.getAttribute("aria-pressed")).join()`)) === `${T.push}:false,${T.pers}:false`);
-    check(`[${tag}] Reiter mit "${T.tab}" vor "Integrationen"`, (await ev(`return [...r.querySelectorAll(".mon-tab")].map(t=>t.dataset.key).join()`)) === "overview,outage,battery,charge,new,updates,sig,integ");
+    check(`[${tag}] Reiter mit "${T.tab}" vor "Integrationen"`, (await ev(`return [...r.querySelectorAll(".mon-tab")].map(t=>t.dataset.key).join()`)) === "overview,outage,battery,charge,new,updates,sig,integ,labels");
 
     // Reiter "Neu"
     await wait(`return r.querySelector('.mon-tab.on')?.dataset.key === "new"`);

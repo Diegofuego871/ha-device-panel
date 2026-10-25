@@ -116,7 +116,7 @@ Alles, was dich benachrichtigt, folgt einem Prinzip: Du setzt einmal eine Vorgab
 
 - **Allgemein:** in den Einstellungen unter "Überwachung und Meldungen", die Vorgabe für alle Geräte
 - **Integration:** am selben Ort, Reiter "Integrationen": eine Liste aller Integrationen mit dem, was von der Vorgabe abweicht, und eine Detailseite pro Integration mit eigenen Reitern
-- **Label (optional):** in den Einstellungen im Abschnitt "Labels": ein Label aus Home Assistant bekommt dieselben Reiter wie eine Integration und gilt für alle Geräte, die es tragen, vor der Integration und nach dem Gerät. Bei mehreren Labels gilt das strengste ("Nicht überwachen", dann die längere Zeit oder die tiefere Schwelle)
+- **Label (optional):** in den Einstellungen unter "Überwachung und Meldungen", Reiter "Labels" (neben "Integrationen"): ein Label aus Home Assistant bekommt dieselben Reiter wie eine Integration und gilt für alle Geräte, die es tragen, vor der Integration und nach dem Gerät. Bei mehreren Labels gilt das strengste ("Nicht überwachen", dann die längere Zeit oder die tiefere Schwelle)
 - **Gerät:** im Pop-up des Geräts, Reiter "Einstellungen": nur dieses Gerät, mit der Herkunft jedes Werts
 - **Herkunft:** jede Einstellung sagt, woher sie stammt (Standard, Integration oder Gerät), und ein Chip "Eigene Einstellung" filtert Geräte mit eigenen Werten; in den Einstellungen lassen sie sich einzeln oder alle auf einmal zurücksetzen
 

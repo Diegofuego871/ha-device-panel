@@ -50,8 +50,9 @@ for (const lang of ["de", "en"]) {
       check(`[${tag}] ohne Label kein Chip "${L.chip}"`, !(await s.ev(`return !!r.querySelector(".chips [data-label-open]")`)));
       await s.tap(".gear-btn");
       await s.wait(`return !!r.querySelector("dialog.settings .set-sec")`);
-      check(`[${tag}] Abschnitt "${L.section}" steht hinter "Überwachung und Meldungen"`, await s.ev(`const t=[...r.querySelectorAll("dialog.settings .set-sec-head")].map(x=>x.dataset.id); return t.join() === "devices,monitor,labels,routines,ai,updates"`), await s.ev(`return [...r.querySelectorAll("dialog.settings .set-sec-head")].map(x=>x.dataset.id).join()`));
-      await s.tap('[data-set="section"][data-id="labels"]');
+      check(`[${tag}] Register "${L.section}" steht hinter "Integrationen", kein eigener Abschnitt`, await s.ev(`const t=[...r.querySelectorAll("dialog.settings .set-sec-head")].map(x=>x.dataset.id); return t.join() === "devices,monitor,routines,ai,updates"`), await s.ev(`return [...r.querySelectorAll("dialog.settings .set-sec-head")].map(x=>x.dataset.id).join()`));
+      await s.tap('[data-set="section"][data-id="monitor"]');
+      await s.tap('.mon-tab[data-key="labels"]');
       check(`[${tag}] leer: Hinweis und "${L.add}"`, await s.wait(`return !!r.querySelector(".label-add") && r.querySelector(".mon-empty")`) && (await s.text(".label-add")) === L.add);
       await s.tap(".label-add");
       check(`[${tag}] ohne Labels in HA: Hinweis statt Liste`, await s.wait(`return !!r.querySelector(".label-pick .mon-empty")`));
@@ -96,7 +97,8 @@ for (const lang of ["de", "en"]) {
     // --- Einstellungen: Label hinzufügen
     await tap(".gear-btn");
     await wait(`return !!r.querySelector("dialog.settings .set-sec")`);
-    await tap('[data-set="section"][data-id="labels"]');
+    await tap('[data-set="section"][data-id="monitor"]');
+    await tap('.mon-tab[data-key="labels"]');
     await tap(".label-add");
     const picks = await ev(`return [...r.querySelectorAll(".label-pick .ilist-row .ilist-name")].map(x=>x.firstChild.textContent).join()`);
     check(`[${tag}] Plus: Labels mit Geräten zur Wahl, ohne Geräte nicht`, picks.includes(NAMES[lang]) && picks.includes("Garage") && !picks.includes("Ohne Geräte"), picks);
@@ -127,8 +129,6 @@ for (const lang of ["de", "en"]) {
       return JSON.stringify(last.labels) === '["garage","oft_offline"]' && last.offline_after_integrations?.["label:garage"] === 60 && last.offline_after_integrations?.["label:oft_offline"] === 30 && last.type_integrations?.["label:oft_offline"] === "sensor";
     }));
     // Kein Label in der Integrationsliste und kein Label im Typ-Abschnitt
-    await tap('[data-set="section"][data-id="labels"]');
-    await tap('[data-set="section"][data-id="monitor"]');
     await tap('.mon-tab[data-key="integ"]');
     await wait(`return !!r.querySelector('.ilist-row[data-key="zha"]')`);
     check(`[${tag}] Liste der Integrationen ohne Label-Zeilen`, await ev(`return ![...r.querySelectorAll(".ilist-row")].some(x=>String(x.dataset.key).startsWith("label:"))`));

@@ -7,6 +7,14 @@ Alle nennenswerten Änderungen an dieser Integration stehen in dieser Datei.
 Das Format folgt [Keep a Changelog](https://keepachangelog.com/de/1.1.0/),
 die Versionsnummern folgen [Semantic Versioning](https://semver.org/lang/de/).
 
+## [2.155.1] - 2026-10-25
+
+Die Label-Einstellungen wandern in "Überwachung und Meldungen".
+
+### Geändert
+
+- **Labels als Reiter:** Die Einstellungen für Labels sind kein eigener Abschnitt mehr, sondern der Reiter "Labels" in "Überwachung und Meldungen", gleich hinter "Integrationen". Inhalt und Verhalten bleiben gleich (Plus, dieselben Reiter wie bei einer Integration, Reihenfolge, Entfernen).
+
 ## [2.155.0] - 2026-10-25
 
 Labels: Geräte mit einem Label aus Home Assistant lassen sich gemeinsam einstellen, von "oft offline" nicht mehr überwachten Geräten bis zu einer gemeinsamen Batterie-Schwelle.
@@ -5056,6 +5064,7 @@ Erste Vorabversion.
   GitHub Actions für die Prüfungen von HACS und hassfest sowie die Tests.
 
 [2.6.0]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v2.6.0
+[2.155.1]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v2.155.1
 [2.155.0]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v2.155.0
 [2.154.2]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v2.154.2
 [2.154.1]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v2.154.1

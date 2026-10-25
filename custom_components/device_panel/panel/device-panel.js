@@ -478,6 +478,9 @@ const MON_TAB_KEYS = {
   integ: ["offline_after_integrations", "notify_delay_integrations", "charge_full_integrations", "charge_rise_integrations", "charge_stall_integrations", "charge_stop_integrations", "charge_live_integrations", "notify_exclude_integrations", "persistent_exclude_integrations", "battery_low_integrations", "battery_push_exclude_integrations", "new_exclude_integrations", "signal_low_integrations"],
 };
 
+// Register "Labels" (seit 2.155.1): die Zuordnungen pro Integration tragen auch die Labels ("label:<ID>"), dazu die Liste der eingerichteten
+MON_TAB_KEYS.labels = ["labels", ...MON_TAB_KEYS.integ];
+
 // Reiter der Abschnitte "Geräte im Panel" und "Darstellung" (seit 1.0.0,
 // docs/mockups/content-v1, A) mit den Optionen, die sie ändern.
 // Prompt der KI-Einschätzung (Profi-Modus, seit 1.2.0): wie
@@ -6801,7 +6804,6 @@ class DevicePanel extends HTMLElement {
     return [
       ["devices", ["show_service_devices", "show_disabled_devices", ...SUB_TAB_KEYS.integrations, ...SUB_TAB_KEYS.types, ...SUB_TAB_KEYS.devs, ...SUB_TAB_KEYS.devset]],
       ["monitor", Object.values(MON_TAB_KEYS).flat()],
-      ["labels", ["labels", ...MON_TAB_KEYS.integ]],
       ["routines", ["routines_pause", "routines_catch_up", "notify_service_routines", "routines_notify_error"]],
       ["ai", ["ai_assessment", "ai_task_entity", "ai_prompt"]],
       ["updates", [...SUB_TAB_KEYS.pstart, ...SUB_TAB_KEYS.pstorage, ...SUB_TAB_KEYS.pupdates]],
@@ -7095,10 +7097,6 @@ class DevicePanel extends HTMLElement {
       const task = (this._settings?.data?.catalog?.ai_tasks || []).find((x) => x.value === d.ai_task_entity);
       const base = d.ai_assessment ? this._t("sumAiOn", task?.name || d.ai_task_entity || "") : this._t("sumAiOff");
       return d.ai_prompt ? `${base} · ${this._t("sumAiPrompt")}` : base;
-    }
-    if (id === "labels") {
-      const n = (d.labels || []).length;
-      return n ? this._t("sumLabels", n) : this._t("sumLabelsNone");
     }
     if (id === "routines") {
       return this._t(d.routines_pause ? "sumRoutinesPaused" : "sumRoutinesIdle");
@@ -7424,7 +7422,7 @@ class DevicePanel extends HTMLElement {
     const st = this._settings;
     const t = (k, ...a) => this._t(k, ...a);
     const tab = MON_TAB_KEYS[st.tab] ? st.tab : "overview";
-    const tabs = [["overview", "tabOverview"], ["outage", "tabOutage"], ["battery", "tabBattery"], ["charge", "tabCharge"], ["new", "tabNew"], ["updates", "tabUpdates"], ["sig", "tabSignal"], ["integ", "tabInteg"]]
+    const tabs = [["overview", "tabOverview"], ["outage", "tabOutage"], ["battery", "tabBattery"], ["charge", "tabCharge"], ["new", "tabNew"], ["updates", "tabUpdates"], ["sig", "tabSignal"], ["integ", "tabInteg"], ["labels", "tabLabels"]]
       .map(([id, key]) => {
         const keys = MON_TAB_KEYS[id];
         // Punkt am Reiter: dort gibt es eine Änderung (blau) oder einen Fehler (rot).
@@ -7447,6 +7445,8 @@ class DevicePanel extends HTMLElement {
             ? this._monSigHtml(d)
           : tab === "integ"
             ? this._monIntegHtml(d, changes, errors)
+          : tab === "labels"
+            ? this._labelsHtml(d, errors)
             : this._monOverviewHtml(d, errors, ui, changes);
     return `<div class="mon-tabs" role="tablist">${tabs}</div><div class="mon-body" role="tabpanel">${body}</div>`;
   }
@@ -9251,7 +9251,6 @@ class DevicePanel extends HTMLElement {
           : "") +
         ttl("ttlAiPrompt") +
         this._aiPromptHtml(d, changes.has("ai_prompt")),
-      labels: this._labelsHtml(d, errors),
       routines:
         row("routines_pause", t("optRoutinesPause"), sw("routines_pause", t("optRoutinesPause")), t("optRoutinesPauseShort"), null) +
         row("routines_catch_up", t("optRoutinesCatchUp"), num("routines_catch_up", t("minuteUnit"), t("optRoutinesCatchUp")), t("optRoutinesCatchUpShort"), null) +
@@ -9259,7 +9258,7 @@ class DevicePanel extends HTMLElement {
         row("routines_notify_error", t("optRoutinesNotifyError"), sw("routines_notify_error", t("optRoutinesNotifyError")), t("optRoutinesNotifyErrorShort"), t("optRoutinesNotifyErrorInfo")),
     };
     const titles = {
-      devices: "secDevices", monitor: "secMonitor", labels: "secLabels", routines: "secRoutines", ai: "secAiSettings", updates: "secPanel",
+      devices: "secDevices", monitor: "secMonitor", routines: "secRoutines", ai: "secAiSettings", updates: "secPanel",
     };
     // Dialog "Ansicht": nur der Block der Filter-Chips (Rahmen und Reiter baut _viewBodyHtml)
     if (st.mode === "view") return fields.chips;
@@ -9352,6 +9351,7 @@ class DevicePanel extends HTMLElement {
           st.tab = btn.dataset.key;
           if (btn.dataset.sub) st.sub.battery = btn.dataset.sub;
           st.integ = null;
+          st.label = null;
           if (btn.dataset.filter) st.integFilter = btn.dataset.filter;
           if (action === "goto") st.open.add("monitor");
         } else if (action === "integ") {

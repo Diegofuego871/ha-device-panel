@@ -65,9 +65,9 @@ for (const lang of ["de", "en"]) {
     await tap('[data-set="section"][data-id="monitor"]');
     await wait(`return !!r.querySelector("dialog.settings .mon-tabs")`);
     const tabs = await ev(`return [...r.querySelectorAll("dialog.settings .mon-tabs .mon-tab")].map(b => b.dataset.key).join()`);
-    check(`[${tag}] Einstellungen: acht Reiter, kein "Magic Push"`, tabs === "overview,outage,battery,charge,new,updates,sig,integ", tabs);
+    check(`[${tag}] Einstellungen: neun Reiter, kein "Magic Push"`, tabs === "overview,outage,battery,charge,new,updates,sig,integ,labels", tabs);
     const cols = await ev(`return getComputedStyle(r.querySelector("dialog.settings .mon-tabs")).gridTemplateColumns.split(" ").length`);
-    check(`[${tag}] Reiterleiste: vier Spalten (zwei Zeilen)`, cols === 4, String(cols));
+    check(`[${tag}] Reiterleiste: fünf Spalten am Desktop, drei am Handy (neun Reiter)`, cols === (mobile ? 3 : 5), String(cols));
     check(`[${tag}] kein Reiter abgeschnitten`, await ev(`return [...r.querySelectorAll("dialog.settings .mon-tab")].every(b => b.scrollWidth <= b.clientWidth + 1)`));
     check(`[${tag}] Einstellungen: keine Magic-Push-Übersicht mehr`, !(await ev(`return !!r.querySelector('dialog.settings [data-mg-all-zone], dialog.settings [data-set^="magic-"]')`)));
     await tap('dialog.settings .dlg-actions [data-set="close"]');

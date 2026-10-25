@@ -7,6 +7,14 @@ All notable changes to this integration are documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/).
 
+## [2.155.1] - 2026-10-25
+
+The label settings move into "Monitoring and notifications".
+
+### Changed
+
+- **Labels as a tab:** the settings for labels are no longer a section of their own but the tab "Labels" in "Monitoring and notifications", right after "Integrations". Content and behaviour stay the same (plus button, same tabs as an integration, order, remove).
+
 ## [2.155.0] - 2026-10-25
 
 Labels: devices that carry a Home Assistant label can be set together, from "often offline" devices that are no longer monitored to a shared battery threshold.
@@ -4955,6 +4963,7 @@ First pre-release.
   GitHub Actions for HACS/hassfest validation and tests.
 
 [2.6.0]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v2.6.0
+[2.155.1]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v2.155.1
 [2.155.0]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v2.155.0
 [2.154.2]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v2.154.2
 [2.154.1]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v2.154.1

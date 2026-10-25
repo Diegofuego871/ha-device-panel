@@ -260,7 +260,7 @@ for (const lang of ["de", "en"]) {
     await tap(".gear-btn");
     await wait(`return !!r.querySelector("dialog.settings .set-sec")`);
     const order = await ev(`return [...r.querySelectorAll(".set-sec-head")].map(h=>h.dataset.id).join(",")`);
-    check(`[${tag}] Abschnitte (notify-v3)`, order === "devices,monitor,labels,routines,ai,updates", order);
+    check(`[${tag}] Abschnitte (notify-v3)`, order === "devices,monitor,routines,ai,updates", order);
     check(`[${tag}] Überwachung und Meldungen zusammengefasst`, (await text('[data-id="monitor"] .set-sec-title')) === T.secMon && (await text('[data-id="monitor"] .set-sec-sum')) === T.sumMon(2), await text('[data-id="monitor"] .set-sec-sum'));
     await tap('[data-set="section"][data-id="monitor"]');
     check(`[${tag}] Reiter "Allgemein" zuerst, ohne Übersichtskarten (die stehen seit 2.96.0 in den Reitern)`, await wait(`return r.querySelector('.mon-tab.on')?.dataset.key === "overview" && r.querySelectorAll(".lane").length === 0`));
