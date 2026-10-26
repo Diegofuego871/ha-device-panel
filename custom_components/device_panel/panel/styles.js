@@ -92,7 +92,7 @@ button { font: inherit; color: inherit; }
 .apps-btn.dot-warn::after, .app-pin.dot-warn::after { background: var(--dp-warning); }
 /* Sternschnuppe (seit 2.147.0, docs/mockups/shootingstar-v1, A; seit 2.149.0 ist der Punkt selbst die Sternschnuppe): alle 10 Sekunden löst sich der Punkt vom Knopf mit Punkt
    (Launcher, angeheftete Apps, Zahnrad), huscht mit Schweif und wechselndem Tempo einmal um die Linie und setzt sich kurz vergrössert wieder hin. Farbe wie der Punkt (rot, bei Orange orange).
-   Ohne Bewegung bei "Bewegung reduzieren". Alle Knöpfe laufen im Gleichschritt (seit 2.150.0, syncBeats in device-panel.js (Start an der nächsten vollen 10 Sekunden); der Messpunkt des Ausfall-Pulses startet im selben Takt). */
+   Läuft auch bei "Bewegung reduzieren" (seit 2.156.1), abschaltbar im Panel (Einstellungen › Panel › Allgemein, "Animationen"). Alle Knöpfe laufen im Gleichschritt (seit 2.150.0, syncBeats in device-panel.js (Start an der nächsten vollen 10 Sekunden); der Messpunkt des Ausfall-Pulses startet im selben Takt). */
 .gear-btn.has-dot, .apps-btn.has-dot, .app-pin.has-dot { --cm: var(--dp-error); --cd: 0s; }
 .apps-btn.has-dot.dot-warn, .app-pin.has-dot.dot-warn { --cm: var(--dp-warning); }
 .gear-btn.has-dot::before, .apps-btn.has-dot::before, .app-pin.has-dot::before { content: ""; position: absolute; inset: -1px; border-radius: 50%; pointer-events: none; opacity: 0;
@@ -118,10 +118,6 @@ button { font: inherit; color: inherit; }
 }
 :host([data-anim="off"]) .gear-btn.has-dot::before, :host([data-anim="off"]) .apps-btn.has-dot::before, :host([data-anim="off"]) .app-pin.has-dot::before { animation: none; opacity: 0; }
 :host([data-anim="off"]) .gear-btn.has-dot::after, :host([data-anim="off"]) .apps-btn.has-dot::after, :host([data-anim="off"]) .app-pin.has-dot::after { animation: none; }
-@media (prefers-reduced-motion: reduce) {
-  .gear-btn.has-dot::before, .apps-btn.has-dot::before, .app-pin.has-dot::before { animation: none; opacity: 0; }
-  .gear-btn.has-dot::after, .apps-btn.has-dot::after, .app-pin.has-dot::after { animation: none; }
-}
 .gear-btn:hover, .rtall-btn:hover, .apps-btn:hover { background: var(--dp-hover); color: var(--dp-text); }
 .apps-btn.on { background: var(--dp-primary-soft); border-color: transparent; color: var(--dp-primary); }
 .content { flex: 1 1 auto; min-height: 0; overflow: auto; overscroll-behavior: contain; padding: 0 20px 16px; }
@@ -186,7 +182,6 @@ button.kwarn:focus-visible { outline: 2px solid var(--dp-primary); outline-offse
 /* Messpunkt auf der Kurve (seit 2.148.0): alle 15 s einmal von links nach rechts; Keyframes mit den Punkten der Kurve stehen im HTML (device-panel.js) */
 .pchart .pdot { position: absolute; z-index: 2; width: 7px; height: 7px; margin: -3.5px 0 0 -3.5px; border-radius: 50%; background: #fff; box-shadow: 0 0 7px 2px currentColor; pointer-events: none; opacity: 0;
   animation-duration: 10s; animation-timing-function: linear; animation-iteration-count: infinite; animation-delay: 0s; }
-@media (prefers-reduced-motion: reduce) { .pchart .pdot { display: none; } }
 :host([data-anim="off"]) .pchart .pdot { display: none; }
 .pchart .base { stroke: var(--dp-divider); stroke-width: 1; }
 .pchart .area { fill: var(--dp-error-soft); }

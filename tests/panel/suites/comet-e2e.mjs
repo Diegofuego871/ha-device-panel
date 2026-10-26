@@ -28,8 +28,7 @@ for (const reduce of [false, true]) {
     await ev(`r.host._debugOn = true; r.host._apps.paintDots()`);
     await f.waitForFunction(new Function(`return ${R}.querySelector(".apps-btn").classList.contains("has-dot")`), null, { timeout: 5000 });
     a = await anim();
-    if (reduce) check(`[${tag}] "Bewegung reduzieren": keine Animation, Punkt bleibt`, a[0] && a[1] === "none" && a[2] === "none", JSON.stringify(a));
-    else {
+    {
       check(`[${tag}] Punkt da: Schweif (dp-comet) und atmender Punkt (dp-land)`, a[0] && a[1] === "dp-comet" && a[2] === "dp-land", JSON.stringify(a));
       check(`[${tag}] orange bei Debug`, /warning/.test(await ev(`return r.querySelector(".apps-btn").classList.contains("dot-warn") + " " + (getComputedStyle(r.querySelector(".apps-btn")).getPropertyValue("--cm") || "")`)) || (await ev(`return r.querySelector(".apps-btn").classList.contains("dot-warn")`)) === true);
       // Mitten im Lauf ist der Schweif sichtbar
@@ -47,7 +46,7 @@ for (const reduce of [false, true]) {
       await p.screenshot({ path: `${outDir}/comet-${mobile ? "mobile" : "desktop"}.png` });
     }
     // Gleichschritt (2.150.0): kommt ein zweiter Knopf später dazu (Neustart steht aus, Zahnrad), laufen beide Sternschnuppen synchron
-    if (!reduce) {
+    {
       await p.waitForTimeout(1300);
       await ev(`r.getAnimations().forEach((x) => { if (x.playState === "paused") x.play(); })`);
       await ev(`r.host._debugOn = true; r.host._gearRestart = true; r.host._apps.paintDots()`);

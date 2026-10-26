@@ -146,7 +146,7 @@ Status: online = `--dp-success` (Punkt + Pill "Verbunden"), ausgefallen =
   Hinweis, was gesendet wird; Antwort als Karte (`.ai-card`, Rand und
   Verlauf in Violett/Primärfarbe, Überschrift fett, Text, Fusszeile "Erstellt
   von … · Zeit · Neu erstellen"); Wartezustand mit pulsierendem Symbol,
-  bei `prefers-reduced-motion` ohne Animation.
+  läuft auch bei `prefers-reduced-motion` (seit 2.156.1); abschaltbar über den Schalter "Animationen".
 - Profi-Modus der KI-Einschätzung (seit 1.2.0, `docs/mockups/ai-v1/`, A):
   im Abschnitt ein Schalter (Standard aus; an, wenn ein eigener Prompt
   gilt), darunter Überschrift "Prompt · Standard|Eigener", der Text in einer

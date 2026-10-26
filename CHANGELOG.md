@@ -9,12 +9,13 @@ and this project adheres to [Semantic Versioning](https://semver.org/).
 
 ## [2.156.1] - 2026-10-26
 
-Setup wizard as large as the settings, switch for pre-releases in the usual colour.
+Setup wizard as large as the settings, switch for pre-releases in the usual colour, animations also with "Reduce motion".
 
 ### Changed
 
 - **Setup wizard on the desktop:** the window is now as large as the settings (up to 880 px wide and as high); on the phone it stays full screen.
 - **Switch "Show pre-releases":** now in the same colour as all other switches (no longer violet).
+- **Shooting star and measuring dot:** the shooting star at the dot of the buttons and the measuring dot of the outage pulse no longer stop when the system asks to reduce motion. They run always and can be switched off in Settings › Panel › General (switch "Animations"), as before.
 - **Number fields for entries:** the fields for the maximum number of entries (for example "Panel log: Entries") now show all digits, up to 100 000.
 - **Devices without online status:** the count no longer has its own line under the tiles; it is a row with a ring in the availability tile ("N without online status"). The filter chip "No online status" stays.
 

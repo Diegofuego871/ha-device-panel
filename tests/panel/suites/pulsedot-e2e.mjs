@@ -73,7 +73,7 @@ for (const mobile of [false, true]) {
   // Reduzierte Bewegung
   await p.emulateMedia({ reducedMotion: "reduce" });
   const rm = await ev(`return getComputedStyle(r.querySelector(".pchart .pdot")).display`);
-  check(`[${tag}] reduzierte Bewegung: kein Punkt`, rm === "none", rm);
+  check(`[${tag}] reduzierte Bewegung: Messpunkt läuft trotzdem (seit 2.156.1)`, rm !== "none", rm);
   // Frisch geladen (eigene Seite): der erste sichtbare Moment des Messpunkts liegt am Anfang der Linie (nie am Ende oder mitten im Lauf)
   if (!mobile) {
     const p2 = await ctx.newPage();

@@ -9,12 +9,13 @@ die Versionsnummern folgen [Semantic Versioning](https://semver.org/lang/de/).
 
 ## [2.156.1] - 2026-10-26
 
-Einrichtungsassistent so gross wie die Einstellungen, Schalter für Vorabversionen in der gewohnten Farbe.
+Einrichtungsassistent so gross wie die Einstellungen, Schalter für Vorabversionen in der gewohnten Farbe, Animationen auch bei "Bewegung reduzieren".
 
 ### Geändert
 
 - **Einrichtungsassistent auf dem Desktop:** Das Fenster ist jetzt so gross wie die Einstellungen (bis 880 px breit und gleich hoch); auf dem Handy bleibt es Vollbild.
 - **Schalter "Vorabversionen anzeigen":** jetzt in derselben Farbe wie alle anderen Schalter (nicht mehr violett).
+- **Sternschnuppe und Messpunkt:** Die Sternschnuppe am Punkt der Knöpfe und der Messpunkt des Ausfall-Pulses bleiben bei "Bewegung reduzieren" im System nicht mehr stehen. Sie laufen immer und lassen sich wie bisher in Einstellungen › Panel › Allgemein ausschalten (Schalter "Animationen").
 - **Zahlenfelder für Einträge:** Die Felder für die höchste Anzahl Einträge (zum Beispiel "Panel-Log: Einträge") zeigen jetzt alle Stellen, bis 100 000.
 - **Geräte ohne Online-Status:** Die Zahl hat keine eigene Zeile mehr unter den Kacheln, sondern steht als Zeile mit Ring in der Kachel "Verfügbarkeit" ("N ohne Online-Status"). Der Filter-Chip "Ohne Online-Status" bleibt.
 
