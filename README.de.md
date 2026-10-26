@@ -137,7 +137,7 @@ Manche Geräte melden sich nur ab und zu, zum Beispiel Bluetooth-Sensoren, und w
 
 - **Wo:** Schalter "Online-Status beobachten" im Reiter "Ausfall" einer Integration und eines Labels; für ein einzelnes Gerät die Auswahl "Ohne Online-Status" neben "Eigene Zeit" und "Nicht überwachen" im Popup (Einstellungen). Eine eigene Zeit am Gerät schaltet den Status wieder ein
 - **Rangfolge:** Gerät › Label › Integration; bei mehreren Labels gilt das strengste: "Nicht überwachen", dann "Ohne Online-Status", dann eine Zeit
-- **Im Panel:** ein grauer Ring statt des Punkts, eine Zeile unter den Kacheln ("N Geräte ohne Online-Status"), die zugleich der Filter-Chip "Ohne Online-Status" ist (wie alle Chips ausblend- und verschiebbar)
+- **Im Panel:** ein grauer Ring statt des Punkts, eine Zeile in der Kachel "Verfügbarkeit" ("N ohne Online-Status") und der Filter-Chip "Ohne Online-Status" (wie alle Chips ausblend- und verschiebbar)
 - **Einrichtungsassistent:** im Schritt "Meldungen", Reiter "Ausfall", ein Ring-Schalter je Integration und Gerät sowie der Schalter auf der Karte eines Labels
 
 ### Vom Ausfall zur Meldung

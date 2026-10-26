@@ -424,13 +424,7 @@ tr.dev.flaky td:first-child { box-shadow: inset 4px 0 0 var(--dp-warning); }
 /* Ohne Online-Status (seit 2.156.0): ein Ring statt des Punkts, Zeile unter den Kacheln */
 .pd.ring { background: transparent; border: 2px solid currentColor; box-sizing: border-box; }
 .pill.ns { color: var(--dp-text2); }
-.nsline:empty { display: none; }
-.nsline { margin: 8px 0 0; }
-.nsl { display: inline-flex; align-items: center; gap: 8px; padding: 5px 10px; border: 0; border-radius: 10px; background: none; color: var(--dp-text2); font: inherit; font-size: 13px; }
-button.nsl { cursor: pointer; }
-button.nsl:hover, button.nsl[aria-pressed="true"] { background: var(--dp-hover); color: var(--dp-text); }
-button.nsl:focus-visible { outline: 2px solid var(--dp-primary); outline-offset: 2px; }
-.nsl .pd { width: 11px; height: 11px; border-radius: 50%; }
+.lines i.ring { background: none; border: 2px solid var(--dp-text3); border-radius: 50%; box-sizing: border-box; width: 9px; height: 9px; }
 .pill.on { color: var(--dp-success); background: var(--dp-success-soft); }
 .pill.off { color: var(--dp-error); background: var(--dp-error-soft); }
 .pill.warn { color: color-mix(in srgb, var(--dp-warning) 85%, var(--dp-text)); background: var(--dp-warning-soft); }
@@ -713,6 +707,8 @@ button.ai-head:focus-visible { outline: 2px solid #7c4dff; outline-offset: -2px;
 /* Auswahl plus Uhrzeit nebeneinander (Batterie täglich um …). */
 .opt-pair { display: flex; flex: 1 1 auto; flex-wrap: wrap; align-items: center; justify-content: flex-end; gap: 8px; min-width: 0; }
 .opt-pair .opt-select { flex: 0 1 190px; }
+/* Felder mit Werten ab 10 000 (Einträge, zum Beispiel 100 000) zeigen alle Stellen (seit 2.156.1) */
+.opt-input.wide input { width: 76px; }
 .opt-input input[type="time"] { width: auto; color-scheme: light dark; text-align: left; }
 /* Fehler schlägt "geändert" (sonst bliebe das Feld im Popup blau). */
 .opt-input.bad, .opt.changed > .opt-line .opt-input.bad { border-color: var(--dp-error); box-shadow: inset 0 0 0 1px var(--dp-error); }
@@ -775,7 +771,6 @@ button.ai-head:focus-visible { outline: 2px solid #7c4dff; outline-offset: -2px;
 .sw-btn { position: relative; flex: none; width: 36px; height: 20px; padding: 0; border: none; border-radius: 99px; background: color-mix(in srgb, var(--dp-text) 25%, transparent); cursor: pointer; transition: background .15s; }
 .sw-btn span { position: absolute; top: 2px; left: 2px; width: 16px; height: 16px; border-radius: 50%; background: #fff; transition: left .15s; }
 .sw-btn.on { background: var(--dp-primary); }
-.sw-btn.beta.on { background: var(--dp-beta); }
 .sw-btn.on span { left: 18px; }
 .sw-btn:disabled { opacity: .5; cursor: default; }
 .sw-btn:focus-visible { outline: 2px solid var(--dp-primary); outline-offset: 2px; }
@@ -2358,7 +2353,7 @@ button.lg-row.has-chev:hover .al-chev { color: var(--dp-primary); }
   .tr-n { grid-area: n; } .tr-l { grid-area: l; } .tr-t { grid-area: t; }
 }
 /* Einrichtungsassistent (seit 2.135.0, docs/mockups/wizard-v1): Popup am Desktop, Vollbild am Handy */
-dialog.wizard-dlg { padding: 0; border: none; border-radius: 22px; background: var(--dp-card); color: var(--dp-text); box-shadow: var(--dp-shadow); width: min(640px, calc(100vw - 32px)); height: min(640px, calc(100% - 48px)); max-height: calc(100% - 48px); overflow: hidden; margin: auto; }
+dialog.wizard-dlg { padding: 0; border: none; border-radius: 22px; background: var(--dp-card); color: var(--dp-text); box-shadow: var(--dp-shadow); width: min(880px, calc(100vw - 48px)); height: min(1100px, calc(100% - 48px)); max-height: calc(100% - 48px); overflow: hidden; margin: auto; }
 dialog.wizard-dlg::backdrop { background: rgba(0,0,0,0.5); }
 dialog.wizard-dlg[open] { display: flex; flex-direction: column; }
 /* Kopf wie bei den anderen Fenstern: das Standard-Kreuz (.dlg-close) ganz oben rechts, darunter der Fortschritt */

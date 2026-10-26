@@ -137,7 +137,7 @@ Some devices report only now and then, for example Bluetooth sensors, and would 
 
 - **Where:** switch "Watch online status" in the tab "Outage" of an integration and of a label; for a single device the choice "No online status" next to "Own time" and "Do not monitor" in the pop-up (Settings). An own time on the device switches the status on again
 - **Order of precedence:** device › label › integration; with several labels the strictest applies: "Do not monitor", then "No online status", then a time
-- **In the panel:** a grey ring instead of the dot, a line under the tiles ("N devices without online status") that doubles as the filter chip "No online status" (can be hidden and moved like all chips)
+- **In the panel:** a grey ring instead of the dot, a row in the availability tile ("N without online status") and the filter chip "No online status" (can be hidden and moved like all chips)
 - **Setup wizard:** in the step "Notifications", tab "Outage", a ring switch per integration and device, and the switch on the card of a label
 
 ### From outage to notification

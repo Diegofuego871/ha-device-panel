@@ -1544,7 +1544,7 @@ class DevicePanel extends HTMLElement {
         <span class="app-pins"></span><button type="button" class="apps-btn" aria-haspopup="dialog" aria-expanded="false" title="${escape(this._t("appsBtn"))}" aria-label="${escape(this._t("appsBtn"))}">${mdi("apps", 22)}</button>
       </div>
       <div class="area-pop" role="dialog" aria-label="${escape(this._t("areaTitle"))}" hidden></div>
-      <div class="content"><div class="hstrip"></div><div class="hero"></div><div class="nsline"></div><div class="chips"></div><div class="viewline"></div><div class="list"></div><div class="foot"></div></div>
+      <div class="content"><div class="hstrip"></div><div class="hero"></div><div class="chips"></div><div class="viewline"></div><div class="list"></div><div class="foot"></div></div>
       <dialog class="device"></dialog><dialog class="magic-dlg"></dialog><dialog class="magic-dlg routine-dlg"></dialog><dialog class="stat-dlg"></dialog><dialog class="settings"></dialog><dialog class="area-sheet"></dialog><dialog class="pulse-dlg"></dialog><dialog class="log-dlg proto-dlg"></dialog><dialog class="apps-dlg"></dialog><dialog class="app-dlg"></dialog><dialog class="rtall-dlg"></dialog><dialog class="mgall-dlg"></dialog><dialog class="status-dlg"></dialog><dialog class="prompt-dlg"></dialog><dialog class="notes-dlg"></dialog><dialog class="notes-dlg backup-dlg"></dialog><dialog class="rename-dlg"></dialog><dialog class="discard-dlg"></dialog><dialog class="wizard-dlg"></dialog>
       <div class="toast" role="status" aria-live="polite" hidden></div>`;
     const root = this.shadowRoot;
@@ -3029,9 +3029,9 @@ class DevicePanel extends HTMLElement {
     const offline = scope.filter((d) => d.online === false).sort((a, b) => Date.parse(a.offline_since) - Date.parse(b.offline_since));
     // Kopf und Puls nur mit überwachten Geräten; deaktivierte und nicht überwachte zählen nicht.
     const monitored = scope.filter((d) => !d.disabled && !d.unmonitored && !d.no_status);
-    setHtml(root.querySelector(".hero"), this._loading ? "" : this._heroHtml(monitored, offline));
-    // Eine Zeile unter den Kacheln (seit 2.156.0): Geräte ohne Online-Status (zählen weder online noch ausgefallen)
-    setHtml(root.querySelector(".nsline"), this._loading ? "" : this._noStatusLineHtml(scope));
+    // Geräte ohne Online-Status (seit 2.156.0) zählen weder online noch ausgefallen; die Kachel nennt ihre Zahl als eigene Zeile
+    const noStatus = scope.filter((d) => d.no_status && !d.disabled && !d.unmonitored).length;
+    setHtml(root.querySelector(".hero"), this._loading ? "" : this._heroHtml(monitored, offline, noStatus));
     setHtml(root.querySelector(".hstrip"), this._loading ? "" : this._stripHtml(monitored, offline));
     setHtml(root.querySelector(".chips"), this._loading ? "" : this._chipsHtml(all));
     this._guardPin();
@@ -3057,7 +3057,7 @@ class DevicePanel extends HTMLElement {
     this._renderDevice(soft);
   }
 
-  _heroHtml(all, offline) {
+  _heroHtml(all, offline, noStatus = 0) {
     const online = all.filter((d) => d.online === true);
     const flaky = online.filter((d) => d.flaky).length;
     const noData = all.filter((d) => d.online == null).length;
@@ -3083,7 +3083,8 @@ class DevicePanel extends HTMLElement {
       <div class="lines">${line("var(--dp-success)", this._t("linesOnline", online.length - flaky))}
       ${flaky ? line("var(--dp-warning)", this._t("linesFlaky", flaky)) : ""}
       ${line("var(--dp-error)", this._t("linesOffline", offline.length))}
-      ${noData ? line("var(--dp-text3)", this._t("linesNoData", noData)) : ""}</div></div></div>`;
+      ${noData ? line("var(--dp-text3)", this._t("linesNoData", noData)) : ""}
+      ${noStatus ? `<div><i class="ring"></i>${escape(this._t("linesNoStatus", noStatus))}</div>` : ""}</div></div></div>`;
     // Zeile unten in der Kachel (seit 1.16.0, docs/mockups/chip-warn-v1, V1): wie
     // viele Geräte eine Warnung haben; antippbar, setzt den Filter "Warnungen".
     // Bei Ausfällen ohne Warnungen entfällt die Zeile (seit 2.83.0): "Keine Warnungen" direkt unter einem Ausfall las sich als
@@ -3106,15 +3107,6 @@ class DevicePanel extends HTMLElement {
 
   // Zeile unter den Kacheln (seit 2.156.0): "N Geräte ohne Online-Status", nur wenn es solche gibt. Ein Tipp setzt den Chip "Ohne Online-Status"
   // (data-hint), ist der Chip ausgeblendet, bleibt es ein reiner Hinweis.
-  _noStatusLineHtml(scope) {
-    const n = scope.filter((d) => d.no_status && !d.disabled && !d.unmonitored).length;
-    if (!n) return "";
-    const text = `<span class="pd ring"></span><span>${escape(this._t("noStatusLine", n))}</span>`;
-    return this._hideChips.has("nostatus")
-      ? `<div class="nsl">${text}</div>`
-      : `<button type="button" class="nsl" data-hint="nostatus" aria-pressed="${this._hint === "nostatus"}">${text}</button>`;
-  }
-
   _syncSticky() {
     const content = this.shadowRoot.querySelector(".content");
     if (!content) return;
@@ -8985,7 +8977,7 @@ class DevicePanel extends HTMLElement {
     ]);
     const num = (key, unit, label) => {
       const [min, max] = st.data.limits?.[key] || [];
-      return `<span class="opt-input"><input type="number" inputmode="numeric" step="1" ${min != null ? `min="${min}" max="${max}"` : ""} data-opt="${key}" value="${escape(d[key] ?? "")}" aria-label="${escape(label)}"><span class="unit">${escape(unit)}</span></span>`;
+      return `<span class="opt-input${max >= 10000 ? " wide" : ""}"><input type="number" inputmode="numeric" step="1" ${min != null ? `min="${min}" max="${max}"` : ""} data-opt="${key}" value="${escape(d[key] ?? "")}" aria-label="${escape(label)}"><span class="unit">${escape(unit)}</span></span>`;
     };
     // Ausschlüsse als Tabelle: Schalter "Anzeigen" pro Integration bzw. Typ,
     // bei den Integrationen dazu "Push" und "Anhaltend" (Bild 5). Jede Spalte

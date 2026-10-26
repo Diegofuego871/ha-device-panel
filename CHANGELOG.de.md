@@ -7,6 +7,17 @@ Alle nennenswerten Änderungen an dieser Integration stehen in dieser Datei.
 Das Format folgt [Keep a Changelog](https://keepachangelog.com/de/1.1.0/),
 die Versionsnummern folgen [Semantic Versioning](https://semver.org/lang/de/).
 
+## [2.156.1] - 2026-10-26
+
+Einrichtungsassistent so gross wie die Einstellungen, Schalter für Vorabversionen in der gewohnten Farbe.
+
+### Geändert
+
+- **Einrichtungsassistent auf dem Desktop:** Das Fenster ist jetzt so gross wie die Einstellungen (bis 880 px breit und gleich hoch); auf dem Handy bleibt es Vollbild.
+- **Schalter "Vorabversionen anzeigen":** jetzt in derselben Farbe wie alle anderen Schalter (nicht mehr violett).
+- **Zahlenfelder für Einträge:** Die Felder für die höchste Anzahl Einträge (zum Beispiel "Panel-Log: Einträge") zeigen jetzt alle Stellen, bis 100 000.
+- **Geräte ohne Online-Status:** Die Zahl hat keine eigene Zeile mehr unter den Kacheln, sondern steht als Zeile mit Ring in der Kachel "Verfügbarkeit" ("N ohne Online-Status"). Der Filter-Chip "Ohne Online-Status" bleibt.
+
 ## [2.156.0] - 2026-10-26
 
 Ohne Online-Status: Ein Gerät bleibt für Batterie, Laden und Empfang überwacht, hat aber keinen Online-Status, keine Ausfälle und keine Ausfall-Meldungen.
@@ -5076,7 +5087,8 @@ Erste Vorabversion.
   GitHub Actions für die Prüfungen von HACS und hassfest sowie die Tests.
 
 [2.6.0]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v2.6.0
-[2.156.0]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v2.156.0
+[2.156.1]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v2.156.1
+[2.156.0]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/2.156.0
 [2.155.1]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v2.155.1
 [2.155.0]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v2.155.0
 [2.154.2]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v2.154.2

@@ -56,7 +56,7 @@ for (const lang of ["de", "en"]) {
       check(`[${tag}] Willkommen: Los geht's, ${L.later}, ${L.never}`, (await s.text(`${s.D} .wz-welcome-ft`)).includes(L.start) && (await s.text(`${s.D} .wz-ft2`)).includes(L.later) && (await s.text(`${s.D} .wz-ft2`)).includes(L.never));
       const box = await s.ev(`const d = r.querySelector("${s.D}").getBoundingClientRect(); return [Math.round(d.left), Math.round(d.top), Math.round(d.width), Math.round(d.height), innerWidth, innerHeight]`);
       if (mobile) check(`[${tag}] Handy: Vollbild`, box[0] === 0 && box[1] === 0 && box[2] === box[4] && box[3] === box[5], JSON.stringify(box));
-      else check(`[${tag}] Desktop: Popup in der Mitte (höchstens 640 px breit)`, box[2] <= 640 && box[2] > 400 && Math.abs(box[0] + box[2] / 2 - box[4] / 2) < 4, JSON.stringify(box));
+      else check(`[${tag}] Desktop: Popup in der Mitte, so gross wie die Einstellungen (höchstens 880 px breit)`, box[2] <= 880 && box[2] > 640 && Math.abs(box[0] + box[2] / 2 - box[4] / 2) < 4, JSON.stringify(box));
       await s.shot("1-welcome");
       check(`[${tag}] Kachel "${L.tile}" im Launcher und oranger Punkt am Knopf`, (await s.tileShown()) && (await s.launcherDot()));
 

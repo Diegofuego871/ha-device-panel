@@ -9,8 +9,8 @@ let ok = true;
 const check = (l, c, i = "") => { ok &&= !!c; console.log(`${c ? "PASS" : "FAIL"} ${l}${i ? " - " + i : ""}`); };
 const R = `document.querySelector("device-panel").shadowRoot`;
 const T = {
-  de: { line: /Geräte ohne Online-Status/, chip: "Ohne Online-Status", sw: "Online-Status beobachten", label: "Oft offline" },
-  en: { line: /devices? without online status/i, chip: "No online status", sw: "Watch online status", label: "Often offline" },
+  de: { line: /ohne Online-Status/, chip: "Ohne Online-Status", sw: "Online-Status beobachten", label: "Oft offline" },
+  en: { line: /without online status/i, chip: "No online status", sw: "Watch online status", label: "Often offline" },
 };
 
 for (const lang of ["de", "en"]) {
@@ -38,7 +38,7 @@ for (const lang of ["de", "en"]) {
     const calls = (type) => p.evaluate((t) => window.__wsCalls.filter((m) => m.type === t), type);
 
     // --- ohne Einstellung: keine Zeile, kein Chip
-    check(`[${tag}] ohne Einstellung: keine Zeile`, !(await ev(`return !!r.querySelector(".nsline .nsl")`)));
+    check(`[${tag}] ohne Einstellung: keine Zeile in der Kachel`, !(await ev(`return !!r.querySelector(".lines i.ring")`)));
     check(`[${tag}] ohne Einstellung: kein Chip`, !(await ev(`return !!r.querySelector('.chips [data-hint="nostatus"]')`)));
 
     // --- Zigbee ohne Online-Status
@@ -48,15 +48,17 @@ for (const lang of ["de", "en"]) {
     check(`[${tag}] Backend-Feld: Zigbee-Geräte ohne Online-Status`, ns.length > 0 && !ns.includes("a"), ns);
     check(`[${tag}] ohne Status: online und Ausfallzeit leer`, await ev(`return r.host._devices.filter((d) => d.no_status).every((d) => d.online == null && d.offline_after == null && d.avail24 == null)`));
     const count = await ev(`return r.host._devices.filter((d) => d.no_status && !d.disabled && !d.unmonitored).length`);
-    check(`[${tag}] Zeile unter den Kacheln mit Anzahl`, await wait(`const t=r.querySelector(".nsline .nsl")?.innerText || ""; return t.includes(String(${count}))`) && L.line.test(await ev(`return r.querySelector(".nsline .nsl").innerText`)), await ev(`return r.querySelector(".nsline")?.innerText`));
-    check(`[${tag}] Chip "${L.chip}" in der Zeile`, await ev(`return !!r.querySelector('.nsline button[data-hint="nostatus"]')`));
-    check(`[${tag}] Ring statt Punkt in der Zeile`, await ev(`return !!r.querySelector(".nsline .pd.ring")`));
+    const nsRow = `r.querySelector(".lines i.ring")?.parentElement?.innerText || ""`;
+    check(`[${tag}] Kachel Verfügbarkeit: Zeile mit Anzahl und Ring`, await wait(`return (${nsRow}).includes(String(${count}))`) && L.line.test(await ev(`return ${nsRow}`)), await ev(`return ${nsRow}`));
+    check(`[${tag}] keine eigene Zeile unter den Kacheln mehr`, !(await ev(`return !!r.querySelector(".nsline")`)));
+    check(`[${tag}] Chip "${L.chip}" in der Chip-Leiste`, await ev(`return !!r.querySelector('.chips [data-hint="nostatus"]')`));
+    check(`[${tag}] Kachel zählt Geräte ohne Status nicht als online`, await ev(`const n=r.host._devices.filter((d)=>!d.no_status && !d.disabled && !d.unmonitored).length; return r.querySelector(".ringwrap .c")?.innerText.replace(/\\s+/g," ").includes(String(r.host._devices.filter((d)=>d.online===true).length))`));
     check(`[${tag}] Kachel: Ring, kein Ausfall`, await ev(`const d=r.querySelector('.dev[data-open="b"]'); return !!d && !!(d.querySelector(".pd.ring, .av.ns")) && !d.querySelector(".pd.off")`));
 
     // --- Chip filtert
-    await tap('.nsline button[data-hint="nostatus"]');
+    await tap('.chips [data-hint="nostatus"]');
     check(`[${tag}] Filter zeigt nur Geräte ohne Online-Status`, await wait(`const ids=[...r.querySelectorAll(".dev")].map((x) => x.dataset.open); return ids.length > 0 && ids.every((id) => r.host._devices.find((d) => d.id === id).no_status)`));
-    await tap('.nsline button[data-hint="nostatus"]');
+    await tap('.chips [data-hint="nostatus"]');
     await wait(`return r.querySelectorAll(".dev").length > ${count}`);
 
     // --- Popup: Auswahl und Status
@@ -79,7 +81,7 @@ for (const lang of ["de", "en"]) {
     // --- Integration: Schalter
     await p.evaluate(() => { window.__opts.offline_after_integrations = {}; delete window.__devSettings.offline.b; });
     await refetch();
-    check(`[${tag}] Einstellung zurück: Zeile weg`, await wait(`return !r.querySelector(".nsline .nsl")`));
+    check(`[${tag}] Einstellung zurück: Zeile weg`, await wait(`return !r.querySelector(".lines i.ring")`));
     await tap(".gear-btn");
     await wait(`return !!r.querySelector("dialog.settings .set-sec")`);
     await tap('[data-set="section"][data-id="monitor"]');
@@ -95,7 +97,7 @@ for (const lang of ["de", "en"]) {
     const saved = (await calls("device_panel/set_options")).at(-1);
     check(`[${tag}] Integration: "nostatus" gespeichert`, saved?.values?.offline_after_integrations?.hue === "nostatus", JSON.stringify(saved?.values?.offline_after_integrations));
     await p.screenshot({ path: `${outDir}/nostatus-integ-${tag.replace("/", "-")}.png` });
-    check(`[${tag}] Zeile erscheint nach dem Speichern`, await wait(`return !!r.querySelector(".nsline .nsl")`));
+    check(`[${tag}] Zeile erscheint nach dem Speichern`, await wait(`return !!r.querySelector(".lines i.ring")`));
 
     // --- Assistent: Label-Karte und Drill-Down
     await p.evaluate((name) => {
