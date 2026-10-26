@@ -20,6 +20,7 @@ from homeassistant.helpers import device_registry as dr
 from .const import CONF_LABELS, DOMAIN, LABEL_PREFIX
 
 OFF = "off"
+NOSTATUS = "nostatus"
 
 Found = Sequence[tuple[str, Any]]
 
@@ -89,10 +90,11 @@ def first(found: Found) -> tuple[str, Any]:
 
 
 def strictest_time(found: Found) -> tuple[str, Any]:
-    """"off" (nicht überwachen) vor einer Zeit; bei Zeiten die längere."""
-    for item in found:
-        if item[1] == OFF:
-            return item
+    """"off" (nicht überwachen) vor "nostatus" (ohne Online-Status) vor einer Zeit; bei Zeiten die längere."""
+    for value in (OFF, NOSTATUS):
+        for item in found:
+            if item[1] == value:
+                return item
     return max(found, key=lambda kv: kv[1])
 
 

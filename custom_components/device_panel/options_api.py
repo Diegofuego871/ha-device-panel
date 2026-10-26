@@ -62,6 +62,7 @@ from .const import (
     NEW_FIELDS,
     CONF_BATTERY_PUSH_EXCLUDE,
     DEFAULT_BATTERY_FIELDS,
+    MONITOR_NOSTATUS,
     MONITOR_OFF,
     OFFLINE_INTEGRATION_RANGE,
     CLICK_PANEL,
@@ -619,8 +620,8 @@ def signal_integrations_map(value: Any) -> dict[str, dict[str, int | str]]:
 
 def offline_map(value: Any) -> dict[str, int | str]:
     """
-    Eigenes "Ausgefallen nach" {Domain: Minuten oder "off"}; "off" schaltet die
-    Überwachung der Integration aus (Geräte bleiben sichtbar).
+    Eigenes "Ausgefallen nach" {Domain oder Label: Minuten, "off" oder "nostatus"}; "off" schaltet die
+    Überwachung der Integration aus (Geräte bleiben sichtbar), "nostatus" nur den Online-Status (seit 2.156.0).
     """
     low, high = OFFLINE_INTEGRATION_RANGE
     if value is None:
@@ -634,6 +635,9 @@ def offline_map(value: Any) -> dict[str, int | str]:
         # YAML 1.1 (Optionsdialog) liest "off" als False.
         if minutes is False or (isinstance(minutes, str) and minutes.strip().lower() == MONITOR_OFF):
             out[domain] = MONITOR_OFF
+            continue
+        if isinstance(minutes, str) and minutes.strip().lower() == MONITOR_NOSTATUS:
+            out[domain] = MONITOR_NOSTATUS
             continue
         number = _whole(minutes)
         if number is None or not low <= number <= high:
@@ -979,11 +983,26 @@ def battery_threshold(opts: Mapping[str, Any], domain: str | None) -> int | None
     return None if value == BATTERY_OFF else value
 
 
-def offline_after_for(opts: Mapping[str, Any], domain: str | None) -> float | None:
-    """Wirksames "Ausgefallen nach" in Sekunden für ein Gerät der Integration; None = nicht überwacht."""
+def offline_setting_for(opts: Mapping[str, Any], domain: str | None) -> int | str:
+    """Wirksame Einstellung "Ausgefallen nach" für ein Gerät der Integration (Label vor Integration vor global): Minuten, "off" oder "nostatus"."""
     _key, own = pick(opts.get(CONF_OFFLINE_INTEGRATIONS), domain, strictest_time)
-    value = opts[CONF_OFFLINE_AFTER] if own is None else own
-    return None if value == MONITOR_OFF else value * 60
+    return opts[CONF_OFFLINE_AFTER] if own is None else own
+
+
+def offline_after_for(opts: Mapping[str, Any], domain: str | None) -> float | None:
+    """
+    Wirksames "Ausgefallen nach" in Sekunden für ein Gerät der Integration; None = nicht überwacht. Ohne Online-Status ("nostatus") gilt die
+    globale Zeit, damit "Erst melden nach" und die übrigen Zeiten weiter rechnen; ob das Gerät einen Status hat, sagt status_off_for.
+    """
+    value = offline_setting_for(opts, domain)
+    if value == MONITOR_OFF:
+        return None
+    return opts[CONF_OFFLINE_AFTER] * 60 if value == MONITOR_NOSTATUS else value * 60
+
+
+def status_off_for(opts: Mapping[str, Any], domain: str | None) -> bool:
+    """Gilt für ein Gerät der Integration (Label vor Integration vor global) "Ohne Online-Status" (seit 2.156.0)."""
+    return offline_setting_for(opts, domain) == MONITOR_NOSTATUS
 
 
 def notify_delay_for(opts: Mapping[str, Any], domain: str | None, own: int | None = None, offline_after: float | None = None) -> int:
@@ -1012,7 +1031,7 @@ def notify_delay_conflicts(options: Mapping[str, Any], before: Mapping[str, Any]
     for domain, delay in now[CONF_NOTIFY_DELAY_INTEGRATIONS].items():
         changed = delay != old[CONF_NOTIFY_DELAY_INTEGRATIONS].get(domain) or now[CONF_OFFLINE_INTEGRATIONS].get(domain) != old[CONF_OFFLINE_INTEGRATIONS].get(domain)
         offline = offline_after_for(now, domain)
-        if changed and offline is not None and delay * 60 < offline:
+        if changed and offline is not None and not status_off_for(now, domain) and delay * 60 < offline:
             bad.append(domain)
     return bad
 

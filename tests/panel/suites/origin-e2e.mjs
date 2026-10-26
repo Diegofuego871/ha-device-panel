@@ -12,13 +12,13 @@ const R = `document.querySelector("device-panel").shadowRoot`;
 
 const TEXT = {
   de: {
-    label: "Ausgefallen nach", glob: "Globaler Wert (2 Min.)", integ: "Wie Integration (1 Std.)", own: "Eigene Zeit", none: "Nicht überwachen",
+    label: "Ausgefallen nach", glob: "Globaler Wert (2 Min.)", integ: "Wie Integration (1 Std.)", own: "Eigene Zeit", nostat: "Ohne Online-Status", none: "Nicht überwachen",
     std: "Standard", dev: "Gerät", integOrigin: "Integration Zigbee Home Automation", would: "Standard wäre 2 Min.",
     notifyOn: "Push aus · Anhaltend aus", notifyInteg: "Wie Integration", min: "Min.", range: "Erlaubt: 1 bis 1440", pill: "Nicht überwacht",
     resetTitle: "Eigenes \"Ausgefallen nach\" auf Geräten", batInteg: "Wie Integration (30 %)", batWould: "Standard wäre 15 %",
   },
   en: {
-    label: "Offline after", glob: "Global value (2 min)", integ: "Same as integration (1 h)", own: "Own time", none: "Don't monitor",
+    label: "Offline after", glob: "Global value (2 min)", integ: "Same as integration (1 h)", own: "Own time", nostat: "No online status", none: "Don't monitor",
     std: "Default", dev: "Device", integOrigin: "Integration Zigbee Home Automation", would: "Default would be 2 min",
     notifyOn: "Push off · Persistent off", notifyInteg: "Same as integration", min: "min", range: "Allowed: 1 to 1440", pill: "Not monitored",
     resetTitle: "Own \"Offline after\" on devices", batInteg: "Same as integration (30 %)", batWould: "Default would be 15 %",
@@ -60,7 +60,7 @@ for (const lang of ["de", "en"]) {
     await openDev("e");
     check(`[${tag}] Zeile "${T.label}" zuerst im Abschnitt`, (await ev(`return r.querySelector(".dev-set .opt .opt-label").textContent`)) === T.label);
     const sel0 = await ev(`const s=r.querySelector('select[data-dlg="dev-off"]'); return s.value + "|" + s.options[s.selectedIndex].textContent + "|" + [...s.options].map(o=>o.textContent).join(",")`);
-    check(`[${tag}] globaler Wert, drei Wahlmöglichkeiten`, sel0 === `default|${T.glob}|${T.glob},${T.own},${T.none}`, sel0);
+    check(`[${tag}] globaler Wert, vier Wahlmöglichkeiten`, sel0 === `default|${T.glob}|${T.glob},${T.own},${T.nostat},${T.none}`, sel0);
     const o0 = await origin("dev-off");
     check(`[${tag}] Herkunft "${T.std}"`, o0[0] === T.std && o0[1] === "std" && o0[2] === "", JSON.stringify(o0));
     check(`[${tag}] Herkunft Batterie: Standard`, (await origin("dev-bat"))[1] === "std");

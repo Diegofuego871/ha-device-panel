@@ -254,6 +254,7 @@
         "integration": "Integration",
         "label": "Label",
         "offline": "Ausgefallen",
+        "nostatus": "Ohne Online-Status",
         "problems": "Warnungen",
         "batteries": "Batterie",
         "battery": "Batterie niedrig",

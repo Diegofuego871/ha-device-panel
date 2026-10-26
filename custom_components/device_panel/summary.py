@@ -48,7 +48,7 @@ def _warning(d: dict[str, Any]) -> bool:
     if d["online"] is False:
         return False
     return (
-        d["online"] is not True
+        (d["online"] is not True and not d.get("no_status"))
         or bool(d.get("flaky"))
         or bool((d.get("battery") or {}).get("low"))
         or bool(d.get("signal")) and signal_weak(d["signal"], signal_limit(d))

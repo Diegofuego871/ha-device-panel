@@ -279,6 +279,7 @@ function releaseMarkdownHtml(markdown) {
 // --- Symbole (Material Design Icons als Pfad, Funkarten als Strichzeichnung)
 const MDI = {
   plus: "M19,13H13V19H11V13H5V11H11V5H13V11H19V13Z",
+  circleOutline: "M12,20A8,8 0 0,1 4,12A8,8 0 0,1 12,4A8,8 0 0,1 20,12A8,8 0 0,1 12,20M12,2A10,10 0 0,0 2,12A10,10 0 0,0 12,22A10,10 0 0,0 22,12A10,10 0 0,0 12,2Z",
   tag: "M21.41,11.58L12.41,2.58C12.05,2.22 11.55,2 11,2H4C2.9,2 2,2.9 2,4V11C2,11.55 2.22,12.05 2.59,12.42L11.59,21.42C11.95,21.78 12.45,22 13,22C13.55,22 14.05,21.78 14.41,21.41L21.41,14.41C21.78,14.05 22,13.55 22,13C22,12.45 21.77,11.94 21.41,11.58M13,20L4,11V4H11L20,13M6.5,5A1.5,1.5 0 0,1 8,6.5A1.5,1.5 0 0,1 6.5,8A1.5,1.5 0 0,1 5,6.5A1.5,1.5 0 0,1 6.5,5Z",
   search: "M9.5,3A6.5,6.5 0 0,1 16,9.5C16,11.11 15.41,12.59 14.44,13.73L14.71,14H15.5L20.5,19L19,20.5L14,15.5V14.71L13.73,14.44C12.59,15.41 11.11,16 9.5,16A6.5,6.5 0 0,1 3,9.5A6.5,6.5 0 0,1 9.5,3M9.5,5C7,5 5,7 5,9.5C5,12 7,14 9.5,14C12,14 14,12 14,9.5C14,7 12,5 9.5,5Z",
   wifi: "M12,21L15.6,16.2C14.6,15.45 13.35,15 12,15C10.65,15 9.4,15.45 8.4,16.2L12,21M12,3C7.95,3 4.21,4.34 1.2,6.6L3,9C5.5,7.12 8.62,6 12,6C15.38,6 18.5,7.12 21,9L22.8,6.6C19.79,4.34 16.05,3 12,3M12,9C9.3,9 6.81,9.89 4.8,11.4L6.6,13.8C8.1,12.67 9.97,12 12,12C14.03,12 15.9,12.67 17.4,13.8L19.2,11.4C17.19,9.89 14.7,9 12,9Z",
@@ -498,7 +499,7 @@ const RESTART_WAIT_MS = 5 * 60 * 1000;
 // Übrige Filter-Chips, die sich ausblenden lassen (seit 1.11.0, wie const.CHIP_KEYS):
 // Schlüssel, Symbol. Die Texte stehen in strings.js (chipOther).
 const CHIP_OTHER = [
-  ["area", "home"], ["integration", "puzzle"], ["label", "tag"], ["offline", "closeCircle"], ["problems", "alert"], ["batteries", "battery"], ["battery", "battery"],
+  ["area", "home"], ["integration", "puzzle"], ["label", "tag"], ["offline", "closeCircle"], ["nostatus", "circleOutline"], ["problems", "alert"], ["batteries", "battery"], ["battery", "battery"],
   ["signal", "signal"], ["update", "update"], ["override", "tune"], ["new", "sparkle"], ["charging", "batteryCharging"], ["favorites", "heart"],
 ];
 // Reihenfolge aller Chips über der Liste (seit 1.13.0, seit 1.14.0 eine Folge,
@@ -512,7 +513,7 @@ const chipKind = (key) => (key === "area" || key === "integration" || key === "l
 // Nutzers): "Alle" ist angeheftet, dann die Hinweise, dann die Verbindungsarten,
 // hinten die seltenen Chips.
 const CHIP_DEFAULT = [
-  "all", "pin", "favorites", "integration", "label", "new", "offline", "problems", "battery", "batteries", "charging", "area",
+  "all", "pin", "favorites", "integration", "label", "new", "offline", "nostatus", "problems", "battery", "batteries", "charging", "area",
   "thread", "wifi", "ble", "zigbee", "ethernet", "cloud", "matter", "network", "unknown", "zwave",
   "signal", "update", "override",
 ];
@@ -544,6 +545,8 @@ function chipOrder(order, connOrder, counts) {
     const a = out.indexOf("all"), p = out.indexOf("pin");
     out.splice(p > a && a >= 0 ? p + 1 : a >= 0 ? a + 1 : Math.max(p + 1, 0), 0, "favorites");
   }
+  // Der Chip "Ohne Online-Status" (seit 2.156.0) fehlt in älteren Folgen: gleich hinter "Ausgefallen"
+  if (!out.includes("nostatus")) out.splice(out.includes("offline") ? out.indexOf("offline") + 1 : out.length, 0, "nostatus");
   // Der Chip "Label" (seit 2.155.0) fehlt in älteren Folgen: gleich hinter "Integration"
   if (!out.includes("label")) out.splice(out.includes("integration") ? out.indexOf("integration") + 1 : out.length, 0, "label");
   const full = [...out, ...["area", "integration", "label", "all", ...CHIP_TAIL].filter((k) => !out.includes(k))];
@@ -673,7 +676,7 @@ const devWeak = (d) => devSigLevel(d) === 1;
 // niedrig, schwacher Empfang oder keine Daten, ohne Ausfälle. Deaktivierte und
 // nicht überwachte Geräte zählen nicht (bewusst abgeschaltet).
 const devOffline = (d) => !d.disabled && !d.unmonitored && d.online === false;
-const devWarn = (d) => !d.disabled && !d.unmonitored && d.online !== false && (d.online !== true || Boolean(d.flaky) || Boolean(d.battery?.low) || devWeak(d));
+const devWarn = (d) => !d.disabled && !d.unmonitored && !d.no_status && d.online !== false && (d.online !== true || Boolean(d.flaky) || Boolean(d.battery?.low) || devWeak(d));
 // Vorschlag für die eigene Schwelle: 5 dBm bzw. 10 LQI unter dem heutigen
 // Wert, im erlaubten Bereich; ohne Wert der Standard.
 function sigSuggest(sig) {
@@ -852,6 +855,8 @@ const HINTS = [
   { key: "update", cls: "u", icon: "update", label: "hintUpdate", test: (d) => Boolean(d.update) },
   { key: "override", cls: "o", icon: "tune", label: "hintOverride", test: hasOverride },
   { key: "new", cls: "nw", icon: "sparkle", label: "hintNew", test: (d) => Boolean(d.new) },
+  // Ohne Online-Status (seit 2.156.0): überwacht (Batterie, Laden, Empfang), aber ohne Status und Ausfälle; der Ring statt des Punkts
+  { key: "nostatus", cls: "ns", icon: "circleOutline", label: "chipNoStatus", test: (d) => Boolean(d.no_status) && !d.disabled },
   // Favoriten (seit 2.22.0): nur das rote Herz, ohne Text und Zahl; erscheint immer (auch ohne Favoriten), damit man es findet
   { key: "favorites", cls: "fv", icon: "heart", label: "hintFavorites", test: (d) => Boolean(d.fav), bare: true },
 ];
@@ -1539,7 +1544,7 @@ class DevicePanel extends HTMLElement {
         <span class="app-pins"></span><button type="button" class="apps-btn" aria-haspopup="dialog" aria-expanded="false" title="${escape(this._t("appsBtn"))}" aria-label="${escape(this._t("appsBtn"))}">${mdi("apps", 22)}</button>
       </div>
       <div class="area-pop" role="dialog" aria-label="${escape(this._t("areaTitle"))}" hidden></div>
-      <div class="content"><div class="hstrip"></div><div class="hero"></div><div class="chips"></div><div class="viewline"></div><div class="list"></div><div class="foot"></div></div>
+      <div class="content"><div class="hstrip"></div><div class="hero"></div><div class="nsline"></div><div class="chips"></div><div class="viewline"></div><div class="list"></div><div class="foot"></div></div>
       <dialog class="device"></dialog><dialog class="magic-dlg"></dialog><dialog class="magic-dlg routine-dlg"></dialog><dialog class="stat-dlg"></dialog><dialog class="settings"></dialog><dialog class="area-sheet"></dialog><dialog class="pulse-dlg"></dialog><dialog class="log-dlg proto-dlg"></dialog><dialog class="apps-dlg"></dialog><dialog class="app-dlg"></dialog><dialog class="rtall-dlg"></dialog><dialog class="mgall-dlg"></dialog><dialog class="status-dlg"></dialog><dialog class="prompt-dlg"></dialog><dialog class="notes-dlg"></dialog><dialog class="notes-dlg backup-dlg"></dialog><dialog class="rename-dlg"></dialog><dialog class="discard-dlg"></dialog><dialog class="wizard-dlg"></dialog>
       <div class="toast" role="status" aria-live="polite" hidden></div>`;
     const root = this.shadowRoot;
@@ -1831,7 +1836,7 @@ class DevicePanel extends HTMLElement {
         const d = this._devices.find((x) => x.id === this._detailId);
         const start = [d?.offline_after, d?.offline_default?.minutes, d?.offline_default?.global].find((v) => Number.isInteger(v)) ?? 2;
         this._offRangeError = null;
-        this._setDeviceSettings(this._detailId, { offline: el.value === "own" ? start : el.value === "off" ? "off" : null });
+        this._setDeviceSettings(this._detailId, { offline: el.value === "own" ? start : el.value === "off" ? "off" : el.value === "nostatus" ? "nostatus" : null });
       } else if (el.matches?.('input[data-dlg="dev-off-min"]')) {
         const v = Number(el.value);
         const [min, max] = [1, 1440];
@@ -2414,7 +2419,7 @@ class DevicePanel extends HTMLElement {
       case "name":
         return String(d.name || "");
       case "status":
-        return d.disabled || d.unmonitored ? 4 : d.online === false ? 0 : d.online == null ? 2 : d.flaky ? 1 : 3;
+        return d.disabled || d.unmonitored || d.no_status ? 4 : d.online === false ? 0 : d.online == null ? 2 : d.flaky ? 1 : 3;
       case "connection":
         return this._t(CONN[this._connOf(d)].key);
       case "avail":
@@ -3023,8 +3028,10 @@ class DevicePanel extends HTMLElement {
     const scope = this._scoped() ? all.filter((d) => this._scopePass(d)) : all;
     const offline = scope.filter((d) => d.online === false).sort((a, b) => Date.parse(a.offline_since) - Date.parse(b.offline_since));
     // Kopf und Puls nur mit überwachten Geräten; deaktivierte und nicht überwachte zählen nicht.
-    const monitored = scope.filter((d) => !d.disabled && !d.unmonitored);
+    const monitored = scope.filter((d) => !d.disabled && !d.unmonitored && !d.no_status);
     setHtml(root.querySelector(".hero"), this._loading ? "" : this._heroHtml(monitored, offline));
+    // Eine Zeile unter den Kacheln (seit 2.156.0): Geräte ohne Online-Status (zählen weder online noch ausgefallen)
+    setHtml(root.querySelector(".nsline"), this._loading ? "" : this._noStatusLineHtml(scope));
     setHtml(root.querySelector(".hstrip"), this._loading ? "" : this._stripHtml(monitored, offline));
     setHtml(root.querySelector(".chips"), this._loading ? "" : this._chipsHtml(all));
     this._guardPin();
@@ -3095,6 +3102,17 @@ class DevicePanel extends HTMLElement {
         <div class="top"><span class="num ok">0</span><span class="lbl">${escape(this._t("allOnline"))}</span></div>
         <div class="durs">${escape(this._t("allOnlineSub"))}</div>${warnLine}</div>`;
     return ring + off + this._pulseHtml(all);
+  }
+
+  // Zeile unter den Kacheln (seit 2.156.0): "N Geräte ohne Online-Status", nur wenn es solche gibt. Ein Tipp setzt den Chip "Ohne Online-Status"
+  // (data-hint), ist der Chip ausgeblendet, bleibt es ein reiner Hinweis.
+  _noStatusLineHtml(scope) {
+    const n = scope.filter((d) => d.no_status && !d.disabled && !d.unmonitored).length;
+    if (!n) return "";
+    const text = `<span class="pd ring"></span><span>${escape(this._t("noStatusLine", n))}</span>`;
+    return this._hideChips.has("nostatus")
+      ? `<div class="nsl">${text}</div>`
+      : `<button type="button" class="nsl" data-hint="nostatus" aria-pressed="${this._hint === "nostatus"}">${text}</button>`;
   }
 
   _syncSticky() {
@@ -3325,7 +3343,7 @@ class DevicePanel extends HTMLElement {
 
   // Geräte im Kopf: mit Filter "Bereich" nur dessen, überwacht (nicht deaktiviert).
   _headDevices() {
-    return this._devices.filter((d) => !d.disabled && !d.unmonitored && this._scopePass(d));
+    return this._devices.filter((d) => !d.disabled && !d.unmonitored && !d.no_status && this._scopePass(d));
   }
 
   // --- Fenster "Unterbrüche in 24 Std." (seit 0.26.0, docs/mockups/pulse-v1, A)
@@ -3537,7 +3555,8 @@ class DevicePanel extends HTMLElement {
   }
 
   _avatar(d, size = 18) {
-    const cls = d.online === false ? "off" : d.online == null ? "none" : d.flaky ? "warn" : "";
+    // Ohne Online-Status (seit 2.156.0): der Punkt wird ein Ring
+    const cls = d.online === false ? "off" : d.no_status ? "none ns" : d.online == null ? "none" : d.flaky ? "warn" : "";
     // Logo der Integration, wenn der Brand-Dienst von HA eines liefert; sonst das Icon der Verbindungsart.
     const src = this._brandSrc(d.integration?.domain);
     const icon = src ? `<img class="brand" src="${escape(src)}" alt="" width="${size + 6}" height="${size + 6}" draggable="false">` : CONN[this._connOf(d)].icon(size);
@@ -3682,6 +3701,7 @@ class DevicePanel extends HTMLElement {
     const tag = (cls, icon, text, label) =>
       `<span class="ovr ${cls}" role="img" title="${escape(label)}" aria-label="${escape(label)}">${mdi(icon, 12)}${text ? escape(text) : ""}</span>`;
     if (d.offline_setting === "off") out.push(tag("time-off", "timer", "", this._t("ovrTimeOffTip")));
+    else if (d.offline_setting === "nostatus") out.push(tag("time-nostatus", "circleOutline", "", this._t("ovrTimeNoStatusTip")));
     else if (Number.isInteger(d.offline_setting)) out.push(tag("time", "timer", this._t("offlineMin", d.offline_setting), this._t("ovrTimeOwnTip", this._t("offlineMin", d.offline_setting))));
     if (Number.isInteger(d.notify_delay_setting)) out.push(tag("time", "bell", this._t("offlineMin", d.notify_delay_setting), this._t("ovrDelayOwnTip", this._t("offlineMin", d.notify_delay_setting))));
     const setting = d.battery_setting;
@@ -3709,6 +3729,7 @@ class DevicePanel extends HTMLElement {
   _statusHtml(d) {
     if (d.disabled) return `<span class="pill none">${escape(this._t("statusDisabled"))}</span>`;
     if (d.unmonitored) return `<span class="pill none">${escape(this._t("statusUnmonitored"))}</span>`;
+    if (d.no_status) return `<span class="pill none ns"><span class="pd ring"></span>${escape(this._t("statusNoStatus"))}</span>`;
     if (d.online === false) return `<div class="dur">${this._durationHtml(d)}</div><div class="durs">${escape(this._t("statusOffline"))}</div>`;
     if (d.online == null) return `<span class="pill none">${escape(this._t("statusNoData"))}</span>`;
     if (d.flaky) return `<span class="pill warn">${escape(this._t("statusFlaky"))}</span><div class="durs">${escape(this._t("flakyOutages", d.avail24.outages))}</div>`;
@@ -3789,7 +3810,7 @@ class DevicePanel extends HTMLElement {
   _groups(rows) {
     const byName = (a, b) => String(a.name).localeCompare(String(b.name));
     const outages = (d) => d.avail24?.outages || 0;
-    const active = rows.filter((d) => !d.disabled && !d.unmonitored);
+    const active = rows.filter((d) => !d.disabled && !d.unmonitored && !d.no_status);
     // Chip "Lädt": der volleste zuerst (fast fertig); Batterie-Chips: der leerste zuerst.
     const chosen = this._sortCmp() || (this._batterySort() ? (a, b) => batteryRank(a) - batteryRank(b) || byName(a, b) : this._chargingView() ? (a, b) => (b.charging?.level ?? -1) - (a.charging?.level ?? -1) || byName(a, b) : null);
     const groups = [
@@ -3797,6 +3818,8 @@ class DevicePanel extends HTMLElement {
       ["w", this._t("groupFlaky"), this._t("groupFlakyHint", this._flakyOutages), active.filter((d) => d.online === true && d.flaky).sort((a, b) => outages(b) - outages(a) || byName(a, b))],
       ["n", this._t("groupNoData"), this._t("groupNoDataHint"), active.filter((d) => d.online == null).sort(byName)],
       ["", this._t("groupOnline"), null, active.filter((d) => d.online === true && !d.flaky).sort(byName)],
+      // Ohne Online-Status (seit 2.156.0): überwacht, aber ohne Status; vor den deaktivierten
+      ["d", this._t("groupNoStatus"), this._t("groupNoStatusHint"), rows.filter((d) => d.no_status && !d.disabled && !d.unmonitored).sort(byName)],
       // Nur mit "Deaktivierte Geräte anzeigen": am Ende, nicht überwacht.
       ["d", this._t("groupDisabled"), this._t("groupDisabledHint"), rows.filter((d) => d.disabled).sort(byName)],
       // Integration auf "Nicht überwachen": sichtbar, ohne Status und Meldungen.
@@ -4351,6 +4374,7 @@ class DevicePanel extends HTMLElement {
     const mode = setting === "off" ? "off" : Number.isInteger(setting) ? "own" : "default";
     const range = mode === "own" ? this._devRangeError : null;
     const parts = { out: "", bat: "", chg: "", sig: "" };
+    let outFirst = 0;
     // Herkunft unter jeder Einstellung (Variante A, docs/mockups/backlog-v1):
     // Etikett (Standard / Integration / Gerät) und was ohne die Wahl am Gerät
     // gälte; der Tooltip trägt die ausführliche Erklärung.
@@ -4363,14 +4387,14 @@ class DevicePanel extends HTMLElement {
     // Zeit in Minuten oder "Nicht überwachen"; das Gerät geht vor.
     {
       const od = d.offline_default || { minutes: 2, integration: null, global: 2 };
-      const fmt = (v) => (v === "off" ? t("offlineNone") : t("offlineMin", v));
+      const fmt = (v) => (v === "off" ? t("offlineNone") : v === "nostatus" ? t("offlineNoStatus") : t("offlineMin", v));
       const own = d.offline_setting;
-      const offMode = own === "off" ? "off" : Number.isInteger(own) ? "own" : "default";
+      const offMode = own === "off" ? "off" : own === "nostatus" ? "nostatus" : Number.isInteger(own) ? "own" : "default";
       const offRange = offMode === "own" ? this._offRangeError : null;
       const defLabel = od.integration ? this._via(od.integration, t("devOffInteg", fmt(od.minutes))) : t("devOffGlobal", fmt(od.minutes));
       parts.out += `<div class="opt${offMode !== "default" ? " changed" : ""}"><div class="opt-line"><span class="opt-label">${escape(t("devOffline"))}</span>${sel(
         "dev-off",
-        [["default", defLabel], ["own", t("devOffOwn")], ["off", t("devOffNone")]],
+        [["default", defLabel], ["own", t("devOffOwn")], ["nostatus", t("devOffNoStatus")], ["off", t("devOffNone")]],
         offMode,
         t("devOffline")
       )}</div>${
@@ -4380,6 +4404,8 @@ class DevicePanel extends HTMLElement {
             }`
           : ""
       }${origin(offMode !== "default", od.integration, offMode !== "default" || od.integration ? t("originDefaultWould", fmt(od.global)) : "", t("devOffShort"))}</div>`;
+      // Ab hier ruhen die Ausfall-Einstellungen, wenn das Gerät ohne Online-Status ist (seit 2.156.0)
+      outFirst = parts.out.length;
     }
     // "Erst melden nach" pro Gerät (seit 2.91.0): Standard der Integration bzw. global oder eigene Zeit; nie kürzer als "Ausgefallen nach"
     {
@@ -4389,7 +4415,7 @@ class DevicePanel extends HTMLElement {
       const dRange = dMode === "own" ? this._delayRangeError : null;
       const dLabel = nd.integration ? this._via(nd.integration, t("devDelayInteg", t("offlineMin", nd.minutes))) : t("devDelayGlobal", t("offlineMin", nd.minutes));
       // Eigenes "Erst melden nach" kürzer als das wirksame "Ausgefallen nach" des Geräts: Fehler am Feld (der Server lehnt es ebenfalls ab)
-      const offEffective = d.offline_setting === "off" ? null : Number.isInteger(d.offline_setting) ? d.offline_setting : d.offline_default?.minutes ?? 2;
+      const offEffective = d.offline_setting === "off" || d.no_status ? null : Number.isInteger(d.offline_setting) ? d.offline_setting : d.offline_default?.minutes ?? 2;
       const short = dMode === "own" && Number.isInteger(offEffective) && own < offEffective ? { value: String(own), message: t("integDelayError", t("offlineMin", offEffective)) } : null;
       const bad = dRange || short;
       parts.out += `<div class="opt${dMode !== "default" ? " changed" : ""}"><div class="opt-line"><span class="opt-label">${escape(t("devDelay"))}</span>${sel(
@@ -4566,11 +4592,13 @@ class DevicePanel extends HTMLElement {
     // kein Empfang) entfallen seit 2.46.0.
     const od = d.offline_default || { minutes: 2, integration: null, global: 2 };
     const offOwn = d.offline_setting;
-    const offEff = offOwn === "off" ? "off" : Number.isInteger(offOwn) ? offOwn : od.minutes;
+    const offEff = offOwn === "off" ? "off" : offOwn === "nostatus" ? "nostatus" : Number.isInteger(offOwn) ? offOwn : od.minutes;
     const silenced = Boolean(d.notify_off || muted);
     const outTl =
       offEff === "off"
         ? this._ptlHtml([{ cls: "mk-off", title: t("offlineNone"), sub: t("tlDevNotMonitored"), w: 100 }])
+        : offEff === "nostatus"
+          ? this._ptlHtml([{ cls: "mk-off", title: t("offlineNoStatus"), sub: t("tlDevNoStatus"), w: 100 }])
         : this._ptlHtml(
             // Zwei Balken wie im Reiter der Einstellungen (seit 2.93.0): "Ausgefallen nach" und "Erst melden nach" (nie kürzer, siehe _outageRows)
             this._outageRows(
@@ -4596,7 +4624,7 @@ class DevicePanel extends HTMLElement {
     const note = (key) => `<div class="opt-short mon-empty">${escape(t(key))}</div>`;
     const hasSignal = d.signal?.value != null || d.signal_setting != null;
     const bodies = {
-      out: outTl + parts.out,
+      out: outTl + parts.out.slice(0, outFirst) + (d.no_status ? `<div class="mon-dis">${parts.out.slice(outFirst)}</div>` : parts.out.slice(outFirst)),
       bat: d.has_battery ? batTl + parts.bat : note("devNoBattery"),
       chg: d.battery?.level != null ? chgTl + parts.chg : note("devNoBattery"),
       sig: hasSignal ? parts.sig : note("devNoSignal"),
@@ -4879,8 +4907,10 @@ class DevicePanel extends HTMLElement {
       if (d.online === false) {
         status = `<span class="pill off"><span class="pd"></span>${escape(this._t("statusOfflinePill", `${d.since_at_least ? "≥ " : ""}${this._duration(d.offline_since)}`))}</span>`;
         avatar = "off";
-      } else if (d.disabled || d.unmonitored || d.online == null) {
-        status = `<span class="pill none">${escape(this._t(d.disabled ? "statusDisabled" : d.unmonitored ? "statusUnmonitored" : "statusNoData"))}</span>`;
+      } else if (d.disabled || d.unmonitored || d.no_status || d.online == null) {
+        status = d.no_status && !d.disabled && !d.unmonitored
+          ? `<span class="pill none ns"><span class="pd ring"></span>${escape(this._t("statusNoStatus"))}</span>`
+          : `<span class="pill none">${escape(this._t(d.disabled ? "statusDisabled" : d.unmonitored ? "statusUnmonitored" : "statusNoData"))}</span>`;
         avatar = "none";
       } else if (d.flaky || devWeak(d) || d.battery?.low) {
         avatar = "warn";
@@ -4888,7 +4918,7 @@ class DevicePanel extends HTMLElement {
       // Grund der Warnung oben (seit 1.27.0, docs/mockups/warn-reason-v1, K2): Marken im Kopf,
       // die zugehörigen Kacheln der Statistik tragen einen gelben Punkt.
       const why = [];
-      if (d.online !== false && !d.disabled && !d.unmonitored) {
+      if (d.online !== false && !d.disabled && !d.unmonitored && !d.no_status) {
         if (d.flaky) why.push([this._t("statusFlaky"), this._t("flakyOutages", d.avail24?.outages ?? 0)]);
         if (devWeak(d)) why.push([this._t("warnWeakSignal"), sigText(d.signal)]);
         if (d.battery?.low) why.push([this._t("warnBatteryLow"), d.battery.level != null ? `${d.battery.level} %` : ""]);
@@ -7158,7 +7188,7 @@ class DevicePanel extends HTMLElement {
     const active = this.shadowRoot.activeElement;
     const focusSel = active && dialog.contains(active) && active.dataset
       ? active.dataset.set ? `[data-set="${active.dataset.set}"]${active.dataset.id ? `[data-id="${active.dataset.id}"]` : ""}${active.dataset.key ? `[data-key="${active.dataset.key}"]` : ""}`
-        : active.dataset.lsearch ? `[data-lsearch="${active.dataset.lsearch}"]` : active.dataset.opt ? `[data-opt="${active.dataset.opt}"]` : active.dataset.bat ? `[data-bat="${active.dataset.bat}"]` : active.dataset.batMode ? `[data-bat-mode="${active.dataset.batMode}"]` : active.dataset.sig ? `[data-sig="${active.dataset.sig}"]` : active.dataset.sigMode ? `[data-sig-mode="${active.dataset.sigMode}"]` : active.dataset.connInteg ? `[data-conn-integ="${active.dataset.connInteg}"]` : active.dataset.typeInteg ? `[data-type-integ="${active.dataset.typeInteg}"]` : active.dataset.offMode ? `[data-off-mode="${active.dataset.offMode}"]` : active.dataset.delayMode ? `[data-delay-mode="${active.dataset.delayMode}"]` : active.dataset.imon ? `[data-imon="${active.dataset.imon}"]` : active.dataset.list && active.dataset.value ? `[data-list="${active.dataset.list}"][data-value="${active.dataset.value}"]` : active.dataset.emoji ? `[data-emoji="${active.dataset.emoji}"]` : active.dataset.nfield ? `[data-nfield="${active.dataset.nfield}"]` : active.dataset.bfield ? `[data-bfield="${active.dataset.bfield}"]` : active.dataset.newfield ? `[data-newfield="${active.dataset.newfield}"]` : active.dataset.qday !== undefined ? `[data-qday="${active.dataset.qday}"][data-qfield="${active.dataset.qfield}"]` : active.dataset.qdayOn !== undefined ? `[data-qday-on="${active.dataset.qdayOn}"]` : active.dataset.qtopic ? `[data-qtopic="${active.dataset.qtopic}"]` : active.dataset.ukind ? `[data-ukind="${active.dataset.ukind}"]` : active.dataset.uitem ? `[data-uitem="${active.dataset.uitem}"]` : active.dataset.cinteg ? `[data-cinteg="${active.dataset.cinteg}"]` : active.dataset.cfullInteg ? `[data-cfull-integ="${active.dataset.cfullInteg}"]` : active.dataset.criseInteg ? `[data-crise-integ="${active.dataset.criseInteg}"]` : active.dataset.cfull !== undefined ? "[data-cfull]" : active.dataset.ver ? `[data-ver="${active.dataset.ver}"]` : null
+        : active.dataset.lsearch ? `[data-lsearch="${active.dataset.lsearch}"]` : active.dataset.opt ? `[data-opt="${active.dataset.opt}"]` : active.dataset.bat ? `[data-bat="${active.dataset.bat}"]` : active.dataset.batMode ? `[data-bat-mode="${active.dataset.batMode}"]` : active.dataset.sig ? `[data-sig="${active.dataset.sig}"]` : active.dataset.sigMode ? `[data-sig-mode="${active.dataset.sigMode}"]` : active.dataset.connInteg ? `[data-conn-integ="${active.dataset.connInteg}"]` : active.dataset.typeInteg ? `[data-type-integ="${active.dataset.typeInteg}"]` : active.dataset.offMode ? `[data-off-mode="${active.dataset.offMode}"]` : active.dataset.delayMode ? `[data-delay-mode="${active.dataset.delayMode}"]` : active.dataset.imon ? `[data-imon="${active.dataset.imon}"]` : active.dataset.istatus ? `[data-istatus="${active.dataset.istatus}"]` : active.dataset.list && active.dataset.value ? `[data-list="${active.dataset.list}"][data-value="${active.dataset.value}"]` : active.dataset.emoji ? `[data-emoji="${active.dataset.emoji}"]` : active.dataset.nfield ? `[data-nfield="${active.dataset.nfield}"]` : active.dataset.bfield ? `[data-bfield="${active.dataset.bfield}"]` : active.dataset.newfield ? `[data-newfield="${active.dataset.newfield}"]` : active.dataset.qday !== undefined ? `[data-qday="${active.dataset.qday}"][data-qfield="${active.dataset.qfield}"]` : active.dataset.qdayOn !== undefined ? `[data-qday-on="${active.dataset.qdayOn}"]` : active.dataset.qtopic ? `[data-qtopic="${active.dataset.qtopic}"]` : active.dataset.ukind ? `[data-ukind="${active.dataset.ukind}"]` : active.dataset.uitem ? `[data-uitem="${active.dataset.uitem}"]` : active.dataset.cinteg ? `[data-cinteg="${active.dataset.cinteg}"]` : active.dataset.cfullInteg ? `[data-cfull-integ="${active.dataset.cfullInteg}"]` : active.dataset.criseInteg ? `[data-crise-integ="${active.dataset.criseInteg}"]` : active.dataset.cfull !== undefined ? "[data-cfull]" : active.dataset.ver ? `[data-ver="${active.dataset.ver}"]` : null
       : null;
     if (!setHtml(dialog, html)) return;
     // Die Versionszeile wurde eben mit aufgebaut: als aktuell vermerken, sonst
@@ -7283,7 +7313,7 @@ class DevicePanel extends HTMLElement {
         : kind === "connection"
         ? t(CONN[x.value]?.key || "connUnknown")
         : kind === "offline"
-          ? x.value === "off" ? t("offlineNone") : t("offlineMin", x.value)
+          ? x.value === "off" ? t("offlineNone") : x.value === "nostatus" ? t("offlineNoStatus") : t("offlineMin", x.value)
         : kind === "notify_delay"
           ? t("offlineMin", x.value)
         : kind === "notify" || x.value === "off"
@@ -7995,7 +8025,9 @@ class DevicePanel extends HTMLElement {
       const unmon = off === "off";
       const flags = [noPush.has(x.domain) && t("diffNoPush"), noPers.has(x.domain) && t("diffNoPers")].filter(Boolean);
       const dl = delayMap[x.domain];
-      const out = [Number.isInteger(off) || flags.length ? t("diffOutage", Number.isInteger(off) ? t("offlineMin", off) : null, flags) : "", Number.isInteger(dl) ? t("diffDelay", t("offlineMin", dl)) : ""].filter(Boolean).join(", ") || null;
+      // Ohne Online-Status (seit 2.156.0): kein Ausfall, also auch keine Zeiten und Ausfall-Meldungen zu nennen
+      const nostat = off === "nostatus";
+      const out = nostat ? t("integNoStatus") : [Number.isInteger(off) || flags.length ? t("diffOutage", Number.isInteger(off) ? t("offlineMin", off) : null, flags) : "", Number.isInteger(dl) ? t("diffDelay", t("offlineMin", dl)) : ""].filter(Boolean).join(", ") || null;
       const batText = b !== undefined || noBatPush.has(x.domain) ? t("diffBattery", Number.isInteger(b) ? b : null, b === "off", noBatPush.has(x.domain)) : null;
       const sigCount = Object.keys(sigMap[x.domain] || {}).length;
       const sigDiff = sigCount ? t("diffSignal", sigCount) : null;
@@ -8514,6 +8546,9 @@ class DevicePanel extends HTMLElement {
     const delayOwn = (d.notify_delay_integrations || {})[dom];
     const off = offMap[dom];
     const unmon = off === "off";
+    // Ohne Online-Status (seit 2.156.0): überwacht, aber ohne Ausfälle; Zeiten und Ausfall-Meldungen der Ebene ruhen
+    const nostat = off === "nostatus";
+    const outOff = unmon || nostat;
     const val = (k) => (errors[k] ? saved[k] : d[k]);
     const gOff = val("offline_after");
     const gDelay = val("notify_delay");
@@ -8527,14 +8562,15 @@ class DevicePanel extends HTMLElement {
     const same = (a, b) => JSON.stringify(a ?? null) === JSON.stringify(b ?? null);
     const origin = (own, would) =>
       `<div class="opt-origin"><span class="origin ${own ? "own" : "std"}">${escape(t(own ? "originOwn" : "originStandard"))}</span>${own && would ? `<span>${escape(t("originDefaultWould", would))}</span>` : ""}</div>`;
-    const swi = (attrs, checked, label) =>
-      `<label class="switch"><input type="checkbox" ${attrs} ${checked ? "checked" : ""} ${unmon ? "disabled" : ""} aria-label="${escape(label)}"><span></span></label>`;
+    const swi = (attrs, checked, label, lock = unmon) =>
+      `<label class="switch"><input type="checkbox" ${attrs} ${checked ? "checked" : ""} ${lock ? "disabled" : ""} aria-label="${escape(label)}"><span></span></label>`;
     const opt = (changed, label, control, originHtml, extra = "", cls = "") =>
       `<div class="opt${cls}${changed ? " changed" : ""}"><div class="opt-line"><span class="opt-label">${escape(label)}</span>${control}</div>${extra}${originHtml}</div>`;
-    const listSw = (key, label) =>
-      opt(has(key) !== (saved[key] || []).includes(dom), label, swi(`data-list="${key}" data-value="${escape(dom)}"`, !has(key), `${label}: ${item.name}`), origin(has(key)));
+    const listSw = (key, label, lock = unmon) =>
+      opt(has(key) !== (saved[key] || []).includes(dom), label, swi(`data-list="${key}" data-value="${escape(dom)}"`, !has(key), `${label}: ${item.name}`, lock), origin(has(key)));
     let tl;
     if (unmon) tl = `<div class="nf-note">${mdi("info", 16)}<div><p>${escape(t("integUnmonInfo"))}</p></div></div>`;
+    else if (nostat) tl = `<div class="nf-note">${mdi("info", 16)}<div><p>${escape(t(isLabel ? "labelNoStatusInfo" : "integNoStatusInfo"))}</p></div></div>`;
     else {
       const reason = tgt("outage") ? t("tlSwitchedOff") : t("tlNoTarget");
       const later = pushOn && dEff < eff;
@@ -8555,12 +8591,14 @@ class DevicePanel extends HTMLElement {
     const delayOpts = [["default", t("integOffDefault", fmt(gDelay))], ...dMins.map((m) => [String(m), fmt(m)])]
       .map(([v, l]) => `<option value="${v}"${v === (Number.isInteger(delayOwn) ? String(delayOwn) : "default") ? " selected" : ""}>${escape(l)}</option>`)
       .join("");
-    const delaySel = `<span class="opt-select"><select data-delay-mode="${escape(dom)}" ${unmon ? "disabled" : ""} aria-label="${escape(`${t("optDelay")}: ${item.name}`)}">${delayOpts}</select>${mdi("chevronDown", 18)}</span>`;
-    const delayErr = Number.isInteger(delayOwn) && Number.isInteger(eff) && delayOwn < eff ? t("integDelayError", fmt(eff)) : "";
-    const offSel = `<span class="opt-select"><select data-off-mode="${escape(dom)}" ${unmon ? "disabled" : ""} aria-label="${escape(`${t("optOfflineAfter")}: ${item.name}`)}">${offOpts}</select>${mdi("chevronDown", 18)}</span>`;
+    const delaySel = `<span class="opt-select"><select data-delay-mode="${escape(dom)}" ${outOff ? "disabled" : ""} aria-label="${escape(`${t("optDelay")}: ${item.name}`)}">${delayOpts}</select>${mdi("chevronDown", 18)}</span>`;
+    const delayErr = !nostat && Number.isInteger(delayOwn) && Number.isInteger(eff) && delayOwn < eff ? t("integDelayError", fmt(eff)) : "";
+    const offSel = `<span class="opt-select"><select data-off-mode="${escape(dom)}" ${outOff ? "disabled" : ""} aria-label="${escape(`${t("optOfflineAfter")}: ${item.name}`)}">${offOpts}</select>${mdi("chevronDown", 18)}</span>`;
     // Gleiche Reiter wie in den Einstellungen und im Geräte-Popup (seit 1.42.0): Ausfall | Batterie | Laden | Neu | Empfang | Geräte,
     // je Reiter die Grafik wie im globalen Reiter (hier mit den für die Integration wirksamen Werten).
     const wrap = (h) => `<div class="${unmon ? "mon-dis" : ""}">${h}</div>`;
+    // Die Ausfall-Einstellungen ruhen auch ohne Online-Status
+    const wrapOut = (h) => `<div class="${outOff ? "mon-dis" : ""}">${h}</div>`;
     const empty = (key) => `<div class="opt-short mon-empty">${escape(t(key))}</div>`;
     const reasonOf = (excluded, topic) => (excluded ? t("tlIntegOff") : tgt(topic) ? t("tlSwitchedOff") : t("tlNoTarget"));
     // Ausfall
@@ -8569,7 +8607,10 @@ class DevicePanel extends HTMLElement {
       opt(!same(unmon, (saved.offline_after_integrations || {})[dom] === "off"), t("optMonitor"),
         `<label class="switch"><input type="checkbox" data-imon="${escape(dom)}" ${unmon ? "" : "checked"} aria-label="${escape(`${t("optMonitor")}: ${item.name}`)}"><span></span></label>`,
         origin(unmon), unmon ? "" : `<div class="opt-short">${escape(t("optMonitorShort"))}</div>`) +
-      wrap(
+      opt(!same(nostat, (saved.offline_after_integrations || {})[dom] === "nostatus"), t("optStatus"),
+        `<label class="switch"><input type="checkbox" data-istatus="${escape(dom)}" ${nostat ? "" : "checked"} ${unmon ? "disabled" : ""} aria-label="${escape(`${t("optStatus")}: ${item.name}`)}"><span></span></label>`,
+        origin(nostat), `<div class="opt-short">${escape(t("optStatusShort"))}</div>`, unmon ? " mon-dis" : "") +
+      wrapOut(
         opt(!same(Number.isInteger(off) ? off : null, Number.isInteger((saved.offline_after_integrations || {})[dom]) ? saved.offline_after_integrations[dom] : null), t("optOfflineAfter"), offSel, origin(Number.isInteger(off), fmt(gOff))) +
           opt(
             !same(Number.isInteger(delayOwn) ? delayOwn : null, Number.isInteger((saved.notify_delay_integrations || {})[dom]) ? saved.notify_delay_integrations[dom] : null),
@@ -8579,9 +8620,9 @@ class DevicePanel extends HTMLElement {
             delayErr ? `<div class="opt-error">${escape(delayErr)}</div>` : `<div class="opt-short">${escape(t("integDelayShort"))}</div>`,
             delayErr ? " invalid" : ""
           ) +
-          listSw("notify_exclude_integrations", t("optPushOutage")) +
+          listSw("notify_exclude_integrations", t("optPushOutage"), outOff) +
           (tgt("outage") && d.notify_outage ? "" : `<div class="opt-short mon-hint">${escape(t(tgt("outage") ? "integPushGlobalOff" : "noTargetWarn"))}</div>`) +
-          listSw("persistent_exclude_integrations", t("optPersistent"))
+          listSw("persistent_exclude_integrations", t("optPersistent"), outOff)
       );
     // Batterie und Laden: nur sinnvoll mit Batteriegeräten oder eigener Einstellung (zum Zurücksetzen).
     const chargeMaps = ["charge_full_integrations", "charge_rise_integrations", "charge_stall_integrations", "charge_stop_integrations", "charge_live_integrations"];
@@ -8745,7 +8786,7 @@ class DevicePanel extends HTMLElement {
       ? `<div class="ovr-list">${devs
           .map(({ kind, x }) => {
             const on = st.resets[kind].has(x.id);
-            const value = kind === "offline" ? (x.value === "off" ? t("ovrKindUnmon") : t("ovrKindOffline", fmt(x.value))) : kind === "notify_delay" ? t("ovrKindDelay", fmt(x.value)) : kind === "notify" ? t("ovrKindNotify") : kind === "charge" ? this._chargeOwnText(x.value) : t("ovrKindBattery", x.value);
+            const value = kind === "offline" ? (x.value === "off" ? t("ovrKindUnmon") : x.value === "nostatus" ? t("ovrKindNoStatus") : t("ovrKindOffline", fmt(x.value))) : kind === "notify_delay" ? t("ovrKindDelay", fmt(x.value)) : kind === "notify" ? t("ovrKindNotify") : kind === "charge" ? this._chargeOwnText(x.value) : t("ovrKindBattery", x.value);
             const label = t(on ? "ovrUndo" : "ovrReset", x.name);
             return `<div class="ovr-row${on ? " reset" : ""}${kind === "charge" ? " long" : ""}"><span class="ovr-name">${escape(x.name)}${x.area ? `<small>${escape(x.area)}</small>` : ""}</span>
             <span class="ovr-val">${on ? `<s>${escape(value)}</s> ${escape(t("ovrToInteg"))}` : escape(value)}</span>
@@ -9782,6 +9823,12 @@ class DevicePanel extends HTMLElement {
         if (el.checked) on.add(field);
         else on.delete(field);
         st.draft[key] = order.filter((f) => on.has(f));
+      } else if (el.dataset.istatus) {
+        // "Online-Status beobachten" einer Integration oder eines Labels (seit 2.156.0): aus = "nostatus", an = Standard
+        const own = { ...(st.draft.offline_after_integrations || {}) };
+        if (el.checked) delete own[el.dataset.istatus];
+        else own[el.dataset.istatus] = "nostatus";
+        st.draft.offline_after_integrations = own;
       } else if (el.dataset.imon) {
         // "Überwachen" einer Integration = "Ausgefallen nach" nicht "off";
         // wieder ein: Standard (eine eigene Zeit ist mit "off" ersetzt).

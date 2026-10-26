@@ -24,6 +24,7 @@
 - **Battery overview with notifications:** a colored battery symbol on every device, a warning threshold (default 15 %), push or persistent notification, a history of up to 12 months with a forecast of how long the battery lasts, and a message when a device is fully charged
 - **Signal overview with warnings:** signal strength in dBm or LQI on every device, a warning threshold per connection type, a history with median and range, and for Bluetooth the receiver (adapter or proxy) a device is or was connected through
 - **Notifications on up to four levels:** set a default once, change it per integration (or per label), override it on a single device; every setting shows where its value comes from (graphic below)
+- **Without online status:** a device stays monitored for battery, charging and signal but has no online status, outages or outage notifications (grey ring, own filter chip)
 - **Labels:** devices that carry a Home Assistant label are set together (for example "often offline" without monitoring); a label sits between the device and the integration, and has its own filter chip
 - **Quiet time:** notifications wait during the night (times per weekday, kinds selectable) and arrive afterwards as one summary or one by one
 - **Magic Push:** your own messages per device without an automation: pick a value, say when it should notify, write the text, done
@@ -129,6 +130,15 @@ Labels are the labels you give devices in Home Assistant (Settings › Areas, la
 - **Several labels:** the strictest applies: "Do not monitor" first, otherwise the longer time or the lower threshold; for type, connection type and notifications on or off, the label higher up in the list counts (move with "Move up" / "Move down")
 - **In the panel:** the filter chip "Label" (multi-select, "No label", combines with the other filters) appears as soon as a device carries a label; the pop-up of a device shows "Same as label" and the origin "Label <name>"
 - **Only devices:** labels on devices count, labels on entities do not; "Remove label" deletes the settings of the label and leaves Home Assistant untouched
+
+### Without online status
+
+Some devices report only now and then, for example Bluetooth sensors, and would look permanently offline. "Without online status" keeps them monitored for battery, charging, signal and updates, but they get no online status, no outages, no outage statistics and no outage notifications.
+
+- **Where:** switch "Watch online status" in the tab "Outage" of an integration and of a label; for a single device the choice "No online status" next to "Own time" and "Do not monitor" in the pop-up (Settings). An own time on the device switches the status on again
+- **Order of precedence:** device › label › integration; with several labels the strictest applies: "Do not monitor", then "No online status", then a time
+- **In the panel:** a grey ring instead of the dot, a line under the tiles ("N devices without online status") that doubles as the filter chip "No online status" (can be hidden and moved like all chips)
+- **Setup wizard:** in the step "Notifications", tab "Outage", a ring switch per integration and device, and the switch on the card of a label
 
 ### From outage to notification
 

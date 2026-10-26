@@ -7,6 +7,18 @@ Alle nennenswerten Änderungen an dieser Integration stehen in dieser Datei.
 Das Format folgt [Keep a Changelog](https://keepachangelog.com/de/1.1.0/),
 die Versionsnummern folgen [Semantic Versioning](https://semver.org/lang/de/).
 
+## [2.156.0] - 2026-10-26
+
+Ohne Online-Status: Ein Gerät bleibt für Batterie, Laden und Empfang überwacht, hat aber keinen Online-Status, keine Ausfälle und keine Ausfall-Meldungen.
+
+### Hinzugefügt
+
+- **Ohne Online-Status:** ein dritter Zustand neben "Überwachen" und "Nicht überwachen". Das Gerät zeigt einen grauen Ring statt eines grünen oder roten Punkts, hat keine Ausfälle, keine Ausfall-Statistik und keine Ausfall-Meldungen; Batterie, Laden, Empfang und Updates bleiben. Das passt zu Geräten, die sich nur ab und zu melden (zum Beispiel Bluetooth-Sensoren) und sonst dauernd ausgefallen wirken.
+- **Schalter "Online-Status beobachten":** im Reiter "Ausfall" einer Integration und eines Labels sowie als Auswahl "Ohne Online-Status" neben "Eigene Zeit" und "Nicht überwachen" im Geräte-Popup. Rangfolge wie immer: Gerät › Label › Integration; bei mehreren Labels gilt das strengste ("Nicht überwachen" vor "Ohne Online-Status" vor einer Zeit). Eine eigene Zeit am Gerät schaltet den Status wieder ein.
+- **Zeile unter den Kacheln:** "N Geräte ohne Online-Status" zeigt, wie viele Geräte betroffen sind; sie ist zugleich der neue Filter-Chip "Ohne Online-Status" (wie alle Chips ausblend- und verschiebbar, Einstellungen › Anzeige).
+- **Einrichtungsassistent:** im Schritt "Meldungen", Reiter "Ausfall", hat jede Integration und jedes Gerät einen zweiten Schalter mit Ring; die Karte eines Labels im Schritt "Labels" hat den Schalter "Online-Status beobachten", und die Zusammenfassung zählt die Geräte ohne Status.
+- **Grafiken und README:** Ebenen- und Ablaufgrafik nennen den neuen Zustand; neuer Abschnitt im README.
+
 ## [2.155.1] - 2026-10-25
 
 Die Label-Einstellungen wandern in "Überwachung und Meldungen".
@@ -5064,6 +5076,7 @@ Erste Vorabversion.
   GitHub Actions für die Prüfungen von HACS und hassfest sowie die Tests.
 
 [2.6.0]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v2.6.0
+[2.156.0]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v2.156.0
 [2.155.1]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v2.155.1
 [2.155.0]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v2.155.0
 [2.154.2]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v2.154.2

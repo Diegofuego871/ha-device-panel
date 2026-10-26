@@ -15,9 +15,9 @@ const TEXT = {
     lvSub: "Jede Einstellung hat bis zu vier Ebenen. Das Genauere gewinnt: Gerät vor Label vor Integration vor Allgemein.",
     levels: [
       { n: "1", name: "Allgemein", where: "Einstellungen › Überwachung und Meldungen", what: "Die Vorgabe für alle Geräte.", chips: ["Ausgefallen nach 2 Min.", "Batterie schwach ab 15 %", "Empfang schwach unter -80 dBm", "Push-Ziel"] },
-      { n: "2", name: "Integration", where: "Einstellungen › Überwachung und Meldungen › Integrationen", what: "Für alle Geräte einer Integration, zum Beispiel Zigbee oder Shelly.", chips: ["Ausgefallen nach 10 Min.", "Batterie schwach ab 25 %", "Kein Push für diese Integration"] },
-      { n: "3", name: "Label", where: "Einstellungen › Überwachung und Meldungen › Labels", what: "Für alle Geräte mit einem Label aus Home Assistant, zum Beispiel \"Oft offline\".", chips: ["Nicht überwachen", "Batterie schwach ab 20 %", "Mehrere Labels: das strengste gilt"] },
-      { n: "4", name: "Gerät", where: "Geräte-Popup › Einstellungen", what: "Nur für dieses eine Gerät.", chips: ["Eigene Zeit oder nicht überwachen", "Batterie schwach ab 30 % oder aus", "Meldungen aus oder 24 Std. stumm"] },
+      { n: "2", name: "Integration", where: "Einstellungen › Überwachung und Meldungen › Integrationen", what: "Für alle Geräte einer Integration, zum Beispiel Zigbee oder Shelly.", chips: ["Ausgefallen nach 10 Min.", "Ohne Online-Status", "Batterie schwach ab 25 %", "Kein Push für diese Integration"] },
+      { n: "3", name: "Label", where: "Einstellungen › Überwachung und Meldungen › Labels", what: "Für alle Geräte mit einem Label aus Home Assistant, zum Beispiel \"Oft offline\".", chips: ["Nicht überwachen oder ohne Online-Status", "Batterie schwach ab 20 %", "Mehrere Labels: das strengste gilt"] },
+      { n: "4", name: "Gerät", where: "Geräte-Popup › Einstellungen", what: "Nur für dieses eine Gerät.", chips: ["Eigene Zeit, ohne Online-Status oder nicht überwachen", "Batterie schwach ab 30 % oder aus", "Meldungen aus oder 24 Std. stumm"] },
     ],
     override: "überschreibt",
     exTitle: "Beispiel: Batterie-Warnung",
@@ -34,6 +34,7 @@ const TEXT = {
     mxHead: ["", "Allgemein", "Integration", "Label", "Gerät"],
     mxRows: [
       ["Überwachung und \"Ausgefallen nach\"", 1, 1, 1, 1],
+      ["\"Online-Status beobachten\" (aus: Ring, keine Ausfälle)", 0, 1, 1, 1],
       ["\"Erst melden nach\"", 1, 1, 1, 1],
       ["Meldungen bei Ausfall und Rückkehr (Push, anhaltend)", 1, 1, 1, 1],
       ["Batterie-Warnung", 1, 1, 1, 1],
@@ -50,7 +51,7 @@ const TEXT = {
     flSub: "Beispiel Ausfall: Wer entscheidet in welchem Schritt?",
     flSteps: [
       { t: "Das Gerät meldet sich nicht mehr", d: "Das Panel sieht es an den Entitäten des Geräts in Home Assistant.", by: "" },
-      { t: "Ausgefallen nach 2 Min.", d: "Danach zeigt das Panel das Gerät als ausgefallen, mit Dauer und Statistik.", by: "Gerät › Label › Integration › Allgemein" },
+      { t: "Ausgefallen nach 2 Min.", d: "Danach zeigt das Panel das Gerät als ausgefallen, mit Dauer und Statistik. Ohne Online-Status gibt es keinen Ausfall: das Gerät zeigt einen Ring.", by: "Gerät › Label › Integration › Allgemein" },
       { t: "Erst melden nach 2 Min.", d: "Erst dann wird gemeldet. Die Zeiten laufen ab Beginn des Ausfalls und werden nicht addiert.", by: "Allgemein" },
       { t: "Darf gemeldet werden?", d: "Nicht, wenn das Gerät auf \"aus\" oder \"stumm\" steht oder die Integration kein Push hat.", by: "Gerät › Label › Integration › Allgemein" },
       { t: "Meldung geht an das Ziel", d: "Ab 3 Geräten gleichzeitig als eine Sammelmeldung mit vermuteter Ursache. Optional zusätzlich anhaltend in Home Assistant.", by: "Ziel des Reiters Ausfall" },
@@ -73,9 +74,9 @@ const TEXT = {
     lvSub: "Every setting has up to four levels. The more specific one wins: device before label before integration before general.",
     levels: [
       { n: "1", name: "General", where: "Settings › Monitoring and notifications", what: "The default for all devices.", chips: ["Offline after 2 min.", "Battery low from 15 %", "Weak signal below -80 dBm", "Push target"] },
-      { n: "2", name: "Integration", where: "Settings › Monitoring and notifications › Integrations", what: "For all devices of one integration, for example Zigbee or Shelly.", chips: ["Offline after 10 min.", "Battery low from 25 %", "No push for this integration"] },
-      { n: "3", name: "Label", where: "Settings › Monitoring and notifications › Labels", what: "For all devices with a Home Assistant label, for example \"Often offline\".", chips: ["Do not monitor", "Battery low from 20 %", "Several labels: the strictest applies"] },
-      { n: "4", name: "Device", where: "Device pop-up › Settings", what: "Only this one device.", chips: ["Own time or do not monitor", "Battery low from 30 % or off", "Notifications off or muted for 24 h"] },
+      { n: "2", name: "Integration", where: "Settings › Monitoring and notifications › Integrations", what: "For all devices of one integration, for example Zigbee or Shelly.", chips: ["Offline after 10 min.", "No online status", "Battery low from 25 %", "No push for this integration"] },
+      { n: "3", name: "Label", where: "Settings › Monitoring and notifications › Labels", what: "For all devices with a Home Assistant label, for example \"Often offline\".", chips: ["Do not monitor or no online status", "Battery low from 20 %", "Several labels: the strictest applies"] },
+      { n: "4", name: "Device", where: "Device pop-up › Settings", what: "Only this one device.", chips: ["Own time, no online status or do not monitor", "Battery low from 30 % or off", "Notifications off or muted for 24 h"] },
     ],
     override: "overrides",
     exTitle: "Example: battery warning",
@@ -92,6 +93,7 @@ const TEXT = {
     mxHead: ["", "General", "Integration", "Label", "Device"],
     mxRows: [
       ["Monitoring and \"Offline after\"", 1, 1, 1, 1],
+      ["\"Watch online status\" (off: ring, no outages)", 0, 1, 1, 1],
       ["\"Report only after\"", 1, 1, 1, 1],
       ["Notifications for outage and return (push, persistent)", 1, 1, 1, 1],
       ["Battery warning", 1, 1, 1, 1],
@@ -107,7 +109,7 @@ const TEXT = {
     flSub: "Example outage: who decides in which step?",
     flSteps: [
       { t: "The device stops reporting", d: "The panel sees it from the entities of the device in Home Assistant.", by: "" },
-      { t: "Offline after 2 min.", d: "Then the panel shows the device as offline, with duration and statistics.", by: "Device › Label › Integration › General" },
+      { t: "Offline after 2 min.", d: "Then the panel shows the device as offline, with duration and statistics. Without online status there is no outage: the device shows a ring.", by: "Device › Label › Integration › General" },
       { t: "Report only after 2 min.", d: "Only then it is reported. The times run from the start of the outage and are not added.", by: "General" },
       { t: "May it be reported?", d: "Not if the device is set to \"off\" or \"muted\", or the integration has no push.", by: "Device › Label › Integration › General" },
       { t: "Notification goes to the target", d: "From 3 devices at once as one group message with a likely cause. Optionally also persistent in Home Assistant.", by: "Target of the Outage tab" },

@@ -148,6 +148,11 @@ export class WizardUi {
       chargeOn: this.chargeOnFrom(v),
       updOn: this.updOnFrom(v),
       lab: this.labelsFrom(v),
+      // Ohne Online-Status (seit 2.156.0): Integrationen (Domains) und Geräte (IDs), deren Online-Status nicht beobachtet wird
+      noStat: {
+        integ: new Set(Object.entries(v.offline_after_integrations || {}).filter(([k, x]) => x === "nostatus" && !k.startsWith(LABEL_PREFIX)).map(([k]) => k)),
+        dev: new Set(this.overrideList("offline").filter((o) => o.value === "nostatus").map((o) => o.id)),
+      },
     };
   }
 
@@ -172,6 +177,8 @@ export class WizardUi {
         newPush: !has("new_exclude_integrations", id),
         charge: has("charge_integrations", id),
         upd: has("updates_integrations_off", id) ? "off" : has("updates_integrations_on", id) ? "on" : "default",
+        // Online-Status beobachten (seit 2.156.0); aus = "nostatus", die Zeiten und der Ausfall-Push ruhen
+        status: off !== "nostatus",
       };
     }
     return { ids, cfg };
@@ -220,6 +227,7 @@ export class WizardUi {
     return {
       exI: [...d.exI].sort(), exT: [...d.exT].sort(), exD: [...d.exD].sort(), target: d.target, on: { ...d.on }, v: { ...d.v }, quiet: { ...d.quiet }, sys: Object.fromEntries(Object.entries(d.sys).map(([k, x]) => [k, { ...x }])),
       lab: { ids: [...d.lab.ids], cfg: Object.fromEntries(Object.entries(d.lab.cfg).map(([k, x]) => [k, { ...x }])) },
+      noStat: { integ: [...d.noStat.integ].sort(), dev: [...d.noStat.dev].sort() },
       ex: Object.fromEntries(Object.entries(d.ex).map(([k, set]) => [k, [...set].sort()])),
       devOff: Object.fromEntries(Object.entries(d.devOff).map(([k, set]) => [k, [...set].sort()])), chargeOn: [...d.chargeOn].sort(), updOn: [...d.updOn].sort(),
     };
@@ -250,6 +258,13 @@ export class WizardUi {
     for (const id of Object.keys(d.devOff)) if (Array.isArray(x.devOff?.[id])) d.devOff[id] = new Set(list(x.devOff[id], known));
     if (Array.isArray(x.chargeOn)) d.chargeOn = new Set(list(x.chargeOn, known));
     if (Array.isArray(x.updOn)) d.updOn = new Set(list(x.updOn, new Set(this.updateItems().map((u) => u.id))));
+    // Ohne Online-Status: nur Integrationen und Geräte, die es noch gibt
+    if (x.noStat) {
+      d.noStat = {
+        integ: new Set(list(x.noStat.integ, new Set(s.data.integrations.map((i) => i.domain)))),
+        dev: new Set(list(x.noStat.dev, known)),
+      };
+    }
     // Labels: nur solche, die es in Home Assistant noch gibt oder die schon eingerichtet waren
     if (Array.isArray(x.lab?.ids)) {
       const known = new Set([...(s.data.labels || []).map((l) => l.id), ...d.lab.ids]);
@@ -269,6 +284,7 @@ export class WizardUi {
           newPush: typeof y.newPush === "boolean" ? y.newPush : base.newPush,
           charge: typeof y.charge === "boolean" ? y.charge : base.charge,
           upd: ["default", "on", "off"].includes(y.upd) ? y.upd : base.upd,
+          status: typeof y.status === "boolean" ? y.status : base.status,
         };
       }
       d.lab = { ids, cfg };
@@ -292,7 +308,7 @@ export class WizardUi {
   }
 
   snapshot(d) {
-    return { i: [...d.exI].sort(), t: [...d.exT].sort(), d: [...d.exD].sort(), target: d.target, on: d.on, v: d.v, q: d.quiet, y: d.sys, x: Object.fromEntries(Object.entries(d.ex).map(([k, set]) => [k, [...set].sort()])), o: Object.fromEntries(Object.entries(d.devOff).map(([k, set]) => [k, [...set].sort()])), c: [...d.chargeOn].sort(), u: [...d.updOn].sort(), l: d.lab };
+    return { i: [...d.exI].sort(), t: [...d.exT].sort(), d: [...d.exD].sort(), target: d.target, on: d.on, v: d.v, q: d.quiet, y: d.sys, x: Object.fromEntries(Object.entries(d.ex).map(([k, set]) => [k, [...set].sort()])), o: Object.fromEntries(Object.entries(d.devOff).map(([k, set]) => [k, [...set].sort()])), c: [...d.chargeOn].sort(), u: [...d.updOn].sort(), l: d.lab, n: { i: [...d.noStat.integ].sort(), d: [...d.noStat.dev].sort() } };
   }
 
   dirty() {
@@ -340,7 +356,7 @@ export class WizardUi {
   }
 
   labelDefault() {
-    return { mon: true, after: "", delay: "", bat: "", push: true, batPush: true, newPush: true, charge: false, upd: "default" };
+    return { mon: true, after: "", delay: "", bat: "", push: true, batPush: true, newPush: true, charge: false, upd: "default", status: true };
   }
 
   labelName(id) {
@@ -425,7 +441,7 @@ export class WizardUi {
         if (!(/^\d+$/.test(raw) && n >= lo && n <= hi)) return this.t("wzErrRange", `${name}: ${this.t(label)}`, lo, hi);
       }
       const detect = c.after !== "" ? Number(c.after) : Number(base.offline_after);
-      if (c.mon && c.delay !== "" && Number(c.delay) < detect) return `${name}: ${this.t("wzErrDelay", detect)}`;
+      if (c.mon && c.status && c.delay !== "" && Number(c.delay) < detect) return `${name}: ${this.t("wzErrDelay", detect)}`;
     }
     return "";
   }
@@ -709,18 +725,36 @@ export class WizardUi {
             const key = `${id}:${i.domain}`;
             const open = deep && this.s.openInt.has(key);
             const chev = deep ? `<button type="button" class="wz-mx" data-wz-iopen="${escape(key)}" aria-expanded="${open}" title="${escape(this.t(id === "updates" ? "wzMUpdates" : "wzMDevices"))}" aria-label="${escape(this.t(id === "updates" ? "wzMUpdates" : "wzMDevices"))}"><span class="wz-chev${open ? " open" : ""}">${mdi("chevronRight", 16)}</span></button>` : "";
-            const head = `<div class="wz-li">${chev}${this.host._ibadge(i.domain, i.name)}<div class="wz-nm">${escape(i.name)}<small>${escape(id === "updates" ? this.t("updIntegCount", i.n) : this.t("devicesCount", i.n))}</small></div><label class="switch${state === "part" ? " part" : ""}"><input type="checkbox" data-wz-int="${id}" data-wz-dom="${escape(i.domain)}"${state !== "off" ? " checked" : ""}${none ? " disabled" : ""} aria-label="${escape(i.name)}"><span></span></label></div>`;
+            // Ausfall: ein zweiter Schalter (Ring) für den Online-Status der Integration (seit 2.156.0); ohne Status ruht die Meldung
+            const ns = id === "outage" ? this.statusSwitch("int", i.domain, i.name) : "";
+            const quiet = id === "outage" && this.s.d.noStat.integ.has(i.domain);
+            const head = `<div class="wz-li">${chev}${this.host._ibadge(i.domain, i.name)}<div class="wz-nm">${escape(i.name)}<small>${escape(id === "updates" ? this.t("updIntegCount", i.n) : this.t("devicesCount", i.n))}</small></div>${ns}<label class="switch${state === "part" ? " part" : ""}"><input type="checkbox" data-wz-int="${id}" data-wz-dom="${escape(i.domain)}"${state !== "off" ? " checked" : ""}${none || quiet ? " disabled" : ""} aria-label="${escape(i.name)}"><span></span></label></div>`;
             if (!open) return head;
             // Bei ausgeschalteter Integration (Ausfall, Batterie) gelten die Geräte nicht: ausgegraut
-            const off = state === "off" && !["charge", "updates"].includes(id);
+            const off = (state === "off" && !["charge", "updates"].includes(id)) || quiet;
             const devs = this.rowDevices(id, i.domain)
-              .map((x) => `<div class="wz-li${off ? " dim" : ""}"><div class="wz-nm">${escape(x.name)}${this.devSub(id, x)}</div><label class="switch"><input type="checkbox" data-wz-md="${id}" data-wz-id="${escape(x.id)}"${this.devOn(id, x.id) ? " checked" : ""}${none || off ? " disabled" : ""} aria-label="${escape(x.name)}"><span></span></label></div>`)
+              .map((x) => {
+                const dquiet = id === "outage" && this.s.d.noStat.dev.has(x.id);
+                return `<div class="wz-li${off || dquiet ? " dim" : ""}"><div class="wz-nm">${escape(x.name)}${this.devSub(id, x)}</div>${id === "outage" ? this.statusSwitch("dev", x.id, x.name, quiet) : ""}<label class="switch"><input type="checkbox" data-wz-md="${id}" data-wz-id="${escape(x.id)}"${this.devOn(id, x.id) ? " checked" : ""}${none || off || dquiet ? " disabled" : ""} aria-label="${escape(x.name)}"><span></span></label></div>`;
+              })
               .join("");
             return `${head}<div class="wz-sub wz-dsub">${devs}</div>`;
           })
           .join("")
       : `<p class="wz-p small">${escape(this.t("wzMNoInteg"))}</p>`;
     return `<div class="wz-sub wz-msub"><p class="wz-p small">${escape(this.t(`wzMSub_${id}`))}</p>${body}</div>`;
+  }
+
+  // Schalter "Online-Status beobachten" (seit 2.156.0) neben dem der Ausfall-Meldung: Ring-Symbol, aus = ohne Online-Status. Eine Integration
+  // auf "Nicht überwachen" oder ein Gerät mit eigener Zeit lässt der Assistent, wie es ist (gesperrt); lock sperrt von aussen (Integration aus).
+  statusSwitch(kind, key, name, lock = false) {
+    const { escape, mdi } = this.h;
+    const { d, base } = this.s;
+    const own = kind === "int" ? (base.offline_after_integrations || {})[key] : this.overrideList("offline").find((o) => o.id === key)?.value;
+    const fixed = own !== undefined && own !== "nostatus";
+    const on = !(kind === "int" ? d.noStat.integ : d.noStat.dev).has(key);
+    const label = `${this.t("optStatus")}: ${name}`;
+    return `<span class="wz-ns" title="${escape(this.t(fixed ? "wzNsFixed" : "optStatus"))}">${mdi("circleOutline", 14)}<label class="switch"><input type="checkbox" data-wz-ns="${kind}" data-wz-key="${escape(key)}"${on ? " checked" : ""}${fixed || lock ? " disabled" : ""} aria-label="${escape(label)}"><span></span></label></span>`;
   }
 
   testText() {
@@ -741,7 +775,7 @@ export class WizardUi {
       .join("");
     const diff = (id) => {
       const c = d.lab.cfg[id];
-      const parts = [!c.mon && t("integUnmon"), c.after !== "" && t("offlineMin", Number(c.after)), c.delay !== "" && t("diffDelay", t("offlineMin", Number(c.delay))), c.bat === "off" ? t("devBatOff") : c.bat !== "" && `${c.bat} %`,
+      const parts = [!c.mon && t("integUnmon"), c.mon && !c.status && t("integNoStatus"), c.after !== "" && t("offlineMin", Number(c.after)), c.delay !== "" && t("diffDelay", t("offlineMin", Number(c.delay))), c.bat === "off" ? t("devBatOff") : c.bat !== "" && `${c.bat} %`,
         !c.push && t("diffNoPush"), !c.batPush && t("optBatPush"), !c.newPush && t("diffNoNew"), c.charge && t("diffCharge"), c.upd !== "default" && `${t("optUpdNotify")}: ${t(c.upd === "on" ? "devChargeOn" : "devChargeOff")}`].filter(Boolean);
       return parts.length ? parts.join(" · ") : t("integStandard");
     };
@@ -764,18 +798,20 @@ export class WizardUi {
     const sw = (field, on, label, off = false) => `<label class="switch"><input type="checkbox" data-wz-lc="${escape(id)}" data-wz-lf="${field}"${on ? " checked" : ""}${off ? " disabled" : ""} aria-label="${escape(label)}"><span></span></label>`;
     const timeSel = (field, label, value, std) => {
       const times = [...new Set([...LABEL_TIMES, ...(value !== "" ? [Number(value)] : [])])].sort((a, b) => a - b);
-      return `<label class="wz-sel wz-sel-s"><select data-wz-lc="${escape(id)}" data-wz-lf="${field}" aria-label="${escape(label)}"${c.mon ? "" : " disabled"}><option value=""${value === "" ? " selected" : ""}>${escape(std)}</option>${times.map((m) => `<option value="${m}"${String(m) === value ? " selected" : ""}>${escape(t("offlineMin", m))}</option>`).join("")}</select>${mdi("chevronDown", 18)}</label>`;
+      return `<label class="wz-sel wz-sel-s"><select data-wz-lc="${escape(id)}" data-wz-lf="${field}" aria-label="${escape(label)}"${c.mon && c.status ? "" : " disabled"}><option value=""${value === "" ? " selected" : ""}>${escape(std)}</option>${times.map((m) => `<option value="${m}"${String(m) === value ? " selected" : ""}>${escape(t("offlineMin", m))}</option>`).join("")}</select>${mdi("chevronDown", 18)}</label>`;
     };
     const row = (icon, title, sub, control) => `<div class="wz-li"><span class="wz-ic">${mdi(icon, 18)}</span><div class="wz-nm">${escape(title)}${sub ? `<small>${escape(sub)}</small>` : ""}</div>${control}</div>`;
     const batValues = [...new Set([10, 15, 20, 25, 30, ...(/^\d+$/.test(c.bat) ? [Number(c.bat)] : [])])].sort((a, b) => a - b);
     const batSel = `<label class="wz-sel wz-sel-s"><select data-wz-lc="${escape(id)}" data-wz-lf="bat" aria-label="${escape(t("optBatteryLow"))}"><option value=""${c.bat === "" ? " selected" : ""}>${escape(t("wzLStd"))}</option>${batValues.map((v) => `<option value="${v}"${String(v) === c.bat ? " selected" : ""}>${v} %</option>`).join("")}<option value="off"${c.bat === "off" ? " selected" : ""}>${escape(t("devBatOff"))}</option></select>${mdi("chevronDown", 18)}</label>`;
     const updSel = `<label class="wz-sel wz-sel-s"><select data-wz-lc="${escape(id)}" data-wz-lf="upd" aria-label="${escape(t("optUpdNotify"))}"${none ? " disabled" : ""}><option value="default"${c.upd === "default" ? " selected" : ""}>${escape(t("labelUpdDefault"))}</option><option value="on"${c.upd === "on" ? " selected" : ""}>${escape(t("devChargeOn"))}</option><option value="off"${c.upd === "off" ? " selected" : ""}>${escape(t("devChargeOff"))}</option></select>${mdi("chevronDown", 18)}</label>`;
     const dim = c.mon ? "" : " dim";
+    const outDim = c.mon && c.status ? "" : "dim";
     return `<div class="wz-msg on wz-lcard"><div class="wz-li">${this.host._ibadge(`${LABEL_PREFIX}${id}`, this.labelName(id))}<div class="wz-nm">${escape(this.labelName(id))}<small>${escape(t("labelDevs", (this.s.data.labels.find((l) => l.id === id) || {}).devices || 0))}</small></div><button type="button" class="dlg-btn wz-lrm" data-wz-lrm="${escape(id)}">${mdi("close", 16)}${escape(t("wzLRemove"))}</button></div>
       ${row("eye", t("optMonitor"), t("wzLMonSub"), sw("mon", c.mon, t("optMonitor")))}
-      <div class="${dim.trim()}">${row("pulse", t("optOfflineAfter"), "", timeSel("after", t("optOfflineAfter"), c.after, t("wzLStd")))}
+      <div class="${dim.trim()}">${row("circleOutline", t("optStatus"), t("wzLNsSub"), sw("status", c.status, t("optStatus"), !c.mon))}
+      <div class="${outDim}">${row("pulse", t("optOfflineAfter"), "", timeSel("after", t("optOfflineAfter"), c.after, t("wzLStd")))}
       ${row("timer", t("optDelay"), "", timeSel("delay", t("optDelay"), c.delay, t("wzLStd")))}
-      ${row("alert", t("wzM_outage"), "", sw("push", c.push, t("wzM_outage"), none || !c.mon))}
+      ${row("alert", t("wzM_outage"), "", sw("push", c.push, t("wzM_outage"), none || !c.mon || !c.status))}</div>
       ${row("battery", t("optBatteryLow"), "", batSel)}
       ${row("battery", t("wzM_battery"), "", sw("batPush", c.batPush, t("wzM_battery"), none))}
       ${row("batteryCharging", t("wzM_charge"), "", sw("charge", c.charge, t("wzM_charge"), none))}</div>
@@ -830,10 +866,12 @@ export class WizardUi {
     const row = (a, b) => `<div class="wz-li"><div class="wz-nm">${escape(a)}</div><b class="wz-val">${escape(b)}</b></div>`;
     const quiet = d.target === "none" ? "" : row(t("wzSumQuiet"), d.quiet.on ? (d.quiet.uniform ? `${d.quiet.from} – ${d.quiet.to}` : t("wzQCustomShort")) : t("wzOff"));
     const labelsRow = this.hasLabels() ? row(t("wzSumLabels"), d.lab.ids.length ? d.lab.ids.map((id) => this.labelName(id)).join(", ") : t("wzNone")) : "";
+    const nsCount = d.noStat.integ.size + d.noStat.dev.size + (this.hasLabels() ? d.lab.ids.filter((id) => d.lab.cfg[id].mon && !d.lab.cfg[id].status).length : 0);
+    const noStatus = nsCount ? row(t("wzSumNoStatus"), String(nsCount)) : "";
     const sysKinds = d.target === "none" ? [] : this.sysShown();
     const system = sysKinds.length ? row(t("wzSumSystem"), sysKinds.some((k) => d.sys[k].on) ? sysKinds.filter((k) => d.sys[k].on).map((k) => `${t(`stSys${k[0].toUpperCase()}${k.slice(1)}`).replace(/ \(.*\)/, "")} ${d.sys[k].limit} %`).join(", ") : t("wzOff")) : "";
     return `<div class="wz-check">${mdi("check", 30)}</div><h2 class="wz-h2">${escape(t("wzDoneTitle"))}</h2><p class="wz-p">${escape(t("wzDoneText"))}</p>
-      <div class="wz-sum">${row(t("wzSumInteg"), t("wzOf", data.integrations.length - d.exI.size, data.integrations.length))}${row(t("wzSumTypes"), t("wzOf", typesOn, types.size))}${row(t("wzSumDevices"), t("wzOf", this.chosen().length, this.afterTypes().length))}${row(t("wzSumTarget"), target)}${row(t("wzSumMsgs"), msgs.length ? msgs.join(", ") : t("wzNone"))}${labelsRow}${quiet}${system}</div>
+      <div class="wz-sum">${row(t("wzSumInteg"), t("wzOf", data.integrations.length - d.exI.size, data.integrations.length))}${row(t("wzSumTypes"), t("wzOf", typesOn, types.size))}${row(t("wzSumDevices"), t("wzOf", this.chosen().length, this.afterTypes().length))}${row(t("wzSumTarget"), target)}${row(t("wzSumMsgs"), msgs.length ? msgs.join(", ") : t("wzNone"))}${labelsRow}${noStatus}${quiet}${system}</div>
       ${this.s.saveError ? `<div class="dlg-error">${escape(t("wzSaveError"))} ${escape(this.s.saveError)}</div>` : ""}
       <p class="wz-p">${escape(t("wzDoneFoot"))}</p>`;
   }
@@ -875,6 +913,7 @@ export class WizardUi {
     // Voll geladen: eine Integration gilt, wenn die Mehrheit ihrer Geräte an ist; die anderen Geräte bekommen eine eigene Wahl (siehe deviceCalls)
     values.charge_integrations = merge("charge", base.charge_integrations, this.chargeIntegrations());
     Object.assign(values, this.updateLists());
+    Object.assign(values, this.statusValues());
     if (this.hasLabels()) Object.assign(values, this.labelValues(values));
     if (d.target !== "none") {
       values.quiet_enabled = d.quiet.on;
@@ -894,6 +933,19 @@ export class WizardUi {
     return values;
   }
 
+  // Ohne Online-Status (seit 2.156.0): die Integrationen mit "nostatus" in der Zuordnung "Ausgefallen nach"; nur die Integrationen, die der Assistent
+  // zeigt, ändern sich (andere Einträge, auch Zeiten und "off", bleiben). Die Geräte stehen in deviceCalls.
+  statusValues() {
+    const { d, base } = this.s;
+    const map = { ...(base.offline_after_integrations || {}) };
+    for (const i of this.rowIntegrations("outage")) {
+      if (map[i.domain] === "off" || Number.isInteger(map[i.domain])) continue;
+      if (d.noStat.integ.has(i.domain)) map[i.domain] = "nostatus";
+      else if (map[i.domain] === "nostatus") delete map[i.domain];
+    }
+    return { offline_after_integrations: Object.fromEntries(Object.entries(map).sort(([a], [b]) => a.localeCompare(b))) };
+  }
+
   // Die Einstellungen der Labels (seit 2.155.0) in die Zuordnungen und Listen pro Integration: was der Assistent zeigt, ersetzt die Wahl der Labels,
   // die er kennt (eingerichtete und gewählte); andere Schlüssel bleiben. Nur was vom Standard abweicht, wird geschrieben.
   labelValues(values) {
@@ -906,6 +958,7 @@ export class WizardUi {
       const c = d.lab.cfg[id];
       const key = `${LABEL_PREFIX}${id}`;
       if (!c.mon) maps.offline_after_integrations[key] = "off";
+      else if (!c.status) maps.offline_after_integrations[key] = "nostatus";
       else if (c.after !== "") maps.offline_after_integrations[key] = Number(c.after);
       if (c.delay !== "") maps.notify_delay_integrations[key] = Number(c.delay);
       if (c.bat === "off") maps.battery_low_integrations[key] = "off";
@@ -965,13 +1018,14 @@ export class WizardUi {
   // Ergebnis: Liste von Änderungen für set_device_settings; leer ohne Push-Ziel.
   deviceCalls() {
     const { d, opts } = this.s;
-    if (d.target === "none") return [];
+    // Ohne Push-Ziel gibt es keine Meldungen zu wählen; "Ohne Online-Status" (seit 2.156.0) hängt nicht am Ziel
+    const none = d.target === "none";
     const calls = new Map();
     const set = (id, change) => calls.set(id, { ...(calls.get(id) || {}), device_id: id, ...change });
     const baseOff = new Set((opts.overrides?.notify || []).map((o) => o.id));
     const baseBat = new Set((opts.overrides?.battery || []).filter((o) => o.value === "off").map((o) => o.id));
     const baseCharge = new Map((opts.overrides?.charge || []).filter((o) => typeof o.value?.on === "boolean").map((o) => [o.id, o.value.on]));
-    for (const x of this.chosen()) {
+    for (const x of none ? [] : this.chosen()) {
       const off = d.devOff.outage.has(x.id);
       if (off && !baseOff.has(x.id)) set(x.id, { notify: false });
       else if (!off && baseOff.has(x.id)) set(x.id, { notify: true });
@@ -981,9 +1035,18 @@ export class WizardUi {
         else if (!boff && baseBat.has(x.id)) set(x.id, { battery: null });
       }
     }
+    // Ohne Online-Status (seit 2.156.0): eigene Wahl des Geräts; eine eigene Zeit oder "Nicht überwachen" am Gerät lässt der Assistent stehen
+    const baseOffline = new Map((opts.overrides?.offline || []).map((o) => [o.id, o.value]));
+    for (const x of this.chosen()) {
+      const has = baseOffline.get(x.id);
+      if (has !== undefined && has !== "nostatus") continue;
+      const want = d.noStat.dev.has(x.id);
+      if (want && has === undefined) set(x.id, { offline: "nostatus" });
+      else if (!want && has === "nostatus") set(x.id, { offline: null });
+    }
     // Lademeldung: Gerät an/aus gegen die Integration (siehe chargeIntegrations)
     const included = new Set(this.chargeIntegrations());
-    for (const i of this.rowIntegrations("charge")) {
+    for (const i of none ? [] : this.rowIntegrations("charge")) {
       for (const x of this.rowDevices("charge", i.domain)) {
         const on = d.chargeOn.has(x.id);
         // gewünschte eigene Wahl: keine, wenn das Gerät der Integration folgt
@@ -1129,6 +1192,10 @@ export class WizardUi {
           } else set.delete(dev);
         } else if (el.checked) d.devOff[id].delete(dev);
         else d.devOff[id].add(dev);
+        this.render();
+      } else if (el.matches("[data-wz-ns]")) {
+        const set = el.dataset.wzNs === "int" ? d.noStat.integ : d.noStat.dev;
+        flip(set, el.dataset.wzKey, el.checked);
         this.render();
       } else if (el.matches("[data-wz-lab]")) {
         // Ein Label wählen: es ist damit eingerichtet (ohne Wahl gilt der Standard)

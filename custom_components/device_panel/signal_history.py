@@ -227,7 +227,7 @@ class SignalLog:
         for device in devices:
             dev = device.get("id")
             sig = device.get("signal")
-            if not dev or device.get("online") is not True or not sig or sig.get("value") is None:
+            if not dev or (device.get("online") is not True and not device.get("no_status")) or not sig or sig.get("value") is None:
                 self._weak_pending.pop(dev, None)
                 continue
             limit = signal_limit(device)

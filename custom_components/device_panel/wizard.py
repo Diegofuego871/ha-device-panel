@@ -26,6 +26,7 @@ from .devices import (
     async_integration_info,
     candidate_devices,
     device_offline_after,
+    device_status_off,
     live_status,
     effective_type,
     battery,
@@ -56,7 +57,7 @@ async def ws_wizard_data(hass: HomeAssistant, connection: websocket_api.ActiveCo
         area = areas.async_get_area(device.area_id) if device.area_id else None
         # Gerade ausgefallen (nach "Ausgefallen nach", wie in der Liste); nicht überwachte Geräte haben keinen Status
         offline_after = device_offline_after(hass, opts, device)
-        online = None if offline_after is None else live_status(hass, entries, now, offline_after, log, device.id)[0]
+        online = None if offline_after is None or device_status_off(hass, opts, device) else live_status(hass, entries, now, offline_after, log, device.id)[0]
         devices.append(
             {
                 "id": device.id,

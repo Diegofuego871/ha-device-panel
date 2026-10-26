@@ -416,10 +416,21 @@ tr.dev.flaky td:first-child { box-shadow: inset 4px 0 0 var(--dp-warning); }
 .av.off .dot { background: var(--dp-error); box-shadow: 0 0 8px var(--dp-error); }
 .av.warn .dot { background: var(--dp-warning); }
 .av.none .dot { background: var(--dp-text3); }
+.av.ns .dot { background: var(--dp-card); border: 2.5px solid var(--dp-text3); box-sizing: border-box; }
 .dur { font-size: 15px; font-weight: 600; color: var(--dp-error); font-variant-numeric: tabular-nums; }
 .durs { font-size: 12px; color: var(--dp-text2); }
 .pill { display: inline-flex; align-items: center; gap: 6px; height: 22px; padding: 0 9px; border-radius: 999px; font-size: 12px; font-weight: 500; white-space: nowrap; }
 .pill .pd { width: 7px; height: 7px; border-radius: 50%; background: currentColor; }
+/* Ohne Online-Status (seit 2.156.0): ein Ring statt des Punkts, Zeile unter den Kacheln */
+.pd.ring { background: transparent; border: 2px solid currentColor; box-sizing: border-box; }
+.pill.ns { color: var(--dp-text2); }
+.nsline:empty { display: none; }
+.nsline { margin: 8px 0 0; }
+.nsl { display: inline-flex; align-items: center; gap: 8px; padding: 5px 10px; border: 0; border-radius: 10px; background: none; color: var(--dp-text2); font: inherit; font-size: 13px; }
+button.nsl { cursor: pointer; }
+button.nsl:hover, button.nsl[aria-pressed="true"] { background: var(--dp-hover); color: var(--dp-text); }
+button.nsl:focus-visible { outline: 2px solid var(--dp-primary); outline-offset: 2px; }
+.nsl .pd { width: 11px; height: 11px; border-radius: 50%; }
 .pill.on { color: var(--dp-success); background: var(--dp-success-soft); }
 .pill.off { color: var(--dp-error); background: var(--dp-error-soft); }
 .pill.warn { color: color-mix(in srgb, var(--dp-warning) 85%, var(--dp-text)); background: var(--dp-warning-soft); }
@@ -2422,6 +2433,8 @@ dialog.wizard-dlg[open] { display: flex; flex-direction: column; }
 /* Schritt "Labels" (seit 2.155.0): schmale Auswahl in der Zeile, Zeile eines eingerichteten Labels, Karte des gewählten */
 .wz-sel.wz-sel-s { flex: none; width: 168px; margin: 0; }
 .wz-sel.wz-sel-s select { padding: 8px 34px 8px 10px; font-size: 13.5px; }
+.wz-ns { display: inline-flex; align-items: center; gap: 6px; flex: none; color: var(--dp-text2); }
+.wz-ns svg { flex: none; }
 .wz-lrow { width: 100%; border: 1px solid var(--dp-divider); border-radius: 12px; background: none; color: inherit; font: inherit; text-align: left; cursor: pointer; margin: 4px 0; }
 .wz-lrow.on { border-color: var(--dp-primary); }
 .wz-lrow:focus-visible { outline: 2px solid var(--dp-primary); outline-offset: 2px; }

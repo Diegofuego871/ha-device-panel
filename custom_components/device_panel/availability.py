@@ -40,7 +40,7 @@ from homeassistant.helpers.storage import Store
 from homeassistant.util import dt as dt_util
 
 from .const import CONF_AVAIL_DAYS, CONF_AVAIL_MB, CONF_OFFLINE_AFTER, CONF_STARTUP_GRACE, DOMAIN
-from .devices import device_back_since, device_down_since, device_offline_after, device_status, monitored_devices
+from .devices import device_back_since, device_down_since, device_offline_after, device_status, status_devices
 from .options_api import effective
 from .storage_util import PeriodicSaver
 
@@ -260,7 +260,7 @@ class AvailabilityLog:
             return 0
         now = now if now is not None else time.time()
         opts = effective(self.hass)
-        monitored = list(monitored_devices(self.hass, opts))
+        monitored = list(status_devices(self.hass, opts))
         devices = [(device.id, entries) for device, entries in monitored]
         offline_after = {device.id: self._offline_after(opts, device) for device, _entries in monitored}
         firsts = {dev: list(evs[0]) for dev, evs in self._events.items() if evs}
@@ -319,7 +319,7 @@ class AvailabilityLog:
 
     def _offline_after(self, opts: dict[str, Any], device: Any) -> float:
         """"Ausgefallen nach" des Geräts in Sekunden (eigener Wert der Integration oder global)."""
-        # Nicht überwachte Geräte liefert monitored_devices nicht; der globale
+        # Nicht überwachte Geräte und solche ohne Online-Status liefert status_devices nicht; der globale
         # Wert ist nur der Rückfall.
         return device_offline_after(self.hass, opts, device) or opts[CONF_OFFLINE_AFTER] * 60
 
@@ -338,7 +338,7 @@ class AvailabilityLog:
         # Wechsel für die Meldungen: (Gerät, Zustand, Zeitpunkt); "gone" =
         # nicht mehr überwacht.
         changes: list[tuple[str, Any, float]] = []
-        for device, entries in monitored_devices(self.hass, opts):
+        for device, entries in status_devices(self.hass, opts):
             seen.add(device.id)
             online, since = device_status(self.hass, entries, now_dt, self._offline_after(opts, device))
             state = None if online is None else ONLINE if online else OFFLINE

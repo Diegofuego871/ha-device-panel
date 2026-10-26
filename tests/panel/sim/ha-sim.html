@@ -475,7 +475,7 @@
     const dom = d.integration?.domain;
     return dom && dom in (map || {}) ? [dom, map[dom]] : [null, undefined];
   };
-  window.__strictestTime = (found) => found.find(([, v]) => v === "off") || found.reduce((a, b) => (b[1] > a[1] ? b : a));
+  window.__strictestTime = (found) => found.find(([, v]) => v === "off") || found.find(([, v]) => v === "nostatus") || found.reduce((a, b) => (b[1] > a[1] ? b : a));
   window.__lowest = (found) => found.find(([, v]) => v === "off") || found.reduce((a, b) => (b[1] < a[1] ? b : a));
   function catalog() {
     const byDomain = {};
@@ -1002,7 +1002,7 @@
         }
         if ("hide_chips" in msg.values) {
           // Wie options_api._chips: bekannte Schlüssel in fester Reihenfolge.
-          const known = ["area", "integration", "label", "offline", "problems", "batteries", "battery", "signal", "update", "override", "new", "charging", "favorites"];
+          const known = ["area", "integration", "label", "offline", "nostatus", "problems", "batteries", "battery", "signal", "update", "override", "new", "charging", "favorites"];
           const v = msg.values.hide_chips;
           if (!Array.isArray(v) || v.some((x) => !known.includes(x))) throw { code: "invalid_format", message: "chips" };
           msg.values.hide_chips = known.filter((k) => v.includes(k));
@@ -1020,7 +1020,7 @@
           msg.values.connection_order = [...new Set(v)];
         }
         if ("chip_order" in msg.values) {
-          const known = ["area", "integration", "label", "all", "zigbee", "thread", "zwave", "matter", "ble", "wifi", "ethernet", "network", "cloud", "unknown", "offline", "problems", "batteries", "battery", "signal", "update", "override", "new", "charging", "favorites", "pin"];
+          const known = ["area", "integration", "label", "all", "zigbee", "thread", "zwave", "matter", "ble", "wifi", "ethernet", "network", "cloud", "unknown", "offline", "nostatus", "problems", "batteries", "battery", "signal", "update", "override", "new", "charging", "favorites", "pin"];
           const v = msg.values.chip_order;
           if (!Array.isArray(v) || v.some((x) => !known.includes(x))) throw { code: "invalid_format", message: "chip order" };
           msg.values.chip_order = [...new Set(v)];
@@ -1135,7 +1135,7 @@
         if ("offline_after_integrations" in msg.values) {
           // Wie options_api.offline_map: Minuten 1 bis 1440 oder "off".
           const m = msg.values.offline_after_integrations;
-          if (!m || typeof m !== "object" || Array.isArray(m) || Object.entries(m).some(([k, v]) => !KEY_RE.test(k) || (v !== "off" && (!Number.isInteger(v) || v < 1 || v > 1440)))) throw { code: "invalid_format", message: "offline map" };
+          if (!m || typeof m !== "object" || Array.isArray(m) || Object.entries(m).some(([k, v]) => !KEY_RE.test(k) || (v !== "off" && v !== "nostatus" && (!Number.isInteger(v) || v < 1 || v > 1440)))) throw { code: "invalid_format", message: "offline map" };
         }
         if ("notify_delay_integrations" in msg.values) {
           // Wie options_api.notify_delay_map: Minuten 1 bis 1440, kein "off"
@@ -1150,7 +1150,7 @@
           const bad = Object.entries(dm || {}).filter(([dom, v]) => {
             const off = (om || {})[dom] ?? msg.values.offline_after ?? window.__opts.offline_after;
             const changed = v !== (window.__opts.notify_delay_integrations || {})[dom] || (om || {})[dom] !== (window.__opts.offline_after_integrations || {})[dom];
-            return changed && off !== "off" && v < off;
+            return changed && off !== "off" && off !== "nostatus" && v < off;
           });
           void nowD;
           if (bad.length) throw { code: "invalid_format", message: `"Erst melden nach" darf nicht kürzer sein als "Ausgefallen nach" (${bad.map((x) => x[0]).join(", ")})` };
@@ -1169,7 +1169,7 @@
           const ownD = "notify_delay" in msg ? msg.notify_delay : window.__devSettings.notifyDelay[msg.device_id];
           const ownO = "offline" in msg ? msg.offline : window.__devSettings.offline[msg.device_id];
           const offM = window.__opts.offline_after_integrations || {};
-          const offMin = ownO === "off" ? null : Number.isInteger(ownO) ? ownO : offM[dev.integration?.domain] === "off" ? null : offM[dev.integration?.domain] ?? window.__opts.offline_after;
+          const offMin = ownO === "off" ? null : Number.isInteger(ownO) ? ownO : ownO === "nostatus" ? window.__opts.offline_after : offM[dev.integration?.domain] === "off" ? null : Number.isInteger(offM[dev.integration?.domain]) ? offM[dev.integration?.domain] : window.__opts.offline_after;
           if (("notify_delay" in msg || "offline" in msg) && ownD != null && offMin != null && ownD < offMin) throw { code: "invalid_format", message: '"Erst melden nach" darf nicht kürzer sein als "Ausgefallen nach"' };
         }
         const out = {};
@@ -1183,7 +1183,7 @@
         if ("offline" in msg) {
           // Wie das Backend: "off" oder Minuten 1..1440.
           const v = msg.offline;
-          if (!(v === null || v === "off" || (Number.isInteger(v) && v >= 1 && v <= 1440))) throw { code: "invalid_format", message: "offline" };
+          if (!(v === null || v === "off" || v === "nostatus" || (Number.isInteger(v) && v >= 1 && v <= 1440))) throw { code: "invalid_format", message: "offline" };
           if (v === null) delete window.__devSettings.offline[msg.device_id];
           else window.__devSettings.offline[msg.device_id] = v;
           out.offline = v;
@@ -1884,6 +1884,9 @@
         // Gerät vor Integration vor global (wie devices.device_offline_after)
         const offEff = (d) => (d.id in devOff ? devOff[d.id] : window.__scopePick(offMap, d, window.__strictestTime)[1] ?? window.__opts.offline_after);
         const unmon = (d) => offEff(d) === "off" && !d.disabled;
+        // Ohne Online-Status (2.156.0): überwacht, aber ohne Status, Ausfälle und Ausfall-Meldungen
+        const nost = (d) => offEff(d) === "nostatus" && !d.disabled;
+        const offMinutes = (d) => (offEff(d) === "nostatus" ? window.__opts.offline_after : offEff(d));
         const notifyDefault = (d) => {
           const dom = d.integration?.domain;
           const exP = window.__opts.notify_exclude_integrations.includes(dom);
@@ -1898,22 +1901,24 @@
             labels: [...(window.__devLabels[d.id] || [])].sort(),
             name_original: d.name,
             name_custom: window.__names[d.id] || null,
-            ...(unmon(d) ? { online: null, offline_since: null, since_at_least: false } : {}),
+            ...(unmon(d) || nost(d) ? { online: null, offline_since: null, since_at_least: false } : {}),
+            ...(nost(d) ? { avail24: null } : {}),
             unmonitored: unmon(d),
-            offline_after: unmon(d) ? null : offEff(d),
+            no_status: nost(d),
+            offline_after: unmon(d) || nost(d) ? null : offEff(d),
             offline_setting: devOff[d.id] ?? null,
             // Wie das Backend (seit 2.91.0): wirksam (nie kürzer als "Ausgefallen nach"), eigener Wert, Standard
             notify_delay: (() => {
               const dm = window.__opts.notify_delay_integrations || {};
               const v = window.__devSettings.notifyDelay[d.id] ?? window.__scopePick(dm, d, window.__strictestTime)[1] ?? window.__opts.notify_delay;
-              const o = offEff(d);
+              const o = offMinutes(d);
               return Number.isInteger(o) ? Math.max(v, o) : v;
             })(),
             notify_delay_setting: window.__devSettings.notifyDelay[d.id] ?? null,
             notify_delay_default: (() => { const [k, v] = window.__scopePick(window.__opts.notify_delay_integrations || {}, d, window.__strictestTime); return { minutes: v ?? window.__opts.notify_delay, integration: k, global: window.__opts.notify_delay }; })(),
             offline_default: (() => { const [k, v] = window.__scopePick(offMap, d, window.__strictestTime); return { minutes: v ?? window.__opts.offline_after, integration: k, global: window.__opts.offline_after }; })(),
             notify_default: notifyDefault(d),
-            flaky: !unmon(d) && Boolean(d.online && d.avail24 && d.avail24.outages >= flakyN),
+            flaky: !unmon(d) && !nost(d) && Boolean(d.online && d.avail24 && d.avail24.outages >= flakyN),
             battery: bat(d),
             has_battery: Boolean(d.battery),
             battery_setting: window.__devSettings.battery[d.id] ?? null,

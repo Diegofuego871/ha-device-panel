@@ -87,6 +87,7 @@ def _since(d: dict[str, Any]) -> float | None:
 def _status(device: dict[str, Any]) -> str:
     return (
         "not monitored" if device.get("unmonitored")
+        else "no online status" if device.get("no_status")
         else "disabled" if device.get("disabled")
         else "no data" if device.get("online") is None
         else "offline" if device["online"] is False

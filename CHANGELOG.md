@@ -7,6 +7,18 @@ All notable changes to this integration are documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/).
 
+## [2.156.0] - 2026-10-26
+
+Without online status: a device stays monitored for battery, charging and signal, but has no online status, no outages and no outage notifications.
+
+### Added
+
+- **Without online status:** a third state next to "Monitor" and "Do not monitor". The device shows a grey ring instead of a green or red dot, has no outages, no outage statistics and no outage notifications; battery, charging, signal and updates stay. It suits devices that report only now and then (for example Bluetooth sensors) and would otherwise look permanently offline.
+- **Switch "Watch online status":** in the tab "Outage" of an integration and of a label, and as the choice "No online status" next to "Own time" and "Do not monitor" in the device pop-up. Order of precedence as always: device › label › integration; with several labels the strictest applies ("Do not monitor" before "No online status" before a time). An own time on the device switches the status on again.
+- **Line under the tiles:** "N devices without online status" shows how many devices are affected; it is also the new filter chip "No online status" (can be hidden and moved like all chips, Settings › Display).
+- **Setup wizard:** in the step "Notifications", tab "Outage", every integration and every device has a second switch with a ring; the card of a label in the step "Labels" has the switch "Watch online status", and the summary counts the devices without status.
+- **Graphics and README:** the level graphic and the flow graphic mention the new state; new section in the README.
+
 ## [2.155.1] - 2026-10-25
 
 The label settings move into "Monitoring and notifications".
@@ -4963,6 +4975,7 @@ First pre-release.
   GitHub Actions for HACS/hassfest validation and tests.
 
 [2.6.0]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v2.6.0
+[2.156.0]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v2.156.0
 [2.155.1]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v2.155.1
 [2.155.0]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v2.155.0
 [2.154.2]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v2.154.2

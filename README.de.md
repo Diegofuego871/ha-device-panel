@@ -24,6 +24,7 @@
 - **Batterie-Übersicht mit Meldungen:** ein farbiges Batteriesymbol bei jedem Gerät, eine Warnschwelle (Standard 15 %), Push oder anhaltende Benachrichtigung, ein Verlauf bis 12 Monate mit Prognose, wie lange die Batterie hält, und eine Meldung, wenn ein Gerät voll geladen ist
 - **Empfangs-Übersicht mit Warnungen:** Empfang in dBm oder LQI bei jedem Gerät, eine Warnschwelle pro Verbindungsart, ein Verlauf mit Median und Spanne, und bei Bluetooth der Empfänger (Adapter oder Proxy), über den ein Gerät verbunden ist oder war
 - **Meldungen auf bis zu vier Ebenen:** einmal eine Vorgabe setzen, pro Integration (oder pro Label) ändern, auf einem einzelnen Gerät überschreiben; jede Einstellung zeigt, woher ihr Wert stammt (Grafik unten)
+- **Ohne Online-Status:** Ein Gerät bleibt für Batterie, Laden und Empfang überwacht, hat aber keinen Online-Status, keine Ausfälle und keine Ausfall-Meldungen (grauer Ring, eigener Filter-Chip)
 - **Labels:** Geräte mit einem Label aus Home Assistant werden gemeinsam eingestellt (zum Beispiel "oft offline" ohne Überwachung); ein Label steht zwischen Gerät und Integration und hat einen eigenen Filter-Chip
 - **Ruhezeit:** Meldungen warten in der Nacht (Zeiten je Wochentag, Arten wählbar) und kommen danach als Zusammenfassung oder einzeln
 - **Magic Push:** eigene Meldungen pro Gerät ohne Automation: einen Wert wählen, sagen, wann gemeldet wird, den Text schreiben, fertig
@@ -129,6 +130,15 @@ Labels sind die Labels, die du Geräten in Home Assistant gibst (Einstellungen �
 - **Mehrere Labels:** das strengste gilt: zuerst "Nicht überwachen", sonst die längere Zeit oder die tiefere Schwelle; bei Typ, Verbindungsart und Meldung an oder aus zählt das Label weiter oben in der Liste (verschieben mit "Nach oben" / "Nach unten")
 - **Im Panel:** der Filter-Chip "Label" (Mehrfachauswahl, "Ohne Label", kombinierbar mit den anderen Filtern) erscheint, sobald ein Gerät ein Label trägt; das Pop-up eines Geräts zeigt "Wie Label" und die Herkunft "Label <Name>"
 - **Nur Geräte:** Labels an Geräten zählen, Labels an Entitäten nicht; "Label entfernen" löscht die Einstellungen des Labels und lässt Home Assistant unberührt
+
+### Ohne Online-Status
+
+Manche Geräte melden sich nur ab und zu, zum Beispiel Bluetooth-Sensoren, und wirken sonst dauernd ausgefallen. "Ohne Online-Status" lässt sie für Batterie, Laden, Empfang und Updates überwacht, sie haben aber keinen Online-Status, keine Ausfälle, keine Ausfall-Statistik und keine Ausfall-Meldungen.
+
+- **Wo:** Schalter "Online-Status beobachten" im Reiter "Ausfall" einer Integration und eines Labels; für ein einzelnes Gerät die Auswahl "Ohne Online-Status" neben "Eigene Zeit" und "Nicht überwachen" im Popup (Einstellungen). Eine eigene Zeit am Gerät schaltet den Status wieder ein
+- **Rangfolge:** Gerät › Label › Integration; bei mehreren Labels gilt das strengste: "Nicht überwachen", dann "Ohne Online-Status", dann eine Zeit
+- **Im Panel:** ein grauer Ring statt des Punkts, eine Zeile unter den Kacheln ("N Geräte ohne Online-Status"), die zugleich der Filter-Chip "Ohne Online-Status" ist (wie alle Chips ausblend- und verschiebbar)
+- **Einrichtungsassistent:** im Schritt "Meldungen", Reiter "Ausfall", ein Ring-Schalter je Integration und Gerät sowie der Schalter auf der Karte eines Labels
 
 ### Vom Ausfall zur Meldung
 
