@@ -49,7 +49,7 @@ Offline devices with the time they have been gone, unstable devices (three or mo
 
 ### Search, filter, sort
 
-Search runs over all columns. Filter chips narrow the list: warnings, offline, battery, charging, new devices, devices with their own settings, favorites, each connection type, and an area, an integration and a label filter (only while a device carries a label) that combine with the chips. Hidden devices, integrations and device types are neither shown nor monitored. The accent colour of the panel can be chosen per user (Settings › Panel › General): Home Assistant or one of nine colours. The animations (measuring dot on the outage pulse, shooting star at the dot of the buttons) are on by default and can be switched off there as well.
+Search runs over all columns. Filter chips narrow the list: warnings, offline, battery, charging, new devices, devices with their own settings, favorites, each connection type, and an area, an integration and a label filter (only while a device carries a label) that combine with the chips. Hidden devices, integrations and device types are neither shown nor monitored. The language of the panel (automatic, English or German) and the accent colour can be chosen per user (Settings › Panel › General): Home Assistant or one of nine colours. The animations (measuring dot on the outage pulse, shooting star at the dot of the buttons) are on by default and can be switched off there as well.
 
 | Warnings | Battery | Area filter |
 |---|---|---|

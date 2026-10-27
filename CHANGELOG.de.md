@@ -7,6 +7,14 @@ Alle nennenswerten Änderungen an dieser Integration stehen in dieser Datei.
 Das Format folgt [Keep a Changelog](https://keepachangelog.com/de/1.1.0/),
 die Versionsnummern folgen [Semantic Versioning](https://semver.org/lang/de/).
 
+## [2.157.0] - 2026-10-27
+
+Die Sprache des Panels lässt sich wählen.
+
+### Hinzugefügt
+
+- **Sprache des Panels:** Einstellungen › Panel › Allgemein hat eine neue Auswahl "Sprache des Panels" mit "Automatisch", "Englisch" und "Deutsch". "Automatisch" folgt wie bisher der Sprache von Home Assistant. Die Wahl gilt nur für dich und wird bei deinen übrigen persönlichen Panel-Einstellungen gespeichert; sie wirkt mit "Speichern" und gilt sofort im ganzen Panel. Die Namen der Sprachen stehen immer in der gerade gewählten Sprache.
+
 ## [2.156.1] - 2026-10-26
 
 Einrichtungsassistent so gross wie die Einstellungen, Schalter für Vorabversionen in der gewohnten Farbe, Animationen auch bei "Bewegung reduzieren".
@@ -5088,6 +5096,7 @@ Erste Vorabversion.
   GitHub Actions für die Prüfungen von HACS und hassfest sowie die Tests.
 
 [2.6.0]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v2.6.0
+[2.157.0]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v2.157.0
 [2.156.1]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v2.156.1
 [2.156.0]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/2.156.0
 [2.155.1]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v2.155.1

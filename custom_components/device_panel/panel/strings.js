@@ -1928,6 +1928,12 @@ export const STRINGS = {
     secDevices: "Geräte im Panel",
     ttlStart: "Startseite",
     ttlAccent: "Akzentfarbe",
+    ttlLang: "Sprache",
+    optLang: "Sprache des Panels",
+    optLangShort: "Gilt nur für dich. Automatisch folgt der Sprache von Home Assistant.",
+    langAuto: "Automatisch",
+    langEn: "Englisch",
+    langDe: "Deutsch",
     ttlAnim: "Animationen",
     optAnim: "Animationen anzeigen",
     optAnimShort: "Messpunkt auf dem Ausfall-Puls und Sternschnuppe am Punkt der Knöpfe (Launcher, angeheftete Apps, Zahnrad). Gilt nur für dich. Aus: Alles steht still.",
@@ -4412,6 +4418,12 @@ export const STRINGS = {
     secDevices: "Devices in the panel",
     ttlStart: "Start page",
     ttlAccent: "Accent colour",
+    ttlLang: "Language",
+    optLang: "Panel language",
+    optLangShort: "Only for you. Automatic follows the language of Home Assistant.",
+    langAuto: "Automatic",
+    langEn: "English",
+    langDe: "German",
     ttlAnim: "Animations",
     optAnim: "Show animations",
     optAnimShort: "Measuring dot on the outage pulse and shooting star at the dot of the buttons (launcher, pinned apps, settings gear). Only for you. Off: everything stands still.",
@@ -4974,7 +4986,8 @@ export const STRINGS = {
   },
 };
 
-export function pickLang(hass) {
+export function pickLang(hass, forced = "") {
+  if (forced === "de" || forced === "en") return forced;
   const lang = String((hass && (hass.locale?.language || hass.language)) || "en").toLowerCase();
   return lang === "de" || lang.startsWith("de-") ? "de" : "en";
 }

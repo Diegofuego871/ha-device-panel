@@ -7,6 +7,14 @@ All notable changes to this integration are documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/).
 
+## [2.157.0] - 2026-10-27
+
+The language of the panel can be chosen.
+
+### Added
+
+- **Panel language:** Settings › Panel › General has a new drop-down "Panel language" with "Automatic", "English" and "German". "Automatic" follows the language of Home Assistant as before. The choice only applies to you and is stored with your other personal panel settings; it takes effect with "Save" and applies at once to the whole panel. The names of the languages are always written in the language that is currently selected.
+
 ## [2.156.1] - 2026-10-26
 
 Setup wizard as large as the settings, switch for pre-releases in the usual colour, animations also with "Reduce motion".
@@ -4987,6 +4995,7 @@ First pre-release.
   GitHub Actions for HACS/hassfest validation and tests.
 
 [2.6.0]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v2.6.0
+[2.157.0]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v2.157.0
 [2.156.1]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v2.156.1
 [2.156.0]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/2.156.0
 [2.155.1]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v2.155.1

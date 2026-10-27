@@ -842,7 +842,7 @@ const ACCENTS = [
 
 function sanitizeViews(raw) {
   const r = raw && typeof raw === "object" ? raw : {};
-  return { desktop: sanitizeView(r.desktop), mobile: sanitizeView(r.mobile), updated: Number(r.updated) || 0, accent: ACCENTS.some((a) => a.id === r.accent) ? r.accent : "", anim: r.anim !== false };
+  return { desktop: sanitizeView(r.desktop), mobile: sanitizeView(r.mobile), updated: Number(r.updated) || 0, accent: ACCENTS.some((a) => a.id === r.accent) ? r.accent : "", anim: r.anim !== false, lang: r.lang === "de" || r.lang === "en" ? r.lang : "" };
 }
 
 // Hinweis-Chips: Schlüssel, CSS-Klasse, Symbol, Text und Bedingung.
@@ -1176,6 +1176,49 @@ class DevicePanel extends HTMLElement {
     this._applyAccent();
     this._anim = v.anim;
     this._applyAnim();
+    // Sprache des Benutzers (seit 2.157.0): kommt sie später von HA und weicht ab, zieht das Panel nach
+    if (v.lang !== (this._langPref || "")) {
+      this._langPref = v.lang;
+      this._applyLang();
+    }
+  }
+
+  // Sprache des Panels: die gewählte (Einstellungen › Panel › Allgemein) oder, bei "Automatisch", die von Home Assistant
+  _lang() {
+    return pickLang(this._hass, this._langPref);
+  }
+
+  // Sprache neu anwenden: die Texte der Kopfzeile (stehen nur im Gerüst) und alles, was sich aus Texten aufbaut
+  _applyLang() {
+    const root = this.shadowRoot;
+    if (!root?.querySelector(".toolbar")) return;
+    const t = (k) => this._t(k);
+    root.querySelector(".tb-main h1").textContent = t("title");
+    const search = root.querySelector(".search");
+    search.placeholder = t("search");
+    search.setAttribute("aria-label", t("search"));
+    const clear = root.querySelector(".search-clear");
+    clear.title = t("searchClear");
+    clear.setAttribute("aria-label", t("searchClear"));
+    const view = root.querySelector(".view-btn");
+    view.title = t("viewBtn");
+    view.setAttribute("aria-label", t("viewBtn"));
+    const label = view.querySelector("span");
+    if (label) label.textContent = t("viewBtn");
+    const apps = root.querySelector(".apps-btn");
+    apps.title = t("appsBtn");
+    apps.setAttribute("aria-label", t("appsBtn"));
+    root.querySelector(".area-pop")?.setAttribute("aria-label", t("areaTitle"));
+    this._apps.renderBar();
+    this._render();
+    this._renderDevice();
+    if (this._settings) this._renderSettings();
+  }
+
+  _setLang(lang) {
+    this._langPref = lang === "de" || lang === "en" ? lang : "";
+    this._saveView();
+    this._applyLang();
   }
 
   // Akzentfarbe des Benutzers auf das Panel legen; leer = die Farbe von Home Assistant
@@ -1210,7 +1253,7 @@ class DevicePanel extends HTMLElement {
   }
 
   _viewData() {
-    return { desktop: this._views.desktop, mobile: this._views.mobile, updated: this._viewUpdated, accent: this._accent || "", anim: this._anim !== false };
+    return { desktop: this._views.desktop, mobile: this._views.mobile, updated: this._viewUpdated, accent: this._accent || "", anim: this._anim !== false, lang: this._langPref || "" };
   }
 
   // Nach jeder Änderung: lokal sofort, an HA verzögert und gebündelt.
@@ -1523,7 +1566,9 @@ class DevicePanel extends HTMLElement {
 
   // Zahlen und Uhrzeit im Format der HA-Sprache des Benutzers (z. B. de-CH).
   _locale() {
-    return this._hass?.locale?.language || this._hass?.language || undefined;
+    const ha = this._hass?.locale?.language || this._hass?.language || undefined;
+    // Gewählte Sprache: das Format von HA behalten, wenn es dazu passt (zum Beispiel de-CH bei Deutsch)
+    return this._langPref && !String(ha || "").toLowerCase().startsWith(this._langPref) ? this._langPref : ha;
   }
 
   _syncBeats() {
@@ -1531,7 +1576,7 @@ class DevicePanel extends HTMLElement {
   }
 
   _t(key, ...args) {
-    const value = STRINGS[pickLang(this._hass)][key];
+    const value = STRINGS[this._lang()][key];
     return typeof value === "function" ? value(...args) : value;
   }
 
@@ -5128,7 +5173,7 @@ class DevicePanel extends HTMLElement {
     this._devForce = true;
     this._renderDevice();
     try {
-      const r = await this._hass.callWS({ type: "device_panel/ai_ask", device_id: id, question: q, language: pickLang(this._hass), history: asks.map(({ q: aq, a }) => ({ q: aq, a })) });
+      const r = await this._hass.callWS({ type: "device_panel/ai_ask", device_id: id, question: q, language: this._lang(), history: asks.map(({ q: aq, a }) => ({ q: aq, a })) });
       st.asks = [...asks, { q, a: r.text }];
       // Neue Vorschläge zur Antwort; ohne welche bleiben die bisherigen (ohne die gestellten)
       if (Array.isArray(r.next) && r.next.length) st.next = r.next;
@@ -5179,7 +5224,7 @@ class DevicePanel extends HTMLElement {
     this._ai.set(id, { state: "loading" });
     this._renderDevice();
     try {
-      const r = await this._hass.callWS({ type: "device_panel/ai_assess", device_id: id, language: pickLang(this._hass) });
+      const r = await this._hass.callWS({ type: "device_panel/ai_assess", device_id: id, language: this._lang() });
       this._ai.set(id, { state: "done", title: r.title, text: r.text, source: r.source, at: r.at, next: r.next || [] });
     } catch (err) {
       const code = err && typeof err === "object" ? err.code : null;
@@ -5790,7 +5835,7 @@ class DevicePanel extends HTMLElement {
 
   // Stand der Panel-Einstellungen, die nicht zu den Optionen gehören (Vorabversionen, automatisch installieren, Startseite)
   _extraBase() {
-    return { prerelease: Boolean(this._prerelease), auto_update: Boolean(this._autoUpdate), start_panel: Boolean(this._startOn), accent: this._accent || "", anim: this._anim !== false };
+    return { prerelease: Boolean(this._prerelease), auto_update: Boolean(this._autoUpdate), start_panel: Boolean(this._startOn), accent: this._accent || "", anim: this._anim !== false, lang: this._langPref || "" };
   }
 
   async _openSettings(tab = "overview") {
@@ -6094,7 +6139,7 @@ class DevicePanel extends HTMLElement {
   }
 
   async _loadNotes(n, force = false) {
-    const lang = pickLang(this._hass);
+    const lang = this._lang();
     try {
       const data = await this._hass.callWS({ type: "device_panel/release_notes", installed: n.installed || undefined, latest: n.latest, language: lang, force });
       if (this._notes !== n) return;
@@ -6131,7 +6176,7 @@ class DevicePanel extends HTMLElement {
       body = `<div class="dlg-error">${escape(t("notesError"))} ${escape(msg)}</div><div class="aip-btns"><button type="button" class="dlg-btn" data-notes="retry">${mdi("reset", 18)}${escape(t("notesRetry"))}</button></div>`;
     } else {
       const entries = n.data?.entries || [];
-      const lang = pickLang(this._hass);
+      const lang = this._lang();
       const note = n.data?.language && n.data.language !== lang ? `<div class="nf-note">${mdi("info", 16)}<div><p>${escape(t("notesEnglishOnly"))}</p></div></div>` : "";
       body =
         note +
@@ -6723,7 +6768,7 @@ class DevicePanel extends HTMLElement {
       const text = p.text.replace(/\r\n/g, "\n").trim();
       const problem = this._promptError(text);
       if (problem) throw new Error(problem);
-      const r = await this._hass.callWS({ type: "device_panel/ai_prompt_preview", device_id: p.device, language: pickLang(this._hass), prompt: text });
+      const r = await this._hass.callWS({ type: "device_panel/ai_prompt_preview", device_id: p.device, language: this._lang(), prompt: text });
       result = { text: r.text };
     } catch (err) {
       result = { error: err && typeof err === "object" && err.message ? String(err.message) : String(err || "") };
@@ -8922,6 +8967,17 @@ class DevicePanel extends HTMLElement {
       const sw = (id, color, label) => `<button type="button" class="accent-sw${cur === id ? " on" : ""}" data-accent="${id}" aria-pressed="${cur === id}" style="--a:${color}"><i></i><span>${escape(label)}</span></button>`;
       return `<div class="accent-grid${accChanged ? " changed" : ""}" role="group" aria-label="${escape(t("ttlAccent"))}">${sw("", "var(--primary-color, #03a9f4)", t("accentHa"))}${ACCENTS.map((a) => sw(a.id, a.color, t(`accent_${a.id}`))).join("")}</div><div class="opt-short">${escape(t("accentShort"))}</div>`;
     };
+    // Sprache (seit 2.157.0): Benutzereinstellung, Entwurf in st.extra.lang, gespeichert mit "Speichern"; die Namen stehen in der gerade
+    // gewählten Sprache des Entwurfs (Englisch/English, Deutsch/German)
+    const langRow = () => {
+      const cur = st.extra ? st.extra.lang : this._langPref || "";
+      const changed = Boolean(st.extra) && st.extra.lang !== st.extraBase.lang;
+      const dl = cur === "de" || cur === "en" ? cur : pickLang(this._hass);
+      const tl = (k) => STRINGS[dl][k];
+      const opts = [["", tl("langAuto")], ["en", tl("langEn")], ["de", tl("langDe")]].map(([v, l]) => `<option value="${v}"${cur === v ? " selected" : ""}>${escape(l)}</option>`).join("");
+      const control = `<span class="opt-select"><select data-lang-set aria-label="${escape(tl("optLang"))}"${st.extra ? "" : " disabled"}>${opts}</select>${mdi("chevronDown", 18)}</span>`;
+      return row("lang", tl("optLang"), control, tl("optLangShort"), null).replace('class="opt', changed ? 'class="opt changed' : 'class="opt');
+    };
     // Animationen (seit 2.151.0): Benutzereinstellung, Entwurf in st.extra.anim, gespeichert mit "Speichern"
     const animRow = () => {
       const on = st.extra ? st.extra.anim !== false : this._anim !== false;
@@ -9239,7 +9295,7 @@ class DevicePanel extends HTMLElement {
       updates:
         subTabs("panel", [["pstart", "subPanelStart"], ["pupdates", "subPanelUpdates"], ["pstorage", "subPanelStorage"]], panelTab) +
         (panelTab === "pstart"
-          ? `<div class="nf-note view-own">${mdi("info", 16)}<div><p>${escape(t("startOwnNote"))}</p></div></div>` + ttl("ttlStart") + startRow() + ttl("ttlAccent") + accentRow() + ttl("ttlAnim") + animRow() + this._backupChapterHtml(changes.size > 0) + this._wizardChapterHtml(changes.size > 0)
+          ? `<div class="nf-note view-own">${mdi("info", 16)}<div><p>${escape(t("startOwnNote"))}</p></div></div>` + ttl("ttlStart") + startRow() + ttl("ttlLang") + langRow() + ttl("ttlAccent") + accentRow() + ttl("ttlAnim") + animRow() + this._backupChapterHtml(changes.size > 0) + this._wizardChapterHtml(changes.size > 0)
           : panelTab === "pstorage"
             ? storageChapter()
           : row("update_check", t("optUpdateCheck"), sw("update_check", t("optUpdateCheck")), t("optUpdateCheckShort"), t("optUpdateCheckInfo")) +
@@ -9639,6 +9695,11 @@ class DevicePanel extends HTMLElement {
       if (st?.draft && el.tagName === "SELECT" && el.dataset.cfull !== undefined) {
         // "own": mit einem Wert ausserhalb der Stufen beginnen (der bisherige eigene Wert, sonst 85).
         st.draft.charge_full = el.value === "own" ? (Number.isInteger(st.draft.charge_full) && !CHARGE_FULL_PRESETS.includes(st.draft.charge_full) ? st.draft.charge_full : CHARGE_FULL_OWN_START) : Number(el.value);
+        this._renderSettings();
+        return;
+      }
+      if (st?.extra && el.tagName === "SELECT" && el.dataset.langSet !== undefined) {
+        st.extra.lang = el.value;
         this._renderSettings();
         return;
       }
@@ -10093,6 +10154,7 @@ class DevicePanel extends HTMLElement {
       if (extra.includes("start_panel")) await this._saveStartPanel(st.extra.start_panel);
       if (extra.includes("accent")) this._setAccent(st.extra.accent);
       if (extra.includes("anim")) this._setAnim(st.extra.anim);
+      if (extra.includes("lang")) this._setLang(st.extra.lang);
       if (anyReset) await this._hass.callWS({ type: "device_panel/reset_device_settings", ...resets });
       // Ansicht (pro Benutzer): erst jetzt speichern, die Liste zeigt sie schon
       if (viewChanged) {

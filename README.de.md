@@ -49,7 +49,7 @@ Ausgefallene Geräte mit der Zeit, seit der sie weg sind, instabile Geräte (dre
 
 ### Suchen, filtern, sortieren
 
-Die Suche läuft über alle Spalten. Filter-Chips grenzen die Liste ein: Warnungen, ausgefallen, Batterie, lädt, neue Geräte, Geräte mit eigenen Einstellungen, Favoriten, jede Verbindungsart, dazu ein Bereichs-, ein Integrations- und ein Label-Filter (nur solange ein Gerät ein Label trägt), die sich mit den Chips kombinieren lassen. Ausgeblendete Geräte, Integrationen und Gerätetypen werden weder gezeigt noch überwacht. Die Akzentfarbe des Panels ist pro Benutzer wählbar (Einstellungen › Panel › Allgemein): Home Assistant oder eine von neun Farben. Die Animationen (Messpunkt auf dem Ausfall-Puls, Sternschnuppe am Punkt der Knöpfe) sind standardmässig an und lassen sich dort ebenfalls ausschalten.
+Die Suche läuft über alle Spalten. Filter-Chips grenzen die Liste ein: Warnungen, ausgefallen, Batterie, lädt, neue Geräte, Geräte mit eigenen Einstellungen, Favoriten, jede Verbindungsart, dazu ein Bereichs-, ein Integrations- und ein Label-Filter (nur solange ein Gerät ein Label trägt), die sich mit den Chips kombinieren lassen. Ausgeblendete Geräte, Integrationen und Gerätetypen werden weder gezeigt noch überwacht. Die Sprache des Panels (automatisch, Englisch oder Deutsch) und die Akzentfarbe ist pro Benutzer wählbar (Einstellungen › Panel › Allgemein): Home Assistant oder eine von neun Farben. Die Animationen (Messpunkt auf dem Ausfall-Puls, Sternschnuppe am Punkt der Knöpfe) sind standardmässig an und lassen sich dort ebenfalls ausschalten.
 
 | Warnungen | Batterie | Bereichsfilter |
 |---|---|---|
