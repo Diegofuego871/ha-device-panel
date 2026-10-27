@@ -1875,13 +1875,27 @@ class DevicePanel extends HTMLElement {
           this._devRangeError = null;
           this._setDeviceSettings(this._detailId, { battery: v });
         }
+      } else if (el.matches?.('input[data-dlg="dev-mon"], input[data-dlg="dev-stat"]')) {
+        // Schalter "Überwachen" und "Online-Status beobachten" (seit 2.157.0): Gerät vor Label vor Integration; was der Schalter gegen den
+        // geerbten Wert durchsetzen soll, geht nur mit einer eigenen Zeit (sie schaltet Überwachen und Status ein)
+        const d = this._devices.find((x) => x.id === this._detailId);
+        const od = d?.offline_default || {};
+        const own = d?.offline_setting;
+        const start = [d?.offline_after, od.minutes, od.global].find((v) => Number.isInteger(v)) ?? 2;
+        const mon = el.matches('[data-dlg="dev-mon"]');
+        let value;
+        if (!el.checked) value = mon ? "off" : "nostatus";
+        else if (mon) value = own === "off" && od.minutes !== "off" ? null : start;
+        else value = own === "nostatus" && od.minutes !== "nostatus" && od.minutes !== "off" ? null : start;
+        this._offRangeError = null;
+        this._setDeviceSettings(this._detailId, { offline: value });
       } else if (el.matches?.('select[data-dlg="dev-off"]')) {
         // Eigene Zeit: mit dem bisher geltenden Wert beginnen (Minuten; war
         // die Integration auf "Nicht überwachen", mit dem globalen Wert).
         const d = this._devices.find((x) => x.id === this._detailId);
         const start = [d?.offline_after, d?.offline_default?.minutes, d?.offline_default?.global].find((v) => Number.isInteger(v)) ?? 2;
         this._offRangeError = null;
-        this._setDeviceSettings(this._detailId, { offline: el.value === "own" ? start : el.value === "off" ? "off" : el.value === "nostatus" ? "nostatus" : null });
+        this._setDeviceSettings(this._detailId, { offline: el.value === "own" ? start : null });
       } else if (el.matches?.('input[data-dlg="dev-off-min"]')) {
         const v = Number(el.value);
         const [min, max] = [1, 1440];
@@ -4420,27 +4434,40 @@ class DevicePanel extends HTMLElement {
       const [cls, label] = own ? ["own", t("originDevice")] : name ? ["integ", t(isLabelKey(integKey) ? "originLabel" : "originIntegration", name)] : ["std", t("originStandard")];
       return `<div class="opt-origin"><span class="origin ${cls}"${tip ? ` title="${escape(tip)}"` : ""}>${escape(label)}</span><span>${escape(text)}</span></div>`;
     };
-    // "Ausgefallen nach" pro Gerät (Punkt 7): Standard der Integration, eigene
-    // Zeit in Minuten oder "Nicht überwachen"; das Gerät geht vor.
+    // Überwachen, Online-Status beobachten und "Ausgefallen nach" pro Gerät: dieselben drei Zeilen wie bei einer Integration und einem Label
+    // (seit 2.157.0). Die Schalter zeigen den wirksamen Stand, die Herkunft sagt, ob er vom Gerät kommt. Gespeichert wird weiter ein Wert:
+    // Zeit, "nostatus" oder "off"; ein Schalter, der den vererbten Wert aufheben soll, setzt eine eigene Zeit (die schaltet beides ein).
     {
       const od = d.offline_default || { minutes: 2, integration: null, global: 2 };
-      const fmt = (v) => (v === "off" ? t("offlineNone") : v === "nostatus" ? t("offlineNoStatus") : t("offlineMin", v));
       const own = d.offline_setting;
-      const offMode = own === "off" ? "off" : own === "nostatus" ? "nostatus" : Number.isInteger(own) ? "own" : "default";
-      const offRange = offMode === "own" ? this._offRangeError : null;
-      const defLabel = od.integration ? this._via(od.integration, t("devOffInteg", fmt(od.minutes))) : t("devOffGlobal", fmt(od.minutes));
-      parts.out += `<div class="opt${offMode !== "default" ? " changed" : ""}"><div class="opt-line"><span class="opt-label">${escape(t("devOffline"))}</span>${sel(
+      const inhOff = od.minutes === "off";
+      const inhNo = od.minutes === "nostatus";
+      const monitored = !d.unmonitored;
+      const noStatus = Boolean(d.no_status);
+      const monOwn = monitored === inhOff;
+      const statOwn = monitored && noStatus !== inhNo;
+      const timeOwn = Number.isInteger(own);
+      const inhMin = Number.isInteger(od.minutes) ? od.minutes : od.global;
+      const defLabel = od.integration && Number.isInteger(od.minutes) ? this._via(od.integration, t("devOffInteg", t("offlineMin", inhMin))) : t("devOffGlobal", t("offlineMin", inhMin));
+      const offRange = timeOwn ? this._offRangeError : null;
+      const swit = (name, on, label, lock) => `<label class="switch"><input type="checkbox" data-dlg="${name}" ${on ? "checked" : ""} ${lock ? "disabled" : ""} aria-label="${escape(label)}"><span></span></label>`;
+      const line = (own_, label, control, tip, would) =>
+        `<div class="opt${own_ ? " changed" : ""}"><div class="opt-line"><span class="opt-label">${escape(label)}</span>${control}</div>${origin(own_, od.integration, own_ || od.integration ? t("originDefaultWould", would) : "", tip)}</div>`;
+      parts.out += line(monOwn, t("optMonitor"), swit("dev-mon", monitored, t("optMonitor"), false), t("optMonitorShort"), inhOff ? t("offlineNone") : t("devMonOn"));
+      parts.out += line(statOwn, t("optStatus"), swit("dev-stat", !noStatus, t("optStatus"), !monitored), t("optStatusShort"), inhNo ? t("offlineNoStatus") : t("devStatOn"));
+      const timeLocked = !monitored || noStatus;
+      parts.out += `<div class="${timeLocked ? "mon-dis" : ""}"><div class="opt${timeOwn ? " changed" : ""}"><div class="opt-line"><span class="opt-label">${escape(t("devOffline"))}</span>${sel(
         "dev-off",
-        [["default", defLabel], ["own", t("devOffOwn")], ["nostatus", t("devOffNoStatus")], ["off", t("devOffNone")]],
-        offMode,
+        [["default", defLabel], ["own", t("devOffOwn")]],
+        timeOwn ? "own" : "default",
         t("devOffline")
       )}</div>${
-        offMode === "own"
+        timeOwn
           ? `<div class="opt-line opt-sub"><span class="opt-label">${escape(t("devOffline"))}</span><span class="opt-input${offRange ? " bad" : ""}"><input type="number" inputmode="numeric" step="1" min="1" max="1440" data-dlg="dev-off-min" value="${escape(offRange ? offRange.value : own)}" aria-label="${escape(t("devOffline"))}"><span class="unit">${escape(t("minuteUnit"))}</span></span></div>${
               offRange ? `<div class="opt-error" data-dev-range>${escape(offRange.message)}</div>` : ""
             }`
           : ""
-      }${origin(offMode !== "default", od.integration, offMode !== "default" || od.integration ? t("originDefaultWould", fmt(od.global)) : "", t("devOffShort"))}</div>`;
+      }${origin(timeOwn, od.integration, timeOwn || od.integration ? t("originDefaultWould", t("offlineMin", od.global)) : "", t("devOffShort"))}</div></div>`;
       // Ab hier ruhen die Ausfall-Einstellungen, wenn das Gerät ohne Online-Status ist (seit 2.156.0)
       outFirst = parts.out.length;
     }

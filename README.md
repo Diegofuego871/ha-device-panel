@@ -103,7 +103,7 @@ One window with everything about a device: outages and returns with the duration
 
 ### Settings per device
 
-Every device can override the defaults in the tab "Settings" of its pop-up: its own "offline after" time (or no monitoring), battery warning, signal warning, charging, and outage and online notifications switched off. Each row shows where the value comes from and what the default would be. A symbol next to the name in the list marks devices with their own settings.
+Every device can override the defaults in the tab "Settings" of its pop-up: its own "offline after" time, no online status or no monitoring (the same rows as for an integration), battery warning, signal warning, charging, and outage and online notifications switched off. Each row shows where the value comes from and what the default would be. A symbol next to the name in the list marks devices with their own settings.
 
 <p align="center"><img src="https://raw.githubusercontent.com/Diegofuego871/ha-device-panel/main/docs/screenshots/en/device-settings.png" alt="Device pop-up: settings for this device with own time, own battery warning threshold and notifications off" width="720"></p>
 
@@ -135,7 +135,7 @@ Labels are the labels you give devices in Home Assistant (Settings › Areas, la
 
 Some devices report only now and then, for example Bluetooth sensors, and would look permanently offline. "Without online status" keeps them monitored for battery, charging, signal and updates, but they get no online status, no outages, no outage statistics and no outage notifications.
 
-- **Where:** switch "Watch online status" in the tab "Outage" of an integration and of a label; for a single device the choice "No online status" next to "Own time" and "Do not monitor" in the pop-up (Settings). An own time on the device switches the status on again
+- **Where:** the same three rows "Monitor", "Watch online status" and "Offline after" in the tab "Outage" of an integration, of a label and in the Settings of a device pop-up. "Watch online status: off" means the same everywhere. On a device, an own time switches the status on again
 - **Order of precedence:** device › label › integration; with several labels the strictest applies: "Do not monitor", then "No online status", then a time
 - **In the panel:** a grey ring instead of the dot, a row in the availability tile ("N without online status") and the filter chip "No online status" (can be hidden and moved like all chips)
 - **Setup wizard:** in the step "Notifications", tab "Outage", a ring switch per integration and device, and the switch on the card of a label

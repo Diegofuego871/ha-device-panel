@@ -66,16 +66,16 @@ for (const lang of ["de", "en"]) {
     await wait(`return r.querySelector("dialog.device")?.open && r.querySelector('dialog.device [data-tab="set"]')`);
     check(`[${tag}] Popup zeigt "${L.chip}"`, (await ev(`return r.querySelector("dialog.device").innerText`)).includes(L.chip));
     await tap('dialog.device [data-tab="set"]');
-    await wait(`return r.querySelector('select[data-dlg="dev-off"]')`);
-    const mode = await ev(`const s=r.querySelector('select[data-dlg="dev-off"]'); return s.value + "|" + s.options[s.selectedIndex].textContent`);
-    check(`[${tag}] Popup: Auswahl "${L.chip}", Herkunft Integration`, mode.endsWith(`(${L.chip})`), mode);
-    await ev(`const s=r.querySelector('select[data-dlg="dev-off"]'); s.value="own"; s.dispatchEvent(new Event("change",{bubbles:true}));`);
+    await wait(`return r.querySelector('input[data-dlg="dev-stat"]')`);
+    check(`[${tag}] Popup: Schalter "${L.sw}" aus (geerbt von der Integration), "Ausgefallen nach" gesperrt`, await ev(`const t=r.querySelector('input[data-dlg="dev-stat"]'); const o=t.closest(".opt").querySelector(".origin"); return t.checked === false && !t.disabled && /zha|Zigbee/i.test(o.textContent) && !!r.querySelector('select[data-dlg="dev-off"]').closest(".mon-dis")`));
+    await tap('input[data-dlg="dev-stat"]');
     await savePending(f, R);
     const last = (await calls("device_panel/set_device_settings")).at(-1);
-    check(`[${tag}] eigene Zeit am Gerät schaltet den Status wieder ein`, last?.device_id === "b" && Number.isInteger(last.offline), JSON.stringify(last));
-    await ev(`const s=r.querySelector('select[data-dlg="dev-off"]'); s.value="nostatus"; s.dispatchEvent(new Event("change",{bubbles:true}));`);
+    check(`[${tag}] Schalter an: eigene Zeit am Gerät, Status wieder ein`, last?.device_id === "b" && Number.isInteger(last.offline), JSON.stringify(last));
+    await wait(`return r.host._devices.find((d) => d.id === "b").no_status === false && r.querySelector('input[data-dlg="dev-stat"]')?.checked === true`);
+    await tap('input[data-dlg="dev-stat"]');
     await savePending(f, R);
-    check(`[${tag}] Gerät auf "${L.chip}" gesendet`, (await calls("device_panel/set_device_settings")).at(-1)?.offline === "nostatus");
+    check(`[${tag}] Schalter aus: "nostatus" gesendet`, (await calls("device_panel/set_device_settings")).at(-1)?.offline === "nostatus");
     await ev(`r.querySelector("dialog.device").close()`);
 
     // --- Integration: Schalter

@@ -7,6 +7,14 @@ Alle nennenswerten Änderungen an dieser Integration stehen in dieser Datei.
 Das Format folgt [Keep a Changelog](https://keepachangelog.com/de/1.1.0/),
 die Versionsnummern folgen [Semantic Versioning](https://semver.org/lang/de/).
 
+## [2.158.0] - 2026-10-27
+
+Das Geräte-Popup nutzt für die Überwachung dieselben Zeilen wie eine Integration und ein Label.
+
+### Geändert
+
+- **Geräte-Popup, Reiter "Einstellungen":** Die Auswahl "Ausgefallen nach" mit "Wie Integration", "Eigene Zeit", "Ohne Online-Status" und "Nicht überwachen" ist ersetzt durch dieselben drei Zeilen wie bei einer Integration und einem Label: Schalter "Überwachen", Schalter "Online-Status beobachten" und die Auswahl "Ausgefallen nach" (Standard oder eigene Zeit). Die Schalter zeigen den wirksamen Stand, die Herkunftszeile sagt, ob er vom Gerät, vom Label, von der Integration oder vom Standard kommt. Gespeichert wird weiterhin derselbe Wert, bestehende Einstellungen, Sicherungen und der Assistent funktionieren unverändert. Muss ein Schalter einen geerbten Wert aufheben (zum Beispiel "Online-Status beobachten" an einem Gerät, dessen Integration keinen Online-Status hat), bekommt das Gerät eine eigene Zeit, die Überwachung und Status einschaltet.
+
 ## [2.157.0] - 2026-10-27
 
 Die Sprache des Panels lässt sich wählen.
@@ -5096,6 +5104,7 @@ Erste Vorabversion.
   GitHub Actions für die Prüfungen von HACS und hassfest sowie die Tests.
 
 [2.6.0]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v2.6.0
+[2.158.0]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v2.158.0
 [2.157.0]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v2.157.0
 [2.156.1]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v2.156.1
 [2.156.0]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/2.156.0

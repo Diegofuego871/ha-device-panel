@@ -7,6 +7,14 @@ All notable changes to this integration are documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/).
 
+## [2.158.0] - 2026-10-27
+
+The device pop-up uses the same rows as an integration and a label for monitoring.
+
+### Changed
+
+- **Device pop-up, tab "Settings":** the drop-down "Offline after" with "Same as integration", "Own time", "No online status" and "Don't monitor" is replaced by the same three rows as for an integration and a label: switch "Monitor", switch "Watch online status" and the choice "Offline after" (default or own time). The switches show the effective state, the origin line says whether it comes from the device, the label, the integration or the default. What is saved stays the same, so existing settings, backups and the wizard keep working. If a switch has to override an inherited value (for example "Watch online status" on a device whose integration has no online status), the device gets an own time, which switches monitoring and status on.
+
 ## [2.157.0] - 2026-10-27
 
 The language of the panel can be chosen.
@@ -4995,6 +5003,7 @@ First pre-release.
   GitHub Actions for HACS/hassfest validation and tests.
 
 [2.6.0]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v2.6.0
+[2.158.0]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v2.158.0
 [2.157.0]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v2.157.0
 [2.156.1]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v2.156.1
 [2.156.0]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/2.156.0

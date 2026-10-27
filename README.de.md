@@ -103,7 +103,7 @@ Ein Fenster mit allem zu einem Gerät: Ausfälle und Rückkehr mit der Dauer, Ba
 
 ### Einstellungen pro Gerät
 
-Jedes Gerät kann die Vorgaben im Reiter "Einstellungen" seines Pop-ups überschreiben: eine eigene "Ausgefallen nach"-Zeit (oder keine Überwachung), Batterie-Warnung, Empfang-Warnung, Laden und Ausfall- und Online-Meldungen ausgeschaltet. Jede Zeile zeigt, woher der Wert stammt und wie der Standard wäre. Ein Symbol neben dem Namen in der Liste markiert Geräte mit eigenen Einstellungen.
+Jedes Gerät kann die Vorgaben im Reiter "Einstellungen" seines Pop-ups überschreiben: eine eigene "Ausgefallen nach"-Zeit, kein Online-Status oder keine Überwachung (dieselben Zeilen wie bei einer Integration), Batterie-Warnung, Empfang-Warnung, Laden und Ausfall- und Online-Meldungen ausgeschaltet. Jede Zeile zeigt, woher der Wert stammt und wie der Standard wäre. Ein Symbol neben dem Namen in der Liste markiert Geräte mit eigenen Einstellungen.
 
 <p align="center"><img src="https://raw.githubusercontent.com/Diegofuego871/ha-device-panel/main/docs/screenshots/de/device-settings.png" alt="Geräte-Pop-up: Einstellungen für dieses Gerät mit eigener Zeit, eigener Batterie-Warnschwelle und Meldungen aus" width="720"></p>
 
@@ -135,7 +135,7 @@ Labels sind die Labels, die du Geräten in Home Assistant gibst (Einstellungen �
 
 Manche Geräte melden sich nur ab und zu, zum Beispiel Bluetooth-Sensoren, und wirken sonst dauernd ausgefallen. "Ohne Online-Status" lässt sie für Batterie, Laden, Empfang und Updates überwacht, sie haben aber keinen Online-Status, keine Ausfälle, keine Ausfall-Statistik und keine Ausfall-Meldungen.
 
-- **Wo:** Schalter "Online-Status beobachten" im Reiter "Ausfall" einer Integration und eines Labels; für ein einzelnes Gerät die Auswahl "Ohne Online-Status" neben "Eigene Zeit" und "Nicht überwachen" im Popup (Einstellungen). Eine eigene Zeit am Gerät schaltet den Status wieder ein
+- **Wo:** dieselben drei Zeilen "Überwachen", "Online-Status beobachten" und "Ausgefallen nach" im Reiter "Ausfall" einer Integration, eines Labels und in den Einstellungen eines Geräte-Popups. "Online-Status beobachten: aus" bedeutet überall dasselbe. Am Gerät schaltet eine eigene Zeit den Status wieder ein
 - **Rangfolge:** Gerät › Label › Integration; bei mehreren Labels gilt das strengste: "Nicht überwachen", dann "Ohne Online-Status", dann eine Zeit
 - **Im Panel:** ein grauer Ring statt des Punkts, eine Zeile in der Kachel "Verfügbarkeit" ("N ohne Online-Status") und der Filter-Chip "Ohne Online-Status" (wie alle Chips ausblend- und verschiebbar)
 - **Einrichtungsassistent:** im Schritt "Meldungen", Reiter "Ausfall", ein Ring-Schalter je Integration und Gerät sowie der Schalter auf der Karte eines Labels
