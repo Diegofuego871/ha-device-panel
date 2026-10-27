@@ -7,6 +7,15 @@ All notable changes to this integration are documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/).
 
+## [2.163.0] - 2026-10-27
+
+The tile "Software" stands out when an update is available.
+
+### Changed
+
+- **Update window:** the texts (the note about outage notifications, the confirmation question, the summary) use a larger font.
+- **Device pop-up, tile "Software":** if an update is available, the tile gets an outline and a light tint in the accent colour, so the update is noticed at once.
+
 ## [2.162.0] - 2026-10-27
 
 When "Monitor" is off, everything below it disappears.
@@ -5065,6 +5074,7 @@ First pre-release.
   GitHub Actions for HACS/hassfest validation and tests.
 
 [2.6.0]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v2.6.0
+[2.163.0]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v2.163.0
 [2.162.0]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v2.162.0
 [2.161.0]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v2.161.0
 [2.159.0]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v2.159.0

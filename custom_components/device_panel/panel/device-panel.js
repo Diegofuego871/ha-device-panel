@@ -4316,8 +4316,8 @@ class DevicePanel extends HTMLElement {
     return `<div class="st-tile static${warn ? " warned" : ""}"><span class="st-k">${escape(label)}</span><span class="st-v${bad ? " bad" : ""}">${valueHtml}</span><span class="st-sub">${escape(sub || "")}</span></div>`;
   }
 
-  _tile(label, valueHtml) {
-    return `<div class="tile"><div class="tile-k">${escape(label)}</div><div class="tile-v">${valueHtml}</div></div>`;
+  _tile(label, valueHtml, cls = "") {
+    return `<div class="tile${cls ? ` ${cls}` : ""}"><div class="tile-k">${escape(label)}</div><div class="tile-v">${valueHtml}</div></div>`;
   }
 
   _statTilesHtml(d) {
@@ -4765,7 +4765,7 @@ class DevicePanel extends HTMLElement {
       this._tile(this._t("typeLabel"), typeSel),
       this._tile(this._t("manufacturer"), text(d.manufacturer)),
       this._tile(this._t("model"), text(d.model)),
-      this._tile(this._t("software"), sw),
+      this._tile(this._t("software"), sw, d.update ? "has-upd" : ""),
     ];
     if (d.hw_version) tiles.push(this._tile(this._t("hardware"), text(d.hw_version)));
     tiles.push(this._tile(this._t("area"), text(d.area)));

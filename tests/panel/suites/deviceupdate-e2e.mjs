@@ -47,6 +47,7 @@ for (const lang of ["de", "en"]) {
     };
     await open();
     check(`[${tag}] Knopf mit Pfeil in der Software-Kachel`, await wait(`return !!r.querySelector('dialog.device button.upd-btn[data-dlg="update-open"] .cbtn')`));
+    check(`[${tag}] Kachel "Software" mit Akzentrand, solange ein Update da ist`, await ev(`const t=r.querySelector('dialog.device .tile:has(button.upd-btn)'); return !!t && t.classList.contains("has-upd") && getComputedStyle(t).boxShadow !== "none"`));
 
     await tap('button.upd-btn[data-dlg="update-open"]');
     check(`[${tag}] Dialog: Versionen, Zusammenfassung, Release Notes`, await wait(`const d=r.querySelector("dialog.upd-dlg"); return d?.open && d.innerText.includes("2.1 → 2.2") && d.innerText.includes("Behebt Verbindungsabbrüche") && !!d.querySelector(".upd-notes li")`));

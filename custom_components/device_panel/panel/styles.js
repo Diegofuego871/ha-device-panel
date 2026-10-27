@@ -1215,6 +1215,8 @@ button.ver-link { border: none; background: none; font: inherit; font-size: 13px
 /* Angaben als Kacheln */
 .tiles { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 8px; }
 .tile { min-width: 0; padding: 9px 12px 10px; border-radius: 12px; background: var(--dp-subtle); }
+/* Update verfügbar (seit 2.163.0): Kachel "Software" mit Rand in der Akzentfarbe */
+.tile.has-upd { box-shadow: 0 0 0 1px var(--dp-primary) inset; background: color-mix(in srgb, var(--dp-primary) 8%, var(--dp-subtle)); }
 .tile-k { color: var(--dp-text2); font-size: 12px; min-height: 18px; }
 .tile-v { margin-top: 2px; font-size: 14px; overflow-wrap: anywhere; }
 .tile-v small { display: block; color: var(--dp-text3); font-size: 12px; }
@@ -2472,6 +2474,11 @@ dialog.wizard-dlg[open] { display: flex; flex-direction: column; }
   .wz-stp { min-height: 38px; }
 }
 /* Update eines Geräts starten (seit 2.161.0): Knopf in der Software-Kachel und Dialog */
+/* Update-Fenster (seit 2.163.0): Text grösser, im Fenster ist genug Platz */
+.upd-dlg .dlg-note, .upd-dlg .dlg-note.small { font-size: 15px; line-height: 1.5; color: var(--dp-text2); }
+.upd-dlg .nf-note p { font-size: 15px; line-height: 1.5; }
+.upd-dlg .nf-note p b { font-size: 16px; }
+.upd-summary { font-size: 15px; }
 .upd-btn { display: flex; align-items: center; gap: 8px; margin-top: 4px; padding: 0; border: 0; background: none; color: var(--dp-primary); font: inherit; font-size: 12.5px; text-align: left; cursor: pointer; }
 .upd-btn:hover span:first-child { text-decoration: underline; }
 .upd-notes { max-height: 260px; overflow: auto; margin: 8px 0; padding: 10px 12px; border-radius: 12px; background: var(--dp-subtle); }

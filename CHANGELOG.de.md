@@ -7,6 +7,15 @@ Alle nennenswerten Änderungen an dieser Integration stehen in dieser Datei.
 Das Format folgt [Keep a Changelog](https://keepachangelog.com/de/1.1.0/),
 die Versionsnummern folgen [Semantic Versioning](https://semver.org/lang/de/).
 
+## [2.163.0] - 2026-10-27
+
+Die Kachel "Software" fällt auf, wenn ein Update verfügbar ist.
+
+### Geändert
+
+- **Update-Fenster:** Die Texte (Hinweis zu den Ausfall-Meldungen, Rückfrage, Zusammenfassung) haben eine grössere Schrift.
+- **Geräte-Popup, Kachel "Software":** Ist ein Update verfügbar, hat die Kachel einen Rand und eine leichte Tönung in der Akzentfarbe, damit das Update sofort auffällt.
+
 ## [2.162.0] - 2026-10-27
 
 Ist "Überwachen" aus, verschwindet alles darunter.
@@ -5166,6 +5175,7 @@ Erste Vorabversion.
   GitHub Actions für die Prüfungen von HACS und hassfest sowie die Tests.
 
 [2.6.0]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v2.6.0
+[2.163.0]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v2.163.0
 [2.162.0]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v2.162.0
 [2.161.0]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v2.161.0
 [2.159.0]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v2.159.0
