@@ -25,6 +25,8 @@ The tabs "Switches" and "Entities" always look the same.
 
 - **Device pop-up, tabs "Switches" and "Entities":** both always show the search field, no longer only from eight entries on. Heading, search field and list are built the same in both tabs.
 
+Not released; included in 2.161.0.
+
 ## [2.159.0] - 2026-10-27
 
 "Monitor" sits above the tabs, as it applies to all of them.
@@ -5052,7 +5054,6 @@ First pre-release.
 
 [2.6.0]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v2.6.0
 [2.161.0]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v2.161.0
-[2.160.0]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v2.160.0
 [2.159.0]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v2.159.0
 [2.158.1]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v2.158.1
 [2.158.0]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v2.158.0

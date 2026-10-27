@@ -25,6 +25,8 @@ Die Reiter "Schalter" und "Entitäten" sehen immer gleich aus.
 
 - **Geräte-Popup, Reiter "Schalter" und "Entitäten":** Beide zeigen das Suchfeld immer, nicht mehr erst ab acht Einträgen. Überschrift, Suchfeld und Liste sind in beiden Reitern gleich aufgebaut.
 
+Nicht veröffentlicht; enthalten in 2.161.0.
+
 ## [2.159.0] - 2026-10-27
 
 "Überwachen" steht über den Reitern, weil es für alle gilt.
@@ -5153,7 +5155,6 @@ Erste Vorabversion.
 
 [2.6.0]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v2.6.0
 [2.161.0]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v2.161.0
-[2.160.0]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v2.160.0
 [2.159.0]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v2.159.0
 [2.158.1]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v2.158.1
 [2.158.0]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v2.158.0
