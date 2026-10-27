@@ -26,6 +26,8 @@ The rocket of the setup wizard also moves with "Reduce motion".
 
 - **Rocket (welcome page, launcher tile "Setup", settings):** it no longer stops when the system asks to reduce motion, like the shooting star. It still stops with "Animations" off (Settings › Panel › General).
 
+Not released; included in 2.159.0.
+
 ## [2.158.1] - 2026-10-27
 
 The rocket on the welcome page of the setup wizard moves.
@@ -5032,7 +5034,6 @@ First pre-release.
 
 [2.6.0]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v2.6.0
 [2.159.0]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v2.159.0
-[2.158.2]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v2.158.2
 [2.158.1]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v2.158.1
 [2.158.0]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v2.158.0
 [2.157.0]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v2.157.0

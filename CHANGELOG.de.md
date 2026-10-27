@@ -26,6 +26,8 @@ Die Rakete des Einrichtungsassistenten bewegt sich auch bei "Bewegung reduzieren
 
 - **Rakete (Willkommensseite, Kachel "Einrichtung", Einstellungen):** Sie bleibt bei "Bewegung reduzieren" im System nicht mehr stehen, wie die Sternschnuppe. Bei ausgeschalteten "Animationen" (Einstellungen › Panel › Allgemein) steht sie weiter still.
 
+Nicht veröffentlicht; enthalten in 2.159.0.
+
 ## [2.158.1] - 2026-10-27
 
 Die Rakete auf der Willkommensseite des Einrichtungsassistenten bewegt sich.
@@ -5133,7 +5135,6 @@ Erste Vorabversion.
 
 [2.6.0]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v2.6.0
 [2.159.0]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v2.159.0
-[2.158.2]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v2.158.2
 [2.158.1]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v2.158.1
 [2.158.0]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v2.158.0
 [2.157.0]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v2.157.0
