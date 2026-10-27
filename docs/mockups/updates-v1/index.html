@@ -1,0 +1,128 @@
+<!doctype html><meta charset="utf-8"><title>App "Geräte-Updates"</title><style>
+:root{--p:#03a9f4;--ok:#2e8b57;--bg:#1c1c1c;--card:#262626;--ln:#3a3a3a;--t2:#9a9a9a;--warn:#f5a623;--err:#e5534b}
+*{box-sizing:border-box}
+body{margin:0;background:#0d0d0d;font:14px/1.35 Roboto,Arial,sans-serif;color:#e6e6e6;padding:24px;display:grid;grid-template-columns:repeat(4,340px);gap:18px;align-items:start}
+.ph{background:var(--bg);border:1px solid var(--ln);border-radius:18px;padding:14px;display:flex;flex-direction:column;gap:10px;min-height:700px}
+.cap{color:#8a8a8a;font-size:12px;letter-spacing:.04em;text-transform:uppercase}
+h2{margin:0;font-size:17px;font-weight:700;display:flex;gap:10px;align-items:center}
+.sub{color:var(--t2);font-size:12.5px}
+.ico{width:38px;height:38px;border-radius:12px;background:color-mix(in srgb,var(--p) 18%,transparent);color:var(--p);display:grid;place-items:center;font-size:20px;flex:none}
+.x{margin-left:auto;width:30px;height:30px;border:1px solid var(--ln);border-radius:50%;display:grid;place-items:center;color:var(--t2)}
+.chips{display:flex;gap:6px;flex-wrap:wrap}
+.chip{border:1px solid var(--ln);border-radius:999px;padding:5px 11px;font-size:12.5px;color:#cfcfcf;background:#222}
+.chip.on{background:color-mix(in srgb,var(--p) 22%,transparent);border-color:var(--p);color:var(--p)}
+.chip i{font-style:normal;color:var(--t2);margin-left:4px}.chip.on i{color:var(--p)}
+.row{background:var(--card);border:1px solid var(--ln);border-radius:14px;padding:9px 11px;display:flex;gap:10px;align-items:center}
+.row b{font-weight:500}.row small{color:var(--t2);font-size:12px;display:block}
+.row .go{margin-left:auto;width:24px;height:24px;border:1px solid var(--p);border-radius:50%;color:var(--p);display:grid;place-items:center;font-size:13px;flex:none;background:color-mix(in srgb,var(--p) 10%,transparent)}
+.cb{width:20px;height:20px;border-radius:6px;border:2px solid #666;flex:none;display:grid;place-items:center;font-size:13px;color:#fff;line-height:1}
+.cb.on{background:var(--p);border-color:var(--p)}.cb.half{background:var(--p);border-color:var(--p)}
+.bar{margin-top:auto;display:flex;flex-direction:column;gap:8px;border-top:1px solid var(--ln);padding-top:10px}
+.btn{border:1px solid var(--ln);border-radius:12px;padding:10px;text-align:center;flex:1;color:#ddd}
+.btn.pri{background:var(--ok);border-color:var(--ok);color:#fff;font-weight:500}.btn.dis{opacity:.45}
+.sw{width:38px;height:22px;border-radius:12px;background:#444;position:relative;flex:none}.sw:after{content:"";position:absolute;top:3px;left:3px;width:16px;height:16px;border-radius:50%;background:#bbb}
+.sw.on{background:var(--ok)}.sw.on:after{left:19px;background:#fff}
+.opt{display:flex;justify-content:space-between;align-items:center;gap:8px}
+.grp{display:flex;justify-content:space-between;align-items:center;color:var(--t2);font-size:12px;letter-spacing:.06em;text-transform:uppercase;margin-top:4px}
+.grp .gb{border:1px solid var(--p);color:var(--p);border-radius:999px;padding:3px 10px;font-size:12px;letter-spacing:0;text-transform:none}
+.prog{height:6px;border-radius:99px;background:color-mix(in srgb,var(--p) 20%,transparent);overflow:hidden;margin-top:5px}.prog i{display:block;height:100%;background:var(--p);border-radius:99px}
+.st{font-size:12px;color:var(--p)}.st.ok{color:var(--ok)}.st.bad{color:var(--err)}
+.note{border:1px solid var(--warn);background:color-mix(in srgb,var(--warn) 12%,transparent);color:#f0d9a8;border-radius:12px;padding:9px 11px;font-size:12.5px}
+.rec{color:var(--p);font-size:12px}.s{color:var(--t2);font-size:12px}.bad{color:var(--err);font-size:12px}
+.grid{display:grid;grid-template-columns:repeat(4,1fr);gap:10px;margin-top:4px}
+.app{display:flex;flex-direction:column;align-items:center;gap:4px;font-size:11px;color:#cfcfcf;position:relative}
+.app .ico{width:46px;height:46px;font-size:22px;background:#2a2a2a;color:#bbb;position:relative}
+.app .ico.upd{color:var(--p);background:color-mix(in srgb,var(--p) 18%,transparent);animation:w 3.2s ease-in-out infinite}
+@keyframes w{0%,55%,100%{transform:rotate(0)}60%{transform:rotate(-8deg)}65%{transform:rotate(8deg)}70%{transform:rotate(-6deg)}75%{transform:rotate(5deg)}80%{transform:rotate(0)}}
+.dot{position:absolute;top:-2px;right:-2px;width:11px;height:11px;border-radius:50%;background:var(--p);border:2px solid var(--bg)}
+.dot:before{content:"";position:absolute;right:6px;top:3px;width:26px;height:2px;border-radius:2px;background:linear-gradient(90deg,transparent,var(--p))}
+.top{display:flex;justify-content:space-between;align-items:center;padding:6px 2px;border-bottom:1px solid var(--ln);margin:-4px -2px 4px}
+.push{background:#2b2b2b;border-radius:16px;padding:11px 12px;display:flex;gap:10px}
+.push .a{width:34px;height:34px;border-radius:9px;background:var(--p);flex:none}
+.arrow{color:var(--p);font-size:12px;text-align:center}
+</style><body>
+
+<div class="ph"><span class="cap">0 · App-Launcher: Update-Symbol und Sternschnuppe</span>
+<div class="top"><b>Device Panel</b><span style="position:relative">▦<span class="dot" style="top:-4px;right:-6px"></span></span></div>
+<div class="grid">
+<div class="app"><span class="ico">⚡</span>Routinen</div>
+<div class="app"><span class="ico">🔔</span>Magic Push</div>
+<div class="app"><span class="ico">≣</span>Protokoll</div>
+<div class="app"><span class="ico upd">⬆<span class="dot"></span></span>Geräte-<br>Updates</div>
+<div class="app"><span class="ico">⚙</span>Einstellungen</div>
+<div class="app"><span class="ico">∿</span>Status</div>
+</div>
+<span class="s">Sobald ein Geräte-Update offen ist: das Symbol der App wackelt (wie die Rakete, alle 3 Sekunden kurz) und der Punkt am Knopf fliegt als Sternschnuppe (wie bisher bei Fehlern). Dasselbe am Launcher-Knopf oben rechts und an der angehefteten App.</span>
+<span class="s">Punktfarbe: neutral in der Akzentfarbe (blau), nicht rot oder orange: ein Update ist eine Information, kein Fehler. Ohne Update: Symbol ruhig, kein Punkt. Abschaltbar mit "Animationen" in den Einstellungen.</span>
+<span class="rec">Empfehlung: Akzentfarbe. Alternative: Orange wie "Warnung".</span></div>
+
+<div class="ph"><span class="cap">A · Auswahl mit Kästchen, Chips wählen vor</span>
+<h2><span class="ico">⬆</span><span>Geräte-Updates<br><span class="sub">7 verfügbar</span></span><span class="x">✕</span></h2>
+<div class="chips"><span class="chip on">Alle<i>7</i></span><span class="chip">Shelly<i>4</i></span><span class="chip">Zigbee<i>2</i></span><span class="chip">ESPHome<i>1</i></span></div>
+<div class="row"><span class="cb on">✓</span><div><b>Licht Bad/Dusche</b><small>Shelly · 1.7.5 → 1.7.6</small></div><span class="go">›</span></div>
+<div class="row"><span class="cb on">✓</span><div><b>Wandschalter Flur</b><small>Shelly · 1.7.5 → 1.7.6</small></div><span class="go">›</span></div>
+<div class="row"><span class="cb on">✓</span><div><b>Steckdose Büro</b><small>Shelly · 1.7.4 → 1.7.6</small></div><span class="go">›</span></div>
+<div class="row"><span class="cb on">✓</span><div><b>Rollladen Küche</b><small>Shelly · 1.7.5 → 1.7.6</small></div><span class="go">›</span></div>
+<div class="row"><span class="cb on">✓</span><div><b>Bewegungsmelder Keller</b><small>Zigbee · 2.1 → 2.2</small></div><span class="go">›</span></div>
+<div class="row"><span class="cb on">✓</span><div><b>Leuchte Wohnzimmer</b><small>Zigbee · 1.0.3 → 1.0.4</small></div><span class="go">›</span></div>
+<div class="bar"><div class="opt"><span>Vorher Backup erstellen</span><span class="sw on"></span></div>
+<div style="display:flex;gap:8px"><span class="btn">Schliessen</span><span class="btn pri">7 Updates starten</span></div></div>
+<span class="rec">Empfehlung: Kästchen vorne, Kopfkästchen "Alle" in der Chipzeile. Chip "Shelly" wählt genau die 4 Shelly-Geräte aus (die anderen werden abgewählt); einzelne Kästchen lassen sich danach ändern. Der Knopf zeigt immer die Zahl der Gewählten.</span></div>
+
+<div class="ph"><span class="cap">B · Nur Chips, "Alle" wirkt auf die Anzeige</span>
+<h2><span class="ico">⬆</span><span>Geräte-Updates<br><span class="sub">7 verfügbar</span></span><span class="x">✕</span></h2>
+<div class="chips"><span class="chip">Alle<i>7</i></span><span class="chip on">Shelly<i>4</i></span><span class="chip">Zigbee<i>2</i></span><span class="chip">ESPHome<i>1</i></span></div>
+<div class="row"><div><b>Licht Bad/Dusche</b><small>Shelly · 1.7.5 → 1.7.6</small></div><span class="go">›</span></div>
+<div class="row"><div><b>Wandschalter Flur</b><small>Shelly · 1.7.5 → 1.7.6</small></div><span class="go">›</span></div>
+<div class="row"><div><b>Steckdose Büro</b><small>Shelly · 1.7.4 → 1.7.6</small></div><span class="go">›</span></div>
+<div class="row"><div><b>Rollladen Küche</b><small>Shelly · 1.7.5 → 1.7.6</small></div><span class="go">›</span></div>
+<div class="bar"><div class="opt"><span>Vorher Backup erstellen</span><span class="sw on"></span></div>
+<div style="display:flex;gap:8px"><span class="btn">Schliessen</span><span class="btn pri">Alle 4 starten</span></div></div>
+<span class="s">Einfachster Aufbau, aber ein einzelnes Gerät auslassen geht nicht (nur über den Weg "Filter ändern").</span>
+<span class="bad">Nicht empfohlen: zu grob</span></div>
+
+<div class="ph"><span class="cap">C · Nach Integration gruppiert</span>
+<h2><span class="ico">⬆</span><span>Geräte-Updates<br><span class="sub">7 verfügbar</span></span><span class="x">✕</span></h2>
+<div class="grp"><span>Shelly · 4</span><span class="gb">Gruppe starten</span></div>
+<div class="row"><div><b>Licht Bad/Dusche</b><small>1.7.5 → 1.7.6</small></div><span class="go">›</span></div>
+<div class="row"><div><b>Wandschalter Flur</b><small>1.7.5 → 1.7.6</small></div><span class="go">›</span></div>
+<div class="row"><div><b>Steckdose Büro</b><small>1.7.4 → 1.7.6</small></div><span class="go">›</span></div>
+<div class="grp"><span>Zigbee · 2</span><span class="gb">Gruppe starten</span></div>
+<div class="row"><div><b>Bewegungsmelder Keller</b><small>2.1 → 2.2</small></div><span class="go">›</span></div>
+<div class="row"><div><b>Leuchte Wohnzimmer</b><small>1.0.3 → 1.0.4</small></div><span class="go">›</span></div>
+<div class="bar"><div style="display:flex;gap:8px"><span class="btn">Schliessen</span><span class="btn pri">Alle 7 starten</span></div></div>
+<span class="s">Übersichtlich, aber die Liste wird lang und es gibt keine Chips, die Regel der übrigen Panel-Fenster.</span>
+<span class="bad">Nicht empfohlen</span></div>
+
+<div class="ph"><span class="cap">D · Während die Updates laufen (A)</span>
+<h2><span class="ico">⬆</span><span>Geräte-Updates<br><span class="sub">3 laufen · 1 wartet · 2 fertig · 1 Fehler</span></span><span class="x">✕</span></h2>
+<div class="row"><span class="ico" style="width:24px;height:24px;font-size:13px;background:none">✓</span><div><b>Licht Bad/Dusche</b><small class="st ok">Fertig: Version 1.7.6</small></div></div>
+<div class="row"><span class="ico" style="width:24px;height:24px;font-size:13px;background:none">✓</span><div><b>Wandschalter Flur</b><small class="st ok">Fertig: Version 1.7.6</small></div></div>
+<div class="row"><div style="flex:1"><b>Steckdose Büro</b><small class="st">Update läuft: 62 %</small><div class="prog"><i style="width:62%"></i></div></div></div>
+<div class="row"><div style="flex:1"><b>Rollladen Küche</b><small class="st">Das Gerät startet neu …</small><div class="prog"><i style="width:100%"></i></div></div></div>
+<div class="row"><div style="flex:1"><b>Bewegungsmelder Keller</b><small class="st">Update läuft …</small><div class="prog"><i style="width:30%;opacity:.5"></i></div></div></div>
+<div class="row"><div><b>Leuchte Wohnzimmer</b><small>Wartet (Zigbee: eines nach dem anderen)</small></div></div>
+<div class="row"><span class="ico" style="width:24px;height:24px;font-size:13px;background:none;color:var(--err)">!</span><div><b>Sensor Garage</b><small class="st bad">Fehlgeschlagen: Gerät nicht erreichbar</small></div><span class="go" style="border-color:var(--err);color:var(--err)">↻</span></div>
+<div class="bar"><div style="display:flex;gap:8px"><span class="btn">Schliessen</span></div></div>
+<span class="s">Das Fenster darf geschlossen werden; die Updates laufen weiter. Beim erneuten Öffnen steht der Stand da (wie beim Einzel-Update). Die Ausfall-Meldungen dieser Geräte ruhen, wie bisher beim Einzel-Update.</span></div>
+
+<div class="ph"><span class="cap">E · Sicherheitsabfrage (A)</span>
+<h2><span class="ico">⬆</span><span>Geräte-Updates<br><span class="sub">7 verfügbar</span></span><span class="x">✕</span></h2>
+<div class="note"><b>7 Updates wirklich starten?</b><br>Die Geräte starten nach dem Update neu und sind kurz nicht erreichbar. Ein Update lässt sich meist nicht abbrechen. Die Geräte werden nacheinander und höchstens 3 gleichzeitig (eines je Integration) aktualisiert.</div>
+<div class="opt"><span>Vorher Backup erstellen</span><span class="sw on"></span></div>
+<span class="s">Backup nur, wenn mindestens ein gewähltes Update es kann. Bei gemischter Auswahl: "Ein Backup für alle", das einmal vor dem ersten Update gemacht wird.</span>
+<div class="bar"><div style="display:flex;gap:8px"><span class="btn">← Zurück</span><span class="btn pri">Ja, 7 Updates starten</span></div></div></div>
+
+<div class="ph"><span class="cap">F · Push-Meldung führt hierher</span>
+<div class="push"><span class="a"></span><div><b>Device Panel · Updates</b><br>7 Geräte-Updates verfügbar: Shelly (4), Zigbee (2), ESPHome (1)<br><span class="s">Tippen öffnet "Geräte-Updates"</span></div></div>
+<div class="arrow">↓ Tipp auf die Meldung</div>
+<div style="font-size:12px;color:var(--t2)">Das Panel öffnet sich und gleich das Fenster "Geräte-Updates", mit allen offenen Updates (wie A).</div>
+<span class="s">Heute zeigt der Tipp auf die Update-Seite von Home Assistant (/config/updates). Neu: auf das Panel mit geöffnetem Fenster (Adresse des Panels mit Parameter). Gemeldet werden weiter nur die Arten, die du in den Einstellungen gewählt hast; Core, Betriebssystem, Apps und HACS erscheinen in der Meldung wie bisher, im Fenster aber nicht (siehe Frage 1).</span>
+<span class="rec">Empfehlung: umstellen, wenn die Meldung Geräte-Updates enthält; sonst bleibt der Link zu Home Assistant.</span></div>
+
+<div class="ph"><span class="cap">G · Nichts offen</span>
+<h2><span class="ico">⬆</span><span>Geräte-Updates<br><span class="sub">alles aktuell</span></span><span class="x">✕</span></h2>
+<div style="flex:1;display:grid;place-items:center;text-align:center;color:var(--t2)"><div><div style="font-size:34px;color:var(--ok)">✓</div>Alle Geräte sind auf dem neuesten Stand.<br><span class="s">Zuletzt geprüft: heute 21:04</span></div></div>
+<div class="bar"><div style="display:flex;gap:8px"><span class="btn">Schliessen</span></div></div></div>
+
+</body>
