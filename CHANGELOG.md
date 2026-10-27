@@ -7,6 +7,14 @@ All notable changes to this integration are documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/).
 
+## [2.158.2] - 2026-10-27
+
+The rocket of the setup wizard also moves with "Reduce motion".
+
+### Changed
+
+- **Rocket (welcome page, launcher tile "Setup", settings):** it no longer stops when the system asks to reduce motion, like the shooting star. It still stops with "Animations" off (Settings › Panel › General).
+
 ## [2.158.1] - 2026-10-27
 
 The rocket on the welcome page of the setup wizard moves.
@@ -5012,6 +5020,7 @@ First pre-release.
   GitHub Actions for HACS/hassfest validation and tests.
 
 [2.6.0]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v2.6.0
+[2.158.2]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v2.158.2
 [2.158.1]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v2.158.1
 [2.158.0]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v2.158.0
 [2.157.0]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v2.157.0
