@@ -14,6 +14,7 @@ Das Geräte-Popup nutzt für die Überwachung dieselben Zeilen wie eine Integrat
 ### Geändert
 
 - **Geräte-Popup, Reiter "Einstellungen":** Die Auswahl "Ausgefallen nach" mit "Wie Integration", "Eigene Zeit", "Ohne Online-Status" und "Nicht überwachen" ist ersetzt durch dieselben drei Zeilen wie bei einer Integration und einem Label: Schalter "Überwachen", Schalter "Online-Status beobachten" und die Auswahl "Ausgefallen nach" (Standard oder eigene Zeit). Die Schalter zeigen den wirksamen Stand, die Herkunftszeile sagt, ob er vom Gerät, vom Label, von der Integration oder vom Standard kommt. Gespeichert wird weiterhin derselbe Wert, bestehende Einstellungen, Sicherungen und der Assistent funktionieren unverändert. Muss ein Schalter einen geerbten Wert aufheben (zum Beispiel "Online-Status beobachten" an einem Gerät, dessen Integration keinen Online-Status hat), bekommt das Gerät eine eigene Zeit, die Überwachung und Status einschaltet.
+- **README und Bilder:** neuer Abschnitt und Bilder zu "Ohne Online-Status" und "Labels", die Sprache des Panels und die Grösse des Assistenten sind beschrieben, die Bilder der Geräte-Einstellungen, des Integrations-Details und des Reiters Panel zeigen die aktuellen Zeilen.
 
 ## [2.157.0] - 2026-10-27
 

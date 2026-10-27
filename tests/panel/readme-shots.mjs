@@ -200,6 +200,9 @@ for (const lang of langs) {
       await tap('[data-set="subtab"][data-group="panel"][data-key="pstart"]');
       await wait(`return !!r.querySelector('[data-set="bk-export"]')`);
       await ev(`r.querySelector('[data-set="section"][data-id="updates"]').scrollIntoView({ block: "start" })`);
+      await shotDlg("settings-panel", "dialog.settings");
+      // Das Kapitel selbst: unter Startseite, Sprache, Akzentfarbe und Animationen
+      await ev(`r.querySelector('[data-set="bk-export"]').scrollIntoView({ block: "center" })`);
       await shotDlg("settings-backup", "dialog.settings");
     });
     await step("backup-restore", async () => {
@@ -370,7 +373,37 @@ for (const lang of langs) {
       await tap(".ilist-row");
       await wait(`return !!r.querySelector('[data-set="isub"]')`);
       await ev(SCROLL_TABS);
+      // Die Zeilen "Überwachen", "Online-Status beobachten" und "Ausgefallen nach" (seit 2.156.0) unter die Reiter holen
+      await ev(`const o = r.querySelector("[data-imon]").closest(".opt"); o.scrollIntoView({ block: "center" }); let sc = o.parentElement; while (sc && sc.scrollHeight <= sc.clientHeight) sc = sc.parentElement; if (sc) sc.scrollTop -= 90;`);
       await shotDlg("integ-detail", "dialog.settings");
+    });
+    // Ohne Online-Status (seit 2.156.0): Geräte mit Ring, Zeile in der Kachel "Verfügbarkeit", Chip
+    await step("nostatus", async () => {
+      await p.evaluate(() => { window.__opts.offline_after_integrations = { esphome: "nostatus", bthome: "nostatus" }; });
+      await ev(`return r.host._fetch(true).then(() => true)`);
+      await wait(`return !!r.querySelector(".lines i.ring")`);
+      await shot("nostatus");
+      await p.evaluate(() => { window.__opts.offline_after_integrations = {}; });
+      await ev(`return r.host._fetch(true).then(() => true)`);
+    });
+    // Labels (seit 2.155.0): Reiter in "Überwachung und Meldungen" mit einem Label, das ohne Online-Status ist
+    await step("settings-labels", async () => {
+      await p.evaluate((LANGNAME) => {
+        window.__labels = [{ id: "oft_offline", name: LANGNAME }];
+        window.__devLabels = { b: ["oft_offline"], e: ["oft_offline"] };
+        window.__opts.labels = ["oft_offline"];
+        window.__opts.offline_after_integrations = { "label:oft_offline": "nostatus" };
+      }, lang === "de" ? "Oft offline" : "Often offline");
+      await ev(`return r.host._fetch(true).then(() => true)`);
+      await settingsOpen("monitor", "labels");
+      await wait(`return !!r.querySelector(".ilist-row")`);
+      await tap(".ilist-row");
+      await wait(`return !!r.querySelector('[data-istatus]')`);
+      await ev(SCROLL_TABS);
+      await ev(`const o = r.querySelector("[data-imon]").closest(".opt"); o.scrollIntoView({ block: "center" }); let sc = o.parentElement; while (sc && sc.scrollHeight <= sc.clientHeight) sc = sc.parentElement; if (sc) sc.scrollTop -= 90;`);
+      await shotDlg("settings-labels", "dialog.settings");
+      await p.evaluate(() => { window.__opts.labels = []; window.__opts.offline_after_integrations = {}; window.__labels = []; window.__devLabels = {}; });
+      await ev(`return r.host._fetch(true).then(() => true)`);
     });
     await step("warnings", async () => {
       await tap('.chip[data-problems]');

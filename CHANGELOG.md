@@ -14,6 +14,7 @@ The device pop-up uses the same rows as an integration and a label for monitorin
 ### Changed
 
 - **Device pop-up, tab "Settings":** the drop-down "Offline after" with "Same as integration", "Own time", "No online status" and "Don't monitor" is replaced by the same three rows as for an integration and a label: switch "Monitor", switch "Watch online status" and the choice "Offline after" (default or own time). The switches show the effective state, the origin line says whether it comes from the device, the label, the integration or the default. What is saved stays the same, so existing settings, backups and the wizard keep working. If a switch has to override an inherited value (for example "Watch online status" on a device whose integration has no online status), the device gets an own time, which switches monitoring and status on.
+- **README and screenshots:** new section and pictures for "Without online status" and "Labels", the panel language and the wizard size are described, the screenshots of the device settings, the integration detail and the Panel tab show the current rows.
 
 ## [2.157.0] - 2026-10-27
 
