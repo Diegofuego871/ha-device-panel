@@ -2484,7 +2484,7 @@ dialog.wizard-dlg[open] { display: flex; flex-direction: column; }
 .upd-notes { max-height: 260px; overflow: auto; margin: 8px 0; padding: 10px 12px; border-radius: 12px; background: var(--dp-subtle); }
 .upd-summary { margin: 4px 0 8px; color: var(--dp-text2); }
 .upd-backup { display: flex; align-items: center; gap: 10px; margin: 10px 0; }
-.upd-state { display: flex; align-items: center; gap: 10px; margin: 6px 0 12px; font-size: 15px; }
+.upd-state { display: flex; align-items: center; gap: 10px; margin: 6px 0 12px; font-size: 18px; }
 .upd-state.ok { color: var(--dp-success); }
 .upd-bar { height: 8px; border-radius: 99px; background: var(--dp-primary-soft); overflow: hidden; }
 .upd-bar i { display: block; height: 100%; border-radius: 99px; background: var(--dp-primary); transition: width .4s ease; }

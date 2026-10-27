@@ -13,7 +13,7 @@ Die Kachel "Software" fällt auf, wenn ein Update verfügbar ist.
 
 ### Geändert
 
-- **Update-Fenster:** Die Texte (Hinweis zu den Ausfall-Meldungen, Rückfrage, Zusammenfassung) haben eine grössere Schrift.
+- **Update-Fenster:** Die Texte (Hinweis zu den Ausfall-Meldungen, Fortschrittszeile, Rückfrage, Zusammenfassung) haben eine grössere Schrift.
 - **Geräte-Popup, Kachel "Software":** Ist ein Update verfügbar, hat die Kachel einen Rand und eine leichte Tönung in der Akzentfarbe, damit das Update sofort auffällt.
 
 ## [2.162.0] - 2026-10-27

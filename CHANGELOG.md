@@ -13,7 +13,7 @@ The tile "Software" stands out when an update is available.
 
 ### Changed
 
-- **Update window:** the texts (the note about outage notifications, the confirmation question, the summary) use a larger font.
+- **Update window:** the texts (the note about outage notifications, the progress line, the confirmation question, the summary) use a larger font.
 - **Device pop-up, tile "Software":** if an update is available, the tile gets an outline and a light tint in the accent colour, so the update is noticed at once.
 
 ## [2.162.0] - 2026-10-27
