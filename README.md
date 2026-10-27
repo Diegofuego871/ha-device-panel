@@ -137,7 +137,7 @@ Labels are the labels you give devices in Home Assistant (Settings › Areas, la
 
 Some devices report only now and then, for example Bluetooth sensors, and would look permanently offline. "Without online status" keeps them monitored for battery, charging, signal and updates, but they get no online status, no outages, no outage statistics and no outage notifications.
 
-- **Where:** the same rows in an integration, in a label and in the Settings of a device pop-up: "Monitor" above the tabs (it applies to all of them) and "Watch online status" and "Offline after" in the tab "Outage". "Watch online status: off" means the same everywhere. On a device, an own time switches the status on again
+- **Where:** the same rows in an integration, in a label and in the Settings of a device pop-up: "Monitor" above the tabs (it applies to all of them; switched off, the tabs for outage, battery, charging and signal disappear) and "Watch online status" and "Offline after" in the tab "Outage". "Watch online status: off" means the same everywhere. On a device, an own time switches the status on again
 - **Order of precedence:** device › label › integration; with several labels the strictest applies: "Do not monitor", then "No online status", then a time
 - **In the panel:** a grey ring instead of the dot, a row in the availability tile ("N without online status") and the filter chip "No online status" (can be hidden and moved like all chips)
 - **Setup wizard:** in the step "Notifications", tab "Outage", a ring switch per integration and device, and the switch on the card of a label

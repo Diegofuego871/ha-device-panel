@@ -137,7 +137,7 @@ Labels sind die Labels, die du Geräten in Home Assistant gibst (Einstellungen �
 
 Manche Geräte melden sich nur ab und zu, zum Beispiel Bluetooth-Sensoren, und wirken sonst dauernd ausgefallen. "Ohne Online-Status" lässt sie für Batterie, Laden, Empfang und Updates überwacht, sie haben aber keinen Online-Status, keine Ausfälle, keine Ausfall-Statistik und keine Ausfall-Meldungen.
 
-- **Wo:** dieselben Zeilen bei einer Integration, einem Label und in den Einstellungen eines Geräte-Popups: "Überwachen" über den Reitern (es gilt für alle) sowie "Online-Status beobachten" und "Ausgefallen nach" im Reiter "Ausfall". "Online-Status beobachten: aus" bedeutet überall dasselbe. Am Gerät schaltet eine eigene Zeit den Status wieder ein
+- **Wo:** dieselben Zeilen bei einer Integration, einem Label und in den Einstellungen eines Geräte-Popups: "Überwachen" über den Reitern (es gilt für alle; ausgeschaltet entfallen die Reiter für Ausfall, Batterie, Laden und Empfang) sowie "Online-Status beobachten" und "Ausgefallen nach" im Reiter "Ausfall". "Online-Status beobachten: aus" bedeutet überall dasselbe. Am Gerät schaltet eine eigene Zeit den Status wieder ein
 - **Rangfolge:** Gerät › Label › Integration; bei mehreren Labels gilt das strengste: "Nicht überwachen", dann "Ohne Online-Status", dann eine Zeit
 - **Im Panel:** ein grauer Ring statt des Punkts, eine Zeile in der Kachel "Verfügbarkeit" ("N ohne Online-Status") und der Filter-Chip "Ohne Online-Status" (wie alle Chips ausblend- und verschiebbar)
 - **Einrichtungsassistent:** im Schritt "Meldungen", Reiter "Ausfall", ein Ring-Schalter je Integration und Gerät sowie der Schalter auf der Karte eines Labels

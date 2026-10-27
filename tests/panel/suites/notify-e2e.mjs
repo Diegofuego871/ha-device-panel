@@ -109,7 +109,7 @@ for (const lang of ["de", "en"]) {
     // Shelly: Überwachen aus sperrt den Rest; "Alles auf Standard"
     await integ("shelly");
     await tap('input[data-imon="shelly"]');
-    check(`[${tag}] nicht überwacht: Hinweis, Rest gesperrt`, await wait(`return !r.querySelector('input[data-imon="shelly"]').checked && !!r.querySelector(".mon-body .nf-note") && r.querySelector('select[data-off-mode="shelly"]').disabled && r.querySelector('${sw("notify_exclude_integrations", "shelly")}').disabled`));
+    check(`[${tag}] nicht überwacht: Hinweis, Ausfall/Batterie/Laden/Empfang ausgeblendet, Neu/Updates/Geräte bleiben`, await wait(`return !r.querySelector('input[data-imon="shelly"]').checked && !!r.querySelector(".nf-note") && !r.querySelector('select[data-off-mode="shelly"]') && [...r.querySelectorAll(".lvl-tabs .sub-tab")].map((x)=>x.dataset.key).join() === "new,upd,dev"`));
     await back();
     const sh = await row("shelly");
     check(`[${tag}] Liste: Shelly "${T.unmon}"`, sh && sh[0] === T.unmon && sh[1].includes("unmon"), JSON.stringify(sh));

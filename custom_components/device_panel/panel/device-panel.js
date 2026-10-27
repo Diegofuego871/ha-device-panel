@@ -4091,7 +4091,16 @@ class DevicePanel extends HTMLElement {
     } else if (key === "connection") {
       d.connection = value || d.connection_integration || (d.connection_auto !== undefined ? d.connection_auto : d.connection);
       d.connection_manual = Boolean(value);
-    } else d[`${key}_setting`] = value;
+    } else {
+      d[`${key}_setting`] = value;
+      // Überwachen und Online-Status folgen dem Entwurf sofort; sonst bliebe `unmonitored` bis zum Speichern alt und der
+      // Schalter sprang beim nächsten Neuaufbau (zum Beispiel Reiterwechsel) zurück
+      if (key === "offline") {
+        const eff = value ?? d.offline_default?.minutes;
+        d.unmonitored = eff === "off";
+        d.no_status = eff === "nostatus";
+      }
+    }
   }
 
   _devEdit(id, changes) {
@@ -4715,7 +4724,9 @@ class DevicePanel extends HTMLElement {
       .map(([id, key]) => `<button type="button" role="tab" class="sub-tab${id === cur ? " on" : ""}${ownTab[id] ? " chg" : ""}" data-dlg="stab" data-stab="${id}" aria-selected="${id === cur}">${escape(t(key))}</button>`)
       .join("")}</div>`;
     const err = this._devSetError ? `<div class="opt-error">${escape(t("devSaveError"))} ${escape(this._devSetError)}</div>` : "";
-    return `<div class="dev-set">${monRow}<div class="${monOff ? "mon-dis" : ""}">${tabBar}</div><div class="lvl-body${monOff ? " mon-dis" : ""}" role="tabpanel">${bodies[cur]}</div>${err}</div>`;
+    // Nicht überwacht: Batterie, Laden, Empfang und Ausfälle entfallen, darum bleibt nur die Zeile "Überwachen" (seit 2.162.0)
+    if (monOff) return `<div class="dev-set">${monRow}${err}</div>`;
+    return `<div class="dev-set">${monRow}<div>${tabBar}</div><div class="lvl-body" role="tabpanel">${bodies[cur]}</div>${err}</div>`;
   }
 
   // Typ: im Reiter "Einstellungen" wählbar, in der Übersicht nur Text (seit 1.37.0).
@@ -9045,8 +9056,10 @@ class DevicePanel extends HTMLElement {
       dev: devs.length > 0,
       kind: Boolean(typeOwn || connOwn),
     };
-    const tabs = [["out", "tabOutage"], ["bat", "tabBattery"], ["chg", "tabCharge"], ["new", "tabNew"], ["upd", "tabUpdates"], ["sig", "tabSignal"], isLabel ? ["kind", "tabKind"] : ["dev", "tabDevices"]];
-    const cur = tabs.some(([id]) => id === st.sub?.integ) ? st.sub.integ : "out";
+    // Nicht überwacht: Ausfall, Batterie, Laden und Empfang entfallen (seit 2.162.0); "Neu", "Updates" und die Geräte bzw. Art
+    // haben mit dem Überwachen nichts zu tun und bleiben
+    const tabs = [["out", "tabOutage"], ["bat", "tabBattery"], ["chg", "tabCharge"], ["new", "tabNew"], ["upd", "tabUpdates"], ["sig", "tabSignal"], isLabel ? ["kind", "tabKind"] : ["dev", "tabDevices"]].filter(([id]) => !unmon || ["new", "upd", "kind", "dev"].includes(id));
+    const cur = tabs.some(([id]) => id === st.sub?.integ) ? st.sub.integ : tabs[0][0];
     const tabBar = `<div class="sub-tabs lvl-tabs" role="tablist">${tabs
       .map(([id, key]) => `<button type="button" role="tab" class="sub-tab${id === cur ? " on" : ""}${own[id] ? " chg" : ""}" data-set="isub" data-key="${id}" aria-selected="${id === cur}">${escape(t(key))}</button>`)
       .join("")}</div>`;
@@ -9064,7 +9077,7 @@ class DevicePanel extends HTMLElement {
     const sub = isLabel ? t("labelDevs", item.devices) : t("integDevs", item.devices, item.batDevices);
     return `<button type="button" class="iback" data-set="${isLabel ? "label" : "integ"}" data-key="">${mdi("arrowLeft", 18)}${escape(t(isLabel ? "labelBack" : "integBack"))}</button>
       <div class="ihead">${this._ibadge(dom, item.name)}<div><b>${escape(item.name)}</b><small>${escape(sub)}${isLabel && this._labelInfo(labelId)?.missing ? ` · ${escape(t("labelMissing"))}` : ""}</small></div></div>
-      ${monHtml}${tabBar}<div class="lvl-body" role="tabpanel">${bodies[cur]}</div>
+      ${monHtml}${unmon ? `<div class="nf-note">${mdi("info", 16)}<div><p>${escape(t("integUnmonInfo"))}</p></div></div>` : ""}${tabBar}<div class="lvl-body" role="tabpanel">${bodies[cur]}</div>
       <div class="integ-reset"><button type="button" class="ovr-all" data-set="integ-reset" data-key="${escape(dom)}" ${anyOwn || updOwn ? "" : "disabled"}>${mdi("reset", 15)}${escape(t("integReset"))}</button></div>${labelFoot}`;
   }
 

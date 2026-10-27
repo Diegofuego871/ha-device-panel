@@ -7,6 +7,18 @@ All notable changes to this integration are documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/).
 
+## [2.162.0] - 2026-10-27
+
+When "Monitor" is off, everything below it disappears.
+
+### Changed
+
+- **"Monitor" off hides the rest:** in the device pop-up (Settings) the tab bar and its rows are hidden as soon as "Monitor" is switched off, as outages, battery, charging and signal no longer apply then. In an integration and in a label the tabs "Outage", "Battery", "Charging" and "Signal" are hidden; "New", "Updates" and "Devices" (label: "Kind") stay, as they do not depend on monitoring. In the setup wizard the card of a label shows only "Monitor", "New devices" and "Updates" while it is off.
+
+### Fixed
+
+- **Device pop-up, "Monitor" switched itself on:** after switching "Monitor" off and clicking a tab (for example "Battery"), the switch jumped back to on. The pop-up kept the old state until saving; it now follows the pending change at once.
+
 ## [2.161.0] - 2026-10-27
 
 Start a device update from the device pop-up.
@@ -5053,6 +5065,7 @@ First pre-release.
   GitHub Actions for HACS/hassfest validation and tests.
 
 [2.6.0]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v2.6.0
+[2.162.0]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v2.162.0
 [2.161.0]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v2.161.0
 [2.159.0]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v2.159.0
 [2.158.1]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v2.158.1

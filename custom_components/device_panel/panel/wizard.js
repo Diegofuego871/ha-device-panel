@@ -804,17 +804,17 @@ export class WizardUi {
     const batValues = [...new Set([10, 15, 20, 25, 30, ...(/^\d+$/.test(c.bat) ? [Number(c.bat)] : [])])].sort((a, b) => a - b);
     const batSel = `<label class="wz-sel wz-sel-s"><select data-wz-lc="${escape(id)}" data-wz-lf="bat" aria-label="${escape(t("optBatteryLow"))}"><option value=""${c.bat === "" ? " selected" : ""}>${escape(t("wzLStd"))}</option>${batValues.map((v) => `<option value="${v}"${String(v) === c.bat ? " selected" : ""}>${v} %</option>`).join("")}<option value="off"${c.bat === "off" ? " selected" : ""}>${escape(t("devBatOff"))}</option></select>${mdi("chevronDown", 18)}</label>`;
     const updSel = `<label class="wz-sel wz-sel-s"><select data-wz-lc="${escape(id)}" data-wz-lf="upd" aria-label="${escape(t("optUpdNotify"))}"${none ? " disabled" : ""}><option value="default"${c.upd === "default" ? " selected" : ""}>${escape(t("labelUpdDefault"))}</option><option value="on"${c.upd === "on" ? " selected" : ""}>${escape(t("devChargeOn"))}</option><option value="off"${c.upd === "off" ? " selected" : ""}>${escape(t("devChargeOff"))}</option></select>${mdi("chevronDown", 18)}</label>`;
-    const dim = c.mon ? "" : " dim";
     const outDim = c.mon && c.status ? "" : "dim";
     return `<div class="wz-msg on wz-lcard"><div class="wz-li">${this.host._ibadge(`${LABEL_PREFIX}${id}`, this.labelName(id))}<div class="wz-nm">${escape(this.labelName(id))}<small>${escape(t("labelDevs", (this.s.data.labels.find((l) => l.id === id) || {}).devices || 0))}</small></div><button type="button" class="dlg-btn wz-lrm" data-wz-lrm="${escape(id)}">${mdi("close", 16)}${escape(t("wzLRemove"))}</button></div>
       ${row("eye", t("optMonitor"), t("optMonitorShort"), sw("mon", c.mon, t("optMonitor")))}
-      <div class="${dim.trim()}">${row("circleOutline", t("optStatus"), t("wzLNsSub"), sw("status", c.status, t("optStatus"), !c.mon))}
+      ${!c.mon ? "" : `<div>${row("circleOutline", t("optStatus"), t("wzLNsSub"), sw("status", c.status, t("optStatus"), !c.mon))}
       <div class="${outDim}">${row("pulse", t("optOfflineAfter"), "", timeSel("after", t("optOfflineAfter"), c.after, t("wzLStd")))}
       ${row("timer", t("optDelay"), "", timeSel("delay", t("optDelay"), c.delay, t("wzLStd")))}
       ${row("alert", t("wzM_outage"), "", sw("push", c.push, t("wzM_outage"), none || !c.mon || !c.status))}</div>
       ${row("battery", t("optBatteryLow"), "", batSel)}
       ${row("battery", t("wzM_battery"), "", sw("batPush", c.batPush, t("wzM_battery"), none))}
       ${row("batteryCharging", t("wzM_charge"), "", sw("charge", c.charge, t("wzM_charge"), none))}</div>
+`}
       ${row("sparkle", t("wzM_new"), "", sw("newPush", c.newPush, t("wzM_new"), none))}
       ${row("download", t("wzM_updates"), "", updSel)}
       ${none ? `<p class="wz-p small">${escape(t("wzMNoTargetHint"))}</p>` : ""}</div>`;

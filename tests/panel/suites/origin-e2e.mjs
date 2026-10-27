@@ -87,6 +87,10 @@ for (const lang of ["de", "en"]) {
     check(`[${tag}] Gerät in der Liste: eigene Zeit`, await wait(`return r.host._devices.find((d) => d.id === "e").offline_after === 90`));
     // Nicht überwachen
     await tap('input[data-dlg="dev-mon"]');
+    // 2.162.0: aus = alles darunter weg, auch vor dem Speichern; ein Neuaufbau schaltet den Schalter nicht wieder ein
+    check(`[${tag}] Überwachen aus: Reiter und Inhalt ausgeblendet, Schalter bleibt aus`, await wait(`return !r.querySelector('dialog.device .dev-set .lvl-tabs') && !r.querySelector('dialog.device .dev-set .lvl-body') && r.querySelector('input[data-dlg="dev-mon"]') && !r.querySelector('input[data-dlg="dev-mon"]').checked`));
+    await ev(`r.host._devForce = true; r.host._renderDevice()`);
+    check(`[${tag}] nach Neuaufbau: Schalter weiter aus`, await ev(`return !r.querySelector('input[data-dlg="dev-mon"]').checked && r.host._devices.find((d) => d.id === "e").unmonitored === true`));
     await savePending(f, R);
     check(`[${tag}] "${T.none}" gesendet, Gerät ohne Status`, await wait(`const d=r.host._devices.find((x) => x.id === "e"); return d.unmonitored === true && d.online == null`) && (await calls()).at(-1).offline === "off");
     // Der Status kommt mit der nächsten Abfrage; nach einer Berührung wartet das Popup kurz (siehe _dlgBusy).
@@ -95,6 +99,7 @@ for (const lang of ["de", "en"]) {
     await p.screenshot({ path: `${outDir}/origin-own-${tag.replace("/", "-")}.png` });
     // Zurück: Standard
     await tap('input[data-dlg="dev-mon"]');
+    check(`[${tag}] Überwachen wieder an: Reiter da`, await wait(`return !!r.querySelector('dialog.device .dev-set .lvl-body') && r.querySelector('input[data-dlg="dev-mon"]').checked`));
     await savePending(f, R);
     check(`[${tag}] zurück auf Standard, null gesendet`, await wait(`return r.host._devices.find((d) => d.id === "e").offline_setting === null`) && (await calls()).at(-1).offline === null);
     await tap('dialog.device [data-dlg="close"]');

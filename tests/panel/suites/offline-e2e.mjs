@@ -67,7 +67,7 @@ for (const lang of ["de", "en"]) {
     await back();
     await integ("matter");
     await tap('input[data-imon="matter"]');
-    check(`[${tag}] nicht überwachen: Auswahl gesperrt`, await wait(`return r.querySelector('select[data-off-mode="matter"]')?.disabled`));
+    check(`[${tag}] nicht überwachen: Auswahl ausgeblendet`, await wait(`return !!r.querySelector('input[data-imon="matter"]') && !r.querySelector('select[data-off-mode="matter"]')`));
     await back();
     check(`[${tag}] Entwurf: Liste, Zähler`, (await diff("bthome")) === T.diff30 && (await diff("matter")) === T.unmon && /^1 /.test(await text(".set-count")), `${await diff("bthome")} / ${await diff("matter")} / ${await text(".set-count")}`);
     check(`[${tag}] noch nichts gespeichert`, (await calls("device_panel/set_options")).length === 0);

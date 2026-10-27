@@ -7,6 +7,18 @@ Alle nennenswerten Änderungen an dieser Integration stehen in dieser Datei.
 Das Format folgt [Keep a Changelog](https://keepachangelog.com/de/1.1.0/),
 die Versionsnummern folgen [Semantic Versioning](https://semver.org/lang/de/).
 
+## [2.162.0] - 2026-10-27
+
+Ist "Überwachen" aus, verschwindet alles darunter.
+
+### Geändert
+
+- **"Überwachen" aus blendet den Rest aus:** Im Geräte-Popup (Einstellungen) sind die Reiterleiste und ihre Zeilen weg, sobald "Überwachen" ausgeschaltet ist, denn Ausfälle, Batterie, Laden und Empfang gelten dann nicht mehr. In einer Integration und in einem Label entfallen die Reiter "Ausfall", "Batterie", "Laden" und "Empfang"; "Neu", "Updates" und "Geräte" (Label: "Art") bleiben, weil sie nicht vom Überwachen abhängen. Im Einrichtungsassistenten zeigt die Karte eines Labels bei ausgeschaltetem Überwachen nur "Überwachen", "Neue Geräte" und "Updates".
+
+### Behoben
+
+- **Geräte-Popup, "Überwachen" schaltete sich selbst ein:** Nach dem Ausschalten von "Überwachen" und einem Klick auf einen Reiter (zum Beispiel "Batterie") sprang der Schalter wieder auf ein. Das Popup behielt bis zum Speichern den alten Stand; es folgt jetzt sofort der offenen Änderung.
+
 ## [2.161.0] - 2026-10-27
 
 Ein Update eines Geräts aus dem Geräte-Popup starten.
@@ -5154,6 +5166,7 @@ Erste Vorabversion.
   GitHub Actions für die Prüfungen von HACS und hassfest sowie die Tests.
 
 [2.6.0]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v2.6.0
+[2.162.0]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v2.162.0
 [2.161.0]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v2.161.0
 [2.159.0]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v2.159.0
 [2.158.1]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v2.158.1
