@@ -7,6 +7,14 @@ All notable changes to this integration are documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/).
 
+## [2.158.1] - 2026-10-27
+
+The rocket on the welcome page of the setup wizard moves.
+
+### Changed
+
+- **Setup wizard, welcome page:** the rocket shakes now, as the one in the launcher tile "Setup" and in the settings does while the wizard is not finished. It stops with "Animations" off (Settings › Panel › General) and with "Reduce motion" in the system.
+
 ## [2.158.0] - 2026-10-27
 
 The device pop-up uses the same rows as an integration and a label for monitoring.
@@ -5004,6 +5012,7 @@ First pre-release.
   GitHub Actions for HACS/hassfest validation and tests.
 
 [2.6.0]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v2.6.0
+[2.158.1]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v2.158.1
 [2.158.0]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v2.158.0
 [2.157.0]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v2.157.0
 [2.156.1]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v2.156.1
