@@ -13,6 +13,7 @@ Die Kachel "Software" fällt auf, wenn ein Update verfügbar ist.
 
 ### Geändert
 
+- **Update läuft:** Die Kachel "Software" zeigt ein laufendes Update klein an, mit Prozent, wenn die Integration sie meldet ("Update läuft: 40 %", "Das Gerät startet neu …"). Schliesst du das Fenster während des Updates und tippst erneut auf die Kachel, öffnet es gleich bei der Fortschrittsanzeige.
 - **Update-Fenster:** Die Texte (Hinweis zu den Ausfall-Meldungen, Fortschrittszeile, Rückfrage, Zusammenfassung) haben eine grössere Schrift.
 - **Geräte-Popup, Kachel "Software":** Ist ein Update verfügbar, hat die Kachel einen Rand und eine leichte Tönung in der Akzentfarbe, damit das Update sofort auffällt.
 

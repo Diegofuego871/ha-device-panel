@@ -13,6 +13,7 @@ The tile "Software" stands out when an update is available.
 
 ### Changed
 
+- **Update running:** the tile "Software" shows a running update in small text, with the percentage if the integration reports it ("Update running: 40 %", "The device is restarting …"). If you close the window during the update and tap the tile again, the window opens at the progress display.
 - **Update window:** the texts (the note about outage notifications, the progress line, the confirmation question, the summary) use a larger font.
 - **Device pop-up, tile "Software":** if an update is available, the tile gets an outline and a light tint in the accent colour, so the update is noticed at once.
 

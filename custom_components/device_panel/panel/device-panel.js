@@ -1325,6 +1325,7 @@ class DevicePanel extends HTMLElement {
       // HACS meldet Fortschritt und neue Versionen über seine Update-Entität.
       if (this._settings) this._renderSettingsVersion();
       if (this._upd) this._renderUpdate();
+      this._watchUpdateTile();
       this._gearDot();
       this._watchEntityStates();
     }
@@ -1334,6 +1335,21 @@ class DevicePanel extends HTMLElement {
   // (alle 10 s) oder beim Reiterwechsel neu auf; wer in HAs Dialog schaltet und zurückkommt, sah deshalb den alten Zustand (behoben in
   // 2.92.0). Darum: ändert sich Zustand oder Attribut einer Entität des offenen Geräts, wird das Popup sanft neu gezeichnet
   // (sanft = nicht mitten in Berührung oder Eingabe, siehe _dlgBusy).
+  // Die Kachel "Software" zeigt ein laufendes Update; sie folgt dem Zustand der Update-Entität
+  _watchUpdateTile() {
+    const dlg = this.shadowRoot?.querySelector("dialog.device");
+    const list = this._detailId && dlg?.open && this._detail?.id === this._detailId ? this._detail.data?.updates || [] : [];
+    // Gemerkter Start ist erledigt, sobald das Update weder läuft noch das Gerät fehlt (Schonfrist für den Start)
+    for (const [ent, r] of Object.entries(this._updRun || {})) {
+      const { running, gone } = this._updState(ent);
+      if (!running && !gone && Date.now() - r.at > 30000) delete this._updRun[ent];
+    }
+    const sig = list.map((e) => { const st = this._hass?.states?.[e.entity_id]; return st ? `${st.state}|${st.attributes?.in_progress}|${st.attributes?.update_percentage}` : ""; }).join("\n");
+    if (sig === this._updSig) return;
+    this._updSig = sig;
+    if (list.length) this._renderDevice(true);
+  }
+
   _watchEntityStates() {
     if (!this._detailId || !["sw", "ent"].includes(this._devTab)) return;
     const dlg = this.shadowRoot?.querySelector("dialog.device");
@@ -4753,10 +4769,17 @@ class DevicePanel extends HTMLElement {
     const text = (v) => (v ? escape(v) : `<span class="t3">–</span>`);
     // Update aus dem Popup starten (seit 2.161.0): nur Administratoren und nur, wenn eine Update-Entität des Geräts sich installieren lässt
     const installable = this._detail?.id === d.id && this._hass?.user?.is_admin !== false ? this._detail.data?.updates || [] : [];
+    // Läuft das Update, steht es klein in der Kachel (Prozent, wenn die Integration sie meldet)
+    const upd = { busy: false, text: "" };
+    if (installable.length) {
+      const { running, percent, gone } = this._updState(installable[0].entity_id);
+      if (running) Object.assign(upd, { busy: true, text: percent != null ? this._t("updPercent", Math.round(percent)) : this._t("updRunning") });
+      else if (gone && this._updRun?.[installable[0].entity_id]) Object.assign(upd, { busy: true, text: this._t("updRebooting") });
+    }
     const sw = `${text(d.sw_version)}${
       d.update
         ? installable.length
-          ? `<button type="button" class="upd-btn" data-dlg="update-open" data-entity="${escape(installable[0].entity_id)}"><span>${escape(this._t("updateTo", d.update))}</span><span class="cbtn" aria-hidden="true">${mdi("chevronRight", 16)}</span></button>`
+          ? `<button type="button" class="upd-btn${upd.busy ? " busy" : ""}" data-dlg="update-open" data-entity="${escape(installable[0].entity_id)}"><span>${escape(upd.busy ? upd.text : this._t("updateTo", d.update))}</span><span class="cbtn" aria-hidden="true">${mdi("chevronRight", 16)}</span></button>`
           : `<small class="upd">${escape(this._t("updateTo", d.update))}</small>`
         : ""
     }`;
@@ -6278,9 +6301,8 @@ class DevicePanel extends HTMLElement {
   // Aus dem Reiter "Übersicht" des Geräte-Popups (nur Administratoren): Release Notes lesen, bestätigen, starten, Fortschritt sehen. Der
   // Server hält die Ausfall-Meldungen des Geräts zurück (device_update.py). Die Merkmale der Entität (Installieren 1, Fortschritt 4,
   // Backup 8, Release Notes 16) lesen wir aus ihrem Zustand; was sie nicht kann, zeigt der Dialog nicht.
-  _updState() {
-    const u = this._upd;
-    const st = u ? this._hass?.states?.[u.entity] : null;
+  _updState(entity) {
+    const st = this._hass?.states?.[entity ?? this._upd?.entity] ?? null;
     const a = st?.attributes || {};
     const features = Number(a.supported_features || 0);
     const raw = a.in_progress;
@@ -6293,8 +6315,11 @@ class DevicePanel extends HTMLElement {
     const dev = this._devices.find((x) => x.id === this._detailId);
     if (!dlg || !dev || !entity) return;
     this._upd = { entity, device: dev.id, name: dev.name, step: "info", backup: false, notes: null, notesState: "idle", error: null, started: false, seen: false, installed: null };
-    const { features, a } = this._updState();
+    const { features, a, running, gone } = this._updState();
     this._upd.installed = a.installed_version ?? null;
+    // Fenster nach dem Schliessen wieder geöffnet: läuft das Update (oder startet das Gerät dazu neu), gleich den Fortschritt zeigen
+    const mine = this._updRun?.[entity];
+    if (running || (mine && gone)) Object.assign(this._upd, { step: "run", started: true, seen: true, installed: mine?.from ?? a.installed_version ?? null });
     this._renderUpdate();
     if (!dlg.open) {
       if (typeof dlg.showModal === "function") dlg.showModal();
@@ -6302,7 +6327,7 @@ class DevicePanel extends HTMLElement {
     }
     this._blurOnTouch();
     dlg.scrollTop = 0;
-    if (features & 16) {
+    if (features & 16 && this._upd.step === "info") {
       const u = this._upd;
       u.notesState = "loading";
       try {
@@ -6393,6 +6418,7 @@ class DevicePanel extends HTMLElement {
         u.step = "run";
         u.error = null;
         u.started = true;
+        (this._updRun ||= {})[u.entity] = { from: u.installed, at: Date.now() };
         u.seen = false;
         this._renderUpdate();
         try {

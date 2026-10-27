@@ -68,6 +68,11 @@ for (const lang of ["de", "en"]) {
     await setState(state("on", { in_progress: true, update_percentage: 40 }));
     check(`[${tag}] Fortschritt 40 %`, await wait(`return !!r.querySelector("dialog.upd-dlg .upd-bar i")`) && L.running.test(await text("dialog.upd-dlg .upd-state")) && (await ev(`return r.querySelector("dialog.upd-dlg .upd-bar i").style.width`)) === "40%");
     await p.screenshot({ path: `${outDir}/deviceupdate-run-${tag.replace("/", "-")}.png` });
+    // Fenster schliessen: die Kachel zeigt den Fortschritt, ein Tipp darauf öffnet das Fenster wieder bei der Fortschrittsanzeige
+    await tap('dialog.upd-dlg [data-upd="close"]');
+    check(`[${tag}] Kachel zeigt laufendes Update mit Prozent`, await wait(`const b=r.querySelector('dialog.device button.upd-btn'); return !!b && b.classList.contains("busy") && b.innerText.includes("40 %")`));
+    await tap('button.upd-btn[data-dlg="update-open"]');
+    check(`[${tag}] erneut geöffnet: gleich der Fortschritt, 40 %`, await wait(`const d=r.querySelector("dialog.upd-dlg"); return d?.open && !d.querySelector('[data-upd="next"]') && d.querySelector(".upd-bar i")?.style.width === "40%"`));
     await setState(state("unavailable"));
     check(`[${tag}] Gerät startet neu`, await wait(`return r.querySelector("dialog.upd-dlg .upd-state")?.innerText.includes(${JSON.stringify(L.reboot)})`));
     await setState(state("off", { installed_version: "2.2", latest_version: "2.2" }));

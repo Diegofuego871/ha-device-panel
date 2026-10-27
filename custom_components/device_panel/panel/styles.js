@@ -2480,6 +2480,7 @@ dialog.wizard-dlg[open] { display: flex; flex-direction: column; }
 .upd-dlg .nf-note p b { font-size: 16px; }
 .upd-summary { font-size: 15px; }
 .upd-btn { display: flex; align-items: center; gap: 8px; margin-top: 4px; padding: 0; border: 0; background: none; color: var(--dp-primary); font: inherit; font-size: 12.5px; text-align: left; cursor: pointer; }
+.upd-btn.busy span:first-child { color: var(--dp-text2); }
 .upd-btn:hover span:first-child { text-decoration: underline; }
 .upd-notes { max-height: 260px; overflow: auto; margin: 8px 0; padding: 10px 12px; border-radius: 12px; background: var(--dp-subtle); }
 .upd-summary { margin: 4px 0 8px; color: var(--dp-text2); }
