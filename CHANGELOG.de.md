@@ -7,6 +7,17 @@ Alle nennenswerten Änderungen an dieser Integration stehen in dieser Datei.
 Das Format folgt [Keep a Changelog](https://keepachangelog.com/de/1.1.0/),
 die Versionsnummern folgen [Semantic Versioning](https://semver.org/lang/de/).
 
+## [2.159.0] - 2026-10-27
+
+"Überwachen" steht über den Reitern, weil es für alle gilt.
+
+### Geändert
+
+- **"Überwachen" über den Reitern:** Im Geräte-Popup (Einstellungen), bei einer Integration und bei einem Label ist der Schalter "Überwachen" jetzt eine eigene Zeile über der Reiterleiste (Ausfall, Batterie, Laden, Empfang, ...), mit Beschreibung und Herkunft. Er schaltet Ausfälle, Batterie-Warnung, Laden, Empfang, Statistik und Meldungen gemeinsam aus und versteckt sich darum nicht mehr im ersten Reiter. "Online-Status beobachten" und "Ausgefallen nach" bleiben im Reiter "Ausfall".
+- **Geräte-Popup bei "Überwachen" aus:** Die Reiter und ihre Zeilen sind ausgegraut, wie schon bei einer Integration.
+- **Einrichtungsassistent, Karte eines Labels:** "Überwachen" hat dieselbe Beschreibung.
+- **Einstellungen › KI-Einschätzung:** "KI-Vorschläge in Home Assistant öffnen" ist ein Knopf wie "Gerät in HA öffnen" statt eines Links mit Pfeil.
+
 ## [2.158.2] - 2026-10-27
 
 Die Rakete des Einrichtungsassistenten bewegt sich auch bei "Bewegung reduzieren".
@@ -5121,6 +5132,7 @@ Erste Vorabversion.
   GitHub Actions für die Prüfungen von HACS und hassfest sowie die Tests.
 
 [2.6.0]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v2.6.0
+[2.159.0]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v2.159.0
 [2.158.2]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v2.158.2
 [2.158.1]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v2.158.1
 [2.158.0]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v2.158.0

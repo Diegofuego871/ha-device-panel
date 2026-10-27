@@ -7,6 +7,17 @@ All notable changes to this integration are documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/).
 
+## [2.159.0] - 2026-10-27
+
+"Monitor" sits above the tabs, as it applies to all of them.
+
+### Changed
+
+- **"Monitor" above the tabs:** in the device pop-up (Settings), in an integration and in a label the switch "Monitor" is now its own row above the tab bar (Outage, Battery, Charging, Signal, ...), with description and origin. It switches off outages, battery warning, charging, signal, statistics and notifications together, so it no longer hides in the first tab. "Watch online status" and "Offline after" stay in the tab "Outage".
+- **Device pop-up with "Monitor" off:** the tabs and their rows are greyed out, as already in an integration.
+- **Setup wizard, card of a label:** "Monitor" uses the same description.
+- **Settings › AI assessment:** "Open AI suggestions in Home Assistant" is a button like "Open device in HA" instead of a link with an arrow.
+
 ## [2.158.2] - 2026-10-27
 
 The rocket of the setup wizard also moves with "Reduce motion".
@@ -5020,6 +5031,7 @@ First pre-release.
   GitHub Actions for HACS/hassfest validation and tests.
 
 [2.6.0]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v2.6.0
+[2.159.0]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v2.159.0
 [2.158.2]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v2.158.2
 [2.158.1]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v2.158.1
 [2.158.0]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v2.158.0

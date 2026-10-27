@@ -4426,6 +4426,8 @@ class DevicePanel extends HTMLElement {
     const range = mode === "own" ? this._devRangeError : null;
     const parts = { out: "", bat: "", chg: "", sig: "" };
     let outFirst = 0;
+    let monRow = "";
+    let monOff = false;
     // Herkunft unter jeder Einstellung (Variante A, docs/mockups/backlog-v1):
     // Etikett (Standard / Integration / Gerät) und was ohne die Wahl am Gerät
     // gälte; der Tooltip trägt die ausführliche Erklärung.
@@ -4453,7 +4455,10 @@ class DevicePanel extends HTMLElement {
       const swit = (name, on, label, lock) => `<label class="switch"><input type="checkbox" data-dlg="${name}" ${on ? "checked" : ""} ${lock ? "disabled" : ""} aria-label="${escape(label)}"><span></span></label>`;
       const line = (own_, label, control, tip, would) =>
         `<div class="opt${own_ ? " changed" : ""}"><div class="opt-line"><span class="opt-label">${escape(label)}</span>${control}</div>${origin(own_, od.integration, own_ || od.integration ? t("originDefaultWould", would) : "", tip)}</div>`;
-      parts.out += line(monOwn, t("optMonitor"), swit("dev-mon", monitored, t("optMonitor"), false), t("optMonitorShort"), inhOff ? t("offlineNone") : t("devMonOn"));
+      // "Überwachen" gilt für alle Reiter und steht darum über der Reiterleiste (seit 2.159.0, docs/mockups/monitor-v1, A)
+      monRow = line(monOwn, t("optMonitor"), swit("dev-mon", monitored, t("optMonitor"), false), t("optMonitorShort"), inhOff ? t("offlineNone") : t("devMonOn"));
+      monRow = monRow.replace('<div class="opt-origin">', `<div class="opt-short">${escape(t("optMonitorShort"))}</div><div class="opt-origin">`);
+      monOff = !monitored;
       parts.out += line(statOwn, t("optStatus"), swit("dev-stat", !noStatus, t("optStatus"), !monitored), t("optStatusShort"), inhNo ? t("offlineNoStatus") : t("devStatOn"));
       const timeLocked = !monitored || noStatus;
       parts.out += `<div class="${timeLocked ? "mon-dis" : ""}"><div class="opt${timeOwn ? " changed" : ""}"><div class="opt-line"><span class="opt-label">${escape(t("devOffline"))}</span>${sel(
@@ -4708,7 +4713,7 @@ class DevicePanel extends HTMLElement {
       .map(([id, key]) => `<button type="button" role="tab" class="sub-tab${id === cur ? " on" : ""}${ownTab[id] ? " chg" : ""}" data-dlg="stab" data-stab="${id}" aria-selected="${id === cur}">${escape(t(key))}</button>`)
       .join("")}</div>`;
     const err = this._devSetError ? `<div class="opt-error">${escape(t("devSaveError"))} ${escape(this._devSetError)}</div>` : "";
-    return `<div class="dev-set">${tabBar}<div class="lvl-body" role="tabpanel">${bodies[cur]}</div>${err}</div>`;
+    return `<div class="dev-set">${monRow}<div class="${monOff ? "mon-dis" : ""}">${tabBar}</div><div class="lvl-body${monOff ? " mon-dis" : ""}" role="tabpanel">${bodies[cur]}</div>${err}</div>`;
   }
 
   // Typ: im Reiter "Einstellungen" wählbar, in der Übersicht nur Text (seit 1.37.0).
@@ -8666,11 +8671,12 @@ class DevicePanel extends HTMLElement {
     const empty = (key) => `<div class="opt-short mon-empty">${escape(t(key))}</div>`;
     const reasonOf = (excluded, topic) => (excluded ? t("tlIntegOff") : tgt(topic) ? t("tlSwitchedOff") : t("tlNoTarget"));
     // Ausfall
+    // "Überwachen" gilt für alle Reiter und steht darum über der Reiterleiste (seit 2.159.0, docs/mockups/monitor-v1, A)
+    const monHtml = opt(!same(unmon, (saved.offline_after_integrations || {})[dom] === "off"), t("optMonitor"),
+      `<label class="switch"><input type="checkbox" data-imon="${escape(dom)}" ${unmon ? "" : "checked"} aria-label="${escape(`${t("optMonitor")}: ${item.name}`)}"><span></span></label>`,
+      origin(unmon), `<div class="opt-short">${escape(t("optMonitorShort"))}</div>`, " mon-row");
     const outHtml =
       tl +
-      opt(!same(unmon, (saved.offline_after_integrations || {})[dom] === "off"), t("optMonitor"),
-        `<label class="switch"><input type="checkbox" data-imon="${escape(dom)}" ${unmon ? "" : "checked"} aria-label="${escape(`${t("optMonitor")}: ${item.name}`)}"><span></span></label>`,
-        origin(unmon), unmon ? "" : `<div class="opt-short">${escape(t("optMonitorShort"))}</div>`) +
       opt(!same(nostat, (saved.offline_after_integrations || {})[dom] === "nostatus"), t("optStatus"),
         `<label class="switch"><input type="checkbox" data-istatus="${escape(dom)}" ${nostat ? "" : "checked"} ${unmon ? "disabled" : ""} aria-label="${escape(`${t("optStatus")}: ${item.name}`)}"><span></span></label>`,
         origin(nostat), `<div class="opt-short">${escape(t("optStatusShort"))}</div>`, unmon ? " mon-dis" : "") +
@@ -8901,7 +8907,7 @@ class DevicePanel extends HTMLElement {
     const sub = isLabel ? t("labelDevs", item.devices) : t("integDevs", item.devices, item.batDevices);
     return `<button type="button" class="iback" data-set="${isLabel ? "label" : "integ"}" data-key="">${mdi("arrowLeft", 18)}${escape(t(isLabel ? "labelBack" : "integBack"))}</button>
       <div class="ihead">${this._ibadge(dom, item.name)}<div><b>${escape(item.name)}</b><small>${escape(sub)}${isLabel && this._labelInfo(labelId)?.missing ? ` · ${escape(t("labelMissing"))}` : ""}</small></div></div>
-      ${tabBar}<div class="lvl-body" role="tabpanel">${bodies[cur]}</div>
+      ${monHtml}${tabBar}<div class="lvl-body" role="tabpanel">${bodies[cur]}</div>
       <div class="integ-reset"><button type="button" class="ovr-all" data-set="integ-reset" data-key="${escape(dom)}" ${anyOwn || updOwn ? "" : "disabled"}>${mdi("reset", 15)}${escape(t("integReset"))}</button></div>${labelFoot}`;
   }
 
@@ -9354,7 +9360,7 @@ class DevicePanel extends HTMLElement {
         // Ohne KI-Aufgabe (in Home Assistant unter "KI-Vorschläge" gewählt oder hier) lässt sich die Funktion nicht einschalten (seit 2.38.0);
         // schon Eingeschaltetes bleibt, mit Hinweis. Der Link führt zu /config/ai.
         row("ai_assessment", t("optAi"), sw("ai_assessment", t("optAi"), aiBlocked), t("optAiShort"), t("optAiInfo"), aiReady ? null : t(d.ai_assessment ? "aiLost" : "aiNotReady")) +
-        `<div class="opt-link"><button type="button" class="set-link" data-ai-open>${escape(t("aiOpenHa"))}<span class="cbtn" aria-hidden="true">${mdi("chevronRight", 16)}</span></button></div>` +
+        `<div class="opt-link"><button type="button" class="qbtn" data-ai-open>${mdi("open", 17)}<span class="q-t">${escape(t("aiOpenHa"))}</span></button></div>` +
         (d.ai_assessment
           ? ttl("ttlAiTask") + row(
               "ai_task_entity",

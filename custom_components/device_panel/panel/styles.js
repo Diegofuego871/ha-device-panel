@@ -697,8 +697,6 @@ button.ai-head:focus-visible { outline: 2px solid #7c4dff; outline-offset: -2px;
 .opt.changed > .opt-line .opt-input { border-color: var(--dp-primary); box-shadow: inset 0 0 0 1px var(--dp-primary); }
 .opt.invalid > .opt-line .opt-input { border-color: var(--dp-error); box-shadow: inset 0 0 0 1px var(--dp-error); }
 .opt-link { margin: -2px 0 6px; }
-.set-link { display: inline-flex; align-items: center; gap: 4px; padding: 4px 0; border: 0; background: none; color: var(--dp-primary); font: inherit; font-size: 13px; font-weight: 500; cursor: pointer; }
-.set-link:hover { text-decoration: underline; }
 .opt-error { margin-top: 3px; color: var(--dp-error); font-size: 12px; line-height: 1.35; }
 /* Auswahl plus Uhrzeit nebeneinander (Batterie täglich um …). */
 .opt-pair { display: flex; flex: 1 1 auto; flex-wrap: wrap; align-items: center; justify-content: flex-end; gap: 8px; min-width: 0; }

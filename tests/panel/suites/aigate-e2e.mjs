@@ -58,7 +58,7 @@ for (const lang of ["de", "en"]) {
     {
       const { ctx, ev, text, errors, wait } = await open(lang, mobile);
       check(`[${tag}] mit KI-Aufgabe: Schalter frei, keine Meldung`, await ev(`const i = r.querySelector('input[data-opt="ai_assessment"]'); const o = i.closest(".opt"); return !i.disabled && !i.checked && !o.querySelector(".opt-warn")`));
-      check(`[${tag}] Link "${T.link}" unter dem Schalter`, (await text(".opt-link .set-link")) === T.link);
+      check(`[${tag}] Link "${T.link}" unter dem Schalter`, (await text(".opt-link .qbtn")) === T.link);
       await ev(`r.querySelector('input[data-opt="ai_assessment"]').click()`);
       check(`[${tag}] mit KI-Aufgabe: Schalter lässt sich einschalten`, await wait(`return r.querySelector('input[data-opt="ai_assessment"]').checked`));
       check(`[${tag}] keine Skriptfehler`, errors.length === 0, errors.join(" | "));
@@ -70,13 +70,13 @@ for (const lang of ["de", "en"]) {
       const { ctx, p, ev, tap, text, errors, wait } = await open(lang, mobile, "&noai=1");
       check(`[${tag}] ohne KI-Aufgabe: Schalter gesperrt und aus`, await ev(`const i = r.querySelector('input[data-opt="ai_assessment"]'); return i.disabled && !i.checked`));
       check(`[${tag}] Meldung: "${T.notReady.slice(0, 40)}…"`, (await ev(`const i = r.querySelector('input[data-opt="ai_assessment"]'); return (i.closest(".opt").querySelector(".opt-warn")?.textContent || "").replace(/\\s+/g, " ").trim()`)) === T.notReady);
-      check(`[${tag}] Link "${T.link}" auch ohne KI-Aufgabe`, (await text(".opt-link .set-link")) === T.link);
+      check(`[${tag}] Link "${T.link}" auch ohne KI-Aufgabe`, (await text(".opt-link .qbtn")) === T.link);
       await ev(`r.querySelector('input[data-opt="ai_assessment"]').click()`);
       await p.waitForTimeout(250);
       check(`[${tag}] Klick auf den gesperrten Schalter: bleibt aus, nichts zu speichern`, await ev(`return !r.querySelector('input[data-opt="ai_assessment"]').checked && r.querySelector('[data-set="save"]').disabled`));
       // Der Link führt zu /config/ai und schliesst die Einstellungen
       await p.evaluate(() => { window.__nav = []; });
-      await tap(".opt-link .set-link");
+      await tap(".opt-link .qbtn");
       check(`[${tag}] Link öffnet /config/ai, Einstellungen sind zu`, (await p.evaluate(() => window.__nav.at(-1))) === "/config/ai" && (await wait(`return !r.querySelector("dialog.settings").open`)));
       check(`[${tag}] keine Skriptfehler`, errors.length === 0, errors.join(" | "));
       await ctx.close();
@@ -88,7 +88,7 @@ for (const lang of ["de", "en"]) {
       check(`[${tag}] schon an, KI-Aufgabe weg: Schalter an und frei, Hinweis "${T.lost.slice(0, 40)}…"`, await ev(`const i = r.querySelector('input[data-opt="ai_assessment"]'); return i.checked && !i.disabled`) && (await ev(`return (r.querySelector('input[data-opt="ai_assessment"]').closest(".opt").querySelector(".opt-warn")?.textContent || "").replace(/\\s+/g, " ").trim()`)) === T.lost);
       await ev(`r.querySelector('input[data-opt="ai_assessment"]').click()`);
       check(`[${tag}] ausgeschaltet: jetzt gesperrt mit der Meldung "keine KI-Aufgabe ausgewählt"`, await wait(`const i = r.querySelector('input[data-opt="ai_assessment"]'); return !i.checked && i.disabled`) && (await ev(`return (r.querySelector('input[data-opt="ai_assessment"]').closest(".opt").querySelector(".opt-warn")?.textContent || "").replace(/\\s+/g, " ").trim()`)) === T.notReady);
-      check(`[${tag}] Link bleibt`, (await text(".opt-link .set-link")) === T.link);
+      check(`[${tag}] Link bleibt`, (await text(".opt-link .qbtn")) === T.link);
       check(`[${tag}] keine Skriptfehler`, errors.length === 0, errors.join(" | "));
       await ctx.close();
     }

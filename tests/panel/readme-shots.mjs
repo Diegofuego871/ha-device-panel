@@ -105,7 +105,7 @@ for (const lang of langs) {
     await sub("out");
     await (await handle('select[data-dlg="dev-notify"]')).selectOption("off");
     await wait(`return r.querySelector('select[data-dlg="dev-notify"]')?.value === "off"`);
-    await ev(`r.querySelector(".dev-set").scrollIntoView({ block: "center" })`);
+    await ev(`r.querySelector('[data-dlg="dev-mon"]').closest(".opt").scrollIntoView({ block: "center" })`);
     await shotDlg("device-settings", "dialog.device");
     await closeDialogs();
 
