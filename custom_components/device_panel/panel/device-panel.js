@@ -4778,10 +4778,10 @@ class DevicePanel extends HTMLElement {
     return (cur?.data?.entities || []).filter((e) => DOMAIN_EMOJI[e.entity_id.split(".", 1)[0]]);
   }
 
-  // Suche in den Listen des Geräte-Popups (seit 2.103.0): Reiter "Schalter" und "Entitäten", ab 8 Einträgen. Der Suchtext liegt
+  // Suche in den Listen des Geräte-Popups (seit 2.103.0): Reiter "Schalter" und "Entitäten", immer (seit 2.160.0; vorher ab 8 Einträgen). Der Suchtext liegt
   // in this._devQ (je Reiter) und überlebt den Neuaufbau alle 10 s; getippt wird nur die Liste (data-dev-zone) neu gezeichnet.
   _devSearchHtml(key, n) {
-    if (n < 8) return "";
+    if (!n) return "";
     const q = this._devQ?.[key] || "";
     const ph = this._t("listSearch");
     return `<label class="list-search" data-for="dev-${key}">${mdi("search", 18)}<input type="search" data-dlg="dev-search" data-key="${key}" value="${escape(q)}" placeholder="${escape(ph)}" aria-label="${escape(ph)}" enterkeyhint="search" autocomplete="off" autocapitalize="off" spellcheck="false"><span class="n">${escape(this._devSearchCount(key, n))}</span>${this._fieldClearHtml("data-fc", "", q)}</label>`;

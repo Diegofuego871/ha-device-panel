@@ -7,6 +7,14 @@ Alle nennenswerten Änderungen an dieser Integration stehen in dieser Datei.
 Das Format folgt [Keep a Changelog](https://keepachangelog.com/de/1.1.0/),
 die Versionsnummern folgen [Semantic Versioning](https://semver.org/lang/de/).
 
+## [2.160.0] - 2026-10-27
+
+Die Reiter "Schalter" und "Entitäten" sehen immer gleich aus.
+
+### Geändert
+
+- **Geräte-Popup, Reiter "Schalter" und "Entitäten":** Beide zeigen das Suchfeld immer, nicht mehr erst ab acht Einträgen. Überschrift, Suchfeld und Liste sind in beiden Reitern gleich aufgebaut.
+
 ## [2.159.0] - 2026-10-27
 
 "Überwachen" steht über den Reitern, weil es für alle gilt.
@@ -5134,6 +5142,7 @@ Erste Vorabversion.
   GitHub Actions für die Prüfungen von HACS und hassfest sowie die Tests.
 
 [2.6.0]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v2.6.0
+[2.160.0]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v2.160.0
 [2.159.0]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v2.159.0
 [2.158.1]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v2.158.1
 [2.158.0]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v2.158.0

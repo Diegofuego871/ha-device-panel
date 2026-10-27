@@ -1,6 +1,6 @@
-// Suche in den Listen des Geräte-Popups (2.103.0): Reiter "Entitäten" und "Schalter" haben ab 8 Einträgen ein Suchfeld (Name, Entity-ID
+// Suche in den Listen des Geräte-Popups (2.103.0): Reiter "Entitäten" und "Schalter" haben immer ein Suchfeld (seit 2.160.0, vorher ab 8 Einträgen) (Name, Entity-ID
 // oder Zustand), mit X zum Leeren, Zähler "n von m" und Hinweis ohne Treffer. Der Suchtext bleibt beim Wechsel des Reiters und beim
-// Neuaufbau des Popups; in einem Gerät mit wenigen Einträgen gibt es kein Feld. Deutsch und Englisch, Desktop und Handy.
+// Neuaufbau des Popups; auch in einem Gerät mit wenigen Einträgen steht das Feld da, in beiden Reitern gleich. Deutsch und Englisch, Desktop und Handy.
 import { chromium } from "playwright-core";
 import { launchOptions, outDir } from "../lib.mjs";
 
@@ -95,11 +95,11 @@ for (const lang of ["de", "en"]) {
     check(`[${tag}] Reiter getrennt: Entitäten-Feld leer`, await wait(`return r.querySelector('dialog.device input[data-dlg="dev-search"]').value === ""`));
     await tap("dialog.device .dlg-close");
     await wait(`return !r.querySelector("dialog.device").open`);
-    // anderes Gerät: Suchtext zurückgesetzt, wenige Einträge: kein Feld
+    // anderes Gerät: Suchtext zurückgesetzt, wenige Einträge: Feld bleibt
     await openDev("h");
     await tap('dialog.device .dev-tabs [data-tab="ent"]');
     await wait(`return !!r.querySelector("dialog.device ul.entities")`);
-    check(`[${tag}] Gerät mit wenigen Entitäten (${await rows()}): kein Suchfeld`, (await rows()) < 8 && !(await handle("dialog.device label.list-search")));
+    check(`[${tag}] Gerät mit wenigen Entitäten (${await rows()}): Suchfeld trotzdem da, leer`, (await rows()) < 8 && (await ev(`const i = r.querySelector("dialog.device label.list-search input"); return !!i && i.value === ""`)));
     check(`[${tag}] keine Seitenfehler`, errors.length === 0, errors.join("; "));
     await ctx.close();
   }

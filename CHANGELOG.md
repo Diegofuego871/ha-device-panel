@@ -7,6 +7,14 @@ All notable changes to this integration are documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/).
 
+## [2.160.0] - 2026-10-27
+
+The tabs "Switches" and "Entities" always look the same.
+
+### Changed
+
+- **Device pop-up, tabs "Switches" and "Entities":** both always show the search field, no longer only from eight entries on. Heading, search field and list are built the same in both tabs.
+
 ## [2.159.0] - 2026-10-27
 
 "Monitor" sits above the tabs, as it applies to all of them.
@@ -5033,6 +5041,7 @@ First pre-release.
   GitHub Actions for HACS/hassfest validation and tests.
 
 [2.6.0]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v2.6.0
+[2.160.0]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v2.160.0
 [2.159.0]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v2.159.0
 [2.158.1]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v2.158.1
 [2.158.0]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v2.158.0
