@@ -25,6 +25,7 @@ from homeassistant.loader import async_get_integration
 from homeassistant.util import dt as dt_util
 
 from . import activity
+from .device_update import held_until, installable_updates
 from .battery_history import async_last_known, battery_entity
 from .compat import device_entry_ids, device_primary_entry_id, registry_devices
 from .const import (
@@ -1753,6 +1754,9 @@ async def async_device_detail(hass: HomeAssistant, device_id: str, log: Any = No
     return {
         "id": device.id,
         "entities": entities,
+        # Update-Entitäten, die sich aus dem Popup installieren lassen (seit 2.161.0), und Ende der Zurückhaltung der Ausfall-Meldungen
+        "updates": installable_updates(hass, device_id),
+        "update_hold_until": held_until(hass, device_id),
         "config_entries": configs,
         "identifiers": sorted(f"{i[0]}: {i[1]}" for i in device.identifiers if len(i) >= 2)[:4],
         "stats": {

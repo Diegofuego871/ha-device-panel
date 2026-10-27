@@ -7,6 +7,16 @@ All notable changes to this integration are documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/).
 
+## [2.161.0] - 2026-10-27
+
+Start a device update from the device pop-up.
+
+### Added
+
+- **Update from the pop-up:** if a device offers an update, the line "Update to X available" in the tile "Software" (tab "Overview") is a button with an arrow. It opens a window with the versions, the summary and the release notes of the update (if the integration provides them), and, if the integration supports it, the choice "Create a backup first". "Start update" asks once more ("Really start the update?"), then shows the progress (percent if the integration reports it, "The device is restarting …", "Done: version X is installed", or a note if the update failed). Closing the window does not stop the update.
+- **Outage notifications rest during the update:** from the start until 5 minutes after the end the panel does not report an outage of this device (a restart would otherwise look like one). The device still shows as offline in the panel. If it is still missing after that time, the notification comes then.
+- **Administrators only:** the button and the command are only for administrators. Updates of Home Assistant itself and of apps are not offered here.
+
 ## [2.160.0] - 2026-10-27
 
 The tabs "Switches" and "Entities" always look the same.
@@ -5041,6 +5051,7 @@ First pre-release.
   GitHub Actions for HACS/hassfest validation and tests.
 
 [2.6.0]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v2.6.0
+[2.161.0]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v2.161.0
 [2.160.0]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v2.160.0
 [2.159.0]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v2.159.0
 [2.158.1]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v2.158.1

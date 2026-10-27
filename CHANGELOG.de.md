@@ -7,6 +7,16 @@ Alle nennenswerten Änderungen an dieser Integration stehen in dieser Datei.
 Das Format folgt [Keep a Changelog](https://keepachangelog.com/de/1.1.0/),
 die Versionsnummern folgen [Semantic Versioning](https://semver.org/lang/de/).
 
+## [2.161.0] - 2026-10-27
+
+Ein Update eines Geräts aus dem Geräte-Popup starten.
+
+### Hinzugefügt
+
+- **Update aus dem Popup:** Bietet ein Gerät ein Update an, ist die Zeile "Update auf X verfügbar" in der Kachel "Software" (Reiter "Übersicht") ein Knopf mit Pfeil. Er öffnet ein Fenster mit den Versionen, der Zusammenfassung und den Release Notes des Updates (wenn die Integration sie liefert) und, wenn die Integration es kann, der Wahl "Vorher ein Backup erstellen". "Update starten" fragt noch einmal nach ("Update wirklich starten?"), danach zeigt das Fenster den Fortschritt (Prozent, wenn die Integration sie meldet, "Das Gerät startet neu …", "Fertig: Version X ist installiert" oder einen Hinweis, wenn das Update fehlschlug). Das Fenster zu schliessen hält das Update nicht an.
+- **Ausfall-Meldungen ruhen während des Updates:** Vom Start bis 5 Minuten nach dem Ende meldet das Panel keinen Ausfall dieses Geräts (ein Neustart würde sonst wie einer aussehen). Im Panel erscheint das Gerät weiter als ausgefallen. Fehlt es nach dieser Zeit noch, kommt die Meldung dann.
+- **Nur für Administratoren:** Der Knopf und der Befehl gelten nur für Administratoren. Updates von Home Assistant selbst und von Apps werden hier nicht angeboten.
+
 ## [2.160.0] - 2026-10-27
 
 Die Reiter "Schalter" und "Entitäten" sehen immer gleich aus.
@@ -5142,6 +5152,7 @@ Erste Vorabversion.
   GitHub Actions für die Prüfungen von HACS und hassfest sowie die Tests.
 
 [2.6.0]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v2.6.0
+[2.161.0]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v2.161.0
 [2.160.0]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v2.160.0
 [2.159.0]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v2.159.0
 [2.158.1]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v2.158.1

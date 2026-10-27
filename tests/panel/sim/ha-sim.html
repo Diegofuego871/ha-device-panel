@@ -609,6 +609,9 @@
       entities,
       config_entries: [{ domain: d.integration.domain, name: integrations[d.integration.domain], title: d.integration.title, state }],
       identifiers: [`${d.integration.domain}: ${id}`],
+      // Update aus dem Popup (2.161.0): window.__updates = { <Geräte-ID>: [{ entity_id, features }] }
+      updates: window.__updates?.[id] || [],
+      update_hold_until: null,
       stats: { "24h": summarize(segments(events(id), nowS - D, nowS)), "7d": summarize(segments(events(id), nowS - 7 * D, nowS)) },
     };
   }
@@ -1970,6 +1973,11 @@
         // vielen Geräten): für den Wettlauf mit einer Änderung im Popup.
         if (window.__listDelay) await new Promise((r) => setTimeout(r, window.__listDelay));
         return res;
+      }
+      if (msg.type === "update/release_notes") return window.__updNotes ?? null;
+      if (msg.type === "device_panel/update_install") {
+        if (window.__updFails) throw { code: "invalid_format", message: window.__updFails };
+        return { hold_until: Date.now() / 1000 + 300 };
       }
       if (msg.type === "device_panel/device") {
         const data = detail(msg.device_id);

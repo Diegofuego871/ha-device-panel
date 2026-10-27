@@ -1324,6 +1324,7 @@ class DevicePanel extends HTMLElement {
     } else {
       // HACS meldet Fortschritt und neue Versionen über seine Update-Entität.
       if (this._settings) this._renderSettingsVersion();
+      if (this._upd) this._renderUpdate();
       this._gearDot();
       this._watchEntityStates();
     }
@@ -1590,7 +1591,7 @@ class DevicePanel extends HTMLElement {
       </div>
       <div class="area-pop" role="dialog" aria-label="${escape(this._t("areaTitle"))}" hidden></div>
       <div class="content"><div class="hstrip"></div><div class="hero"></div><div class="chips"></div><div class="viewline"></div><div class="list"></div><div class="foot"></div></div>
-      <dialog class="device"></dialog><dialog class="magic-dlg"></dialog><dialog class="magic-dlg routine-dlg"></dialog><dialog class="stat-dlg"></dialog><dialog class="settings"></dialog><dialog class="area-sheet"></dialog><dialog class="pulse-dlg"></dialog><dialog class="log-dlg proto-dlg"></dialog><dialog class="apps-dlg"></dialog><dialog class="app-dlg"></dialog><dialog class="rtall-dlg"></dialog><dialog class="mgall-dlg"></dialog><dialog class="status-dlg"></dialog><dialog class="prompt-dlg"></dialog><dialog class="notes-dlg"></dialog><dialog class="notes-dlg backup-dlg"></dialog><dialog class="rename-dlg"></dialog><dialog class="discard-dlg"></dialog><dialog class="wizard-dlg"></dialog>
+      <dialog class="device"></dialog><dialog class="magic-dlg"></dialog><dialog class="magic-dlg routine-dlg"></dialog><dialog class="stat-dlg"></dialog><dialog class="settings"></dialog><dialog class="area-sheet"></dialog><dialog class="pulse-dlg"></dialog><dialog class="log-dlg proto-dlg"></dialog><dialog class="apps-dlg"></dialog><dialog class="app-dlg"></dialog><dialog class="rtall-dlg"></dialog><dialog class="mgall-dlg"></dialog><dialog class="status-dlg"></dialog><dialog class="prompt-dlg"></dialog><dialog class="notes-dlg"></dialog><dialog class="notes-dlg backup-dlg"></dialog><dialog class="notes-dlg upd-dlg"></dialog><dialog class="rename-dlg"></dialog><dialog class="discard-dlg"></dialog><dialog class="wizard-dlg"></dialog>
       <div class="toast" role="status" aria-live="polite" hidden></div>`;
     const root = this.shadowRoot;
     this._apps.bind(root);
@@ -1734,6 +1735,7 @@ class DevicePanel extends HTMLElement {
     });
     this._bindPrompt(root.querySelector("dialog.prompt-dlg"));
     this._bindNotes(root.querySelector("dialog.notes-dlg"));
+    this._bindUpdate(root.querySelector("dialog.upd-dlg"));
     this._bindBackup(root.querySelector("dialog.backup-dlg"));
     // Auf dem Handy gibt der Browser beim Schliessen eines Fensters den Fokus an die antippte Kachel zurück und zeigt dort einen
     // blauen Ring (zum Beispiel an der Kachel "Ausfall-Puls"). "close" steigt nicht auf, darum in der Einfangphase.
@@ -4738,7 +4740,15 @@ class DevicePanel extends HTMLElement {
 
   _deviceSectionHtml(d) {
     const text = (v) => (v ? escape(v) : `<span class="t3">–</span>`);
-    const sw = `${text(d.sw_version)}${d.update ? `<small class="upd">${escape(this._t("updateTo", d.update))}</small>` : ""}`;
+    // Update aus dem Popup starten (seit 2.161.0): nur Administratoren und nur, wenn eine Update-Entität des Geräts sich installieren lässt
+    const installable = this._detail?.id === d.id && this._hass?.user?.is_admin !== false ? this._detail.data?.updates || [] : [];
+    const sw = `${text(d.sw_version)}${
+      d.update
+        ? installable.length
+          ? `<button type="button" class="upd-btn" data-dlg="update-open" data-entity="${escape(installable[0].entity_id)}"><span>${escape(this._t("updateTo", d.update))}</span><span class="cbtn" aria-hidden="true">${mdi("chevronRight", 16)}</span></button>`
+          : `<small class="upd">${escape(this._t("updateTo", d.update))}</small>`
+        : ""
+    }`;
     const typeSel = this._typeSelHtml(d, false);
     const tiles = [
       this._tile(this._t("typeLabel"), typeSel),
@@ -5102,6 +5112,7 @@ class DevicePanel extends HTMLElement {
     } else if (action === "stat") this._openStat(btn.dataset.range, btn.dataset.kind);
     else if (action === "more-info") this._openMoreInfo(btn.dataset.entity);
     else if (action === "copy-id") this._copyId(btn);
+    else if (action === "update-open") this._openUpdate(btn.dataset.entity);
     else if (action === "copy-link") this._copyLink(btn);
     else if (action === "fav") this._toggleFav(this._detailId);
     else if (action === "rename") this._renameStart();
@@ -6250,6 +6261,152 @@ class DevicePanel extends HTMLElement {
     dlg.addEventListener("close", () => {
       this._notes = null;
     });
+  }
+
+  // --- Update eines Geräts starten (seit 2.161.0) ----------------------------------------------------------------------------
+  // Aus dem Reiter "Übersicht" des Geräte-Popups (nur Administratoren): Release Notes lesen, bestätigen, starten, Fortschritt sehen. Der
+  // Server hält die Ausfall-Meldungen des Geräts zurück (device_update.py). Die Merkmale der Entität (Installieren 1, Fortschritt 4,
+  // Backup 8, Release Notes 16) lesen wir aus ihrem Zustand; was sie nicht kann, zeigt der Dialog nicht.
+  _updState() {
+    const u = this._upd;
+    const st = u ? this._hass?.states?.[u.entity] : null;
+    const a = st?.attributes || {};
+    const features = Number(a.supported_features || 0);
+    const raw = a.in_progress;
+    const percent = Number.isFinite(Number(a.update_percentage)) && a.update_percentage != null ? Number(a.update_percentage) : typeof raw === "number" ? raw : null;
+    return { st, a, features, running: raw === true || typeof raw === "number", percent, gone: !st || st.state === "unavailable" || st.state === "unknown" };
+  }
+
+  async _openUpdate(entity) {
+    const dlg = this.shadowRoot.querySelector("dialog.upd-dlg");
+    const dev = this._devices.find((x) => x.id === this._detailId);
+    if (!dlg || !dev || !entity) return;
+    this._upd = { entity, device: dev.id, name: dev.name, step: "info", backup: false, notes: null, notesState: "idle", error: null, started: false, seen: false, installed: null };
+    const { features, a } = this._updState();
+    this._upd.installed = a.installed_version ?? null;
+    this._renderUpdate();
+    if (!dlg.open) {
+      if (typeof dlg.showModal === "function") dlg.showModal();
+      else dlg.setAttribute("open", "");
+    }
+    this._blurOnTouch();
+    dlg.scrollTop = 0;
+    if (features & 16) {
+      const u = this._upd;
+      u.notesState = "loading";
+      try {
+        const text = await this._hass.callWS({ type: "update/release_notes", entity_id: entity });
+        if (this._upd !== u) return;
+        u.notes = text || null;
+        u.notesState = text ? "ok" : "none";
+      } catch (err) {
+        if (this._upd !== u) return;
+        u.notesState = "none";
+      }
+      this._renderUpdate();
+    }
+  }
+
+  _renderUpdate() {
+    const dlg = this.shadowRoot.querySelector("dialog.upd-dlg");
+    const u = this._upd;
+    if (!dlg || !u) return;
+    const t = (k, ...a) => this._t(k, ...a);
+    const { a, features, running, percent, gone, st } = this._updState();
+    const from = u.installed ?? a.installed_version ?? "?";
+    const to = a.latest_version ?? "?";
+    // Läuft ein gestartetes Update: laufend, Gerät startet neu, fertig (die Entität steht auf "aktuell") oder fehlgeschlagen
+    if (u.started) {
+      if (running || gone) u.seen = true;
+    }
+    const done = u.started && st && st.state === "off";
+    const failed = u.started && u.seen && !running && !gone && st && st.state === "on";
+    let body = "";
+    let actions = `<button type="button" class="dlg-btn primary" data-upd="close">${mdi("close", 18)}${escape(t("close"))}</button>`;
+    let sub = `${u.name} · ${from} → ${to}`;
+    if (u.step === "run") {
+      if (done) {
+        body = `<div class="upd-state ok">${mdi("check", 22)}<b>${escape(t("updDone", a.installed_version ?? to))}</b></div>`;
+      } else if (failed) {
+        body = `<div class="dlg-error">${escape(t("updFailed"))}</div>`;
+      } else {
+        const label = gone ? t("updRebooting") : running ? (percent != null ? t("updPercent", Math.round(percent)) : t("updRunning")) : t("updWaiting");
+        const bar = percent != null && !gone ? `<div class="upd-bar" role="progressbar" aria-valuenow="${Math.round(percent)}" aria-valuemin="0" aria-valuemax="100"><i style="width:${Math.max(2, Math.min(100, percent))}%"></i></div>` : `<div class="ver-prog"><i></i></div>`;
+        body = `<div class="upd-state">${escape(label)}</div>${bar}<p class="dlg-note small">${escape(t("updHoldNote"))}</p>`;
+      }
+      if (u.error) body = `<div class="dlg-error">${escape(t("updStartError"))} ${escape(u.error)}</div>`;
+    } else if (u.step === "confirm") {
+      body = `<div class="nf-note">${mdi("alert", 16)}<div><p><b>${escape(t("updConfirmTitle"))}</b></p><p>${escape(t("updConfirmText", u.name))}</p></div></div>`;
+      actions = `<button type="button" class="dlg-btn" data-upd="back">${mdi("arrowLeft", 18)}${escape(t("updBack"))}</button><button type="button" class="dlg-btn primary" data-upd="go">${mdi("verDownload", 18)}${escape(t("updConfirmYes"))}</button>`;
+    } else {
+      const summary = a.release_summary ? `<p class="upd-summary">${escape(a.release_summary)}</p>` : "";
+      let notes = "";
+      if (features & 16) {
+        notes = u.notesState === "loading" ? `<p class="dlg-note">${escape(t("notesLoading"))}</p>` : u.notesState === "ok" ? `<div class="rn upd-notes">${releaseMarkdownHtml(u.notes)}</div>` : "";
+      }
+      const link = a.release_url ? `<a class="dlg-btn rn-gh" href="${escape(a.release_url)}" target="_blank" rel="noopener">${escape(t("updNotesWeb"))}${mdi("open", 15)}</a>` : "";
+      const backup = features & 8 ? `<label class="upd-backup"><span class="switch"><input type="checkbox" data-upd-backup ${u.backup ? "checked" : ""}><span></span></span>${escape(t("updBackup"))}</label>` : "";
+      body = `${summary}${notes}${backup}<p class="dlg-note small">${escape(t("updHoldNote"))}</p>`;
+      actions = `${link}<button type="button" class="dlg-btn" data-upd="close">${mdi("close", 18)}${escape(t("promptCancel"))}</button><button type="button" class="dlg-btn primary" data-upd="next">${mdi("verDownload", 18)}${escape(t("updStart"))}</button>`;
+    }
+    const html = `<div class="dlg-head"><span class="dlg-avatar">${mdi("verUp", 24)}</span><div class="dlg-title"><h2>${escape(t("updTitle"))}</h2><div class="dlg-sub">${escape(sub)}</div></div>
+        <button type="button" class="dlg-close" data-upd="close" title="${escape(t("close"))}" aria-label="${escape(t("close"))}">${mdi("close", 18)}</button></div>
+      <div class="dlg-body">${body}</div>
+      <div class="dlg-actions">${actions}</div>`;
+    setHtml(dlg, html);
+  }
+
+  _bindUpdate(dlg) {
+    if (!dlg) return;
+    dlg.addEventListener("change", (ev) => {
+      if (ev.target.matches?.("[data-upd-backup]") && this._upd) this._upd.backup = ev.target.checked;
+    });
+    dlg.addEventListener("click", async (ev) => {
+      if (ev.target === dlg) {
+        const r = dlg.getBoundingClientRect();
+        if (ev.clientY < r.top || ev.clientY > r.bottom || ev.clientX < r.left || ev.clientX > r.right) this._closeUpdate();
+        return;
+      }
+      const btn = ev.target.closest("[data-upd]");
+      const u = this._upd;
+      if (!btn || !u) return;
+      const act = btn.dataset.upd;
+      if (act === "close") this._closeUpdate();
+      else if (act === "next") {
+        u.step = "confirm";
+        this._renderUpdate();
+      } else if (act === "back") {
+        u.step = "info";
+        this._renderUpdate();
+      } else if (act === "go") {
+        u.step = "run";
+        u.error = null;
+        u.started = true;
+        u.seen = false;
+        this._renderUpdate();
+        try {
+          await this._hass.callWS({ type: "device_panel/update_install", device_id: u.device, entity_id: u.entity, backup: Boolean(u.backup) });
+        } catch (err) {
+          if (this._upd !== u) return;
+          u.error = errText(err);
+          u.started = false;
+          u.step = "info";
+        }
+        this._renderUpdate();
+      }
+    });
+    dlg.addEventListener("close", () => {
+      this._upd = null;
+    });
+  }
+
+  _closeUpdate() {
+    const dlg = this.shadowRoot.querySelector("dialog.upd-dlg");
+    this._upd = null;
+    if (dlg?.open) {
+      if (typeof dlg.close === "function") dlg.close();
+      else dlg.removeAttribute("open");
+    }
   }
 
   // --- Einstellungen sichern und wiederherstellen (seit 2.98.0, docs/mockups/backup-v1, A) ---------------------------------

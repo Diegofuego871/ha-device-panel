@@ -115,6 +115,8 @@ from .const import (
 )
 from .push_log import PUSH_STORE_KEY, PushLog
 from .summary import PLATFORMS, SUMMARY_STORE_KEY, SummaryCoordinator
+from .device_update import UpdateError, held_until
+from .device_update import async_install as async_install_update
 from .devices import (
     DEVICES_STORE_KEY,
     async_catalog,
@@ -451,6 +453,28 @@ async def _ws_list_devices(
 ) -> None:
     """Alle Geräte mit Status, Verbindung, Empfang, Batterie und Softwarestand."""
     connection.send_result(msg["id"], await async_list_devices(hass, hass.data.get(DATA_AVAILABILITY)))
+
+
+@websocket_api.websocket_command(
+    {
+        vol.Required("type"): f"{DOMAIN}/update_install",
+        vol.Required("device_id"): str,
+        vol.Required("entity_id"): str,
+        vol.Optional("backup", default=False): bool,
+    }
+)
+@websocket_api.require_admin
+@websocket_api.async_response
+async def _ws_update_install(
+    hass: HomeAssistant, connection: websocket_api.ActiveConnection, msg: dict[str, Any]
+) -> None:
+    """Update eines Geräts starten (nur Administratoren); die Ausfall-Meldungen des Geräts ruhen währenddessen."""
+    try:
+        async_install_update(hass, msg["device_id"], msg["entity_id"], msg["backup"])
+    except UpdateError as err:
+        connection.send_error(msg["id"], websocket_api.ERR_INVALID_FORMAT, str(err))
+        return
+    connection.send_result(msg["id"], {"hold_until": held_until(hass, msg["device_id"])})
 
 
 @websocket_api.websocket_command({vol.Required("type"): f"{DOMAIN}/device", vol.Required("device_id"): str})
@@ -1291,6 +1315,7 @@ def _async_register_websocket_commands(hass: HomeAssistant) -> None:
     websocket_api.async_register_command(hass, _ws_ai_clear)
     websocket_api.async_register_command(hass, _ws_ai_prompt_preview)
     websocket_api.async_register_command(hass, _ws_device)
+    websocket_api.async_register_command(hass, _ws_update_install)
     websocket_api.async_register_command(hass, _ws_availability)
     websocket_api.async_register_command(hass, _ws_battery_history)
     websocket_api.async_register_command(hass, _ws_fetch_favicon)

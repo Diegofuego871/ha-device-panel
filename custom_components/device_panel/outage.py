@@ -38,6 +38,7 @@ from homeassistant.helpers.storage import Store
 from homeassistant.util import dt as dt_util
 
 from . import activity, push, push_icon
+from .device_update import held_until
 from .availability import OFFLINE, ONLINE, AvailabilityLog
 from .const import (
     CONF_NOTIFY_CLICK,
@@ -216,7 +217,12 @@ class OutageNotifier:
         opts = effective(self.hass)
         now = time.time()
         # "Erst melden nach" je Gerät (seit 2.91.0): eigenes, sonst das der Integration, sonst das globale
-        due_all = [(dev, start) for dev, start in self._offline.items() if dev not in self._notified and start + self._delay(opts, dev) <= now]
+        # Ein Gerät mit laufendem Update bleibt zurückgestellt (nicht erledigt): ist es nach der Wartezeit noch weg, kommt die Meldung dann
+        due_all = [
+            (dev, start)
+            for dev, start in self._offline.items()
+            if dev not in self._notified and start + self._delay(opts, dev) <= now and held_until(self.hass, dev, now) is None
+        ]
         due = self._collect_outages(opts, due_all, now)
         if due:
             # Fällig heisst erledigt, auch wenn für das Gerät kein Push geht
@@ -274,6 +280,7 @@ class OutageNotifier:
             self._timer = None
         # Schon fällige, aber wartende Geräte (Sammelzeit) zählen nicht: für sie gilt der Termin der Sammelzeit
         pending = [due for dev, start in self._offline.items() if dev not in self._notified and (due := start + self._delay(opts, dev)) > now]
+        pending += [until for dev in self._offline if dev not in self._notified and (until := held_until(self.hass, dev, now)) is not None]
         pending += [began + GROUP_WAIT_SECONDS for began in self._hold.values()]
         pending += [began + GROUP_WAIT_SECONDS for began in self._back_at.values()]
         if pending:
@@ -285,7 +292,7 @@ class OutageNotifier:
         self.hass.async_create_task(self.async_flush())
 
     def _pushable(self, opts: dict[str, Any], dev: str, now: float) -> bool:
-        if dev in device_settings(self.hass)["notify_off"] or notify_muted_until(self.hass, dev, now):
+        if dev in device_settings(self.hass)["notify_off"] or notify_muted_until(self.hass, dev, now) or held_until(self.hass, dev, now):
             return False
         device = dr.async_get(self.hass).async_get(dev)
         return device is not None and not listed(opts[CONF_NOTIFY_EXCLUDE], primary_domain(self.hass, device))

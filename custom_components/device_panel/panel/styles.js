@@ -2471,4 +2471,14 @@ dialog.wizard-dlg[open] { display: flex; flex-direction: column; }
   .wz-top { padding: 12px 12px 6px 16px; }
   .wz-stp { min-height: 38px; }
 }
+/* Update eines Geräts starten (seit 2.161.0): Knopf in der Software-Kachel und Dialog */
+.upd-btn { display: flex; align-items: center; gap: 8px; margin-top: 4px; padding: 0; border: 0; background: none; color: var(--dp-primary); font: inherit; font-size: 12.5px; text-align: left; cursor: pointer; }
+.upd-btn:hover span:first-child { text-decoration: underline; }
+.upd-notes { max-height: 260px; overflow: auto; margin: 8px 0; padding: 10px 12px; border-radius: 12px; background: var(--dp-subtle); }
+.upd-summary { margin: 4px 0 8px; color: var(--dp-text2); }
+.upd-backup { display: flex; align-items: center; gap: 10px; margin: 10px 0; }
+.upd-state { display: flex; align-items: center; gap: 10px; margin: 6px 0 12px; font-size: 15px; }
+.upd-state.ok { color: var(--dp-success); }
+.upd-bar { height: 8px; border-radius: 99px; background: var(--dp-primary-soft); overflow: hidden; }
+.upd-bar i { display: block; height: 100%; border-radius: 99px; background: var(--dp-primary); transition: width .4s ease; }
 `;
