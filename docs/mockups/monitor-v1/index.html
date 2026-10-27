@@ -1,0 +1,57 @@
+<!doctype html><meta charset="utf-8"><title>Überwachen über den Reitern</title><style>
+:root{--p:#03a9f4;--ok:#2e8b57;--bg:#1c1c1c;--card:#262626;--ln:#3a3a3a;--t2:#9a9a9a;--warn:#f5a623}
+body{margin:0;background:#0d0d0d;font:14px/1.35 Roboto,Arial,sans-serif;color:#e6e6e6;padding:24px;display:grid;grid-template-columns:repeat(4,340px);gap:18px;align-items:start}
+.ph{background:var(--bg);border:1px solid var(--ln);border-radius:18px;padding:14px;display:flex;flex-direction:column;gap:10px;min-height:640px}
+.cap{color:#8a8a8a;font-size:12px;letter-spacing:.04em;text-transform:uppercase}
+h2{margin:0;font-size:15px;font-weight:700;display:flex;gap:10px;align-items:center;justify-content:space-between}
+.h{color:var(--t2);font-size:12px;letter-spacing:.06em;text-transform:uppercase}
+.tabs{display:flex;gap:4px;background:#161616;border-radius:14px;padding:4px}.tabs span{flex:1;text-align:center;padding:7px 4px;border-radius:11px;color:var(--t2);font-size:13px}.tabs .on{background:#262626;color:var(--p)}
+.tabs.off span{opacity:.45}.tabs.off .on{background:#202020}
+.opt{background:var(--card);border:1px solid var(--ln);border-radius:14px;padding:10px 12px;display:flex;flex-direction:column;gap:4px}
+.opt .l{display:flex;justify-content:space-between;align-items:center;gap:8px}.opt small,.s{color:var(--t2);font-size:12px}
+.opt.dim{opacity:.45}
+.sw{width:38px;height:22px;border-radius:12px;background:#444;position:relative;flex:none}.sw:after{content:"";position:absolute;top:3px;left:3px;width:16px;height:16px;border-radius:50%;background:#bbb}
+.sw.on{background:var(--ok)}.sw.on:after{left:19px;background:#fff}
+.tag{display:inline-block;background:#333;color:#aaa;border-radius:8px;padding:1px 8px;font-size:11px;width:fit-content}.tag.own{background:color-mix(in srgb,var(--p) 18%,transparent);color:var(--p)}
+.sel{background:#1c1c1c;border:1px solid var(--ln);border-radius:10px;padding:8px 10px;display:flex;justify-content:space-between;gap:8px;min-width:120px}
+.bar{background:var(--card);border:1px solid var(--ln);border-radius:14px;padding:10px 12px}
+.note{border:1px solid var(--warn);background:color-mix(in srgb,var(--warn) 12%,transparent);color:#f0d9a8;border-radius:12px;padding:8px 10px;font-size:12.5px}
+.rec{color:var(--p);font-size:12px}.bad{color:#e5534b;font-size:12px}
+.tl{height:34px;border-radius:8px;background:repeating-linear-gradient(90deg,#3a2a2a 0 6px,#2d2222 6px 12px)}
+</style><body>
+
+<div class="ph"><span class="cap">0 · Heute: Schalter im Reiter Ausfall</span>
+<h2>Gäste-Tablet</h2><span class="h">Einstellungen für dieses Gerät</span>
+<div class="tabs"><span class="on">Ausfall</span><span>Batterie</span><span>Laden</span><span>Empfang</span></div>
+<div class="opt"><div class="l"><b>Überwachen</b><span class="sw on"></span></div><span class="tag">Standard</span></div>
+<div class="opt"><div class="l"><b>Online-Status beobachten</b><span class="sw on"></span></div><span class="tag">Standard</span></div>
+<div class="opt"><div class="l"><span>Ausgefallen nach</span><span class="sel">Standard (2 Min.) ⌄</span></div></div>
+<span class="bad">Problem: "Überwachen" gilt für alle vier Reiter, steht aber im ersten. Wer es ausschaltet, sieht in Batterie, Laden und Empfang nur ausgegraute Zeilen und findet den Schalter nicht, ohne zurückzuwechseln.</span></div>
+
+<div class="ph"><span class="cap">A · Über den Reitern, eigene Zeile</span>
+<h2>Gäste-Tablet</h2><span class="h">Einstellungen für dieses Gerät</span>
+<div class="bar"><div class="l" style="display:flex;justify-content:space-between;align-items:center"><div><b>Überwachen</b><br><small class="s">Aus: keine Ausfälle, Batterie-Warnung, Statistik, Meldungen</small></div><span class="sw on"></span></div><span class="tag" style="margin-top:6px">Standard</span></div>
+<div class="tabs"><span class="on">Ausfall</span><span>Batterie</span><span>Laden</span><span>Empfang</span></div>
+<div class="opt"><div class="l"><b>Online-Status beobachten</b><span class="sw on"></span></div><small>Aus: Ring statt grün oder rot, keine Ausfälle und Ausfall-Meldungen</small><span class="tag">Standard</span></div>
+<div class="opt"><div class="l"><span>Ausgefallen nach</span><span class="sel">Standard (2 Min.) ⌄</span></div></div>
+<div class="opt"><div class="l"><span>Erst melden nach</span><span class="sel">Standard (2 Min.) ⌄</span></div></div>
+<span class="s">Die Zeile steht für alle Reiter. Online-Status und Zeiten betreffen nur den Ausfall und bleiben im Reiter.</span>
+<span class="rec">Empfehlung: dieselbe Zeile bei Gerät, Integration und Label</span></div>
+
+<div class="ph"><span class="cap">A · Überwachen aus</span>
+<h2>Gäste-Tablet</h2><span class="h">Einstellungen für dieses Gerät</span>
+<div class="bar"><div style="display:flex;justify-content:space-between;align-items:center"><div><b>Überwachen</b><br><small class="s">Aus: keine Ausfälle, Batterie-Warnung, Statistik, Meldungen</small></div><span class="sw"></span></div><span class="tag own" style="margin-top:6px">Gerät</span> <span class="tag">Standard wäre überwacht</span></div>
+<div class="tabs off"><span class="on">Ausfall</span><span>Batterie</span><span>Laden</span><span>Empfang</span></div>
+<div class="opt dim"><div class="l"><b>Online-Status beobachten</b><span class="sw"></span></div></div>
+<div class="opt dim"><div class="l"><span>Ausgefallen nach</span><span class="sel">Standard ⌄</span></div></div>
+<div class="opt dim"><div class="l"><span>Erst melden nach</span><span class="sel">Standard ⌄</span></div></div>
+<span class="s">Alle Reiter sind ausgegraut, und der Schalter, der das ändert, steht sichtbar darüber. Bei Reiter Batterie sieht man dasselbe Bild.</span></div>
+
+<div class="ph"><span class="cap">B · Schalter in der Titelzeile</span>
+<h2>Gäste-Tablet <span style="display:flex;gap:8px;align-items:center;font-weight:400;font-size:13px">Überwachen <span class="sw on"></span></span></h2><span class="h">Einstellungen für dieses Gerät</span>
+<div class="tabs"><span class="on">Ausfall</span><span>Batterie</span><span>Laden</span><span>Empfang</span></div>
+<div class="opt"><div class="l"><b>Online-Status beobachten</b><span class="sw on"></span></div><span class="tag">Standard</span></div>
+<div class="opt"><div class="l"><span>Ausgefallen nach</span><span class="sel">Standard (2 Min.) ⌄</span></div></div>
+<span class="s">Spart eine Zeile. Aber: Beschreibung und Herkunft ("Standard", "Label …", "Gerät") haben dort keinen Platz, und bei Integration und Label gibt es keine Titelzeile mit Platz für einen Schalter.</span>
+<span class="rec" style="color:#9a9a9a">Nicht empfohlen: Herkunft fehlt</span></div>
+</body>
