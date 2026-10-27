@@ -117,6 +117,7 @@ from .push_log import PUSH_STORE_KEY, PushLog
 from .summary import PLATFORMS, SUMMARY_STORE_KEY, SummaryCoordinator
 from .device_update import UpdateError, held_until
 from .device_update import async_install as async_install_update
+from .update_queue import DATA_UPDATE_QUEUE, available as update_available, get_queue as get_update_queue
 from .devices import (
     DEVICES_STORE_KEY,
     async_catalog,
@@ -291,6 +292,8 @@ async def async_unload_entry(hass: HomeAssistant, entry: ConfigEntry) -> bool:
         await log.async_stop()
     if (new_devices := hass.data.pop(DATA_NEW, None)) is not None:
         await new_devices.async_stop()
+    if (update_queue := hass.data.pop(DATA_UPDATE_QUEUE, None)) is not None:
+        update_queue.stop()
     if (update_notifier := hass.data.pop(DATA_UPDATES, None)) is not None:
         await update_notifier.async_stop()
     if (charge_notifier := hass.data.pop(DATA_CHARGE, None)) is not None:
@@ -453,6 +456,32 @@ async def _ws_list_devices(
 ) -> None:
     """Alle Geräte mit Status, Verbindung, Empfang, Batterie und Softwarestand."""
     connection.send_result(msg["id"], await async_list_devices(hass, hass.data.get(DATA_AVAILABILITY)))
+
+
+@websocket_api.websocket_command({vol.Required("type"): f"{DOMAIN}/updates_list"})
+@websocket_api.require_admin
+@callback
+def _ws_updates_list(
+    hass: HomeAssistant, connection: websocket_api.ActiveConnection, msg: dict[str, Any]
+) -> None:
+    """App "Geräte-Updates": offene Geräte-Updates und der Stand der Warteschlange."""
+    connection.send_result(msg["id"], {"available": update_available(hass), "queue": get_update_queue(hass).snapshot()})
+
+
+@websocket_api.websocket_command(
+    {
+        vol.Required("type"): f"{DOMAIN}/updates_start",
+        vol.Required("entity_ids"): vol.All([str], vol.Length(max=500)),
+        vol.Optional("backup", default=False): bool,
+    }
+)
+@websocket_api.require_admin
+@callback
+def _ws_updates_start(
+    hass: HomeAssistant, connection: websocket_api.ActiveConnection, msg: dict[str, Any]
+) -> None:
+    """Gewählte Geräte-Updates einreihen und starten (höchstens drei gleichzeitig, eines je Integration)."""
+    connection.send_result(msg["id"], {"queue": get_update_queue(hass).enqueue(msg["entity_ids"], msg["backup"])})
 
 
 @websocket_api.websocket_command(
@@ -1316,6 +1345,8 @@ def _async_register_websocket_commands(hass: HomeAssistant) -> None:
     websocket_api.async_register_command(hass, _ws_ai_prompt_preview)
     websocket_api.async_register_command(hass, _ws_device)
     websocket_api.async_register_command(hass, _ws_update_install)
+    websocket_api.async_register_command(hass, _ws_updates_list)
+    websocket_api.async_register_command(hass, _ws_updates_start)
     websocket_api.async_register_command(hass, _ws_availability)
     websocket_api.async_register_command(hass, _ws_battery_history)
     websocket_api.async_register_command(hass, _ws_fetch_favicon)

@@ -379,7 +379,7 @@
   window.__areas = AREAS;
   window.__floors = FLOORS;
   const areaId = (name) => AREAS.find((a) => a.name === name)?.id || null;
-  const dev = (id, name, area, integ, connection, type, extra = {}) => ({
+  const dev = (id, name, area, integ, connection, type, extra = {}) => withInstall({
     id, name, area, area_id: areaId(area), integrations: [integ], integration: { domain: integ, title: TITLES[integ] || integ }, type, connection,
     service: false, disabled: false, entities: 3, online: true, offline_since: null, since_at_least: false, signal: null, via: null, battery: null,
     update: null, manufacturer: "Beispiel AG", model: "Modell " + id.toUpperCase(), sw_version: "1.0." + id.length, hw_version: null,
@@ -387,6 +387,23 @@
     created_at: new Date(now - 200 * D * 1000).toISOString(), new: false,
     avail24: avail24(id), ...extra,
   });
+  // 2.164.0: offenes Update, das die App "Geräte-Updates" starten kann (der Server prüft das Merkmal "Installieren"); nur mit ?updapp, damit die
+  // übrigen Suiten keinen Punkt am Launcher-Knopf sehen
+  // Warteschlange wie update_queue.py: höchstens drei gleichzeitig, eines je Integration; Tests setzen den Stand mit window.__uqSet
+  window.__uqPump = () => {
+    const q = window.__uq || [];
+    const running = q.filter((x) => x.status === "running");
+    const busy = new Set(running.map((x) => x.platform));
+    for (const x of q) {
+      if (running.length >= 3) break;
+      if (x.status !== "waiting" || busy.has(x.platform)) continue;
+      x.status = "running";
+      running.push(x);
+      busy.add(x.platform);
+    }
+  };
+  window.__uqSet = (entity, status, error = null) => { const x = (window.__uq || []).find((q) => q.entity_id === entity); if (x) { x.status = status; x.error = error; } window.__uqPump(); };
+  function withInstall(d) { if (d.update_install === undefined) d.update_install = new URLSearchParams(location.search).has("updapp") && Boolean(d.update); return d; }
   const off = (min, extra = {}) => ({ online: false, offline_since: ago(min), ...extra });
   const TITLES = {
     zha: "Funkstick Erdgeschoss", hue: "Bridge", shelly: "shelly-terrasse", esphome: "stromzaehler", matter: "Matter", bthome: "Temperatur Keller",
@@ -1975,6 +1992,26 @@
         return res;
       }
       if (msg.type === "update/release_notes") return window.__updNotes ?? null;
+      // App "Geräte-Updates" (2.164.0): window.__appUpdates überschreibt die Liste; window.__uq ist die Warteschlange des Servers
+      if (msg.type === "device_panel/updates_list") {
+        const list = window.__appUpdates || window.__devices.filter((d) => d.update_install && !d.disabled).map((d) => ({ entity_id: `update.${d.id}_fw`, device_id: d.id, platform: d.integration.domain, features: 13, installed: d.sw_version, latest: d.update, title: d.name }));
+        return { available: list.filter((u) => !(window.__uq || []).some((q) => q.entity_id === u.entity_id && q.status === "done")), queue: (window.__uq || []).map((q) => ({ ...q })) };
+      }
+      if (msg.type === "device_panel/updates_start") {
+        if (window.__updFails) throw { code: "invalid_format", message: window.__updFails };
+        window.__uqCalls = [...(window.__uqCalls || []), { entity_ids: msg.entity_ids, backup: msg.backup }];
+        const list = window.__appUpdates || window.__devices.filter((d) => d.update_install).map((d) => ({ entity_id: `update.${d.id}_fw`, device_id: d.id, platform: d.integration.domain, features: 13, installed: d.sw_version, latest: d.update, title: d.name }));
+        window.__uq = window.__uq || [];
+        for (const id of msg.entity_ids) {
+          const u = list.find((x) => x.entity_id === id);
+          const cur = window.__uq.find((q) => q.entity_id === id);
+          if (!u || (cur && ["waiting", "running"].includes(cur.status))) continue;
+          window.__uq = window.__uq.filter((q) => q.entity_id !== id);
+          window.__uq.push({ ...u, status: "waiting", error: null });
+        }
+        window.__uqPump();
+        return { queue: window.__uq.map((q) => ({ ...q })) };
+      }
       if (msg.type === "device_panel/update_install") {
         if (window.__updFails) throw { code: "invalid_format", message: window.__updFails };
         return { hold_until: Date.now() / 1000 + 300 };

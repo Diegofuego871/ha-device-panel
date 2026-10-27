@@ -7,6 +7,20 @@ Alle nennenswerten Änderungen an dieser Integration stehen in dieser Datei.
 Das Format folgt [Keep a Changelog](https://keepachangelog.com/de/1.1.0/),
 die Versionsnummern folgen [Semantic Versioning](https://semver.org/lang/de/).
 
+## [2.164.0] - 2026-10-27
+
+Neue App "Geräte-Updates": alle offenen Geräte-Updates in einem Fenster, auf einmal startbar.
+
+### Hinzugefügt
+
+- **App "Geräte-Updates" (Launcher, nur Administratoren):** ein Fenster mit allen offenen Updates von Geräten (Geräte-Firmware wie Shelly, Zigbee, ESPHome; nicht Home Assistant selbst, seine Apps und HACS). Chips nach Integration (mit Zahl) wählen genau deren Geräte vor, Kästchen vor jeder Zeile verfeinern die Auswahl, "N Updates starten" startet die Auswahl nach einer Rückfrage. Unterstützt ein gewähltes Update ein Backup, erscheint der Schalter "Vorher Backup erstellen". Ein Tipp auf eine Zeile öffnet das bekannte Update-Fenster des Geräts mit den Release Notes.
+- **Warteschlange auf dem Server:** die Auswahl arbeitet die Integration selbst ab, sie läuft also auch bei geschlossenem Fenster weiter: höchstens drei Updates gleichzeitig und höchstens eines je Integration (parallele Updates bremsen ein Zigbee- oder Z-Wave-Netz). Das Fenster zeigt je Gerät "Wartet", den Fortschritt in Prozent, "Das Gerät startet neu …", "Fertig: Version X ist installiert" oder "Fehlgeschlagen" mit einem Knopf zum erneuten Versuch, und öffnet bei erneutem Öffnen während der Updates gleich diese Ansicht. Wie beim einzelnen Update ruhen die Ausfall-Meldungen dieser Geräte während des Updates und 5 Minuten danach.
+- **Launcher:** Sobald ein Geräte-Update offen ist, wackelt das Symbol der App (wie die Rakete) und zeigt die Zahl; der Knopf des Launchers (oder der angehefteten App) zeigt einen Punkt, der alle 10 Sekunden als Sternschnuppe fliegt, in der Hauptfarbe des Panels (eine Information, keine Störung). Beides lässt sich mit "Animationen" in den Einstellungen abschalten.
+
+### Geändert
+
+- **Update-Meldung:** Enthält sie Geräte-Updates, öffnet ein Tipp das Panel mit dem Fenster "Geräte-Updates" (`/device-panel?app=updates`) statt der Update-Seite von Home Assistant. Ohne Geräte-Updates (nur Home Assistant, Apps, HACS) bleibt der Link wie bisher.
+
 ## [2.163.0] - 2026-10-27
 
 Die Kachel "Software" fällt auf, wenn ein Update verfügbar ist.
@@ -28,6 +42,8 @@ Ist "Überwachen" aus, verschwindet alles darunter.
 ### Behoben
 
 - **Geräte-Popup, "Überwachen" schaltete sich selbst ein:** Nach dem Ausschalten von "Überwachen" und einem Klick auf einen Reiter (zum Beispiel "Batterie") sprang der Schalter wieder auf ein. Das Popup behielt bis zum Speichern den alten Stand; es folgt jetzt sofort der offenen Änderung.
+
+Nicht veröffentlicht; enthalten in 2.163.0.
 
 ## [2.161.0] - 2026-10-27
 
@@ -5176,8 +5192,8 @@ Erste Vorabversion.
   GitHub Actions für die Prüfungen von HACS und hassfest sowie die Tests.
 
 [2.6.0]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v2.6.0
+[2.164.0]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v2.164.0
 [2.163.0]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v2.163.0
-[2.162.0]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v2.162.0
 [2.161.0]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v2.161.0
 [2.159.0]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v2.159.0
 [2.158.1]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v2.158.1

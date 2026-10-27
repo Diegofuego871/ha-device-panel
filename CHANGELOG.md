@@ -7,6 +7,20 @@ All notable changes to this integration are documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/).
 
+## [2.164.0] - 2026-10-27
+
+New app "Device updates": all open device updates in one window, startable at once.
+
+### Added
+
+- **App "Device updates" (launcher, administrators only):** one window with all open updates of devices (device firmware such as Shelly, Zigbee, ESPHome; not Home Assistant itself, its apps or HACS). Chips by integration (with counts) preselect exactly the devices of that integration, checkboxes in front of every row refine the choice, "Start N updates" starts the selection after a confirmation. An optional switch "Create a backup first" appears if a selected update supports it. Tapping a row opens the known update window of the device with the release notes.
+- **Queue on the server:** the selection is worked off by the integration itself, so it keeps running with the window closed: at most three updates at a time and at most one per integration (parallel updates slow down a Zigbee or Z-Wave network). The window shows per device "Waiting", the progress in percent, "The device is restarting …", "Done: version X is installed" or "Failed" with a button to try again, and opens at that view if you open it again during the updates. As with a single update, the outage notifications of those devices rest during the update and for 5 minutes after it.
+- **Launcher:** as soon as a device update is open, the app's icon shakes (like the rocket) and shows the number; the button of the launcher (or of the pinned app) shows a dot that flies as a shooting star every 10 seconds, in the main color of the panel (an information, not a fault). Both can be switched off with "Animations" in the settings.
+
+### Changed
+
+- **Update notification:** if it contains device updates, a tap opens the panel with the window "Device updates" (`/device-panel?app=updates`) instead of the update page of Home Assistant. Without device updates (Home Assistant, apps, HACS only) the link stays as before.
+
 ## [2.163.0] - 2026-10-27
 
 The tile "Software" stands out when an update is available.
@@ -28,6 +42,8 @@ When "Monitor" is off, everything below it disappears.
 ### Fixed
 
 - **Device pop-up, "Monitor" switched itself on:** after switching "Monitor" off and clicking a tab (for example "Battery"), the switch jumped back to on. The pop-up kept the old state until saving; it now follows the pending change at once.
+
+Not released; included in 2.163.0.
 
 ## [2.161.0] - 2026-10-27
 
@@ -5075,8 +5091,8 @@ First pre-release.
   GitHub Actions for HACS/hassfest validation and tests.
 
 [2.6.0]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v2.6.0
+[2.164.0]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v2.164.0
 [2.163.0]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v2.163.0
-[2.162.0]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v2.162.0
 [2.161.0]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v2.161.0
 [2.159.0]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v2.159.0
 [2.158.1]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v2.158.1

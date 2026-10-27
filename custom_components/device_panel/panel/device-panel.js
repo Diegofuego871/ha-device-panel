@@ -12,7 +12,7 @@
  */
 
 const MODULE_VERSION = new URL(import.meta.url).search;
-const [{ STRINGS, pickLang }, { PANEL_CSS }, { MagicPush }, { RoutineUi, DOMAIN_EMOJI }, { AppLauncher }, { StatusUi }, { ProtocolUi }, { WizardUi }] = await Promise.all([
+const [{ STRINGS, pickLang }, { PANEL_CSS }, { MagicPush }, { RoutineUi, DOMAIN_EMOJI }, { AppLauncher }, { StatusUi }, { ProtocolUi }, { WizardUi }, { UpdApp }] = await Promise.all([
   import(`./strings.js${MODULE_VERSION}`),
   import(`./styles.js${MODULE_VERSION}`),
   import(`./magic-push.js${MODULE_VERSION}`),
@@ -21,6 +21,7 @@ const [{ STRINGS, pickLang }, { PANEL_CSS }, { MagicPush }, { RoutineUi, DOMAIN_
   import(`./status-ui.js${MODULE_VERSION}`),
   import(`./protocol.js${MODULE_VERSION}`),
   import(`./wizard.js${MODULE_VERSION}`),
+  import(`./updapp.js${MODULE_VERSION}`),
 ]);
 
 const POLL_INTERVAL_MS = 10000;
@@ -900,6 +901,7 @@ class DevicePanel extends HTMLElement {
     // App-Launcher (seit 2.31.0): Knopf in der Kopfzeile, Favoriten, eigene Links (apps.js)
     this._apps = new AppLauncher(this, { escape, mdi });
     this._status = new StatusUi(this, { escape, mdi, errText });
+    this._updApp = new UpdApp(this, { escape, mdi, errText });
     // Protokoll einer Meldung oder Routine (seit 2.104.0): eigenes Fenster, geöffnet von den Knöpfen mit data-proto
     this._protocol = new ProtocolUi(this, { escape, mdi, errText });
     // Einrichtungsassistent (seit 2.135.0): poppt nach der Installation einmal auf, Kachel im Launcher bis zum ersten Abschluss (wizard.js)
@@ -1325,6 +1327,7 @@ class DevicePanel extends HTMLElement {
       // HACS meldet Fortschritt und neue Versionen über seine Update-Entität.
       if (this._settings) this._renderSettingsVersion();
       if (this._upd) this._renderUpdate();
+      this._updApp.onHass();
       this._watchUpdateTile();
       this._gearDot();
       this._watchEntityStates();
@@ -1572,13 +1575,15 @@ class DevicePanel extends HTMLElement {
     const app = url.searchParams.get("app");
     // Reiter der Status-App (seit 2.73.0): ?app=status&tab=system öffnet gleich die Kurven (Meldung bei hoher Auslastung)
     const tab = url.searchParams.get("tab");
-    if (!id && app !== "status") return;
+    if (!id && app !== "status" && app !== "updates") return;
     url.searchParams.delete("device");
     url.searchParams.delete("app");
     url.searchParams.delete("tab");
     top.history.replaceState(top.history.state, "", url.pathname + url.search + url.hash);
     if (id) this._openDevice(id);
-    else if (this._hass?.user?.is_admin !== false) this._status.open(tab || undefined);
+    else if (this._hass?.user?.is_admin === false) return;
+    else if (app === "updates") this._updApp.open();
+    else this._status.open(tab || undefined);
   }
 
   // Zahlen und Uhrzeit im Format der HA-Sprache des Benutzers (z. B. de-CH).
@@ -1607,7 +1612,7 @@ class DevicePanel extends HTMLElement {
       </div>
       <div class="area-pop" role="dialog" aria-label="${escape(this._t("areaTitle"))}" hidden></div>
       <div class="content"><div class="hstrip"></div><div class="hero"></div><div class="chips"></div><div class="viewline"></div><div class="list"></div><div class="foot"></div></div>
-      <dialog class="device"></dialog><dialog class="magic-dlg"></dialog><dialog class="magic-dlg routine-dlg"></dialog><dialog class="stat-dlg"></dialog><dialog class="settings"></dialog><dialog class="area-sheet"></dialog><dialog class="pulse-dlg"></dialog><dialog class="log-dlg proto-dlg"></dialog><dialog class="apps-dlg"></dialog><dialog class="app-dlg"></dialog><dialog class="rtall-dlg"></dialog><dialog class="mgall-dlg"></dialog><dialog class="status-dlg"></dialog><dialog class="prompt-dlg"></dialog><dialog class="notes-dlg"></dialog><dialog class="notes-dlg backup-dlg"></dialog><dialog class="notes-dlg upd-dlg"></dialog><dialog class="rename-dlg"></dialog><dialog class="discard-dlg"></dialog><dialog class="wizard-dlg"></dialog>
+      <dialog class="device"></dialog><dialog class="magic-dlg"></dialog><dialog class="magic-dlg routine-dlg"></dialog><dialog class="stat-dlg"></dialog><dialog class="settings"></dialog><dialog class="area-sheet"></dialog><dialog class="pulse-dlg"></dialog><dialog class="log-dlg proto-dlg"></dialog><dialog class="apps-dlg"></dialog><dialog class="app-dlg"></dialog><dialog class="rtall-dlg"></dialog><dialog class="mgall-dlg"></dialog><dialog class="status-dlg"></dialog><dialog class="prompt-dlg"></dialog><dialog class="notes-dlg"></dialog><dialog class="notes-dlg backup-dlg"></dialog><dialog class="notes-dlg upd-dlg"></dialog><dialog class="notes-dlg updapp-dlg"></dialog><dialog class="rename-dlg"></dialog><dialog class="discard-dlg"></dialog><dialog class="wizard-dlg"></dialog>
       <div class="toast" role="status" aria-live="polite" hidden></div>`;
     const root = this.shadowRoot;
     this._apps.bind(root);
@@ -1743,6 +1748,7 @@ class DevicePanel extends HTMLElement {
     this._bindRtAll(root.querySelector("dialog.rtall-dlg"));
     this._bindMagicAll(root.querySelector("dialog.mgall-dlg"));
     this._status.bind(root.querySelector("dialog.status-dlg"));
+    this._updApp.bind(root.querySelector("dialog.updapp-dlg"));
     this._protocol.bind(root.querySelector("dialog.proto-dlg"));
     root.addEventListener("click", (ev) => {
       const btn = ev.target.closest?.("[data-proto]");
@@ -6310,9 +6316,9 @@ class DevicePanel extends HTMLElement {
     return { st, a, features, running: raw === true || typeof raw === "number", percent, gone: !st || st.state === "unavailable" || st.state === "unknown" };
   }
 
-  async _openUpdate(entity) {
+  async _openUpdate(entity, deviceId = null) {
     const dlg = this.shadowRoot.querySelector("dialog.upd-dlg");
-    const dev = this._devices.find((x) => x.id === this._detailId);
+    const dev = this._devices.find((x) => x.id === (deviceId || this._detailId));
     if (!dlg || !dev || !entity) return;
     this._upd = { entity, device: dev.id, name: dev.name, step: "info", backup: false, notes: null, notesState: "idle", error: null, started: false, seen: false, installed: null };
     const { features, a, running, gone } = this._updState();

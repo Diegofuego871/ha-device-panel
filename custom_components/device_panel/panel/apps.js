@@ -30,6 +30,8 @@ const BUILTIN = [
   { id: "wizard", group: "panel", icon: "rocket", act: "wizard", admin: true, locked: true, temp: true },
   { id: "routine", group: "panel", icon: "flash", act: "routine" },
   { id: "magic", group: "panel", icon: "bell", act: "magic" },
+  // Geräte-Updates (seit 2.164.0): alle offenen Geräte-Updates in einem Fenster; nur für Administratoren (die Befehle sind es)
+  { id: "updates", group: "panel", icon: "verUp", act: "updates", admin: true },
   { id: "log", group: "panel", icon: "log", act: "log", locked: true },
   // Status (seit 2.62.0): nur für Administratoren (status_get ist ein Befehl für Administratoren); nicht vorgemerkt, wer ihn in der Kopfzeile will, heftet ihn selbst an.
   // Seit 2.76.0 nicht mehr ausblendbar (locked): dort liegen die Einstellungen der Meldungen
@@ -434,6 +436,7 @@ export class AppLauncher {
     else if (a.act === "magic") this.host._openMagicAll();
     else if (a.act === "log") this.host._openLog();
     else if (a.act === "status") this.host._status.open();
+    else if (a.act === "updates") this.host._updApp.open();
     else if (a.act === "wizard") this.host._wizard.open("app");
     else if (a.act === "view") this.host._openView();
     else if (a.act === "settings") this.host._openSettings();
@@ -592,7 +595,7 @@ export class AppLauncher {
         const icon = this._icon(a, 22);
         // "gear-btn": der angeheftete Knopf der Einstellungen (seit 2.88.0 kein fester Knopf mehr; Tests und Stile kennen ihn so)
         const rs = this.runState?.[a.id];
-        const cls = `rtall-btn app-pin${a.id === "settings" ? " gear-btn" : ""}${dot ? ` has-dot dot-${dot}` : ""}${rs ? ` run-${rs}` : ""}`;
+        const cls = `rtall-btn app-pin${a.id === "settings" ? " gear-btn" : ""}${dot ? ` has-dot dot-${dot}` : ""}${rs ? ` run-${rs}` : ""}${a.id === "updates" && dot ? " upd" : ""}`;
         return a.ext
           ? `<a class="${cls}" href="${escape(a.url)}" target="_blank" rel="noopener noreferrer" data-app-pin="${escape(a.id)}" title="${label}" aria-label="${label}">${icon}</a>`
           : `<button type="button" class="${cls}" data-app-pin="${escape(a.id)}" title="${label}" aria-label="${label}">${icon}</button>`;
@@ -630,7 +633,7 @@ export class AppLauncher {
     const style = a.color && !a.favicon ? ` style="background:${a.color};color:#fff"` : "";
     const own = !a.color && !a.favicon ? " own" : "";
     const rs = this.runState?.[a.id];
-    return `<span class="ap-ico${sm ? " sm" : ""}${own}${rs ? ` run-${rs}` : ""}${a.id === "wizard" ? " wiz" : ""}"${style}>${this._icon(a, size)}</span>`;
+    return `<span class="ap-ico${sm ? " sm" : ""}${own}${rs ? ` run-${rs}` : ""}${a.id === "wizard" ? " wiz" : ""}${a.id === "updates" && this.updCount() ? " upd" : ""}"${style}>${this._icon(a, size)}</span>`;
   }
 
   // Knopf oder Verweis einer App: externe Links sind <a> (neuer Tab, kein Zugriff auf das Panel), alles andere <button>
@@ -647,6 +650,8 @@ export class AppLauncher {
     if (a.id === "log" && this.host._debugOn) return `<span class="ap-badge">${escape(this.t("appsDebug"))}</span>`;
     // "Offen" (orange) an der Einrichtung, solange der Assistent nicht beendet ist (wie der orange Punkt am Launcher-Knopf, seit 2.135.1)
     if (a.id === "wizard") return `<span class="ap-badge">${escape(this.t("wzBadge"))}</span>`;
+    // Zahl der offenen Geräte-Updates (seit 2.164.0), in der Hauptfarbe
+    if (a.id === "updates" && this.updCount()) return `<span class="ap-badge info">${this.updCount()}</span>`;
     if (a.id === "status" && this.dotLevels().pins.status) return `<span class="ap-badge bad">${escape(this.t("appsDown"))}</span>`;
     // "Neustart" (rot) an den Einstellungen, solange der rote Punkt am Zahnrad der Kopfzeile steht (Neustart nach einem Update ausstehend, seit 2.85.0)
     if (a.id === "settings" && this.host._gearRestart) return `<span class="ap-badge bad">${escape(this.t("appsRestartPending"))}</span>`;
@@ -661,7 +666,14 @@ export class AppLauncher {
   _dotWhy(id, level) {
     if (id === "settings") return this.t("settingsBtnRestart");
     if (id === "wizard") return this.t("wizDot");
+    if (id === "updates") return this.t("appupDot", this.updCount());
     return this.t(level === "bad" ? "appsDown" : "appsDebug");
+  }
+
+  // Offene Geräte-Updates, die sich aus der App starten lassen (nur Administratoren)
+  updCount() {
+    if (!this._admin()) return 0;
+    return (this.host._devices || []).filter((d) => d.update_install && !d.disabled).length;
   }
 
   // Punkte (seit 2.62.0): orange = Debug-Modus, rot = Störung des Status; seit 2.88.0 rot auch für "Neustart steht aus" (Einstellungen). Ist die
@@ -678,10 +690,13 @@ export class AppLauncher {
     const why = bad && !pinned.has("status") ? "status" : restart && !pinned.has("settings") ? "settings" : warn && !pinned.has("log") ? "log" : "";
     // Einrichtung: orange, hinter allen Störungen; am eigenen Knopf, wenn angeheftet, sonst am Launcher-Knopf
     const wiz = !why && setup && !pinned.has("wizard") ? "wizard" : "";
-    const why2 = why || wiz;
+    // Geräte-Updates: nur ein Hinweis, darum in der Hauptfarbe und hinter allem anderen (seit 2.164.0)
+    const updN = this.updCount() > 0;
+    const upd = !why && !wiz && updN && !pinned.has("updates") ? "updates" : "";
+    const why2 = why || wiz || upd;
     return {
-      pins: { status: bad ? "bad" : "", settings: restart ? "bad" : "", log: warn ? "warn" : "", wizard: setup ? "warn" : "" },
-      launcher: why === "log" || wiz ? "warn" : why ? "bad" : "",
+      pins: { status: bad ? "bad" : "", settings: restart ? "bad" : "", log: warn ? "warn" : "", wizard: setup ? "warn" : "", updates: updN ? "info" : "" },
+      launcher: why === "log" || wiz ? "warn" : why ? "bad" : upd ? "info" : "",
       why: why2,
     };
   }
@@ -694,6 +709,7 @@ export class AppLauncher {
       btn.classList.toggle("has-dot", Boolean(level));
       btn.classList.toggle("dot-warn", level === "warn");
       btn.classList.toggle("dot-bad", level === "bad");
+      btn.classList.toggle("dot-info", level === "info");
       const base = this.t("appsBtn");
       const label = level ? `${base} · ${this._dotWhy(this.dotLevels().why, level)}` : base;
       btn.setAttribute("title", label);
@@ -704,7 +720,7 @@ export class AppLauncher {
   paintDots() {
     this.renderBar();
     // Der offene Launcher zeigt die Pillen: nur neu zeichnen, wenn sich etwas geändert hat (sonst störte es das Bearbeiten und Suchen)
-    const key = JSON.stringify([this.dotLevels().pins, Boolean(this.host._gearRestart), Boolean(this.host._wizard?.visible())]);
+    const key = JSON.stringify([this.dotLevels().pins, Boolean(this.host._gearRestart), Boolean(this.host._wizard?.visible()), this.updCount()]);
     if (key !== this._dotKey) {
       this._dotKey = key;
       if (this.dlg?.open && !this.ui.edit) this.render();

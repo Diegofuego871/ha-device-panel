@@ -654,6 +654,17 @@ def _update(hass: HomeAssistant, entries: list[er.RegistryEntry]) -> str | None:
     return None
 
 
+def _update_install(hass: HomeAssistant, entries: list[er.RegistryEntry]) -> bool:
+    """Ob ein offenes Update des Geräts sich aus der App "Geräte-Updates" starten lässt (nicht Home Assistant, Apps, HACS)."""
+    for entry in entries:
+        if entry.domain != "update" or entry.disabled_by or entry.platform in ("hassio", "homeassistant", "hacs"):
+            continue
+        state = hass.states.get(entry.entity_id)
+        if state is not None and state.state == STATE_ON and int(state.attributes.get("supported_features") or 0) & 1:
+            return True
+    return False
+
+
 def _connection(
     device: dr.DeviceEntry,
     domains: list[str],
@@ -1634,6 +1645,7 @@ async def async_list_devices(hass: HomeAssistant, log: Any = None) -> dict[str, 
                 # Lädt gerade (seit 1.35.0): Ladeanzeige des Geräts oder Anstieg des Stands.
                 "charging": _charging(hass, opts, device, entries, now_ts),
                 "update": _update(hass, entries),
+                "update_install": _update_install(hass, entries),
                 "avail24": avail,
                 # Instabil: online, aber oft unterbrochen.
                 "flaky": bool(online and avail and avail.get("outages", 0) >= flaky_outages),

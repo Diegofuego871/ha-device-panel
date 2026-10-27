@@ -90,11 +90,14 @@ button { font: inherit; color: inherit; }
 .apps-btn, .app-pin { position: relative; }
 .apps-btn.has-dot::after, .app-pin.has-dot::after { content: ""; position: absolute; top: 3px; right: 3px; width: 10px; height: 10px; box-sizing: border-box; border-radius: 50%; background: var(--dp-error); border: 2px solid var(--dp-bg); }
 .apps-btn.dot-warn::after, .app-pin.dot-warn::after { background: var(--dp-warning); }
+/* Geräte-Updates (seit 2.164.0): Hinweis, kein Fehler; Punkt und Sternschnuppe in der Hauptfarbe des Panels */
+.apps-btn.dot-info::after, .app-pin.dot-info::after { background: var(--dp-primary); }
 /* Sternschnuppe (seit 2.147.0, docs/mockups/shootingstar-v1, A; seit 2.149.0 ist der Punkt selbst die Sternschnuppe): alle 10 Sekunden löst sich der Punkt vom Knopf mit Punkt
    (Launcher, angeheftete Apps, Zahnrad), huscht mit Schweif und wechselndem Tempo einmal um die Linie und setzt sich kurz vergrössert wieder hin. Farbe wie der Punkt (rot, bei Orange orange).
    Läuft auch bei "Bewegung reduzieren" (seit 2.156.1), abschaltbar im Panel (Einstellungen › Panel › Allgemein, "Animationen"). Alle Knöpfe laufen im Gleichschritt (seit 2.150.0, syncBeats in device-panel.js (Start an der nächsten vollen 10 Sekunden); der Messpunkt des Ausfall-Pulses startet im selben Takt). */
 .gear-btn.has-dot, .apps-btn.has-dot, .app-pin.has-dot { --cm: var(--dp-error); --cd: 0s; }
 .apps-btn.has-dot.dot-warn, .app-pin.has-dot.dot-warn { --cm: var(--dp-warning); }
+.apps-btn.has-dot.dot-info, .app-pin.has-dot.dot-info { --cm: var(--dp-primary); }
 .gear-btn.has-dot::before, .apps-btn.has-dot::before, .app-pin.has-dot::before { content: ""; position: absolute; inset: -1px; border-radius: 50%; pointer-events: none; opacity: 0;
   background: conic-gradient(from 0deg, transparent 0deg, transparent 240deg, color-mix(in srgb, var(--cm) 14%, transparent) 240deg, color-mix(in srgb, var(--cm) 92%, #fff) 354deg, #fff3e0 358deg, transparent 360deg);
   -webkit-mask: radial-gradient(farthest-side, transparent calc(100% - 3px), #000 calc(100% - 3px)); mask: radial-gradient(farthest-side, transparent calc(100% - 3px), #000 calc(100% - 3px));
@@ -196,8 +199,8 @@ button.kwarn:focus-visible { outline: 2px solid var(--dp-primary); outline-offse
 /* Einrichtung (seit 2.140.1): die Rakete bebt leicht und hebt kurz ab, mit Pause dazwischen; ohne Bewegung bei reduzierter Animation */
 @keyframes wz-rocket { 0%, 55%, 100% { transform: translate(0, 0) rotate(0); } 60% { transform: translate(-0.7px, 0.5px) rotate(-3deg); } 65% { transform: translate(0.7px, -0.5px) rotate(3deg); } 70% { transform: translate(-0.6px, -1px) rotate(-2deg); } 75% { transform: translate(0.6px, -1.6px) rotate(2deg); } 82% { transform: translate(0, -1.8px) rotate(0); } 90% { transform: translate(0, -0.6px) rotate(0); } }
 /* Dieselbe Rakete auf der Willkommensseite des Assistenten (seit 2.158.1), solange er nicht fertig ist; läuft auch bei "Bewegung reduzieren" (seit 2.158.2), abschaltbar über "Animationen" */
-.ap-ico.wiz svg, .wz-hero svg { animation: wz-rocket 3.2s ease-in-out infinite; transform-origin: 50% 70%; }
-:host([data-anim="off"]) .ap-ico.wiz svg, :host([data-anim="off"]) .wz-hero svg { animation: none; }
+.ap-ico.wiz svg, .ap-ico.upd svg, .app-pin.upd svg, .wz-hero svg { animation: wz-rocket 3.2s ease-in-out infinite; transform-origin: 50% 70%; }
+:host([data-anim="off"]) .ap-ico.wiz svg, :host([data-anim="off"]) .ap-ico.upd svg, :host([data-anim="off"]) .app-pin.upd svg, :host([data-anim="off"]) .wz-hero svg { animation: none; }
 @keyframes ee-reveal { from { clip-path: inset(-12px 100% -12px 0); } to { clip-path: inset(-12px 0 -12px 0); } }
 @keyframes ee-fade { 0%, 88% { opacity: 1; } 100% { opacity: 0; } }
 @keyframes ee-thump { 0%, 100% { transform: scale(1); } 15% { transform: scale(1.3); } 30% { transform: scale(1); } 45% { transform: scale(1.18); } }
@@ -2162,6 +2165,7 @@ dialog.app-dlg::backdrop { background: rgba(0,0,0,0.5); }
 .st-flash { display: flex; align-items: center; gap: 8px; margin: 0 0 8px; padding: 10px 14px; border-radius: 14px; background: var(--dp-success-soft); color: var(--dp-success); font-size: 13px; }
 .st-start { margin: 12px 2px 0; color: var(--dp-text2); font-size: 12.5px; line-height: 1.4; }
 .ap-badge.bad { background: var(--dp-error-soft); color: var(--dp-error); }
+.ap-badge.info { background: var(--dp-primary-soft); color: var(--dp-primary); }
 .ap-t b .ap-badge { position: static; margin-left: 6px; }
 .ap-ext { position: absolute; right: 8px; bottom: 6px; display: inline-flex; color: var(--dp-text2); }
 .ap-ext.in { position: static; margin-right: 4px; }
@@ -2489,4 +2493,32 @@ dialog.wizard-dlg[open] { display: flex; flex-direction: column; }
 .upd-state.ok { color: var(--dp-success); }
 .upd-bar { height: 8px; border-radius: 99px; background: var(--dp-primary-soft); overflow: hidden; }
 .upd-bar i { display: block; height: 100%; border-radius: 99px; background: var(--dp-primary); transition: width .4s ease; }
+
+/* App "Geräte-Updates" (seit 2.164.0, docs/mockups/updates-v1, A) */
+.ua-chips { display: flex; flex-wrap: wrap; gap: 8px; margin: 2px 0 12px; }
+.ua-list { display: flex; flex-direction: column; gap: 8px; }
+.ua-row { display: flex; align-items: center; gap: 10px; padding: 8px 10px; border-radius: 14px; background: var(--dp-subtle); }
+.ua-t { flex: 1 1 auto; min-width: 0; display: flex; flex-direction: column; gap: 2px; text-align: left; }
+.ua-t b { font-weight: 500; overflow-wrap: anywhere; }
+.ua-t small { color: var(--dp-text2); font-size: 12.5px; }
+.ua-main { display: flex; align-items: center; gap: 10px; flex: 1 1 auto; min-width: 0; padding: 4px 0; border: 0; background: none; color: inherit; font: inherit; text-align: left; cursor: pointer; }
+.ua-cb { position: relative; flex: none; width: 22px; height: 22px; }
+.ua-cb input { position: absolute; inset: 0; width: 100%; height: 100%; margin: 0; opacity: 0; cursor: pointer; }
+.ua-cb span { position: absolute; inset: 0; display: grid; place-items: center; border-radius: 7px; border: 2px solid var(--dp-text3); color: transparent; pointer-events: none; transition: background .12s, border-color .12s; }
+.ua-cb input:checked + span { background: var(--dp-primary); border-color: var(--dp-primary); color: #fff; }
+.ua-cb input:focus-visible + span { outline: 2px solid var(--dp-primary); outline-offset: 2px; }
+.ua-row.run { align-items: flex-start; padding: 10px 12px; }
+.ua-st { color: var(--dp-primary) !important; font-size: 14px !important; }
+.ua-st.ok { color: var(--dp-success) !important; }
+.ua-st.bad { color: var(--dp-error) !important; }
+.ua-row.waiting .ua-st { color: var(--dp-text2) !important; }
+.ua-row .upd-bar, .ua-row .ver-prog { margin-top: 6px; }
+.ua-ic { flex: none; display: grid; place-items: center; width: 22px; height: 22px; margin-top: 1px; }
+.ua-ic.ok { color: var(--dp-success); }
+.ua-ic.bad { color: var(--dp-error); }
+.ua-retry { flex: none; display: grid; place-items: center; width: 28px; height: 28px; border: 1px solid var(--dp-error); border-radius: 50%; background: var(--dp-error-soft); color: var(--dp-error); cursor: pointer; }
+.ua-empty { display: grid; place-items: center; gap: 6px; padding: 60px 0; color: var(--dp-text2); text-align: center; }
+.ua-empty svg { color: var(--dp-success); }
+.ua-backup { display: flex; align-items: center; gap: 12px; margin: 14px 0 4px; font-size: 15px; }
+.ua-backup small { display: block; color: var(--dp-text2); font-size: 12.5px; }
 `;

@@ -246,7 +246,8 @@ class UpdateNotifier:
         if items and notify_target(opts, "updates") != NOTIFY_NONE:
             await push.async_push(
                 hass, notify_target(opts, "updates"), push.title(hass, opts, "updates", "update_title"), self.message(items),
-                push.notification_data(hass, f"{DOMAIN}_updates", UPDATES_URL),
+                # Mit Geräte-Updates öffnet ein Tipp die App "Geräte-Updates" im Panel (seit 2.164.0), sonst die Update-Seite von Home Assistant
+                push.notification_data(hass, f"{DOMAIN}_updates", push.panel_url(app="updates") if any(i["kind"] == "devices" for i in items) else UPDATES_URL),
                 topic="updates",
             )
         for item in items:
