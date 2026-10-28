@@ -99,6 +99,8 @@ const SIG_LQI_RANGE = [1, 200];
 // Matter: Funkart (Thread/WLAN/LAN) ändert sich praktisch nie.
 const MATTER_REFRESH_MS = 3600000;
 // Popup: Entitäten und Kurzstatistik höchstens 30 s alt, Verlauf 60 s.
+// Frist, bis ein Update, dessen Entität wieder auf "verfügbar" steht, als fehlgeschlagen gilt (siehe _renderUpdate; gleich update_queue.SETTLE_SECONDS)
+const UPD_SETTLE_MS = 5 * 60 * 1000;
 const DETAIL_MAX_AGE_MS = 30000;
 const HISTORY_MAX_AGE_MS = 60000;
 // Batterie-Verlauf (seit 0.22.0, docs/mockups/battery-history-v1, A): dazu 3 Monate.
@@ -6390,8 +6392,18 @@ class DevicePanel extends HTMLElement {
     if (u.started) {
       if (running || gone) u.seen = true;
     }
-    const done = u.started && st && st.state === "off";
-    const failed = u.started && u.seen && !running && !gone && st && st.state === "on";
+    // Nach dem Update steht die Entität oft noch eine Weile auf "Update verfügbar" (Integration holt die neue Version erst, wenn das Gerät wieder
+    // da ist): erst nach UPD_SETTLE_MS ohne Fortschritt gilt es als fehlgeschlagen; eine neue installierte Version oder "aktuell" heisst fertig
+    const newVer = Boolean(u.started && a.installed_version != null && u.installed != null && a.installed_version !== u.installed);
+    const done = u.started && st && (st.state === "off" || newVer);
+    const back = Boolean(u.started && u.seen && !running && !gone && st && st.state === "on" && !newVer);
+    if (back) u.backAt = u.backAt || Date.now();
+    else u.backAt = null;
+    window.clearTimeout(u.settleTimer);
+    const left = back ? UPD_SETTLE_MS - (Date.now() - u.backAt) : 0;
+    if (back && left > 0) u.settleTimer = window.setTimeout(() => this._upd === u && this._renderUpdate(), left + 300);
+    const failed = back && left <= 0;
+    const settling = back && !failed;
     let body = "";
     let actions = `<button type="button" class="dlg-btn primary" data-upd="close">${mdi("close", 18)}${escape(t("close"))}</button>`;
     let sub = `${u.name} · ${from} → ${to}`;
@@ -6401,7 +6413,7 @@ class DevicePanel extends HTMLElement {
       } else if (failed) {
         body = `<div class="dlg-error">${escape(t("updFailed"))}</div>`;
       } else {
-        const label = gone ? t("updRebooting") : running ? (percent != null ? t("updPercent", Math.round(percent)) : t("updRunning")) : t("updWaiting");
+        const label = gone ? t("updRebooting") : running ? (percent != null ? t("updPercent", Math.round(percent)) : t("updRunning")) : settling ? t("updFinishing") : t("updWaiting");
         const bar = percent != null && !gone ? `<div class="upd-bar" role="progressbar" aria-valuenow="${Math.round(percent)}" aria-valuemin="0" aria-valuemax="100"><i style="width:${Math.max(2, Math.min(100, percent))}%"></i></div>` : `<div class="ver-prog"><i></i></div>`;
         body = `<div class="upd-state">${escape(label)}</div>${bar}<p class="dlg-note small">${escape(t("updHoldNote"))}</p>`;
       }

@@ -9,8 +9,8 @@ let ok = true;
 const check = (l, c, i = "") => { ok &&= !!c; console.log(`${c ? "PASS" : "FAIL"} ${l}${i ? " - " + i : ""}`); };
 const R = `document.querySelector("device-panel").shadowRoot`;
 const T = {
-  de: { title: "Geräte-Updates", all: "Alle", start: (n) => `${n} Updates starten`, yes: (n) => `Ja, ${n} Updates starten`, wait: "Wartet", pct: /Update läuft: 40 %/, done: /Fertig: Version/, failed: "Fehlgeschlagen", empty: "Alle Geräte sind auf dem neuesten Stand.", dot: /Geräte-Updates verfügbar/ },
-  en: { title: "Device updates", all: "All", start: (n) => `Start ${n} updates`, yes: (n) => `Yes, start ${n} updates`, wait: "Waiting", pct: /Update running: 40 %/, done: /Done: version/, failed: "Failed", empty: "All devices are up to date.", dot: /device updates available/ },
+  de: { title: "Geräte-Updates", all: "Alle", start: (n) => `${n} Updates starten`, yes: (n) => `Ja, ${n} Updates starten`, wait: "Wartet", pct: /Update läuft: 40 %/, done: /Fertig: Version/, failed: "Fehlgeschlagen", finishing: "Update wird abgeschlossen", empty: "Alle Geräte sind auf dem neuesten Stand.", dot: /Geräte-Updates verfügbar/ },
+  en: { title: "Device updates", all: "All", start: (n) => `Start ${n} updates`, yes: (n) => `Yes, start ${n} updates`, wait: "Waiting", pct: /Update running: 40 %/, done: /Done: version/, failed: "Failed", finishing: "Finishing the update", empty: "All devices are up to date.", dot: /device updates available/ },
 };
 const mk = (id, platform, device, title, from, to) => ({ entity_id: `update.${id}`, device_id: device, platform, features: 13, installed: from, latest: to, title });
 const LIST = [
@@ -98,6 +98,17 @@ for (const lang of ["de", "en"]) {
     await p.evaluate(() => window.__uqSet("update.z1", "failed", "update failed"));
     await reload();
     check(`[${tag}] Fehler gezeigt, Knopf zum Wiederholen`, await wait(`return !!r.querySelector('dialog.updapp-dlg .ua-row.failed [data-ua="retry"]')`) && (await rowTexts()).some((t) => t.includes(L.failed)));
+    // Grund: Meldung der Integration und übersetzte Kennwörter des Servers; "wird abgeschlossen" bei wartender Entität
+    await p.evaluate(() => window.__uqSet("update.z1", "failed", "Device unreachable"));
+    await reload();
+    check(`[${tag}] Grund der Integration steht unter "${L.failed}"`, await wait(`return !!r.querySelector("dialog.updapp-dlg .ua-row.failed .ua-why")`) && (await text("dialog.updapp-dlg .ua-row.failed .ua-why")) === "Device unreachable");
+    await p.evaluate(() => window.__uqSet("update.z1", "failed", "update failed"));
+    await reload();
+    check(`[${tag}] Kennwort "update failed" wird übersetzt`, await wait(`return r.querySelector("dialog.updapp-dlg .ua-row.failed .ua-why")?.innerText.length > 30`) && !/^update failed$/.test(await text("dialog.updapp-dlg .ua-row.failed .ua-why")));
+    await p.evaluate(() => { const q = window.__uq.find((x) => x.entity_id === "update.s2"); q.status = "running"; q.settling = true; });
+    await setState("update.s2", "on");
+    await reload();
+    check(`[${tag}] Entität wieder "verfügbar": "${L.finishing}"`, await wait(`const rows=[...r.querySelectorAll("dialog.updapp-dlg .ua-row")]; return rows.some((x) => x.innerText.includes(${JSON.stringify(L.finishing)}))`));
     await tap('dialog.updapp-dlg [data-ua="retry"]');
     check(`[${tag}] Wiederholen sendet nur dieses Update`, await p.evaluate(() => { const c = window.__uqCalls.at(-1); return c.entity_ids.length === 1 && c.entity_ids[0] === "update.z1"; }));
     await tap('dialog.updapp-dlg [data-ua="close"]');

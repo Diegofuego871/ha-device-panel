@@ -11,7 +11,7 @@ from homeassistant.helpers import entity_registry as er
 from pytest_homeassistant_custom_component.common import MockConfigEntry, async_fire_time_changed, async_mock_service
 
 from custom_components.device_panel.const import DATA_AVAILABILITY, DOMAIN
-from custom_components.device_panel.update_queue import MAX_PARALLEL, NO_PROGRESS_SECONDS, available, get_queue
+from custom_components.device_panel.update_queue import MAX_PARALLEL, NO_PROGRESS_SECONDS, SETTLE_SECONDS, available, get_queue
 
 from .test_outage import _device
 
@@ -84,6 +84,12 @@ async def test_failure_and_no_progress(hass: HomeAssistant, setup, freezer) -> N
     await hass.async_block_till_done()
     hass.states.async_set(a, "on", {"supported_features": 13})
     await hass.async_block_till_done()
+    # Nicht sofort: die Entität steht oft noch eine Weile auf "verfügbar" (Frist SETTLE_SECONDS), das Panel zeigt "wird abgeschlossen"
+    status = {i["entity_id"]: i for i in queue.snapshot()}
+    assert status[a]["status"] == "running" and status[a]["settling"] is True
+    freezer.tick(timedelta(seconds=SETTLE_SECONDS + 1))
+    async_fire_time_changed(hass)
+    await hass.async_block_till_done()
     status = {i["entity_id"]: i for i in queue.snapshot()}
     assert status[a]["status"] == "failed" and status[a]["error"]
     # B zeigt nie einen Fortschritt: nach der Frist fehlgeschlagen
@@ -118,3 +124,47 @@ async def test_push_link_for_device_updates(hass: HomeAssistant, setup, freezer)
     await hass.async_block_till_done()
     assert len(calls) == 1
     assert calls[0].data["data"]["url"] == "/device-panel?app=updates"
+
+
+async def test_late_success_is_not_a_failure(hass: HomeAssistant, setup, freezer) -> None:
+    """Fall aus der Praxis (Shelly): "läuft nicht mehr", bevor das Gerät neu startet; die neue Version kommt erst Minuten später."""
+    async_mock_service(hass, "update", "install")
+    a = _update(hass, _device(hass, "A"), "shelly")
+    b = _update(hass, _device(hass, "B"), "zha")
+    queue = get_queue(hass)
+    queue.enqueue([a, b], backup=False)
+    await hass.async_block_till_done()
+    for ent in (a, b):
+        hass.states.async_set(ent, "on", {"supported_features": 13, "in_progress": True})
+        await hass.async_block_till_done()
+        hass.states.async_set(ent, "on", {"supported_features": 13})  # Fortschritt aus, Version noch die alte
+        await hass.async_block_till_done()
+    # A: nach 2 Minuten "aktuell" (Frist läuft noch): fertig
+    freezer.tick(timedelta(minutes=2))
+    hass.states.async_set(a, "off", {"supported_features": 13, "installed_version": "1.1"})
+    await hass.async_block_till_done()
+    # B: Frist abgelaufen, als fehlgeschlagen gemeldet, dann kommt doch die neue Version: wieder fertig
+    freezer.tick(timedelta(seconds=SETTLE_SECONDS))
+    async_fire_time_changed(hass)
+    await hass.async_block_till_done()
+    assert {i["entity_id"]: i["status"] for i in queue.snapshot()}[b] == "failed"
+    hass.states.async_set(b, "on", {"supported_features": 13, "installed_version": "1.1", "latest_version": "1.2"})  # Version geändert
+    await hass.async_block_till_done()
+    status = {i["entity_id"]: i for i in queue.snapshot()}
+    assert status[a]["status"] == "done" and status[b]["status"] == "done" and status[b]["error"] is None
+
+
+async def test_service_error_is_the_reason(hass: HomeAssistant, setup) -> None:
+    """Lehnt die Integration das Update ab, nennt die Zeile den Grund der Integration."""
+    from homeassistant.exceptions import HomeAssistantError
+
+    async def refuse(call) -> None:
+        raise HomeAssistantError("Device unreachable")
+
+    hass.services.async_register("update", "install", refuse)
+    a = _update(hass, _device(hass, "A"), "shelly")
+    queue = get_queue(hass)
+    queue.enqueue([a], backup=False)
+    await hass.async_block_till_done()
+    item = queue.snapshot()[0]
+    assert item["status"] == "failed" and "Device unreachable" in item["error"]

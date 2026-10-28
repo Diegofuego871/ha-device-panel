@@ -19,6 +19,11 @@ Entities can be excluded as a "sign of life" on a device.
 
 - **Window "Device updates":** larger font throughout (body text 16 px, secondary lines 14 px, larger chips), also in the confirmation and the progress view.
 
+### Fixed
+
+- **Update wrongly shown as "Failed" (window "Device updates" and the update window of a device):** many integrations (seen with Shelly) switch the progress off and still offer the old version for a while before the restarted device reports the new one. The panel then reported a failure although the update had worked. Now it shows "Finishing the update …" for up to 5 minutes and counts the update as done as soon as the entity says "up to date" or the installed version changes; a failure already reported turns into "Done" if the new version shows up later.
+- **Reason for a failed update:** if the integration refuses the update or ends it with an error (for example "device unreachable"), the row in "Device updates" now shows that text under "Failed". Without an error text it explains in words what was seen (no progress within 10 minutes, still the old version, not finished after 60 minutes).
+
 ## [2.164.0] - 2026-10-27
 
 New app "Device updates": all open device updates in one window, startable at once.

@@ -273,6 +273,7 @@ export class UpdApp {
     let cls = "";
     let extra = "";
     let lead = "";
+    let why = "";
     if (s.kind === "waiting") line = t("appupWaiting");
     else if (s.kind === "done") {
       line = t("updDone", x.latest ?? "?");
@@ -280,13 +281,17 @@ export class UpdApp {
       lead = `<span class="ua-ic ok">${mdi("check", 16)}</span>`;
     } else if (s.kind === "failed") {
       line = t("appupFailed");
+      // Grund: die Meldung der Integration (zum Beispiel "Gerät nicht erreichbar") oder ein Kennwort des Servers, das hier übersetzt wird
+      const known = { "update failed": "appupWhyFailed", "no progress": "appupWhyNoProgress", timeout: "appupWhyTimeout" }[x.error];
+      why = known ? t(known) : x.error || "";
       cls = " bad";
       lead = `<span class="ua-ic bad">${mdi("alert", 16)}</span>`;
       extra = `<button type="button" class="ua-retry" data-ua="retry" data-entity="${escape(x.entity_id)}" title="${escape(t("appupRetry"))}" aria-label="${escape(t("appupRetry"))}">${mdi("reset", 16)}</button>`;
     } else {
-      line = s.gone ? t("updRebooting") : s.percent != null ? t("updPercent", Math.round(s.percent)) : t("updRunning");
+      const finishing = x.settling && !s.gone && !s.active;
+      line = s.gone ? t("updRebooting") : finishing ? t("updFinishing") : s.percent != null ? t("updPercent", Math.round(s.percent)) : t("updRunning");
       extra = s.gone ? `<div class="upd-bar"><i style="width:100%"></i></div>` : s.percent != null ? `<div class="upd-bar" role="progressbar" aria-valuenow="${Math.round(s.percent)}" aria-valuemin="0" aria-valuemax="100"><i style="width:${Math.max(2, Math.min(100, s.percent))}%"></i></div>` : `<div class="ver-prog"><i></i></div>`;
     }
-    return `<div class="ua-row run ${s.kind}">${lead}<div class="ua-t"><b>${escape(name)}</b><small class="ua-st${cls}">${escape(line)}</small>${s.kind === "running" ? extra : ""}</div>${s.kind === "failed" ? extra : ""}</div>`;
+    return `<div class="ua-row run ${s.kind}">${lead}<div class="ua-t"><b>${escape(name)}</b><small class="ua-st${cls}">${escape(line)}</small>${why ? `<small class="ua-why">${escape(why)}</small>` : ""}${s.kind === "running" ? extra : ""}</div>${s.kind === "failed" ? extra : ""}</div>`;
   }
 }

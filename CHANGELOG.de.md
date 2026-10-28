@@ -19,6 +19,11 @@ Entitäten lassen sich an einem Gerät als "Lebenszeichen" ausschliessen.
 
 - **Fenster "Geräte-Updates":** grössere Schrift überall (Fliesstext 16 px, Nebenzeilen 14 px, grössere Chips), auch in der Rückfrage und in der Fortschrittsansicht.
 
+### Behoben
+
+- **Update fälschlich als "Fehlgeschlagen" gezeigt (Fenster "Geräte-Updates" und Update-Fenster eines Geräts):** Viele Integrationen (beobachtet bei Shelly) schalten den Fortschritt aus und bieten noch eine Weile die alte Version an, bevor das neu gestartete Gerät die neue meldet. Das Panel meldete dann einen Fehler, obwohl das Update geklappt hatte. Jetzt zeigt es bis zu 5 Minuten "Update wird abgeschlossen …" und wertet das Update als fertig, sobald die Entität "aktuell" meldet oder sich die installierte Version ändert; ein schon gemeldeter Fehler wird zu "Fertig", wenn die neue Version später erscheint.
+- **Grund eines fehlgeschlagenen Updates:** Lehnt die Integration das Update ab oder beendet sie es mit einem Fehler (zum Beispiel "Gerät nicht erreichbar"), steht dieser Text in der Zeile unter "Fehlgeschlagen". Ohne Fehlertext erklärt die Zeile in Worten, was das Panel gesehen hat (kein Fortschritt innerhalb von 10 Minuten, weiterhin die alte Version, nach 60 Minuten nicht fertig).
+
 ## [2.164.0] - 2026-10-27
 
 Neue App "Geräte-Updates": alle offenen Geräte-Updates in einem Fenster, auf einmal startbar.

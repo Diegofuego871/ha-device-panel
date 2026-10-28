@@ -2523,6 +2523,7 @@ dialog.updapp-dlg .dlg-error { font-size: 15px; }
 .ua-st.bad { color: var(--dp-error) !important; }
 .ua-row.waiting .ua-st { color: var(--dp-text2) !important; }
 .ua-row .upd-bar, .ua-row .ver-prog { margin-top: 6px; }
+.ua-why { color: var(--dp-text2); font-size: 14px; line-height: 1.4; overflow-wrap: anywhere; }
 .ua-ic { flex: none; display: grid; place-items: center; width: 22px; height: 22px; margin-top: 1px; }
 .ua-ic.ok { color: var(--dp-success); }
 .ua-ic.bad { color: var(--dp-error); }

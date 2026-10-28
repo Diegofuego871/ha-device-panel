@@ -8,8 +8,8 @@ let ok = true;
 const check = (l, c, i = "") => { ok &&= !!c; console.log(`${c ? "PASS" : "FAIL"} ${l}${i ? " - " + i : ""}`); };
 const R = `document.querySelector("device-panel").shadowRoot`;
 const T = {
-  de: { start: "Update starten", yes: "Ja, Update starten", back: "Zurück", running: /Update läuft: 40 %/, reboot: "Das Gerät startet neu", done: /Fertig: Version 2\.2 ist installiert/, backup: "Vorher ein Backup erstellen", failed: /fehlgeschlagen/ },
-  en: { start: "Start update", yes: "Yes, start update", back: "Back", running: /Update running: 40 %/, reboot: "The device is restarting", done: /Done: version 2\.2 is installed/, backup: "Create a backup first", failed: /failed/ },
+  de: { start: "Update starten", yes: "Ja, Update starten", back: "Zurück", running: /Update läuft: 40 %/, reboot: "Das Gerät startet neu", done: /Fertig: Version 2\.2 ist installiert/, backup: "Vorher ein Backup erstellen", finishing: "Update wird abgeschlossen", failed: /fehlgeschlagen/ },
+  en: { start: "Start update", yes: "Yes, start update", back: "Back", running: /Update running: 40 %/, reboot: "The device is restarting", done: /Done: version 2\.2 is installed/, backup: "Create a backup first", finishing: "Finishing the update", failed: /failed/ },
 };
 const ENT = "update.bewegungsmelder_firmware";
 const state = (st, attrs = {}) => ({ entity_id: ENT, state: st, attributes: { supported_features: 29, installed_version: "2.1", latest_version: "2.2", release_summary: "Behebt Verbindungsabbrüche", release_url: "https://example.org/r/2.2", in_progress: false, ...attrs } });
@@ -89,6 +89,9 @@ for (const lang of ["de", "en"]) {
     await setState(state("on", { in_progress: true }));
     await wait(`return !!r.querySelector("dialog.upd-dlg .ver-prog")`);
     await setState(state("on"));
+    // Nicht sofort: die Entität steht oft noch eine Weile auf "verfügbar", das Fenster sagt "wird abgeschlossen" (Frist 5 Minuten)
+    check(`[${tag}] zurück auf "verfügbar": noch kein Fehler, "${L.finishing}"`, await wait(`return (r.querySelector("dialog.upd-dlg .upd-state")?.innerText || "").includes(${JSON.stringify(L.finishing)}) && !r.querySelector("dialog.upd-dlg .dlg-error")`));
+    await ev(`r.host._upd.backAt = Date.now() - 6 * 60 * 1000; r.host._renderUpdate()`);
     check(`[${tag}] fehlgeschlagen wird gesagt`, await wait(`return !!r.querySelector("dialog.upd-dlg .dlg-error")`) && L.failed.test(await text("dialog.upd-dlg .dlg-error")));
     await tap('dialog.upd-dlg [data-upd="close"]');
 

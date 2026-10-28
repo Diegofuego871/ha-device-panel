@@ -11,7 +11,9 @@ protokolliert; ist das Gerät nach der Wartezeit noch weg, kommt die Meldung dan
 
 from __future__ import annotations
 
+import logging
 import time
+from collections.abc import Callable
 from typing import Any
 
 from homeassistant.const import STATE_OFF, STATE_ON, STATE_UNAVAILABLE, STATE_UNKNOWN
@@ -20,6 +22,8 @@ from homeassistant.helpers import entity_registry as er
 from homeassistant.helpers.event import async_call_later, async_track_state_change_event
 
 from .const import DOMAIN
+
+_LOGGER = logging.getLogger(__name__)
 
 DATA_UPDATE_HOLD = f"{DOMAIN}_update_hold"
 
@@ -66,8 +70,13 @@ class UpdateError(Exception):
 
 
 @callback
-def async_install(hass: HomeAssistant, device_id: str, entity_id: str, backup: bool = False) -> None:
-    """Update starten: Meldungen des Geräts zurückhalten, dann update.install ohne auf das Ende zu warten."""
+def async_install(hass: HomeAssistant, device_id: str, entity_id: str, backup: bool = False, on_error: Callable[[str], None] | None = None) -> None:
+    """
+    Update starten: Meldungen des Geräts zurückhalten, dann update.install, ohne auf das Ende zu warten.
+
+    Der Dienst läuft im Hintergrund und wartet auf die Integration; meldet sie einen Fehler (zum Beispiel "Gerät nicht erreichbar"), geht
+    der Text an on_error (seit 2.165.0). Sonst bliebe nur das Protokoll von Home Assistant, und das Panel könnte den Grund nicht nennen.
+    """
     match = next((u for u in installable_updates(hass, device_id) if u["entity_id"] == entity_id), None)
     if match is None:
         raise UpdateError("no installable update for this device")
@@ -79,7 +88,16 @@ def async_install(hass: HomeAssistant, device_id: str, entity_id: str, backup: b
     data: dict[str, Any] = {"entity_id": entity_id}
     if backup:
         data["backup"] = True
-    hass.async_create_task(hass.services.async_call("update", "install", data, blocking=False))
+
+    async def _run() -> None:
+        try:
+            await hass.services.async_call("update", "install", data, blocking=True)
+        except Exception as err:  # noqa: BLE001 - jede Antwort der Integration ist für den Nutzer ein Grund
+            _LOGGER.warning("Update of %s failed: %s", entity_id, err)
+            if on_error is not None:
+                on_error(str(err) or type(err).__name__)
+
+    hass.async_create_task(_run())
 
 
 @callback
