@@ -123,3 +123,53 @@ async def test_backup_roundtrip(hass: HomeAssistant, setup) -> None:
     empty = {**file, "sections": {"devices": {**file["sections"]["devices"], "settings": {}}}}
     await backup.async_import(hass, empty, ["devices"], dry_run=False, replace=True)
     assert not hass.data[DATA_DEVICE_SETTINGS]["liveness_exclude"]
+
+
+async def test_liveness_report_for_debug_log(hass: HomeAssistant, setup) -> None:
+    """Die Zeile für das Debug-Protokoll nennt die zählenden Entitäten mit Zustand und die ausgeschlossenen (2.169.0)."""
+    from custom_components.device_panel.devices import liveness_report
+
+    hass.config.language = "de"
+    device, real, helpers = _smarthub(hass)
+    hass.states.async_set(real, "unavailable")
+    # Ohne Markierung zählen der Sensor und die drei Helfer
+    text = liveness_report(hass, device.id)
+    assert f"{real}=unavailable" in text and all(f"{h}=1.0" in text for h in helpers) and "ausgeschlossen" not in text
+    # Mit Markierung der Helfer: nur der Sensor zählt, die Helfer stehen als ausgeschlossen da
+    from custom_components.device_panel.devices import async_set_device_settings
+
+    await async_set_device_settings(hass, device.id, liveness_exclude=helpers)
+    text = liveness_report(hass, device.id)
+    assert text.startswith(f"{real}=unavailable") and "; ausgeschlossen: " in text and all(h in text for h in helpers)
+
+
+async def test_debug_log_names_the_liveness_entities(hass: HomeAssistant, setup, freezer) -> None:
+    """Bei Debug an steht beim Ausfall und bei der Rückkehr, welche Lebenszeichen-Entitäten welchen Zustand hatten (2.169.0)."""
+    from custom_components.device_panel import activity
+    from custom_components.device_panel.devices import async_set_device_settings
+
+    from .test_outage import _tick
+
+    hass.config.language = "de"
+    activity.set_debug(hass, True)
+    device, real, helpers = _smarthub(hass)
+    await async_set_device_settings(hass, device.id, liveness_exclude=helpers)
+    await _tick(hass, setup, freezer, 1)
+    hass.states.async_set(real, "unavailable")
+    await _tick(hass, setup, freezer, 3)
+    hass.states.async_set(real, "42")
+    await _tick(hass, setup, freezer, 1)
+    entries = [e for e in activity.get(hass).entries if e.get("device_id") == device.id and e["code"].startswith("outage_")]
+    seen = [e for e in entries if e["code"] == "outage_seen"]
+    back = [e for e in entries if e["code"].startswith("outage_back")]
+    assert seen and f"{real}=unavailable" in seen[0]["detail"] and "ausgeschlossen" in seen[0]["detail"]
+    assert back and f"{real}=42" in back[0]["detail"]
+
+
+async def test_liveness_report_english(hass: HomeAssistant, setup) -> None:
+    from custom_components.device_panel.devices import async_set_device_settings, liveness_report
+
+    hass.config.language = "en"
+    device, real, helpers = _smarthub(hass)
+    await async_set_device_settings(hass, device.id, liveness_exclude=helpers)
+    assert "; excluded: " in liveness_report(hass, device.id)

@@ -59,7 +59,7 @@ from .const import (
     PERSISTENT_OUTAGE_ID,
     STORAGE_VERSION,
 )
-from .devices import async_device_facts, async_mute_device, device_notify_delay, device_settings, notify_muted_until, primary_domain
+from .devices import async_device_facts, async_mute_device, device_notify_delay, device_settings, liveness_report, notify_muted_until, primary_domain
 from .scope import listed
 from .options_api import notify_target, effective
 
@@ -172,7 +172,7 @@ class OutageNotifier:
             return
         device = dr.async_get(self.hass).async_get(dev)
         name = (device.name_by_user or device.name or dev) if device is not None else dev
-        activity.record(self.hass, "debug", "outage", code, name, dev, **args)
+        activity.record(self.hass, "debug", "outage", code, name, dev, entities=liveness_report(self.hass, dev), **args)
 
     async def async_handle(self, changes: list[tuple[str, Any, float]]) -> None:
         came_back: list[tuple[str, float]] = []

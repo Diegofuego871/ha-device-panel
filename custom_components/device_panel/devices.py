@@ -228,6 +228,32 @@ def _liveness_states(hass: HomeAssistant, entries: list[er.RegistryEntry], exclu
     return states, [s for s in states if s.state in dead]
 
 
+def liveness_report(hass: HomeAssistant, device_id: str, limit: int = 8) -> str:
+    """
+    Die Lebenszeichen-Entitäten eines Geräts mit ihren Zuständen als eine Zeile für das Debug-Protokoll (seit 2.169.0), zum Beispiel
+    "Verbindungssensor: binary_sensor.x=off" oder "sensor.a=unavailable, sensor.b=unavailable; ausgeschlossen: sensor.h". Mehr als limit
+    Entitäten werden gekürzt, damit der Eintrag lesbar bleibt.
+    """
+    entries = er.async_entries_for_device(er.async_get(hass), device_id)
+    exclude = liveness_exclude(hass, device_id)
+    relevant, is_connectivity = liveness_entities(entries, exclude)
+    if not relevant:
+        return "-"
+    from .push import language  # noqa: PLC0415 (push meldet seinerseits hierher)
+
+    de = language(hass) == "de"
+    missing = "fehlt" if de else "missing"
+    parts = [f"{e.entity_id}={s.state if (s := hass.states.get(e.entity_id)) is not None else missing}" for e in relevant]
+    shown = ", ".join(parts[:limit]) + (f" (+{len(parts) - limit})" if len(parts) > limit else "")
+    text = f"{'Verbindungssensor' if de else 'Connectivity sensor'}: {shown}" if is_connectivity else shown
+    # Ausgeschlossene nur nennen, wenn die Wahl wirkt (bliebe sonst nichts übrig, gilt sie nicht)
+    used = {e.entity_id for e in relevant}
+    skipped = sorted(x for x in exclude if x not in used and any(e.entity_id == x for e in entries))
+    if skipped:
+        text += f"; {'ausgeschlossen' if de else 'excluded'}: {', '.join(skipped[:limit])}" + (f" (+{len(skipped) - limit})" if len(skipped) > limit else "")
+    return text
+
+
 def device_down_since(hass: HomeAssistant, entries: list[er.RegistryEntry], exclude: frozenset[str] | set[str] = frozenset()) -> datetime | None:
     """
     Seit wann alle lebenden Entitäten weg sind, auch unter der Schwelle

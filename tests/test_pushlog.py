@@ -181,7 +181,7 @@ async def test_system_query_levels_cats_and_debug(hass: HomeAssistant, setup, ha
     activity.record(hass, "error", "system", "ai_failed", "Device Panel", reason="Zeit", detail="x", chars=1, task="ai_task.x")
     activity.record(hass, "info", "push", "push_sent", "notify.handy", title="T")
     activity.set_debug(hass, True)
-    activity.record(hass, "debug", "outage", "outage_seen", "Lampe", dev.id, minutes=5)  # Debug mit Gerät: im System
+    activity.record(hass, "debug", "outage", "outage_seen", "Lampe", dev.id, minutes=5, entities="light.l=unavailable")  # Debug mit Gerät: im System
     now = time.time() + 5
     out = devicelog.system_query(hass, since=None, until=now)
     assert out["all"] >= 5  # der Start der Einrichtung zählt mit

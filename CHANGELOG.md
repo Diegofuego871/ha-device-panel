@@ -7,6 +7,14 @@ All notable changes to this integration are documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/).
 
+## [2.169.0] - 2026-10-28
+
+The debug log names the entities that decided an outage.
+
+### Added
+
+- **Sign-of-life entities in the debug log:** with debug mode on, the entries "detected as offline", "offline since … (began before a gap)" and "reachable again" now show in a detail line which entities counted as a sign of life and in which state, for example `Sign of life: sensor.a=unavailable, sensor.b=unavailable; excluded: sensor.helper`. A connectivity sensor is marked as such. The entities you excluded are named too, and a long list is shortened. This shows why a device counts as offline (or online again) without opening Home Assistant. Nothing changes without debug mode.
+
 ## [2.168.0] - 2026-10-28
 
 The chips "Sign of life", "Excluded" and "Others" now show as soon as an entity does not count.
@@ -5140,6 +5148,7 @@ First pre-release.
   GitHub Actions for HACS/hassfest validation and tests.
 
 [2.6.0]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v2.6.0
+[2.169.0]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v2.169.0
 [2.168.0]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v2.168.0
 [2.167.0]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v2.167.0
 [2.166.0]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v2.166.0

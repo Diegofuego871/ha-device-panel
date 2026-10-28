@@ -7,6 +7,14 @@ Alle nennenswerten Änderungen an dieser Integration stehen in dieser Datei.
 Das Format folgt [Keep a Changelog](https://keepachangelog.com/de/1.1.0/),
 die Versionsnummern folgen [Semantic Versioning](https://semver.org/lang/de/).
 
+## [2.169.0] - 2026-10-28
+
+Das Debug-Protokoll nennt die Entitäten, die einen Ausfall entschieden haben.
+
+### Hinzugefügt
+
+- **Lebenszeichen-Entitäten im Debug-Protokoll:** Bei eingeschaltetem Debug-Modus zeigen die Einträge "als ausgefallen erkannt", "ausgefallen seit … (begann vor einer Lücke)" und "wieder erreichbar" in einer Detailzeile, welche Entitäten als Lebenszeichen zählten und in welchem Zustand, zum Beispiel `Lebenszeichen: sensor.a=unavailable, sensor.b=unavailable; ausgeschlossen: sensor.helfer`. Ein Verbindungssensor ist als solcher gekennzeichnet. Auch die von dir ausgeschlossenen Entitäten werden genannt, eine lange Liste wird gekürzt. So sieht man, warum ein Gerät als ausgefallen (oder wieder online) gilt, ohne Home Assistant zu öffnen. Ohne Debug-Modus ändert sich nichts.
+
 ## [2.168.0] - 2026-10-28
 
 Die Chips "Lebenszeichen", "Ausgeschlossen" und "Übrige" erscheinen jetzt, sobald eine Entität nicht zählt.
@@ -5241,6 +5249,7 @@ Erste Vorabversion.
   GitHub Actions für die Prüfungen von HACS und hassfest sowie die Tests.
 
 [2.6.0]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v2.6.0
+[2.169.0]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v2.169.0
 [2.168.0]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v2.168.0
 [2.167.0]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v2.167.0
 [2.166.0]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v2.166.0
