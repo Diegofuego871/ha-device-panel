@@ -15,6 +15,10 @@ Filter "Lebenszeichen" in der Entitätenliste, und Updates werden nicht mehr fä
 
 - **Filter nach Lebenszeichen:** Im Geräte-Popup, Reiter "Entitäten", zeigt eine Reiterleiste unter dem Suchfeld "Alle", "Zählen mit" oder "Zählen nicht". "Zählen mit" zeigt die Entitäten, die als Lebenszeichen zählen (und nicht ausgeschlossen sind), "Zählen nicht" alle übrigen (ausgeschlossene und solche, die nie zählen, etwa Diagnose-Entitäten). Der Filter wirkt zusammen mit der Suche, die Zahl im Suchfeld zeigt, wie viele übrig sind, und er folgt einer noch nicht gespeicherten Änderung sofort. Bei Geräten mit vielen Entitäten muss man nicht mehr scrollen, um zu sehen, welche zählen.
 
+### Geändert
+
+- **Marke "Lebenszeichen" sieht aus wie ein Knopf:** kräftiger Rand in der Akzentfarbe, etwas höher, mit Druckeffekt; eine ausgeschlossene Entität hat einen gestrichelten grauen Rand und den durchgestrichenen Text.
+
 ### Behoben
 
 - **Update fälschlich als "Fehlgeschlagen" gezeigt (Fenster "Geräte-Updates" und Update-Fenster eines Geräts):** Viele Integrationen (beobachtet bei Shelly) schalten den Fortschritt aus und bieten noch eine Weile die alte Version an, bevor das neu gestartete Gerät die neue meldet. Das Panel meldete dann einen Fehler, obwohl das Update geklappt hatte. Jetzt zeigt es bis zu 5 Minuten "Update wird abgeschlossen …" und wertet das Update als fertig, sobald die Entität "aktuell" meldet oder sich die installierte Version ändert; ein schon gemeldeter Fehler wird zu "Fertig", wenn die neue Version später erscheint.

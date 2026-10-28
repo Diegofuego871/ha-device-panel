@@ -15,6 +15,10 @@ Filter "Sign of life" in the entity list, and updates are no longer wrongly show
 
 - **Filter by sign of life:** in the device pop-up, tab "Entities", a tab bar below the search field shows "All", "Counting" or "Not counting". "Counting" shows the entities that count as a sign of life (and are not excluded), "Not counting" shows all the others (excluded ones and those that never count, such as diagnostic entities). The filter works together with the search, the number in the search field shows how many are left, and it follows an unsaved change at once. On devices with many entities you no longer have to scroll to find out which ones count.
 
+### Changed
+
+- **Mark "Sign of life" looks like a button:** stronger border in the accent color, a little taller, with a press effect; an excluded entity has a dashed grey border and the crossed-out text.
+
 ### Fixed
 
 - **Update wrongly shown as "Failed" (window "Device updates" and the update window of a device):** many integrations (seen with Shelly) switch the progress off and still offer the old version for a while before the restarted device reports the new one. The panel then reported a failure although the update had worked. Now it shows "Finishing the update …" for up to 5 minutes and counts the update as done as soon as the entity says "up to date" or the installed version changes; a failure already reported turns into "Done" if the new version shows up later.

@@ -1237,8 +1237,15 @@ button.ver-link { border: none; background: none; font: inherit; font-size: 13px
 .ent-name small { display: block; color: var(--dp-text3); font-size: 12px; }
 .ent-name small.cat { display: inline; margin-left: 6px; }
 .sub-tabs.ent-filter { margin: 4px 0 10px; }
-button.pill.live { border: 0; font: inherit; font-size: 11px; cursor: pointer; }
+/* Die Marke "Lebenszeichen" ist ein Schalter (seit 2.165.0) und sieht seit 2.166.0 so aus: kräftiger Rand in der Akzentfarbe, höher, mit Druckeffekt;
+   ausgeschlossen: gestrichelter, grauer Rand und durchgestrichener Text */
+button.pill.live { height: 26px; padding: 0 11px; border: 1.5px solid var(--dp-primary); font: inherit; font-size: 12px; font-weight: 500; cursor: pointer; box-shadow: 0 1px 0 color-mix(in srgb, var(--dp-primary) 35%, transparent); transition: background .12s, transform .08s; }
+button.pill.live:hover { background: color-mix(in srgb, var(--dp-primary) 22%, transparent); }
+button.pill.live:active { transform: scale(0.95); }
+button.pill.live:focus-visible { outline: 2px solid var(--dp-primary); outline-offset: 2px; }
 .pill.live.off { color: var(--dp-text2); background: var(--dp-subtle); text-decoration: line-through; }
+button.pill.live.off { border: 1.5px dashed var(--dp-text3); box-shadow: none; }
+button.pill.live.off:hover { background: var(--dp-hover); }
 .dlg-note.small.warn { color: var(--dp-warning); }
 .pill.live { height: 19px; font-size: 11px; color: var(--dp-primary); background: var(--dp-primary-soft); }
 .ent-state { flex: none; max-width: 45%; text-align: right; overflow-wrap: anywhere; }
