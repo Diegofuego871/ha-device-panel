@@ -1,0 +1,56 @@
+<!doctype html><meta charset="utf-8"><title>Routinen, Favoriten schnell schalten</title><style>
+:root{--p:#43a047;--bg:#1c1c1c;--card:#2a2a2a;--ln:#3a3a3a;--t2:#9a9a9a}
+*{box-sizing:border-box}
+body{margin:0;background:#0d0d0d;font:14px/1.35 Roboto,Arial,sans-serif;color:#e6e6e6;padding:24px;display:grid;grid-template-columns:repeat(4,340px);gap:18px;align-items:start}
+.ph{background:var(--bg);border:1px solid var(--ln);border-radius:18px;padding:14px;display:flex;flex-direction:column;gap:10px;min-height:640px}
+.cap{color:#8a8a8a;font-size:12px;letter-spacing:.04em;text-transform:uppercase}
+.tabs{display:flex;background:#161616;border-radius:14px;padding:4px;font-size:12.5px;color:var(--t2)}.tabs span{flex:1;text-align:center;padding:6px 0;border-radius:11px}.tabs .on{background:#0b0b0b;color:#e55}
+.cnt{display:flex;justify-content:space-between;color:var(--t2);font-size:12.5px}.cnt a{color:var(--p)}
+.dc{background:var(--card);border-radius:16px;overflow:hidden}
+.dh{display:flex;align-items:center;gap:10px;padding:10px 12px}
+.ic{width:32px;height:32px;border-radius:50%;background:#1f1f1f;display:grid;place-items:center;font-size:14px}
+.t{flex:1;min-width:0}.t b{display:block;font-weight:600;font-size:15px}.t small{color:var(--t2);font-size:12px;display:block}
+.bd{background:#24402a;color:var(--p);border-radius:50%;width:24px;height:24px;display:grid;place-items:center;font-size:12px;font-weight:600}
+.cv{width:24px;height:24px;border:1.5px solid var(--p);border-radius:50%;display:grid;place-items:center;color:var(--p);font-size:11px}
+.sw{width:36px;height:20px;border-radius:99px;background:#555;position:relative;flex:none}.sw::after{content:"";position:absolute;top:2px;left:2px;width:16px;height:16px;border-radius:50%;background:#fff}.sw.on{background:var(--p)}.sw.on::after{left:18px}
+.rl{display:flex;align-items:center;gap:10px;padding:7px 12px;border-top:1px solid var(--ln)}.rl .t b{font-weight:500;font-size:14px}.rl .t small{font-size:11.5px}
+.nx{color:var(--p)}
+.fl{background:var(--card);border-radius:14px;display:flex;align-items:center;gap:10px;padding:9px 12px}
+.fl .t b{font-weight:600;font-size:14.5px}.fl .t small:first-of-type{font-size:11px}
+.note{color:var(--t2);font-size:12px}.rec{color:var(--p);font-size:12.5px;font-weight:600}.bad{color:#e5534b;font-size:12px}
+.cost{display:inline-block;background:#333;border-radius:8px;padding:1px 8px;font-size:11px;color:#aaa;width:fit-content}
+</style><body>
+
+<div class="ph"><span class="cap">0 · Heute: im Reiter ♥ starten die Karten offen, zugeklappt gibt es keinen Schalter</span>
+<div class="tabs"><span>Alle 6</span><span>Aktiv 4</span><span>Aus 2</span><span>Läuft 1</span><span class="on">♥ 2</span></div>
+<div class="cnt"><span>2 Routinen auf 2 Geräten</span><a>Alle ausklappen</a></div>
+<div class="dc"><div class="dh"><span class="ic">▮</span><span class="t"><b>myStrom Ecke Disporaum</b><small>1 Routine · <span class="nx">nächster morgen 10:00</span></small></span><span class="bd">1</span><span class="cv">⌄</span></div></div>
+<div class="dc"><div class="dh"><span class="ic">▮</span><span class="t"><b>myStrom Werkbank Disporaum</b><small>1 Routine · 1 aus</small></span><span class="bd">1</span><span class="cv">⌄</span></div></div>
+<span class="bad">Zugeklappt kein Schalter. Aufklappen zeigt Satz, Status, Schalter und die Links (Bearbeiten, Ausführen, …), die du selten brauchst.</span></div>
+
+<div class="ph"><span class="cap">A · Schalter im Kopf der zugeklappten Karte</span>
+<div class="tabs"><span>Alle 6</span><span>Aktiv 4</span><span>Aus 2</span><span>Läuft 1</span><span class="on">♥ 2</span></div>
+<div class="cnt"><span>2 Routinen auf 2 Geräten</span><a>Alle ausklappen</a></div>
+<div class="dc"><div class="dh"><span class="ic">▮</span><span class="t"><b>myStrom Ecke Disporaum</b><small>nächster <span class="nx">morgen 10:00</span></small></span><span class="sw on"></span><span class="cv">⌄</span></div></div>
+<div class="dc"><div class="dh"><span class="ic">▮</span><span class="t"><b>myStrom Werkbank Disporaum</b><small>aus</small></span><span class="sw"></span><span class="cv">⌄</span></div></div>
+<span class="note">Gleich hoch wie heute. Der Schalter ersetzt die Zahl im Kreis.</span><span class="cost">Kein Platz</span>
+<span class="bad">Geht nur bei genau einer Routine je Gerät. Hat ein Gerät zwei Favoriten, gibt es keinen eindeutigen Schalter im Kopf.</span></div>
+
+<div class="ph"><span class="cap">B · Favoriten als flache Liste</span>
+<div class="tabs"><span>Alle 6</span><span>Aktiv 4</span><span>Aus 2</span><span>Läuft 1</span><span class="on">♥ 2</span></div>
+<div class="cnt"><span>2 Routinen</span><a></a></div>
+<div class="fl"><span class="ic">▮</span><span class="t"><small>myStrom Ecke Disporaum</small><b>Ecke ein, 10:00</b><small>nächster <span class="nx">morgen 10:00</span></small></span><span class="sw on"></span></div>
+<div class="fl"><span class="ic">▮</span><span class="t"><small>myStrom Werkbank Disporaum</small><b>Werkbank ein</b><small>aus</small></span><span class="sw"></span></div>
+<span class="note">Eine Zeile je Routine, kein Auf- und Zuklappen. Antippen der Zeile öffnet die Karte mit den Links.</span><span class="cost">Etwas höher je Routine (~60 px)</span>
+<span class="bad">Anderes Aussehen als die übrigen Reiter, Geräte-Gruppierung entfällt im Reiter ♥.</span></div>
+
+<div class="ph"><span class="cap">C · Zugeklappt mit je einer Zeile pro Routine (Empfehlung)</span>
+<div class="tabs"><span>Alle 6</span><span>Aktiv 4</span><span>Aus 2</span><span>Läuft 1</span><span class="on">♥ 2</span></div>
+<div class="cnt"><span>2 Routinen auf 2 Geräten</span><a>Alle ausklappen</a></div>
+<div class="dc"><div class="dh"><span class="ic">▮</span><span class="t"><b>myStrom Ecke Disporaum</b></span><span class="cv">⌄</span></div>
+<div class="rl"><span class="t"><b>Ecke ein, 10:00</b><small>nächster <span class="nx">morgen 10:00</span></small></span><span class="sw on"></span></div></div>
+<div class="dc"><div class="dh"><span class="ic">▮</span><span class="t"><b>myStrom Werkbank Disporaum</b></span><span class="cv">⌄</span></div>
+<div class="rl"><span class="t"><b>Werkbank ein</b><small>aus</small></span><span class="sw"></span></div>
+<div class="rl"><span class="t"><b>Werkbank aus, 18:00</b><small>nächster <span class="nx">heute 18:00</span></small></span><span class="sw on"></span></div></div>
+<span class="note">Jede Karte zeigt zugeklappt ihre Favoriten mit Schalter, auch bei mehreren je Gerät. Standard: zugeklappt; Aufklappen zeigt Satz, Status und die Links.</span><span class="cost">~16 px höher je Karte</span>
+<span class="rec">Gleiche Struktur wie im ganzen Fenster, nur die Schalter sind sichtbar.</span></div>
