@@ -7,6 +7,19 @@ All notable changes to this integration are documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/).
 
+## [2.166.0] - 2026-10-28
+
+Filter "Sign of life" in the entity list, and updates are no longer wrongly shown as failed.
+
+### Added
+
+- **Filter by sign of life:** in the device pop-up, tab "Entities", a tab bar below the search field shows "All", "Counting" or "Not counting". "Counting" shows the entities that count as a sign of life (and are not excluded), "Not counting" shows all the others (excluded ones and those that never count, such as diagnostic entities). The filter works together with the search, the number in the search field shows how many are left, and it follows an unsaved change at once. On devices with many entities you no longer have to scroll to find out which ones count.
+
+### Fixed
+
+- **Update wrongly shown as "Failed" (window "Device updates" and the update window of a device):** many integrations (seen with Shelly) switch the progress off and still offer the old version for a while before the restarted device reports the new one. The panel then reported a failure although the update had worked. Now it shows "Finishing the update …" for up to 5 minutes and counts the update as done as soon as the entity says "up to date" or the installed version changes; a failure already reported turns into "Done" if the new version shows up later.
+- **Reason for a failed update:** if the integration refuses the update or ends it with an error (for example "device unreachable"), the row in "Device updates" now shows that text under "Failed". Without an error text it explains in words what was seen (no progress within 10 minutes, still the old version, not finished after 60 minutes).
+
 ## [2.165.0] - 2026-10-28
 
 Entities can be excluded as a "sign of life" on a device.
@@ -18,11 +31,6 @@ Entities can be excluded as a "sign of life" on a device.
 ### Changed
 
 - **Window "Device updates":** larger font throughout (body text 16 px, secondary lines 14 px, larger chips), also in the confirmation and the progress view.
-
-### Fixed
-
-- **Update wrongly shown as "Failed" (window "Device updates" and the update window of a device):** many integrations (seen with Shelly) switch the progress off and still offer the old version for a while before the restarted device reports the new one. The panel then reported a failure although the update had worked. Now it shows "Finishing the update …" for up to 5 minutes and counts the update as done as soon as the entity says "up to date" or the installed version changes; a failure already reported turns into "Done" if the new version shows up later.
-- **Reason for a failed update:** if the integration refuses the update or ends it with an error (for example "device unreachable"), the row in "Device updates" now shows that text under "Failed". Without an error text it explains in words what was seen (no progress within 10 minutes, still the old version, not finished after 60 minutes).
 
 ## [2.164.0] - 2026-10-27
 
@@ -5108,6 +5116,7 @@ First pre-release.
   GitHub Actions for HACS/hassfest validation and tests.
 
 [2.6.0]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v2.6.0
+[2.166.0]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v2.166.0
 [2.165.0]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v2.165.0
 [2.164.0]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v2.164.0
 [2.163.0]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v2.163.0

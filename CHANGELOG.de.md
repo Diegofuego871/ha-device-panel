@@ -7,6 +7,19 @@ Alle nennenswerten Änderungen an dieser Integration stehen in dieser Datei.
 Das Format folgt [Keep a Changelog](https://keepachangelog.com/de/1.1.0/),
 die Versionsnummern folgen [Semantic Versioning](https://semver.org/lang/de/).
 
+## [2.166.0] - 2026-10-28
+
+Filter "Lebenszeichen" in der Entitätenliste, und Updates werden nicht mehr fälschlich als fehlgeschlagen gezeigt.
+
+### Hinzugefügt
+
+- **Filter nach Lebenszeichen:** Im Geräte-Popup, Reiter "Entitäten", zeigt eine Reiterleiste unter dem Suchfeld "Alle", "Zählen mit" oder "Zählen nicht". "Zählen mit" zeigt die Entitäten, die als Lebenszeichen zählen (und nicht ausgeschlossen sind), "Zählen nicht" alle übrigen (ausgeschlossene und solche, die nie zählen, etwa Diagnose-Entitäten). Der Filter wirkt zusammen mit der Suche, die Zahl im Suchfeld zeigt, wie viele übrig sind, und er folgt einer noch nicht gespeicherten Änderung sofort. Bei Geräten mit vielen Entitäten muss man nicht mehr scrollen, um zu sehen, welche zählen.
+
+### Behoben
+
+- **Update fälschlich als "Fehlgeschlagen" gezeigt (Fenster "Geräte-Updates" und Update-Fenster eines Geräts):** Viele Integrationen (beobachtet bei Shelly) schalten den Fortschritt aus und bieten noch eine Weile die alte Version an, bevor das neu gestartete Gerät die neue meldet. Das Panel meldete dann einen Fehler, obwohl das Update geklappt hatte. Jetzt zeigt es bis zu 5 Minuten "Update wird abgeschlossen …" und wertet das Update als fertig, sobald die Entität "aktuell" meldet oder sich die installierte Version ändert; ein schon gemeldeter Fehler wird zu "Fertig", wenn die neue Version später erscheint.
+- **Grund eines fehlgeschlagenen Updates:** Lehnt die Integration das Update ab oder beendet sie es mit einem Fehler (zum Beispiel "Gerät nicht erreichbar"), steht dieser Text in der Zeile unter "Fehlgeschlagen". Ohne Fehlertext erklärt die Zeile in Worten, was das Panel gesehen hat (kein Fortschritt innerhalb von 10 Minuten, weiterhin die alte Version, nach 60 Minuten nicht fertig).
+
 ## [2.165.0] - 2026-10-28
 
 Entitäten lassen sich an einem Gerät als "Lebenszeichen" ausschliessen.
@@ -18,11 +31,6 @@ Entitäten lassen sich an einem Gerät als "Lebenszeichen" ausschliessen.
 ### Geändert
 
 - **Fenster "Geräte-Updates":** grössere Schrift überall (Fliesstext 16 px, Nebenzeilen 14 px, grössere Chips), auch in der Rückfrage und in der Fortschrittsansicht.
-
-### Behoben
-
-- **Update fälschlich als "Fehlgeschlagen" gezeigt (Fenster "Geräte-Updates" und Update-Fenster eines Geräts):** Viele Integrationen (beobachtet bei Shelly) schalten den Fortschritt aus und bieten noch eine Weile die alte Version an, bevor das neu gestartete Gerät die neue meldet. Das Panel meldete dann einen Fehler, obwohl das Update geklappt hatte. Jetzt zeigt es bis zu 5 Minuten "Update wird abgeschlossen …" und wertet das Update als fertig, sobald die Entität "aktuell" meldet oder sich die installierte Version ändert; ein schon gemeldeter Fehler wird zu "Fertig", wenn die neue Version später erscheint.
-- **Grund eines fehlgeschlagenen Updates:** Lehnt die Integration das Update ab oder beendet sie es mit einem Fehler (zum Beispiel "Gerät nicht erreichbar"), steht dieser Text in der Zeile unter "Fehlgeschlagen". Ohne Fehlertext erklärt die Zeile in Worten, was das Panel gesehen hat (kein Fortschritt innerhalb von 10 Minuten, weiterhin die alte Version, nach 60 Minuten nicht fertig).
 
 ## [2.164.0] - 2026-10-27
 
@@ -5209,6 +5217,7 @@ Erste Vorabversion.
   GitHub Actions für die Prüfungen von HACS und hassfest sowie die Tests.
 
 [2.6.0]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v2.6.0
+[2.166.0]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v2.166.0
 [2.165.0]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v2.165.0
 [2.164.0]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v2.164.0
 [2.163.0]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v2.163.0

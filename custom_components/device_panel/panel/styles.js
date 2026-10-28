@@ -1236,6 +1236,7 @@ button.ver-link { border: none; background: none; font: inherit; font-size: 13px
 .ent-name { flex: 1 1 auto; min-width: 0; overflow-wrap: anywhere; }
 .ent-name small { display: block; color: var(--dp-text3); font-size: 12px; }
 .ent-name small.cat { display: inline; margin-left: 6px; }
+.sub-tabs.ent-filter { margin: 4px 0 10px; }
 button.pill.live { border: 0; font: inherit; font-size: 11px; cursor: pointer; }
 .pill.live.off { color: var(--dp-text2); background: var(--dp-subtle); text-decoration: line-through; }
 .dlg-note.small.warn { color: var(--dp-warning); }

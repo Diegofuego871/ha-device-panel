@@ -4054,6 +4054,7 @@ class DevicePanel extends HTMLElement {
     this._detailId = id;
     this._devTab = tab;
     this._devQ = { ent: "", sw: "" };
+    this._entLive = "all";
     this._devSub = "out";
     this._detail = null;
     this._magic.open(id);
@@ -4842,9 +4843,10 @@ class DevicePanel extends HTMLElement {
 
   _devSearchCount(key, total) {
     const q = String(this._devQ?.[key] || "").trim();
-    if (!q) return "";
+    // Auch der Filter "Lebenszeichen" (seit 2.166.0) engt die Entitäten ein
+    if (!q && !(key === "ent" && this._entLive !== "all")) return "";
     const d = this._devices.find((x) => x.id === this._detailId);
-    const n = d ? (key === "sw" ? this._switchEntities(d) : this._detail?.data?.entities || []).filter((e) => this._devMatch(e, q)).length : 0;
+    const n = d ? (key === "sw" ? this._switchEntities(d).filter((e) => this._devMatch(e, q)) : (this._detail?.data?.entities || []).filter(this._entPass(d))).length : 0;
     return this._t("listSearchOf", n, total);
   }
 
@@ -4902,13 +4904,25 @@ class DevicePanel extends HTMLElement {
     if (!cur || (!cur.data && cur.loading)) return { count: 0, html: `<p class="dlg-note">${escape(this._t("loadingDetail"))}</p>` };
     if (!cur.data) return { count: 0, html: `<div class="dlg-error">${escape(this._t("error"))} ${escape(cur.error || "")}</div>` };
     const list = cur.data.entities || [];
-    return { count: list.length, html: list.length ? `${this._devSearchHtml("ent", list.length)}<div data-dev-zone="ent">${this._entListHtml(d)}</div>` : "" };
+    // Filter "Lebenszeichen" (seit 2.166.0, Reiterleiste wie überall): bei Geräten mit vielen Entitäten gleich sehen, welche zählen und welche nicht
+    const bar = `<div class="sub-tabs ent-filter" role="tablist" aria-label="${escape(this._t("entFilterLabel"))}">${[["all", "entFilterAll"], ["on", "entFilterOn"], ["off", "entFilterOff"]]
+      .map(([v, k]) => `<button type="button" role="tab" class="sub-tab${this._entLive === v ? " on" : ""}" data-dlg="ent-live" data-val="${v}" aria-selected="${this._entLive === v}">${escape(this._t(k))}</button>`)
+      .join("")}</div>`;
+    return { count: list.length, html: list.length ? `${this._devSearchHtml("ent", list.length)}${bar}<div data-dev-zone="ent">${this._entListHtml(d)}</div>` : "" };
+  }
+
+  // Wer in der Liste der Entitäten steht: Suchtext und Filter "Lebenszeichen" (zählt mit = Entität zählt und ist nicht ausgeschlossen; rechnet mit dem Entwurf)
+  _entPass(d) {
+    const off = new Set(d.liveness_exclude_setting || []);
+    const q = this._devQ?.ent;
+    const mode = this._entLive || "all";
+    return (e) => this._devMatch(e, q) && (mode === "all" || (mode === "on") === Boolean(e.liveness_base && !off.has(e.entity_id)));
   }
 
   // Die Liste der Entitäten (mit dem Suchtext des Reiters) und der Hinweis zum Lebenszeichen
   _entListHtml(d) {
     const all = this._detail?.data?.entities || [];
-    const list = all.filter((e) => this._devMatch(e, this._devQ?.ent));
+    const list = all.filter(this._entPass(d));
     if (!list.length) return `<p class="dlg-note mg-none">${escape(this._t("listSearchNone"))}</p>`;
     // Lebenszeichen (seit 2.165.0): die Marke ist ein Schalter; eine ausgeschlossene Entität zählt nicht, zum Beispiel ein selbst angelegter
     // Helfer, der immer verfügbar ist. Rechnet mit dem Entwurf (liveness_exclude_setting), bis gespeichert ist.
@@ -5164,7 +5178,11 @@ class DevicePanel extends HTMLElement {
     const action = btn.dataset.dlg;
     if (action === "close") this._requestCloseDevice();
     else if (action === "save") this._devSave();
-    else if (action === "live-toggle") {
+    else if (action === "ent-live") {
+      this._entLive = ["all", "on", "off"].includes(btn.dataset.val) ? btn.dataset.val : "all";
+      this._devForce = true;
+      this._renderDevice();
+    } else if (action === "live-toggle") {
       // Marke "Lebenszeichen" einer Entität umschalten (Entwurf wie die übrigen Einstellungen, gilt nach "Speichern")
       const d = this._devices.find((x) => x.id === this._detailId);
       const set = new Set(d?.liveness_exclude_setting || []);
