@@ -700,7 +700,7 @@
     notify_delay: 2, notify_fields: ["area", "integration", "since"], notify_exclude_integrations: [], persistent_exclude_integrations: [],
     outage_persistent: false, battery_push_exclude_integrations: [], battery_fields: ["battery", "area"],
     signal_low: {}, signal_low_integrations: {},
-    routines_pause: false, routines_catch_up: 10, protocol_max_mb: 30, protocol_max_entries: 5000, log_max_mb: 10, log_max_entries: 4000, availability_keep_days: 365, availability_max_mb: 20, signal_keep_days: 365, signal_max_mb: 50, push_keep_days: 365, push_max_mb: 10, routines_notify_error: true, status_notify: true, notify_service_status: "", status_cpu_alert: true, status_ram_alert: true, status_disk_alert: true, status_cpu_limit: 99, status_ram_limit: 99, status_disk_limit: 99, status_cpu_minutes: 3, status_ram_minutes: 3, status_disk_minutes: 3, status_cpu_entity: "", status_ram_entity: "", status_disk_entity: "",
+    routines_pause: false, routines_pause_until: 0, routines_catch_up: 10, protocol_max_mb: 30, protocol_max_entries: 5000, log_max_mb: 10, log_max_entries: 4000, availability_keep_days: 365, availability_max_mb: 20, signal_keep_days: 365, signal_max_mb: 50, push_keep_days: 365, push_max_mb: 10, routines_notify_error: true, status_notify: true, notify_service_status: "", status_cpu_alert: true, status_ram_alert: true, status_disk_alert: true, status_cpu_limit: 99, status_ram_limit: 99, status_disk_limit: 99, status_cpu_minutes: 3, status_ram_minutes: 3, status_disk_minutes: 3, status_cpu_entity: "", status_ram_entity: "", status_disk_entity: "",
     notify_new: false, new_window: 5, notify_charge: false, charge_full: 100, charge_rise: 20, notify_charge_stop: false, charge_stall: 15, charge_integrations: [], charge_full_integrations: {}, charge_rise_integrations: {}, charge_stall_integrations: {}, charge_stop_integrations: {}, charge_live: false, charge_live_integrations: {}, notify_updates: false, updates_mode: "daily", updates_time: "09:00", updates_window: 5, updates_repeat: "never", updates_kinds: ["core", "addons", "hacs"], updates_exclude: [], updates_include: [], updates_integrations_on: [], updates_integrations_off: [], new_persistent: false, new_fields: ["area", "integration"], new_exclude_integrations: [],
     // Einrichtungsassistent (seit 2.135.0): per ?wizard=new|later|open|done|off, sonst abgeschlossen (bestehende Installation)
     wizard_state: params.get("wizard") || "done", wizard_done_at: 0, wizard_draft: null,
@@ -842,7 +842,7 @@
       if (msg.type === "device_panel/backup_export" || msg.type === "device_panel/backup_import") {
         const AI = ["ai_assessment", "ai_prompt", "ai_task_entity"];
         const DISPLAY = ["chip_order", "connection_integrations", "connection_order", "exclude_integrations", "exclude_types", "hide_chips", "hide_connections", "show_disabled_devices", "show_service_devices", "type_integrations"];
-        const ROUT = ["routines_catch_up", "routines_notify_error", "routines_pause", "notify_service_routines"];
+        const ROUT = ["routines_catch_up", "routines_notify_error", "routines_pause", "routines_pause_until", "notify_service_routines"];
         const DEV = ["exclude_devices"];
         const keysOf = (sec) => sec === "ai" ? AI : sec === "display" ? DISPLAY : sec === "devices" ? DEV : sec === "routines" ? ROUT : sec === "magic" ? [] : Object.keys(window.__opts).filter((k) => ![...AI, ...DISPLAY, ...DEV, ...ROUT].includes(k));
         const SECS = ["monitor", "display", "devices", "ai", "routines", "magic"];
@@ -982,6 +982,8 @@
         if (window.__setOptsFails) throw new Error(window.__setOptsFails);
         window.__setOptsLog = (window.__setOptsLog || []).concat([JSON.parse(JSON.stringify(msg.values))]);
         if ("wizard_state" in msg.values && !["new", "later", "open", "done", "off"].includes(msg.values.wizard_state)) throw { code: "invalid_format", message: "wizard_state" };
+        if ("routines_pause_until" in msg.values && (!Number.isInteger(msg.values.routines_pause_until) || msg.values.routines_pause_until < 0)) throw { code: "invalid_format", message: "routines_pause_until" };
+        if (msg.values.routines_pause === false) msg.values.routines_pause_until = 0;
         for (const [k, [min, max]] of Object.entries(LIMITS)) {
           const v = msg.values[k];
           if (k in msg.values && (!Number.isInteger(v) || v < min || v > max)) throw { code: "invalid_format", message: `${k} out of range` };
@@ -1562,11 +1564,12 @@
             default_target: window.__opts.notify_service && window.__opts.notify_service !== "none" ? window.__opts.notify_service : "notify.mobile_app_dani_iphone",
             limits: { per_device: 20, name: 60, back_min: 10, back_max: 604800, delay_min: 10, delay_max: 604800, pause_min: 10, pause_max: 86400, hold_max: 604800 },
             now: Date.now() / 1000, today: today(),
+            paused: Boolean(window.__opts.routines_pause), paused_until: window.__opts.routines_pause ? window.__opts.routines_pause_until || 0 : 0,
           };
         }
         if (msg.type.endsWith("routine_list")) {
           if (window.__routineListFails) throw new Error(window.__routineListFails);
-          return { routines: T.list.map((r) => strip(payload(r))), now: Date.now() / 1000, today: today(), paused: Boolean(window.__opts.routines_pause) };
+          return { routines: T.list.map((r) => strip(payload(r))), now: Date.now() / 1000, today: today(), paused: Boolean(window.__opts.routines_pause), paused_until: window.__opts.routines_pause ? window.__opts.routines_pause_until || 0 : 0 };
         }
         if (msg.type.endsWith("routine_save")) {
           const raw = msg.routine;

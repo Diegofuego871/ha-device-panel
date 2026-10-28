@@ -83,7 +83,7 @@ _DISPLAY_KEYS = {
     "type_integrations",
 }
 _DEVICE_KEYS = {CONF_EXCLUDE_DEVICES}
-_ROUTINE_KEYS = {"routines_catch_up", "routines_notify_error", "routines_pause", "notify_service_routines"}
+_ROUTINE_KEYS = {"routines_catch_up", "routines_notify_error", "routines_pause", "routines_pause_until", "notify_service_routines"}
 # Der Zustand des Einrichtungsassistenten gehört zur Installation, nicht zu den Einstellungen: er steht nicht in der Sicherung
 _WIZARD_KEYS = {"wizard_state", "wizard_done_at", "wizard_draft"}
 _SCHEMA_KEYS = {str(k.schema) for k in options_api.PANEL_SCHEMA.schema} - _WIZARD_KEYS

@@ -263,6 +263,9 @@ async def _async_options_updated(hass: HomeAssistant, entry: ConfigEntry) -> Non
     # Update-Erinnerung: Zeitpunkt oder Ausschalten.
     if (update_notifier := hass.data.get(DATA_UPDATES)) is not None:
         await update_notifier.async_options_changed()
+    # Routinen: das Ende einer befristeten Pause neu planen (seit 2.175.0)
+    if (routine_manager := hass.data.get(DATA_ROUTINES)) is not None:
+        routine_manager.async_options_changed()
     # Ausfälle: Verzögerung, Integrationen, anhaltende Benachrichtigung.
     if (notifier := hass.data.get(DATA_OUTAGE)) is not None:
         await notifier.async_options_changed()

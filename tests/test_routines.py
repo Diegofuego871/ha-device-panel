@@ -960,3 +960,53 @@ async def test_failure_shows_until_seen_or_24h(hass: HomeAssistant, setup, freez
     # Überlebt das Speichern (Neustart)
     assert manager.runtime(saved["id"])["fail_at"] is not None
     assert manager._clean_runtime(dict(manager.runtime(saved["id"])))["fail_at"] == manager.runtime(saved["id"])["fail_at"]
+
+
+async def test_pause_until_resumes_by_itself(hass: HomeAssistant, setup, freezer) -> None:  # noqa: F811
+    """"Pausieren bis" (2.175.0): bis dahin werden Routinen übersprungen, danach schaltet sich alles von selbst wieder ein (Option zurückgesetzt)."""
+    freezer.move_to(_at(2026, 10, 12, 6, 0))
+    on = async_mock_service(hass, "switch", "turn_on")
+    manager = hass.data[DATA_ROUTINES]
+    until = int(_at(2026, 10, 13, 6, 0).timestamp())
+    await _options(hass, routines_pause=True, routines_pause_until=until)
+    assert manager.paused() is True and manager.paused_until() == until
+    device = _device(hass, "Steckdose")
+    plug = _switch(hass, device)
+    saved = await manager.async_save_routine(_raw(device, plug, kind="repeat", repeat="daily", time="06:30", delay_s=None))
+    await _tick(hass, freezer, 31 * 60)
+    assert on == [] and manager.runtime(saved["id"])["last"]["what"] == "paused"
+    # Zeitpunkt erreicht: Pause aus, Befristung gelöscht, die nächste Ausführung läuft
+    await _tick(hass, freezer, 24 * 3600)
+    await hass.async_block_till_done()
+    from custom_components.device_panel.options_api import effective
+
+    opts = effective(hass)
+    assert opts["routines_pause"] is False and opts["routines_pause_until"] == 0
+    assert manager.paused() is False and manager.paused_until() is None
+    await _tick(hass, freezer, 24 * 3600)
+    assert len(on) >= 1
+
+
+async def test_pause_until_in_the_past_does_not_pause(hass: HomeAssistant, setup, freezer) -> None:  # noqa: F811
+    freezer.move_to(_at(2026, 10, 12, 6, 0))
+    manager = hass.data[DATA_ROUTINES]
+    await _options(hass, routines_pause=True, routines_pause_until=int(_at(2026, 10, 11, 6, 0).timestamp()))
+    await hass.async_block_till_done()
+    assert manager.paused() is False
+
+
+async def test_pause_until_survives_backup_and_resets_on_switch_off(hass: HomeAssistant, setup) -> None:  # noqa: F811
+    """"Pausieren bis" gehört in die Sicherung; Ausschalten der Pause im Panel löscht den Zeitpunkt."""
+    from custom_components.device_panel import backup, options_api
+
+    entry = hass.config_entries.async_entries(DOMAIN)[0]
+    until = int(time.time()) + 3600
+    assert options_api.apply_values(hass, entry, {"routines_pause": True, "routines_pause_until": until})
+    file = await backup.async_export(hass, ["routines"])
+    assert file["sections"]["routines"]["options"]["routines_pause_until"] == until
+    assert options_api.apply_values(hass, entry, {"routines_pause": False, "routines_pause_until": until})
+    assert options_api.effective(hass)["routines_pause_until"] == 0
+    await backup.async_import(hass, file, ["routines"], dry_run=False)
+    opts = options_api.effective(hass)
+    assert opts["routines_pause"] is True and opts["routines_pause_until"] == until
+    assert options_api.values_from(entry.options)["routines_pause_until"] == until

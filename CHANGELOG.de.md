@@ -7,6 +7,20 @@ Alle nennenswerten Änderungen an dieser Integration stehen in dieser Datei.
 Das Format folgt [Keep a Changelog](https://keepachangelog.com/de/1.1.0/),
 die Versionsnummern folgen [Semantic Versioning](https://semver.org/lang/de/).
 
+## [2.175.0] - 2026-10-28
+
+Globale Pause der Routinen: im Reiter des Geräts klar sichtbar, und "Pausieren bis" mit Datum und Uhrzeit.
+
+### Hinzugefügt
+
+- **"Pausieren bis" in den Einstellungen (Routinen):** Unter dem Schalter "Routinen pausiert" steht ein Feld für Datum und Uhrzeit (Zeit deines Browsers). Ist sie erreicht, schaltet sich die Pause von selbst aus und alle Routinen laufen wieder; im Protokoll erscheint der Eintrag "Die Pause aller Routinen ist abgelaufen". Leer (Knopf "Ohne Ende"): Die Pause gilt, bis du sie ausschaltest. Das Feld ist nur bei eingeschalteter Pause bedienbar; eine Zeit in der Vergangenheit lässt sich nicht speichern. Wer die Pause ausschaltet (in den Einstellungen oder im Fenster Routinen), löscht auch die Zeit. Die Zeit gehört zur Sicherung des Bereichs "Routinen".
+
+### Geändert
+
+- **Pause ist im Reiter "Routinen" eines Geräts sichtbar:** Solange alle Routinen pausiert sind, sagt das eine Warnung oben im Reiter (vorher sah der Reiter aus, als liefe alles). Die Warnung, die im Fenster Routinen und die Zusammenfassung in den Einstellungen nennen die Zeit, wenn ein "Pausieren bis" gesetzt ist ("Pausiert bis Fr., 30.10.2026, 07:30: …").
+
+Nicht veröffentlicht: 2.173.1 und 2.174.0; in dieser Version enthalten.
+
 ## [2.174.0] - 2026-10-28
 
 Reiter Routinen im Geräte-Popup: Suche, Filter und zugeklappte Zeilen wie in der Übersicht.
@@ -14,6 +28,8 @@ Reiter Routinen im Geräte-Popup: Suche, Filter und zugeklappte Zeilen wie in de
 ### Geändert
 
 - **Reiter "Routinen" eines Geräts:** Es gibt jetzt ein Suchfeld (mit "n von m") und die Filter "Alle", "Aktiv", "Aus" und "Läuft" mit ihren Zahlen, immer da, sobald es eine Routine gibt (kein Reiter und kein Knopf mit dem Herz). Bei mehr als einer Routine sind alle zugeklappt, auch bei Suche und Filter (bei genau einer ist sie offen): Eine Zeile zeigt die Uhrzeit (oder den Auslöser), den Namen, wann sie als Nächstes läuft, den Schalter und den runden Pfeil. Ein Tipp auf die Zeile öffnet die Wecker-Karte mit allen Aktionen (Bearbeiten, Ausführen, Protokoll, Löschen) und einem Pfeil zum Zuklappen; die Uhrzeit ist dort kleiner als bisher (26 statt 34 px), das spart Höhe. Routinen lassen sich ohne Aufklappen ein- und ausschalten. Suche und Filter beginnen neu, wenn du ein anderes Gerät öffnest.
+
+Nicht veröffentlicht; enthalten in 2.175.0.
 
 ## [2.173.1] - 2026-10-28
 
@@ -23,7 +39,7 @@ Mehr Abstand zwischen Schalter und Pfeil in den zugeklappten Karten.
 
 - **Routinen und Magic Push, zugeklappte Karten:** Der Schalter im Kopf sitzt etwas weiter links, damit mehr Platz zum runden Pfeil bleibt, der die Karte aufklappt (etwa 28 px statt 16 px).
 
-Nicht veröffentlicht; enthalten in 2.174.0.
+Nicht veröffentlicht; enthalten in 2.175.0 (über 2.174.0).
 
 ## [2.173.0] - 2026-10-28
 
@@ -5321,7 +5337,7 @@ Erste Vorabversion.
   GitHub Actions für die Prüfungen von HACS und hassfest sowie die Tests.
 
 [2.6.0]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v2.6.0
-[2.174.0]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v2.174.0
+[2.175.0]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v2.175.0
 [2.173.0]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v2.173.0
 [2.170.1]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v2.170.1
 [2.170.0]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v2.170.0

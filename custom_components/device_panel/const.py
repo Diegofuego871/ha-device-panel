@@ -13,7 +13,7 @@ PANEL_HTML_FILE = "panel.html"
 STATIC_URL_PATH = f"/{DOMAIN}"
 PANEL_STATIC_URL_PATH = f"{STATIC_URL_PATH}/panel"
 # Cache-Buster: bei jeder Änderung unter panel/ von Hand erhöhen.
-PANEL_VERSION = "395"
+PANEL_VERSION = "396"
 PANEL_PAGE_URL = f"{PANEL_STATIC_URL_PATH}/{PANEL_HTML_FILE}?v={PANEL_VERSION}"
 
 # Mitgeliefertes Bild für Push-Meldungen (Companion-App, "icon_url"), wie in
@@ -201,6 +201,8 @@ DATA_CHARGE = f"{DOMAIN}_charge"
 # Routine (seit 2.21.0): alle pausieren (Ferien), verpasste Routinen nach einem Neustart nachholen (Minuten; 0 = nie), bei einem
 # Fehler benachrichtigen (an das Standard-Ziel, wenn die Routine keine eigene Meldung hat).
 CONF_ROUTINES_PAUSE = "routines_pause"
+# Alle Routinen pausieren bis (seit 2.175.0): Unix-Zeit in Sekunden, 0 = bis zum Wiedereinschalten von Hand
+CONF_ROUTINES_PAUSE_UNTIL = "routines_pause_until"
 CONF_ROUTINES_CATCH_UP = "routines_catch_up"
 CONF_ROUTINES_NOTIFY_ERROR = "routines_notify_error"
 DEFAULT_ROUTINES_CATCH_UP = 10

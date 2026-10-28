@@ -2230,6 +2230,14 @@ class DevicePanel extends HTMLElement {
     }
   }
 
+  // Epoch-Sekunden als Wert für <input type="datetime-local"> (Zeit des Browsers); 0 = leer
+  _localInput(sec) {
+    if (!(sec > 0)) return "";
+    const d = new Date(sec * 1000);
+    const p = (n) => String(n).padStart(2, "0");
+    return `${d.getFullYear()}-${p(d.getMonth() + 1)}-${p(d.getDate())}T${p(d.getHours())}:${p(d.getMinutes())}`;
+  }
+
   _fmtDate(sec) {
     try {
       return new Date(sec * 1000).toLocaleDateString(this._locale(), { day: "numeric", month: "short" });
@@ -7229,7 +7237,7 @@ class DevicePanel extends HTMLElement {
     return [
       ["devices", ["show_service_devices", "show_disabled_devices", ...SUB_TAB_KEYS.integrations, ...SUB_TAB_KEYS.types, ...SUB_TAB_KEYS.devs, ...SUB_TAB_KEYS.devset]],
       ["monitor", Object.values(MON_TAB_KEYS).flat()],
-      ["routines", ["routines_pause", "routines_catch_up", "notify_service_routines", "routines_notify_error"]],
+      ["routines", ["routines_pause", "routines_pause_until", "routines_catch_up", "notify_service_routines", "routines_notify_error"]],
       ["ai", ["ai_assessment", "ai_task_entity", "ai_prompt"]],
       ["updates", [...SUB_TAB_KEYS.pstart, ...SUB_TAB_KEYS.pstorage, ...SUB_TAB_KEYS.pupdates]],
     ];
@@ -7246,6 +7254,7 @@ class DevicePanel extends HTMLElement {
       const v = st.draft[key];
       if (!Number.isInteger(v) || v < min || v > max) errors[key] = this._t("settingsRange", min, max);
     }
+    if (st.draft.routines_pause && st.draft.routines_pause_until > 0 && st.draft.routines_pause_until * 1000 <= Date.now() && st.draft.routines_pause_until !== st.data.values.routines_pause_until) errors.routines_pause_until = this._t("pauseUntilPast");
     if (st.draft.update_check_time && !/^([01]\d|2[0-3]):[0-5]\d$/.test(String(st.draft.update_check_time))) errors.update_check_time = this._t("timeError");
     if (Array.isArray(st.draft.quiet_days) && st.draft.quiet_days.some((x) => x.on && !(/^([01]\d|2[0-3]):[0-5]\d$/.test(String(x.from || "")) && /^([01]\d|2[0-3]):[0-5]\d$/.test(String(x.to || ""))))) errors.quiet_days = this._t("timeError");
     if ("updates_time" in st.draft && !/^([01]\d|2[0-3]):[0-5]\d$/.test(String(st.draft.updates_time || ""))) errors.updates_time = this._t("timeError");
@@ -7524,6 +7533,7 @@ class DevicePanel extends HTMLElement {
       return d.ai_prompt ? `${base} · ${this._t("sumAiPrompt")}` : base;
     }
     if (id === "routines") {
+      if (d.routines_pause && d.routines_pause_until > 0) return this._t("sumRoutinesPausedUntil", this._fmtTime(d.routines_pause_until, true, true));
       return this._t(d.routines_pause ? "sumRoutinesPaused" : "sumRoutinesIdle");
     }
     if (id === "monitor") {
@@ -7995,6 +8005,7 @@ class DevicePanel extends HTMLElement {
       all.routines = r.routines;
       all.error = null;
       all.paused = Boolean(r.paused);
+      all.pausedUntil = r.paused_until > 0 ? r.paused_until : 0;
       this._routines._today = r.today;
       this._routines._offset = Number.isFinite(r.now) ? r.now * 1000 - Date.now() : 0;
     } catch (err) {
@@ -8136,8 +8147,9 @@ class DevicePanel extends HTMLElement {
     all.pauseBusy = true;
     all.err = "";
     try {
-      await this._hass.callWS({ type: "device_panel/set_options", values: { routines_pause: paused } });
+      await this._hass.callWS({ type: "device_panel/set_options", values: { routines_pause: paused, routines_pause_until: 0 } });
       all.paused = paused;
+      all.pausedUntil = 0;
     } catch (err) {
       all.err = this._t("rtToggleError", errText(err));
     }
@@ -9428,6 +9440,14 @@ class DevicePanel extends HTMLElement {
         <button type="button" class="lnk" data-set="check-time-auto"${daily && time ? "" : " disabled"}>${escape(t("optUpdateCheckTimeAuto"))}</button>`;
       return row("update_check_time", t("optUpdateCheckTime"), control, daily ? t("optUpdateCheckTimeShort") : t("optAutoUpdateNeedsCheck"), null);
     };
+    // "Pausieren bis" (seit 2.175.0): Datum und Uhrzeit in der Zeit des Browsers, gespeichert als Epoch-Sekunden; leer = bis zum Ausschalten
+    const pauseUntilRow = () => {
+      const on = Boolean(d.routines_pause);
+      const until = d.routines_pause_until > 0 ? d.routines_pause_until : 0;
+      const control = `<span class="opt-input wide${errors.routines_pause_until ? " bad" : ""}"><input type="datetime-local" data-opt="routines_pause_until" value="${escape(this._localInput(until))}"${on ? "" : " disabled"} aria-label="${escape(t("optRoutinesPauseUntil"))}"></span>
+        <button type="button" class="lnk" data-set="pause-until-clear"${on && until ? "" : " disabled"}>${escape(t("optRoutinesPauseUntilClear"))}</button>`;
+      return row("routines_pause_until", t("optRoutinesPauseUntil"), control, on ? t(until ? "optRoutinesPauseUntilShortSet" : "optRoutinesPauseUntilShort") : t("optRoutinesPauseUntilNeedsPause"), null);
+    };
     // Push zum Panel-Update (seit 2.25.0): Schalter, darunter der Empfänger (nur wenn an)
     const updateNotifyRows = () => {
       const daily = Boolean(d.update_check);
@@ -9755,6 +9775,7 @@ class DevicePanel extends HTMLElement {
         this._aiPromptHtml(d, changes.has("ai_prompt")),
       routines:
         row("routines_pause", t("optRoutinesPause"), sw("routines_pause", t("optRoutinesPause")), t("optRoutinesPauseShort"), null) +
+        pauseUntilRow() +
         row("routines_catch_up", t("optRoutinesCatchUp"), num("routines_catch_up", t("minuteUnit"), t("optRoutinesCatchUp")), t("optRoutinesCatchUpShort"), null) +
         ui.targetRow("routines", "optRoutinesTargetShort") +
         row("routines_notify_error", t("optRoutinesNotifyError"), sw("routines_notify_error", t("optRoutinesNotifyError")), t("optRoutinesNotifyErrorShort"), t("optRoutinesNotifyErrorInfo")),
@@ -9943,6 +9964,10 @@ class DevicePanel extends HTMLElement {
         this._wizard.open("settings");
       } else if (action === "bk-export" || action === "bk-import") {
         this._openBackup(action === "bk-export" ? "export" : "import");
+      } else if (action === "pause-until-clear") {
+        if (!st.draft) return;
+        st.draft.routines_pause_until = 0;
+        this._renderSettings();
       } else if (action === "check-time-auto") {
         // Uhrzeit der Prüfung zurück auf "automatisch"
         if (!st.draft) return;
@@ -10079,6 +10104,13 @@ class DevicePanel extends HTMLElement {
         const day = days[Number(el.dataset.qday)];
         if (day) day[el.dataset.qfield] = el.value;
         st.draft.quiet_days = days;
+        this._updateSettingsMeta();
+        return;
+      }
+      if (st?.draft && el.type === "datetime-local" && el.dataset.opt) {
+        // Leer oder unvollständig = kein Zeitpunkt (die Pause gilt dann bis zum Ausschalten)
+        const ms = el.value ? new Date(el.value).getTime() : NaN;
+        st.draft[el.dataset.opt] = Number.isFinite(ms) ? Math.floor(ms / 1000) : 0;
         this._updateSettingsMeta();
         return;
       }
@@ -10308,6 +10340,11 @@ class DevicePanel extends HTMLElement {
         if (st.extra) st.extra.anim = el.checked;
       } else if (el.dataset.autoUpdate !== undefined) {
         if (st.extra) st.extra.auto_update = el.checked;
+      } else if (el.dataset.opt === "routines_pause") {
+        st.draft.routines_pause = el.checked;
+        if (!el.checked) st.draft.routines_pause_until = 0;
+        this._renderSettings();
+        return;
       } else if (el.dataset.opt) st.draft[el.dataset.opt] = el.checked;
       else if (el.dataset.list) {
         // Angezeigt = nicht in der Liste der Ausschlüsse.
@@ -10422,6 +10459,21 @@ class DevicePanel extends HTMLElement {
       row.classList.toggle("changed", changes.includes("update_check_time"));
       const auto = row.querySelector('[data-set="check-time-auto"]');
       if (auto) auto.disabled = checkInput.disabled || !checkInput.value;
+    }
+    // "Pausieren bis" (seit 2.175.0): Markierung und Fehler nachführen, ohne Neuaufbau (Fokus bleibt im Feld)
+    const untilInput = dialog.querySelector('input[type="datetime-local"][data-opt]');
+    if (untilInput) {
+      const row = untilInput.closest(".opt");
+      untilInput.closest(".opt-input").classList.toggle("bad", Boolean(errors.routines_pause_until));
+      row.classList.toggle("invalid", Boolean(errors.routines_pause_until));
+      row.classList.toggle("changed", changes.includes("routines_pause_until"));
+      const clear = row.querySelector('[data-set="pause-until-clear"]');
+      if (clear) clear.disabled = untilInput.disabled || !st.draft.routines_pause_until;
+      const line = row.querySelector("[data-short]");
+      if (line) {
+        line.className = errors.routines_pause_until ? "opt-error" : "opt-short";
+        line.textContent = errors.routines_pause_until || this._t(st.draft.routines_pause_until ? "optRoutinesPauseUntilShortSet" : "optRoutinesPauseUntilShort");
+      }
     }
     for (const input of dialog.querySelectorAll('input[type="number"][data-opt]')) {
       const key = input.dataset.opt;

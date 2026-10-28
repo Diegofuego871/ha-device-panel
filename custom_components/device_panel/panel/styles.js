@@ -710,6 +710,7 @@ button.ai-head:focus-visible { outline: 2px solid #7c4dff; outline-offset: -2px;
 .opt-pair .opt-select { flex: 0 1 190px; }
 /* Felder mit Werten ab 10 000 (Einträge, zum Beispiel 100 000) zeigen alle Stellen (seit 2.156.1) */
 .opt-input.wide input { width: 76px; }
+.opt-input input[type="datetime-local"] { width: auto; color-scheme: light dark; text-align: left; }
 .opt-input input[type="time"] { width: auto; color-scheme: light dark; text-align: left; }
 /* Fehler schlägt "geändert" (sonst bliebe das Feld im Popup blau). */
 .opt-input.bad, .opt.changed > .opt-line .opt-input.bad { border-color: var(--dp-error); box-shadow: inset 0 0 0 1px var(--dp-error); }
@@ -758,6 +759,7 @@ button.ai-head:focus-visible { outline: 2px solid #7c4dff; outline-offset: -2px;
 /* Hinweis, wenn eine Einstellung so noch nichts bewirkt (Push ohne Ziel). */
 .opt-warn { display: flex; align-items: flex-start; gap: 6px; margin-top: 6px; padding: 7px 10px; border-radius: 8px;
   background: var(--dp-warning-soft); color: color-mix(in srgb, var(--dp-warning) 80%, var(--dp-text)); font-size: 12px; line-height: 1.35; }
+.rt-paused-note { margin: 0 0 10px; }
 .opt-warn svg { flex: none; margin-top: 1px; }
 .info-btn { display: inline-grid; place-items: center; width: 26px; height: 26px; padding: 0; border: none; border-radius: 50%; background: none; color: var(--dp-text3); cursor: pointer; }
 .info-btn:hover, .info-btn.on { color: var(--dp-primary); }

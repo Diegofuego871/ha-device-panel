@@ -12,7 +12,7 @@ from homeassistant.helpers import device_registry as dr
 from homeassistant.util import dt as dt_util
 
 from . import options_api, routines
-from .const import CONF_ROUTINES_PAUSE, DATA_ROUTINES, DOMAIN
+from .const import DATA_ROUTINES, DOMAIN
 
 
 def _manager(hass: HomeAssistant) -> routines.RoutineManager | None:
@@ -65,6 +65,9 @@ def ws_routine_get(hass: HomeAssistant, connection: websocket_api.ActiveConnecti
             "limits": _limits(),
             "now": time.time(),
             "today": dt_util.now().strftime("%Y-%m-%d"),
+            # Alle Routinen pausiert (und bis wann), damit der Reiter des Geräts es zeigt (seit 2.175.0)
+            "paused": manager.paused(),
+            "paused_until": manager.paused_until(),
         },
     )
 
@@ -87,7 +90,7 @@ def ws_routine_list(hass: HomeAssistant, connection: websocket_api.ActiveConnect
     # "paused": Alle Routinen pausieren (Option routines_pause), damit das Fenster "Routinen" den Schalter ohne zweiten Aufruf zeigt
     connection.send_result(
         msg["id"],
-        {"routines": out, "now": time.time(), "today": dt_util.now().strftime("%Y-%m-%d"), "paused": bool(options_api.effective(hass)[CONF_ROUTINES_PAUSE])},
+        {"routines": out, "now": time.time(), "today": dt_util.now().strftime("%Y-%m-%d"), "paused": manager.paused(), "paused_until": manager.paused_until()},
     )
 
 

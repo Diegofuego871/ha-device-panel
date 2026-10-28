@@ -46,13 +46,13 @@ for (const lang of ["de", "en"]) {
     await p.screenshot({ path: `${outDir}/routineall-pause-off-${tag.replace("/", "-")}.png` });
     await p.evaluate(() => { window.__wsCalls = []; });
     await tap(pauseSw);
-    check(`[${tag}] Pause einschalten: sofort set_options routines_pause true, Schalter an, Warnung "${T.note}"`, await wait(`const f = r.querySelector("${body} .rt-pause"); return f.querySelector("input").checked && f.classList.contains("on") && !!f.querySelector(".opt-warn") && f.textContent.includes(${JSON.stringify(T.note)})`) && JSON.stringify((await calls("device_panel/set_options")).at(-1)?.values) === '{"routines_pause":true}' && await p.evaluate(() => window.__opts.routines_pause === true));
+    check(`[${tag}] Pause einschalten: sofort set_options routines_pause true, Schalter an, Warnung "${T.note}"`, await wait(`const f = r.querySelector("${body} .rt-pause"); return f.querySelector("input").checked && f.classList.contains("on") && !!f.querySelector(".opt-warn") && f.textContent.includes(${JSON.stringify(T.note)})`) && JSON.stringify((await calls("device_panel/set_options")).at(-1)?.values) === '{"routines_pause":true,"routines_pause_until":0}' && await p.evaluate(() => window.__opts.routines_pause === true));
     await p.screenshot({ path: `${outDir}/routineall-pause-${tag.replace("/", "-")}.png` });
     // Das Fenster neu öffnen: der Stand bleibt (kommt aus dem Server)
     await ev(`r.host._closeRtAll(); r.host._openRtAll()`);
     check(`[${tag}] Pause: nach Neuöffnen noch an`, await wait(`const f = r.querySelector("${body} .rt-pause"); return !!f && f.querySelector("input").checked`));
     await tap(pauseSw);
-    check(`[${tag}] Pause ausschalten: set_options routines_pause false, Warnung weg`, await wait(`const f = r.querySelector("${body} .rt-pause"); return !f.querySelector("input").checked && !f.querySelector(".opt-warn")`) && JSON.stringify((await calls("device_panel/set_options")).at(-1)?.values) === '{"routines_pause":false}');
+    check(`[${tag}] Pause ausschalten: set_options routines_pause false, Warnung weg`, await wait(`const f = r.querySelector("${body} .rt-pause"); return !f.querySelector("input").checked && !f.querySelector(".opt-warn")`) && JSON.stringify((await calls("device_panel/set_options")).at(-1)?.values) === '{"routines_pause":false,"routines_pause_until":0}');
     // Speichern schlägt fehl: Fehler im Fenster, der Schalter bleibt aus
     await p.evaluate(() => { window.__setOptsFails = "Verbindung weg"; });
     await tap(pauseSw);

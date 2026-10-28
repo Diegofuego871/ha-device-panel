@@ -7,6 +7,20 @@ All notable changes to this integration are documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/).
 
+## [2.175.0] - 2026-10-28
+
+Global pause of the routines: clear in the device tab, and "Pause until" with date and time.
+
+### Added
+
+- **"Pause until" in the settings (Routines):** below the switch "Routines paused" there is a field for date and time (time of your browser). When it is reached, the pause switches itself off and all routines run again; the entry "The pause of all routines is over" appears in the log. Empty ("No end" button): the pause lasts until you turn it off. The field is only available while the pause is on; a time in the past cannot be saved. Turning the pause off (in the settings or in the Routines window) also clears the time. The time is part of the backup of the section "Routines".
+
+### Changed
+
+- **Pause is visible in the tab "Routines" of a device:** while all routines are paused, a warning at the top of the tab says so (before, the tab looked as if everything ran). The warning, the one in the Routines window and the summary in the settings name the time when a "Pause until" is set ("Paused until Fri, 30.10.2026, 07:30: …").
+
+Not released: 2.173.1 and 2.174.0; included in this version.
+
 ## [2.174.0] - 2026-10-28
 
 Routines tab in the device pop-up: search, filters and collapsed rows like the overview.
@@ -14,6 +28,8 @@ Routines tab in the device pop-up: search, filters and collapsed rows like the o
 ### Changed
 
 - **Tab "Routines" of a device:** there is now a search field (with "n of m") and the filters "All", "Active", "Off" and "Running" with their numbers, always shown as soon as there is a routine (no heart tab, no heart button). With more than one routine all are collapsed, also while searching or filtering (with exactly one it is open): a row shows the time (or the trigger), the name, when it runs next, the switch and the round arrow. A tap on the row opens the alarm-clock card with all actions (edit, run, history, delete) and an arrow to collapse it; the time there is smaller than before (26 instead of 34 px) to save height. You can switch routines on and off without expanding. Search and filter start fresh when you open another device.
+
+Not released; included in 2.175.0.
 
 ## [2.173.1] - 2026-10-28
 
@@ -23,7 +39,7 @@ More room between the switch and the arrow in the collapsed cards.
 
 - **Routines and Magic Push, collapsed cards:** the switch in the header sits a little further left, so there is more space to the round arrow that expands the card (about 28 px instead of 16 px).
 
-Not released; included in 2.174.0.
+Not released; included in 2.175.0 (via 2.174.0).
 
 ## [2.173.0] - 2026-10-28
 
@@ -5220,7 +5236,7 @@ First pre-release.
   GitHub Actions for HACS/hassfest validation and tests.
 
 [2.6.0]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v2.6.0
-[2.174.0]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v2.174.0
+[2.175.0]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v2.175.0
 [2.173.0]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v2.173.0
 [2.170.1]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v2.170.1
 [2.170.0]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v2.170.0

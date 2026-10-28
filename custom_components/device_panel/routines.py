@@ -65,6 +65,7 @@ from .const import (
     CONF_ROUTINES_CATCH_UP,
     CONF_ROUTINES_NOTIFY_ERROR,
     CONF_ROUTINES_PAUSE,
+    CONF_ROUTINES_PAUSE_UNTIL,
     DATA_PROTOCOL,
     DOMAIN,
     NOTIFY_NONE,
@@ -868,6 +869,8 @@ class RoutineManager:
         self._handles: dict[str, CALLBACK_TYPE] = {}
         self._lock = asyncio.Lock()
         self._unsubs: list[CALLBACK_TYPE] = []
+        # Ende einer befristeten Pause (seit 2.175.0)
+        self._resume_unsub: CALLBACK_TYPE | None = None
         # Auslöser (seit 2.54.0): zuletzt gesehener Stand der Bedingungen (gilt sie, kann sie nicht "neu eintreten"), laufende
         # "mindestens so lange"-Zeiten und die Beobachtung der Entitäten. Nichts davon wird gespeichert: nach einem Neustart
         # gilt der dann herrschende Stand als Ausgangslage, ein schon erfüllter Auslöser schaltet also nicht.
@@ -909,8 +912,12 @@ class RoutineManager:
             self._runtime[routine_id] = self._clean_runtime(rt if isinstance(rt, dict) else {})
         self._unsubs.append(self.hass.bus.async_listen(dr.EVENT_DEVICE_REGISTRY_UPDATED, self._on_device_registry))
         async_at_started(self.hass, self._on_started)
+        self._plan_resume()
 
     async def async_stop(self) -> None:
+        if self._resume_unsub is not None:
+            self._resume_unsub()
+            self._resume_unsub = None
         for unsub in self._unsubs:
             unsub()
         self._unsubs = []
@@ -1026,6 +1033,51 @@ class RoutineManager:
     def missed_since(self, since: float) -> int:
         """Zahl der Routinen, deren letzter Lauf seit "since" verpasst wurde (für die Zeile "Letzter Start" der Status-App)."""
         return sum(1 for r in self._routines if (last := self.runtime(r).get("last")) and last.get("what") == "missed" and last.get("at", 0) >= since)
+
+    def paused(self, now: float | None = None) -> bool:
+        """Alle Routinen pausiert (Option routines_pause), mit "pausieren bis" nur bis dahin (seit 2.175.0)."""
+        opts = effective(self.hass)
+        if not opts[CONF_ROUTINES_PAUSE]:
+            return False
+        until = opts[CONF_ROUTINES_PAUSE_UNTIL]
+        return not until or (now if now is not None else time.time()) < until
+
+    def paused_until(self) -> float | None:
+        """Bis wann die Pause gilt (Unix-Zeit), None ohne Ende oder ohne Pause."""
+        opts = effective(self.hass)
+        until = opts[CONF_ROUTINES_PAUSE_UNTIL]
+        return float(until) if opts[CONF_ROUTINES_PAUSE] and until else None
+
+    @callback
+    def async_options_changed(self) -> None:
+        """Optionen geändert: das Ende einer befristeten Pause neu planen."""
+        self._plan_resume()
+
+    @callback
+    def _plan_resume(self) -> None:
+        """Am Ende der befristeten Pause schaltet sich alles von selbst wieder ein (die Option wird zurückgesetzt, damit man es sieht)."""
+        if self._resume_unsub is not None:
+            self._resume_unsub()
+            self._resume_unsub = None
+        until = self.paused_until()
+        if until is None:
+            return
+        if until <= time.time():
+            self.hass.async_create_task(self._async_resume())
+            return
+        self._resume_unsub = async_track_point_in_utc_time(self.hass, self._on_resume_time, dt_util.utc_from_timestamp(until))
+
+    @callback
+    def _on_resume_time(self, _now: datetime) -> None:
+        self._resume_unsub = None
+        self.hass.async_create_task(self._async_resume())
+
+    async def _async_resume(self) -> None:
+        entry = next(iter(self.hass.config_entries.async_entries(DOMAIN)), None)
+        if entry is None or not effective(self.hass)[CONF_ROUTINES_PAUSE]:
+            return
+        self.hass.config_entries.async_update_entry(entry, options={**entry.options, CONF_ROUTINES_PAUSE: False, CONF_ROUTINES_PAUSE_UNTIL: 0})
+        activity.record(self.hass, "info", "routine", "routines_resumed")
 
     def failures(self, now: float | None = None) -> dict[str, Any]:
         """
@@ -1342,7 +1394,7 @@ class RoutineManager:
             rt["last"] = {"at": now, "ok": False, "what": "missed", "reason": None}
             self._finish(routine, rt, now)
             return
-        if effective(hass)[CONF_ROUTINES_PAUSE]:
+        if self.paused():
             _trace_step(trace, "result", what="paused")
             self._log(routine, "paused", src, ok=False, trace=trace)
             activity.record(hass, "info", "routine", "routine_paused", name, device)

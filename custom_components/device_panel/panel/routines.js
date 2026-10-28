@@ -497,6 +497,8 @@ export class RoutineUi {
       }
       return `${html}<p class="mg-note">${esc(t("rtLoading"))}</p>`;
     }
+    // Alle Routinen pausiert (seit 2.175.0): im Reiter des Geräts sichtbar, sonst wundert man sich, warum nichts schaltet
+    if (this.data.paused) html += `<div class="opt-warn rt-paused-note" role="status">${this.h.mdi("alert", 14)}<span>${esc(this.pausedNote(this.data.paused_until))}</span></div>`;
     const routines = this.data.routines;
     if (!routines.length) html += `<p class="mg-empty">${esc(this.data.entities.length ? t("rtEmpty") : t("rtNoEntities"))}</p>`;
     else html += this.listControlsHtml(routines) + `<div data-rt-zone>${this.listZoneHtml()}</div>`;
@@ -779,13 +781,18 @@ export class RoutineUi {
   }
 
   // Schalter "Alle Routinen pausieren"; pausiert, steht darunter in Warnfarbe, dass nichts schaltet
+  // Text der Warnung: mit "bis" nennt er den Zeitpunkt, an dem alles wieder läuft (seit 2.175.0)
+  pausedNote(until) {
+    return until > 0 ? this.t("rtPausedUntilNote", this.host._fmtTime(until, true, true)) : this.t("rtPausedNote");
+  }
+
   pauseHtml(all) {
     const esc = (v) => this.esc(v);
     const t = (k, ...a) => this.t(k, ...a);
     const label = esc(t("optRoutinesPause"));
     return `<div class="opt rt-pause${all.paused ? " on" : ""}"><div class="opt-line"><span class="opt-label">${label}</span>
         <label class="switch"><input type="checkbox" data-rta="routines-pause" ${all.paused ? "checked" : ""}${all.pauseBusy ? " disabled" : ""} aria-label="${label}"><span></span></label></div>
-        ${all.paused ? `<div class="opt-warn" role="status">${this.h.mdi("alert", 14)}<span>${esc(t("rtPausedNote"))}</span></div>` : `<div class="opt-short">${esc(t("optRoutinesPauseShort"))}</div>`}</div>`;
+        ${all.paused ? `<div class="opt-warn" role="status">${this.h.mdi("alert", 14)}<span>${esc(this.pausedNote(all.pausedUntil))}</span></div>` : `<div class="opt-short">${esc(t("optRoutinesPauseShort"))}</div>`}</div>`;
   }
 
   overviewHtml(all, devices) {

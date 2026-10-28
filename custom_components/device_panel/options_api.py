@@ -166,6 +166,7 @@ from .const import (
     DEFAULT_STATUS_LIMIT,
     DEFAULT_STATUS_LOAD_MINUTES,
     CONF_ROUTINES_PAUSE,
+    CONF_ROUTINES_PAUSE_UNTIL,
     CONF_AI_ASSESSMENT,
     CONF_AI_PROMPT,
     CONF_AI_TASK,
@@ -697,6 +698,7 @@ PANEL_SCHEMA = vol.Schema(
         vol.Optional(CONF_QUIET_DAYS): quiet.quiet_days,
         vol.Optional(CONF_WIZARD_STATE): vol.In(WIZARD_STATES),
         vol.Optional(CONF_WIZARD_DONE_AT): vol.All(vol.Coerce(int), vol.Range(min=0)),
+        vol.Optional(CONF_ROUTINES_PAUSE_UNTIL): vol.All(vol.Coerce(int), vol.Range(min=0)),
         vol.Optional(CONF_WIZARD_DRAFT): wizard_draft,
         vol.Optional(CONF_QUIET_TOPICS): quiet.quiet_topics,
         vol.Optional(CONF_QUIET_MODE): quiet.quiet_mode,
@@ -778,6 +780,8 @@ def values_from(options: Mapping[str, Any]) -> dict[str, Any]:
     values[CONF_WIZARD_STATE] = options.get(CONF_WIZARD_STATE) if options.get(CONF_WIZARD_STATE) in WIZARD_STATES else "done"
     done_at = _whole(options.get(CONF_WIZARD_DONE_AT))
     values[CONF_WIZARD_DONE_AT] = done_at if done_at is not None and done_at >= 0 else 0
+    until = _whole(options.get(CONF_ROUTINES_PAUSE_UNTIL))
+    values[CONF_ROUTINES_PAUSE_UNTIL] = until if until is not None and until > 0 else 0
     try:
         values[CONF_WIZARD_DRAFT] = wizard_draft(options.get(CONF_WIZARD_DRAFT))
     except vol.Invalid:
@@ -1082,6 +1086,10 @@ def apply_values(hass: HomeAssistant, entry: ConfigEntry, values: dict[str, Any]
                 "eine KI-Task-Entität wählen, dann lässt sich die KI-Einschätzung einschalten",
                 path=[CONF_AI_ASSESSMENT],
             )
+    # Pause ausgeschaltet: ein altes "bis" gilt nicht weiter (sonst pausiert die nächste Pause sofort bis zu einer alten Zeit)
+    if clean.get(CONF_ROUTINES_PAUSE) is False:
+        clean[CONF_ROUTINES_PAUSE_UNTIL] = 0
+        options = {**entry.options, **clean}
     if options == dict(entry.options):
         return False
     if dry_run:
