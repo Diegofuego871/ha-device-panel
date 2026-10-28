@@ -101,8 +101,6 @@ const MATTER_REFRESH_MS = 3600000;
 // Popup: Entitäten und Kurzstatistik höchstens 30 s alt, Verlauf 60 s.
 // Frist, bis ein Update, dessen Entität wieder auf "verfügbar" steht, als fehlgeschlagen gilt (siehe _renderUpdate; gleich update_queue.SETTLE_SECONDS)
 const UPD_SETTLE_MS = 5 * 60 * 1000;
-// Ab so vielen Entitäten zeigt der Reiter "Entitäten" die Chips "Lebenszeichen" (siehe _entitiesHtml)
-const ENT_FILTER_MIN = 8;
 const DETAIL_MAX_AGE_MS = 30000;
 const HISTORY_MAX_AGE_MS = 60000;
 // Batterie-Verlauf (seit 0.22.0, docs/mockups/battery-history-v1, A): dazu 3 Monate.
@@ -4906,8 +4904,8 @@ class DevicePanel extends HTMLElement {
     if (!cur || (!cur.data && cur.loading)) return { count: 0, html: `<p class="dlg-note">${escape(this._t("loadingDetail"))}</p>` };
     if (!cur.data) return { count: 0, html: `<div class="dlg-error">${escape(this._t("error"))} ${escape(cur.error || "")}</div>` };
     const list = cur.data.entities || [];
-    // Filter "Lebenszeichen" (seit 2.166.0, docs/mockups/liveness-filter-v1, C): drei Chips mit Zahl, abgewählt = alle. Die Zeile erscheint nur bei
-    // Geräten mit mindestens ENT_FILTER_MIN Entitäten (sonst gibt es nichts zu suchen); ein Chip ohne Treffer bleibt nur, solange er gewählt ist
+    // Filter "Lebenszeichen" (seit 2.166.0, docs/mockups/liveness-filter-v1, C): drei Chips mit Zahl, abgewählt = alle. Die Zeile steht bei jedem Gerät (seit
+    // 2.168.0, Wunsch des Nutzers); ein Chip ohne Treffer bleibt nur, solange er gewählt ist
     const off = new Set(d.liveness_exclude_setting || []);
     const counts = { on: 0, off: 0, rest: 0 };
     for (const e of list) counts[this._entGroup(e, off)]++;
@@ -4915,7 +4913,7 @@ class DevicePanel extends HTMLElement {
       .filter(([v]) => counts[v] > 0 || this._entLive === v)
       .map(([v, k]) => `<button type="button" class="chip${this._entLive === v ? " on" : ""}" data-dlg="ent-live" data-val="${v}" aria-pressed="${this._entLive === v}"><span>${escape(this._t(k))}</span><span class="n">${counts[v]}</span></button>`)
       .join("");
-    const bar = list.length >= ENT_FILTER_MIN && chips ? `<div class="chips ent-chips" role="group" aria-label="${escape(this._t("entFilterLabel"))}">${chips}</div>` : "";
+    const bar = chips ? `<div class="chips ent-chips" role="group" aria-label="${escape(this._t("entFilterLabel"))}">${chips}</div>` : "";
     return { count: list.length, html: list.length ? `${this._devSearchHtml("ent", list.length)}${bar}<div data-dev-zone="ent">${this._entListHtml(d)}</div>` : "" };
   }
 

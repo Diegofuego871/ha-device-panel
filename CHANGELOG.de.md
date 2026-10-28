@@ -7,6 +7,14 @@ Alle nennenswerten Änderungen an dieser Integration stehen in dieser Datei.
 Das Format folgt [Keep a Changelog](https://keepachangelog.com/de/1.1.0/),
 die Versionsnummern folgen [Semantic Versioning](https://semver.org/lang/de/).
 
+## [2.168.0] - 2026-10-28
+
+Die Chips "Lebenszeichen", "Ausgeschlossen" und "Übrige" erscheinen jetzt bei jedem Gerät.
+
+### Geändert
+
+- **Filter-Chips im Reiter "Entitäten" bei jedem Gerät:** Die Chip-Zeile erschien bisher erst ab acht Entitäten, ein Gerät mit wenigen Entitäten (zum Beispiel ein Shelly mit vier) zeigte keine Chips. Jetzt steht sie bei jedem Gerät; ein Chip ohne Entitäten entfällt (ausser er ist gewählt).
+
 ## [2.167.0] - 2026-10-28
 
 Der Filter nach Lebenszeichen ist jetzt eine schlanke Chip-Zeile, und die Kachel Software zeigt ihre Umrandung auch im hellen Design.
@@ -5233,6 +5241,7 @@ Erste Vorabversion.
   GitHub Actions für die Prüfungen von HACS und hassfest sowie die Tests.
 
 [2.6.0]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v2.6.0
+[2.168.0]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v2.168.0
 [2.167.0]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v2.167.0
 [2.166.0]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v2.166.0
 [2.165.0]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v2.165.0

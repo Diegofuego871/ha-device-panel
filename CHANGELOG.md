@@ -7,6 +7,14 @@ All notable changes to this integration are documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/).
 
+## [2.168.0] - 2026-10-28
+
+The chips "Sign of life", "Excluded" and "Others" now show on every device.
+
+### Changed
+
+- **Filter chips in the tab "Entities" on every device:** the chip row used to appear only from eight entities on, so a device with few entities (for example a Shelly with four) showed no chips. It now shows on every device; a chip without entities is left out (unless it is selected).
+
 ## [2.167.0] - 2026-10-28
 
 The sign-of-life filter is now a slim chip row, and the Software tile shows its outline in the light theme too.
@@ -5132,6 +5140,7 @@ First pre-release.
   GitHub Actions for HACS/hassfest validation and tests.
 
 [2.6.0]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v2.6.0
+[2.168.0]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v2.168.0
 [2.167.0]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v2.167.0
 [2.166.0]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v2.166.0
 [2.165.0]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v2.165.0

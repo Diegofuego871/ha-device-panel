@@ -97,7 +97,7 @@ for (const lang of ["de", "en"]) {
     await wait(`return r.querySelector("dialog.device")?.open && r.querySelector('dialog.device .dev-tabs [data-tab="ent"]')`);
     await tap('dialog.device .dev-tabs [data-tab="ent"]');
     await wait(`return r.querySelectorAll("dialog.device .entity").length >= 1`);
-    check(`[${tag}] Gerät mit wenigen Entitäten: keine Chip-Zeile`, !(await handle("dialog.device .ent-chips")) && (await rows()) < 8);
+    check(`[${tag}] Gerät mit wenigen Entitäten: Chip-Zeile steht trotzdem`, !!(await handle("dialog.device .ent-chips")) && (await rows()) < 8);
     check(`[${tag}] keine Skriptfehler`, errors.length === 0, errors.join(" | "));
     await ctx.close();
   }
