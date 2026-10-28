@@ -1755,7 +1755,18 @@ class DevicePanel extends HTMLElement {
     root.addEventListener("click", (ev) => {
       const btn = ev.target.closest?.("[data-proto]");
       if (!btn || btn.disabled || this._hass?.user?.is_admin === false) return;
-      this._protocol.open({ kind: btn.dataset.proto, itemId: btn.dataset.id || "", deviceId: btn.dataset.device || "", name: btn.dataset.name || "" });
+      let kind = btn.dataset.proto;
+      const itemId = btn.dataset.id || "";
+      const deviceId = btn.dataset.device || "";
+      // Fehlgeschlagene Routine (seit 2.172.0): das Protokoll des Geräts öffnet auf dem Reiter "Routinen" mit dem Filter "Fehlgeschlagen",
+      // das Routinen-Protokoll aller Geräte ebenso; das Öffnen gilt als gesehen (Sternschnuppe weg)
+      let filter = "all";
+      if (kind === "all" && deviceId && this._rtFailFor(deviceId)) kind = "routine";
+      if (kind === "routine") {
+        if (!itemId && this._rtFailFor(deviceId)) filter = "failed";
+        if (!itemId || deviceId) this._rtFailAck(deviceId || null);
+      }
+      this._protocol.open({ kind, itemId, deviceId, name: btn.dataset.name || "", filter });
     });
     this._bindPrompt(root.querySelector("dialog.prompt-dlg"));
     this._bindNotes(root.querySelector("dialog.notes-dlg"));
@@ -2043,9 +2054,11 @@ class DevicePanel extends HTMLElement {
       this._pulse = Array.isArray(result.pulse) ? result.pulse : null;
       // Kopfzeile (seit 2.62.0): Debug-Modus und Störungen des Status für die Punkte am Launcher oder an den angehefteten Apps
       this._debugOn = result.debug === true;
+      this._rtFail = result.routine_fail || null;
       this._statusSum = result.status || { problems: 0, down: 0 };
       this._wizardState = result.wizard || "done";
       this._apps.paintDots();
+      this._paintRtFail();
       this._incidents = result.incidents || [];
       const serverNow = Date.parse(result.now);
       this._offset = Number.isFinite(serverNow) ? serverNow - Date.now() : 0;
@@ -5058,7 +5071,7 @@ class DevicePanel extends HTMLElement {
       : "";
     // Protokoll des Geräts (seit 2.121.0): dasselbe Symbol wie in den Übersichten, links vom Herz; Links aus dem Panel stehen unten, Fenster öffnen oben
     const logBtn = d && this._viewAdmin()
-      ? `<button type="button" class="dlg-act dlg-head-log" data-proto="all" data-device="${escape(d.id)}" data-name="${escape(d.name)}" title="${escape(this._t("prAct"))}" aria-label="${escape(this._t("prAct"))}">${mdi("log", 18)}</button>`
+      ? `<button type="button" class="dlg-act dlg-head-log${this._rtFailFor(d.id) ? " has-dot dot-bad" : ""}" data-proto="all" data-device="${escape(d.id)}" data-name="${escape(d.name)}" title="${escape(this._rtFailTitle(this._rtFailFor(d.id)))}" aria-label="${escape(this._rtFailTitle(this._rtFailFor(d.id)))}">${mdi("log", 18)}</button>`
       : "";
     // Eigene Schwelle wird gerade getippt: nicht neu aufbauen, sonst ginge die
     // Eingabe beim nächsten Abfragen (alle 10 s) verloren.
@@ -7898,8 +7911,48 @@ class DevicePanel extends HTMLElement {
   // Reiter "Alles" für die Liste über alle Geräte. Nur Administratoren (der Befehl verlangt es), links vom Schliessen-Knopf, mit Strich getrennt.
   _protoHeadBtn(kind) {
     if (!this._viewAdmin()) return "";
-    const label = this._t("prAct");
-    return `<span class="dlg-acts"><button type="button" class="dlg-act" data-proto="${kind}" data-device="" data-name="" title="${escape(label)}" aria-label="${escape(label)}">${mdi("log", 18)}</button><span class="dlg-sep"></span></span>`;
+    const fail = kind === "routine" && this._rtFailFor("");
+    const label = this._rtFailTitle(fail);
+    return `<span class="dlg-acts"><button type="button" class="dlg-act${fail ? " has-dot dot-bad" : ""}" data-proto="${kind}" data-device="" data-name="" title="${escape(label)}" aria-label="${escape(label)}">${mdi("log", 18)}</button><span class="dlg-sep"></span></span>`;
+  }
+
+  // Fehlgeschlagene Routinen, die noch niemand im Routinen-Protokoll gesehen hat (seit 2.172.0; der Server hält 24 Stunden und vermerkt das Öffnen):
+  // Sternschnuppe am Launcher, an den Protokoll-Knöpfen und im Geräte-Popup. device "" = alle Geräte. Nur für Administratoren (nur sie öffnen das Protokoll).
+  _rtFailFor(device) {
+    const f = this._rtFail;
+    if (!f || !this._viewAdmin()) return false;
+    return device ? Boolean(f.devices?.[device]) : Boolean(f.at);
+  }
+
+  _rtFailTitle(fail) {
+    return fail ? `${this._t("prAct")} · ${this._t("rtFailDot")}` : this._t("prAct");
+  }
+
+  // Punkte an den Protokoll-Knöpfen nachführen, ohne die Fenster neu zu zeichnen
+  _paintRtFail() {
+    const all = this._rtFailFor("");
+    for (const b of this.shadowRoot.querySelectorAll('dialog.rtall-dlg .dlg-act[data-proto="routine"]')) {
+      b.classList.toggle("has-dot", all);
+      b.classList.toggle("dot-bad", all);
+      b.title = b.ariaLabel = this._rtFailTitle(all);
+    }
+    for (const b of this.shadowRoot.querySelectorAll("dialog.device .dlg-head-log")) {
+      const fail = this._rtFailFor(b.dataset.device);
+      b.classList.toggle("has-dot", fail);
+      b.classList.toggle("dot-bad", fail);
+      b.title = b.ariaLabel = this._rtFailTitle(fail);
+    }
+    this._apps.paintDots();
+  }
+
+  // Das Routinen-Protokoll wurde geöffnet: Fehlschläge dieses Geräts (ohne Angabe: aller) gelten als gesehen
+  _rtFailAck(device) {
+    const f = this._rtFail;
+    if (!f?.at) return;
+    this._rtFail = device ? { devices: Object.fromEntries(Object.entries(f.devices || {}).filter(([k]) => k !== device)) } : { devices: {} };
+    this._rtFail.at = Math.max(0, ...Object.values(this._rtFail.devices)) || null;
+    this._paintRtFail();
+    this._hass.callWS({ type: "device_panel/routine_ack", ...(device ? { device_id: device } : {}) }).catch(() => {});
   }
 
   _renderRtAllFrame() {

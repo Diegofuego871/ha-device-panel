@@ -595,7 +595,7 @@ export class AppLauncher {
         const icon = this._icon(a, 22);
         // "gear-btn": der angeheftete Knopf der Einstellungen (seit 2.88.0 kein fester Knopf mehr; Tests und Stile kennen ihn so)
         const rs = this.runState?.[a.id];
-        const cls = `rtall-btn app-pin${a.id === "settings" ? " gear-btn" : ""}${dot ? ` has-dot dot-${dot}` : ""}${rs ? ` run-${rs}` : ""}${a.id === "updates" && dot ? " upd" : ""}${a.id === "log" && this.host._debugOn ? " dbg" : ""}`;
+        const cls = `rtall-btn app-pin${a.id === "settings" ? " gear-btn" : ""}${dot ? ` has-dot dot-${dot}` : ""}${rs ? ` run-${rs}` : ""}${a.id === "updates" && dot ? " upd" : ""}${a.id === "log" && this.host._debugOn ? " dbg" : ""}${a.id === "routine" && dot ? " rtf" : ""}`;
         return a.ext
           ? `<a class="${cls}" href="${escape(a.url)}" target="_blank" rel="noopener noreferrer" data-app-pin="${escape(a.id)}" title="${label}" aria-label="${label}">${icon}</a>`
           : `<button type="button" class="${cls}" data-app-pin="${escape(a.id)}" title="${label}" aria-label="${label}">${icon}</button>`;
@@ -633,7 +633,7 @@ export class AppLauncher {
     const style = a.color && !a.favicon ? ` style="background:${a.color};color:#fff"` : "";
     const own = !a.color && !a.favicon ? " own" : "";
     const rs = this.runState?.[a.id];
-    return `<span class="ap-ico${sm ? " sm" : ""}${own}${rs ? ` run-${rs}` : ""}${a.id === "wizard" ? " wiz" : ""}${a.id === "updates" && this.updCount() ? " upd" : ""}${a.id === "log" && this.host._debugOn ? " dbg" : ""}"${style}>${this._icon(a, size)}</span>`;
+    return `<span class="ap-ico${sm ? " sm" : ""}${own}${rs ? ` run-${rs}` : ""}${a.id === "wizard" ? " wiz" : ""}${a.id === "updates" && this.updCount() ? " upd" : ""}${a.id === "log" && this.host._debugOn ? " dbg" : ""}${a.id === "routine" && this.rtFail() ? " rtf" : ""}"${style}>${this._icon(a, size)}</span>`;
   }
 
   // Knopf oder Verweis einer App: externe Links sind <a> (neuer Tab, kein Zugriff auf das Panel), alles andere <button>
@@ -652,6 +652,8 @@ export class AppLauncher {
     if (a.id === "wizard") return `<span class="ap-badge">${escape(this.t("wzBadge"))}</span>`;
     // Zahl der offenen Geräte-Updates (seit 2.164.0), in der Hauptfarbe
     if (a.id === "updates" && this.updCount()) return `<span class="ap-badge info">${this.updCount()}</span>`;
+    // "Fehler" (rot) an den Routinen, solange eine fehlgeschlagene Routine im Protokoll noch nicht gesehen ist (seit 2.172.0)
+    if (a.id === "routine" && this.rtFail()) return `<span class="ap-badge bad">${escape(this.t("appsRtFail"))}</span>`;
     if (a.id === "status" && this.dotLevels().pins.status) return `<span class="ap-badge bad">${escape(this.t("appsDown"))}</span>`;
     // "Neustart" (rot) an den Einstellungen, solange der rote Punkt am Zahnrad der Kopfzeile steht (Neustart nach einem Update ausstehend, seit 2.85.0)
     if (a.id === "settings" && this.host._gearRestart) return `<span class="ap-badge bad">${escape(this.t("appsRestartPending"))}</span>`;
@@ -667,7 +669,13 @@ export class AppLauncher {
     if (id === "settings") return this.t("settingsBtnRestart");
     if (id === "wizard") return this.t("wizDot");
     if (id === "updates") return this.t("appupDot", this.updCount());
+    if (id === "routine") return this.t("rtFailDot");
     return this.t(level === "bad" ? "appsDown" : "appsDebug");
+  }
+
+  // Fehlgeschlagene Routinen, die noch niemand im Routinen-Protokoll gesehen hat (seit 2.172.0)
+  rtFail() {
+    return Boolean(this.host._rtFailFor?.(""));
   }
 
   // Offene Geräte-Updates, die sich aus der App starten lassen (nur Administratoren)
@@ -685,9 +693,10 @@ export class AppLauncher {
     const bad = (this.host._statusSum?.problems || 0) > 0 && this._admin();
     const restart = Boolean(this.host._gearRestart);
     const warn = Boolean(this.host._debugOn);
+    const rtf = this.rtFail();
     const setup = Boolean(this.host._wizard?.visible());
     // Grund für den Launcher-Knopf: der erste rote, sonst der orange
-    const why = bad && !pinned.has("status") ? "status" : restart && !pinned.has("settings") ? "settings" : warn && !pinned.has("log") ? "log" : "";
+    const why = bad && !pinned.has("status") ? "status" : restart && !pinned.has("settings") ? "settings" : rtf && !pinned.has("routine") ? "routine" : warn && !pinned.has("log") ? "log" : "";
     // Einrichtung: orange, hinter allen Störungen; am eigenen Knopf, wenn angeheftet, sonst am Launcher-Knopf
     const wiz = !why && setup && !pinned.has("wizard") ? "wizard" : "";
     // Geräte-Updates: nur ein Hinweis, darum in der Hauptfarbe und hinter allem anderen (seit 2.164.0)
@@ -695,7 +704,7 @@ export class AppLauncher {
     const upd = !why && !wiz && updN && !pinned.has("updates") ? "updates" : "";
     const why2 = why || wiz || upd;
     return {
-      pins: { status: bad ? "bad" : "", settings: restart ? "bad" : "", log: warn ? "warn" : "", wizard: setup ? "warn" : "", updates: updN ? "info" : "" },
+      pins: { status: bad ? "bad" : "", settings: restart ? "bad" : "", routine: rtf ? "bad" : "", log: warn ? "warn" : "", wizard: setup ? "warn" : "", updates: updN ? "info" : "" },
       launcher: why === "log" || wiz ? "warn" : why ? "bad" : upd ? "info" : "",
       why: why2,
     };
@@ -720,7 +729,7 @@ export class AppLauncher {
   paintDots() {
     this.renderBar();
     // Der offene Launcher zeigt die Pillen: nur neu zeichnen, wenn sich etwas geändert hat (sonst störte es das Bearbeiten und Suchen)
-    const key = JSON.stringify([this.dotLevels().pins, Boolean(this.host._gearRestart), Boolean(this.host._wizard?.visible()), this.updCount()]);
+    const key = JSON.stringify([this.dotLevels().pins, Boolean(this.host._gearRestart), Boolean(this.host._wizard?.visible()), this.updCount(), this.rtFail()]);
     if (key !== this._dotKey) {
       this._dotKey = key;
       if (this.dlg?.open && !this.ui.edit) this.render();

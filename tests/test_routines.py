@@ -532,6 +532,9 @@ async def test_websocket_commands(hass: HomeAssistant, setup, hass_ws_client) ->
     assert (await call("set_options", values={"routines_pause": False}))["success"]
     assert (await call("routine_list"))["result"]["paused"] is False
     assert (await call("routine_get", device_id=device.id))["result"]["routines"][0]["id"] == routine_id
+    # Fehlschläge quittieren (2.172.0): ohne Fehlschlag leer, mit device_id oder ohne
+    assert (await call("routine_ack", device_id=device.id))["result"] == {"at": None, "devices": {}}
+    assert (await call("routine_ack"))["result"] == {"at": None, "devices": {}}
 
     disabled = await call("routine_enable", routine_id=routine_id, enabled=False)
     assert disabled["result"]["routine"]["enabled"] is False and disabled["result"]["routine"]["due"] is None
@@ -926,3 +929,34 @@ async def test_hanging_call_times_out_and_does_not_block_others(hass: HomeAssist
     assert (ok, reason) == (False, "timeout")
     # Die Sperre ist nach dem Fehler wieder zu haben
     assert not manager._lock.locked()
+
+
+async def test_failure_shows_until_seen_or_24h(hass: HomeAssistant, setup, freezer) -> None:  # noqa: F811
+    """Ein endgültiger Fehlschlag bleibt 24 Stunden gemeldet (Sternschnuppe im Panel), bis jemand das Routinen-Protokoll öffnet (2.172.0)."""
+    async_mock_service(hass, "switch", "turn_on")
+    manager = hass.data[DATA_ROUTINES]
+    device = _device(hass, "Steckdose")
+    other = _device(hass, "Lampe")
+    plug = _switch(hass, device, state="unavailable")
+    saved = await manager.async_save_routine(_raw(device, plug, delay_s=60))
+    assert manager.failures() == {"at": None, "devices": {}}
+    await _tick(hass, freezer, 61)
+    await _tick(hass, freezer, 301)
+    assert manager.failures()["at"] is None  # noch im Wiederholen: kein endgültiger Fehlschlag
+    await _tick(hass, freezer, 301)
+    fail = manager.failures()
+    assert fail["at"] is not None and list(fail["devices"]) == [device.id] and manager.runtime(saved["id"])["fail_at"] == fail["at"]
+    # Ein anderes Gerät quittiert den Fehlschlag nicht
+    manager.ack_failures(other.id)
+    assert manager.failures()["devices"] == fail["devices"]
+    # Das Protokoll des Geräts geöffnet: weg
+    manager.ack_failures(device.id)
+    assert manager.failures() == {"at": None, "devices": {}}
+    # Ohne Quittung: nach 24 Stunden weg
+    manager.runtime(saved["id"])["fail_ack"] = None
+    assert manager.failures()["at"] is not None
+    freezer.tick(timedelta(hours=24, minutes=1))
+    assert manager.failures()["at"] is None
+    # Überlebt das Speichern (Neustart)
+    assert manager.runtime(saved["id"])["fail_at"] is not None
+    assert manager._clean_runtime(dict(manager.runtime(saved["id"])))["fail_at"] == manager.runtime(saved["id"])["fail_at"]

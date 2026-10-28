@@ -7,6 +7,16 @@ All notable changes to this integration are documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/).
 
+## [2.172.0] - 2026-10-28
+
+Failed routines are noticed: shooting star, shaking icon, chip "Error" and a history that opens on the failure.
+
+### Added
+
+- **Failed routine, shooting star and chip:** when a routine fails for good (after the retries, also a failed switch back or a failed run by hand), the shooting star flies in red at the Routines button of the header (or at the launcher button if the app is not pinned). In the launcher the icon of the app "Routines" shakes and carries the chip "Error". In the Routines window the shooting star circles the History button at the top, and in the pop-up of the affected device the History button of that device (other devices stay quiet).
+- **History opens on the failure:** while the shooting star is active, the History button opens the routine history with the filter "Failed" already chosen, in the overview and in the device pop-up (there on the tab "Routines" instead of "All").
+- **How long:** 24 hours after the failure, or until you open the routine history once, from the device or from the overview (opening the history of a device clears the failures of that device, opening it from the overview clears all). The server remembers the failure and that you have seen it, also across restarts, so every browser and phone shows the same. Shown to administrators only, like the history itself.
+
 ## [2.171.0] - 2026-10-28
 
 Routines: switch on and off without expanding the cards, and less space for "Open device".
@@ -15,6 +25,8 @@ Routines: switch on and off without expanding the cards, and less space for "Ope
 
 - **Routines window, collapsed cards with switches:** if more than one device is visible, all cards are collapsed, in every tab and also while searching (with exactly one device the card is open). A collapsed card now shows the switch of its routine in the header instead of the number; a device with several routines shows one slim row per routine below the header, each with its switch. So you can switch routines on and off, for example in the tab with the heart, without expanding anything. Expanded cards keep all options (edit, run, history, delete, heart). Before, the cards in the filtered tabs and during a search started expanded, and the switch was only in the expanded card.
 - **"Open device" takes less space:** the extra line with a divider at the bottom of an expanded card (about 64 px) is gone. "Open device ›" now stands in the line below the name, behind the area.
+
+Not released; included in 2.172.0.
 
 ## [2.170.1] - 2026-10-28
 
@@ -5179,7 +5191,7 @@ First pre-release.
   GitHub Actions for HACS/hassfest validation and tests.
 
 [2.6.0]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v2.6.0
-[2.171.0]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v2.171.0
+[2.172.0]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v2.172.0
 [2.170.1]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v2.170.1
 [2.170.0]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v2.170.0
 [2.168.0]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v2.168.0

@@ -88,6 +88,9 @@ button { font: inherit; color: inherit; }
 .gear-btn.has-dot::after { content: ""; position: absolute; top: 3px; right: 3px; width: 10px; height: 10px; box-sizing: border-box; border-radius: 50%; background: var(--dp-error); border: 2px solid var(--dp-bg); }
 /* Punkt am Launcher-Knopf und an angehefteten Apps (seit 2.62.0): rot = Störung des Status, orange = Debug-Modus */
 .apps-btn, .app-pin { position: relative; }
+/* Protokoll-Knöpfe in den Fenstern (seit 2.172.0): Punkt und Sternschnuppe bei einer fehlgeschlagenen Routine, Rand wie der Grund des Fensters */
+.dlg-act.has-dot { position: relative; }
+.dlg-act.has-dot::after { content: ""; position: absolute; top: 3px; right: 3px; width: 10px; height: 10px; box-sizing: border-box; border-radius: 50%; background: var(--dp-error); border: 2px solid var(--dp-card); }
 .apps-btn.has-dot::after, .app-pin.has-dot::after { content: ""; position: absolute; top: 3px; right: 3px; width: 10px; height: 10px; box-sizing: border-box; border-radius: 50%; background: var(--dp-error); border: 2px solid var(--dp-bg); }
 .apps-btn.dot-warn::after, .app-pin.dot-warn::after { background: var(--dp-warning); }
 /* Geräte-Updates (seit 2.164.0): Hinweis, kein Fehler; Punkt und Sternschnuppe in der Hauptfarbe des Panels */
@@ -95,14 +98,14 @@ button { font: inherit; color: inherit; }
 /* Sternschnuppe (seit 2.147.0, docs/mockups/shootingstar-v1, A; seit 2.149.0 ist der Punkt selbst die Sternschnuppe): alle 10 Sekunden löst sich der Punkt vom Knopf mit Punkt
    (Launcher, angeheftete Apps, Zahnrad), huscht mit Schweif und wechselndem Tempo einmal um die Linie und setzt sich kurz vergrössert wieder hin. Farbe wie der Punkt (rot, bei Orange orange).
    Läuft auch bei "Bewegung reduzieren" (seit 2.156.1), abschaltbar im Panel (Einstellungen › Panel › Allgemein, "Animationen"). Alle Knöpfe laufen im Gleichschritt (seit 2.150.0, syncBeats in device-panel.js (Start an der nächsten vollen 10 Sekunden); der Messpunkt des Ausfall-Pulses startet im selben Takt). */
-.gear-btn.has-dot, .apps-btn.has-dot, .app-pin.has-dot { --cm: var(--dp-error); --cd: 0s; }
+.gear-btn.has-dot, .apps-btn.has-dot, .app-pin.has-dot, .dlg-act.has-dot { --cm: var(--dp-error); --cd: 0s; }
 .apps-btn.has-dot.dot-warn, .app-pin.has-dot.dot-warn { --cm: var(--dp-warning); }
 .apps-btn.has-dot.dot-info, .app-pin.has-dot.dot-info { --cm: var(--dp-primary); }
-.gear-btn.has-dot::before, .apps-btn.has-dot::before, .app-pin.has-dot::before { content: ""; position: absolute; inset: -1px; border-radius: 50%; pointer-events: none; opacity: 0;
+.gear-btn.has-dot::before, .apps-btn.has-dot::before, .app-pin.has-dot::before, .dlg-act.has-dot::before { content: ""; position: absolute; inset: -1px; border-radius: 50%; pointer-events: none; opacity: 0;
   background: conic-gradient(from 0deg, transparent 0deg, transparent 240deg, color-mix(in srgb, var(--cm) 14%, transparent) 240deg, color-mix(in srgb, var(--cm) 92%, #fff) 354deg, #fff3e0 358deg, transparent 360deg);
   -webkit-mask: radial-gradient(farthest-side, transparent calc(100% - 3px), #000 calc(100% - 3px)); mask: radial-gradient(farthest-side, transparent calc(100% - 3px), #000 calc(100% - 3px));
   animation: dp-comet 10s linear 0s infinite; }
-.gear-btn.has-dot::after, .apps-btn.has-dot::after, .app-pin.has-dot::after { animation: dp-land 10s linear 0s infinite; }
+.gear-btn.has-dot::after, .apps-btn.has-dot::after, .app-pin.has-dot::after, .dlg-act.has-dot::after { animation: dp-land 10s linear 0s infinite; }
 @keyframes dp-comet {
   0% { transform: rotate(15deg); opacity: 0; }
   0.8% { transform: rotate(45deg); opacity: 1; }
@@ -119,8 +122,8 @@ button { font: inherit; color: inherit; }
   13% { transform: scale(1.3); opacity: 1; }
   18%, 100% { transform: scale(1); opacity: 1; box-shadow: 0 0 0 8px transparent; }
 }
-:host([data-anim="off"]) .gear-btn.has-dot::before, :host([data-anim="off"]) .apps-btn.has-dot::before, :host([data-anim="off"]) .app-pin.has-dot::before { animation: none; opacity: 0; }
-:host([data-anim="off"]) .gear-btn.has-dot::after, :host([data-anim="off"]) .apps-btn.has-dot::after, :host([data-anim="off"]) .app-pin.has-dot::after { animation: none; }
+:host([data-anim="off"]) .gear-btn.has-dot::before, :host([data-anim="off"]) .apps-btn.has-dot::before, :host([data-anim="off"]) .app-pin.has-dot::before, :host([data-anim="off"]) .dlg-act.has-dot::before { animation: none; opacity: 0; }
+:host([data-anim="off"]) .gear-btn.has-dot::after, :host([data-anim="off"]) .apps-btn.has-dot::after, :host([data-anim="off"]) .app-pin.has-dot::after, :host([data-anim="off"]) .dlg-act.has-dot::after { animation: none; }
 .gear-btn:hover, .rtall-btn:hover, .apps-btn:hover { background: var(--dp-hover); color: var(--dp-text); }
 .apps-btn.on { background: var(--dp-primary-soft); border-color: transparent; color: var(--dp-primary); }
 .content { flex: 1 1 auto; min-height: 0; overflow: auto; overscroll-behavior: contain; padding: 0 20px 16px; }
@@ -200,8 +203,8 @@ button.kwarn:focus-visible { outline: 2px solid var(--dp-primary); outline-offse
 @keyframes wz-rocket { 0%, 55%, 100% { transform: translate(0, 0) rotate(0); } 60% { transform: translate(-0.7px, 0.5px) rotate(-3deg); } 65% { transform: translate(0.7px, -0.5px) rotate(3deg); } 70% { transform: translate(-0.6px, -1px) rotate(-2deg); } 75% { transform: translate(0.6px, -1.6px) rotate(2deg); } 82% { transform: translate(0, -1.8px) rotate(0); } 90% { transform: translate(0, -0.6px) rotate(0); } }
 /* Protokoll bei eingeschaltetem Debug-Modus (seit 2.170.1): wackelt wie das Symbol der Geräte-Updates, damit alle Apps mit Sternschnuppe gleich wirken */
 /* Dieselbe Rakete auf der Willkommensseite des Assistenten (seit 2.158.1), solange er nicht fertig ist; läuft auch bei "Bewegung reduzieren" (seit 2.158.2), abschaltbar über "Animationen" */
-.ap-ico.wiz svg, .ap-ico.upd svg, .app-pin.upd svg, .ap-ico.dbg svg, .app-pin.dbg svg, .wz-hero svg { animation: wz-rocket 3.2s ease-in-out infinite; transform-origin: 50% 70%; }
-:host([data-anim="off"]) .ap-ico.wiz svg, :host([data-anim="off"]) .ap-ico.upd svg, :host([data-anim="off"]) .app-pin.upd svg, :host([data-anim="off"]) .ap-ico.dbg svg, :host([data-anim="off"]) .app-pin.dbg svg, :host([data-anim="off"]) .wz-hero svg { animation: none; }
+.ap-ico.wiz svg, .ap-ico.upd svg, .app-pin.upd svg, .ap-ico.dbg svg, .app-pin.dbg svg, .ap-ico.rtf svg, .app-pin.rtf svg, .wz-hero svg { animation: wz-rocket 3.2s ease-in-out infinite; transform-origin: 50% 70%; }
+:host([data-anim="off"]) .ap-ico.wiz svg, :host([data-anim="off"]) .ap-ico.upd svg, :host([data-anim="off"]) .app-pin.upd svg, :host([data-anim="off"]) .ap-ico.dbg svg, :host([data-anim="off"]) .app-pin.dbg svg, :host([data-anim="off"]) .ap-ico.rtf svg, :host([data-anim="off"]) .app-pin.rtf svg, :host([data-anim="off"]) .wz-hero svg { animation: none; }
 @keyframes ee-reveal { from { clip-path: inset(-12px 100% -12px 0); } to { clip-path: inset(-12px 0 -12px 0); } }
 @keyframes ee-fade { 0%, 88% { opacity: 1; } 100% { opacity: 0; } }
 @keyframes ee-thump { 0%, 100% { transform: scale(1); } 15% { transform: scale(1.3); } 30% { transform: scale(1); } 45% { transform: scale(1.18); } }

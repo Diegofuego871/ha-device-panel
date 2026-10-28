@@ -85,7 +85,7 @@ export class ProtocolUi {
   // --- Öffnen und Schliessen ---------------------------------------------------
 
   // kind: "magic" oder "routine"; itemId: eine Meldung oder Routine; deviceId: alle des Geräts; name: Name des Eintrags oder Geräts
-  open({ kind, itemId = "", deviceId = "", name = "" }) {
+  open({ kind, itemId = "", deviceId = "", name = "", filter = "all" }) {
     const dlg = this.dlg;
     if (!dlg || !FILTERS[kind]) return;
     window.clearTimeout(this._searchTimer);
@@ -103,7 +103,7 @@ export class ProtocolUi {
       range: kind === "system" ? "all" : "30d",
       rangeBack: "30d",
       own: null,
-      filter: "all",
+      filter: FILTERS[kind]?.includes(filter) ? filter : "all",
       item: kind === "magic" || kind === "routine" ? itemId : "",
       pickOpen: false,
       // Von einer Karte geöffnet: die Chips stehen auch bei nur einem Eintrag da, damit man den Filter sieht und aufheben kann

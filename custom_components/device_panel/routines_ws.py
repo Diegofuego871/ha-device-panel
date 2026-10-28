@@ -141,6 +141,19 @@ async def ws_routine_enable(hass: HomeAssistant, connection: websocket_api.Activ
     connection.send_result(msg["id"], {"routine": routines.routine_payload(hass, manager, routine)})
 
 
+@websocket_api.websocket_command({vol.Required("type"): f"{DOMAIN}/routine_ack", vol.Optional("device_id"): vol.Any(str, None)})
+@websocket_api.require_admin
+@websocket_api.async_response
+async def ws_routine_ack(hass: HomeAssistant, connection: websocket_api.ActiveConnection, msg: dict[str, Any]) -> None:
+    """Fehlschläge als gesehen vermerken (das Routinen-Protokoll wurde geöffnet, seit 2.172.0): die eines Geräts, ohne Angabe alle."""
+    manager = _manager(hass)
+    if manager is None:
+        connection.send_error(msg["id"], websocket_api.ERR_NOT_FOUND, "integration not set up")
+        return
+    manager.ack_failures(msg.get("device_id"))
+    connection.send_result(msg["id"], manager.failures())
+
+
 @websocket_api.websocket_command({vol.Required("type"): f"{DOMAIN}/routine_run", vol.Required("routine_id"): str})
 @websocket_api.require_admin
 @websocket_api.async_response
@@ -209,4 +222,4 @@ async def ws_routine_try(hass: HomeAssistant, connection: websocket_api.ActiveCo
     connection.send_result(msg["id"], {"ok": ok, "reason": reason})
 
 
-COMMANDS = (ws_routine_try, ws_routine_devices, ws_routine_get, ws_routine_list, ws_routine_save, ws_routine_delete, ws_routine_enable, ws_routine_run, ws_routine_preview, ws_routine_test)
+COMMANDS = (ws_routine_try, ws_routine_devices, ws_routine_get, ws_routine_list, ws_routine_save, ws_routine_delete, ws_routine_enable, ws_routine_ack, ws_routine_run, ws_routine_preview, ws_routine_test)

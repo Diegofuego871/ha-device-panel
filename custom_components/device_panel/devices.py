@@ -57,6 +57,7 @@ from .const import (
     CONF_HIDE_CONNECTIONS,
     CONNECTION_MANUAL,
     DATA_BLE_BEST,
+    DATA_ROUTINES,
     DATA_SIGNAL,
     DATA_BLE_STAMPS,
     DATA_CONNECTION_OVERRIDES,
@@ -690,6 +691,12 @@ def _update(hass: HomeAssistant, entries: list[er.RegistryEntry]) -> str | None:
         if state is not None and state.state == STATE_ON:
             return _attr(state, "latest_version") or "?"
     return None
+
+
+def routine_failures(hass: HomeAssistant) -> dict[str, Any]:
+    """Fehlschläge der Routinen (routines.Manager.failures); ohne Routinen leer."""
+    manager = hass.data.get(DATA_ROUTINES)
+    return manager.failures() if manager is not None else {"at": None, "devices": {}}
 
 
 def _update_install(hass: HomeAssistant, entries: list[er.RegistryEntry]) -> bool:
@@ -1723,6 +1730,8 @@ async def async_list_devices(hass: HomeAssistant, log: Any = None) -> dict[str, 
         "incidents": [],
         # Für die Kopfzeile (seit 2.62.0): Debug-Modus und Störungen der Status-App, damit Punkte am Launcher oder an der angehefteten App stehen
         "debug": activity.get(hass).debug,
+        # Fehlgeschlagene Routinen, die noch niemand im Protokoll gesehen hat (seit 2.172.0): Sternschnuppe an Launcher, Protokoll-Knöpfen und Geräten
+        "routine_fail": routine_failures(hass),
         # Einrichtungsassistent (seit 2.135.0): Zustand für das Fenster, die Kachel und den Punkt im Launcher
         "wizard": opts[CONF_WIZARD_STATE],
         "status": status_watch.summary() if (status_watch := hass.data.get(DATA_STATUS)) is not None else {"problems": 0, "down": 0},

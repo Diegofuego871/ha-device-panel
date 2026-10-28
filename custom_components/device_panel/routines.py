@@ -97,6 +97,8 @@ REPEATS = ("daily", "weekly", "monthly")
 # Wiederholungen bei nicht erreichbarer Entität: zwei weitere Versuche im Abstand von 5 Minuten
 RETRY_S = 300
 MAX_RETRY = 2
+# So lange zeigt das Panel einen Fehlschlag mit der Sternschnuppe, wenn niemand das Routinen-Protokoll öffnet (seit 2.172.0)
+FAIL_HOURS = 24
 # Erledigte Countdowns räumen sich nach 24 Stunden selbst auf; erledigte "einmal"-Routinen bleiben.
 COUNTDOWN_KEEP_S = 86400
 # Toleranz: eine Routine, der später als das (mindestens) ausgeführt würde, gilt als verpasst
@@ -972,6 +974,9 @@ class RoutineManager:
             "retry": int(raw["retry"]) if isinstance(raw.get("retry"), int) else 0,
             "rretry": int(raw["rretry"]) if isinstance(raw.get("rretry"), int) else 0,
             "last": last if isinstance(last, dict) else None,
+            # Letzter endgültiger Fehlschlag und wann ihn jemand im Routinen-Protokoll gesehen hat (seit 2.172.0, für die Sternschnuppe)
+            "fail_at": num("fail_at"),
+            "fail_ack": num("fail_ack"),
         }
 
     @callback
@@ -1021,6 +1026,36 @@ class RoutineManager:
     def missed_since(self, since: float) -> int:
         """Zahl der Routinen, deren letzter Lauf seit "since" verpasst wurde (für die Zeile "Letzter Start" der Status-App)."""
         return sum(1 for r in self._routines if (last := self.runtime(r).get("last")) and last.get("what") == "missed" and last.get("at", 0) >= since)
+
+    def failures(self, now: float | None = None) -> dict[str, Any]:
+        """
+        Routinen mit einem Fehlschlag, den noch niemand im Protokoll gesehen hat und der höchstens FAIL_HOURS Stunden zurückliegt (seit 2.172.0):
+        {"at": jüngster Zeitpunkt oder None, "devices": {Geräte-ID: jüngster Zeitpunkt}}. Das Panel zeigt dafür die Sternschnuppe.
+        """
+        now = now if now is not None else time.time()
+        devices: dict[str, float] = {}
+        for routine in self._routines.values():
+            rt = self.runtime(routine["id"])
+            at = rt.get("fail_at")
+            if at is None or now - at > FAIL_HOURS * 3600 or at <= (rt.get("fail_ack") or 0):
+                continue
+            key = routine["device_id"] or ""
+            devices[key] = max(devices.get(key, 0.0), at)
+        return {"at": max(devices.values(), default=None), "devices": devices}
+
+    def ack_failures(self, device_id: str | None = None, now: float | None = None) -> None:
+        """Fehlschläge als gesehen vermerken (das Routinen-Protokoll wurde geöffnet): eines Geräts, ohne Angabe aller Routinen."""
+        now = now if now is not None else time.time()
+        changed = False
+        for routine in self._routines.values():
+            if device_id is not None and routine["device_id"] != device_id:
+                continue
+            rt = self.runtime(routine["id"])
+            if rt.get("fail_at") is not None and (rt.get("fail_ack") or 0) < rt["fail_at"]:
+                rt["fail_ack"] = max(now, rt["fail_at"])
+                changed = True
+        if changed:
+            self._save()
 
     def get(self, routine_id: str) -> dict[str, Any] | None:
         return self._routines.get(routine_id)
@@ -1341,6 +1376,7 @@ class RoutineManager:
             return
         rt["last"] = {"at": now, "ok": False, "what": "failed", "reason": reason}
         activity.record(hass, "error", "routine", "routine_failed", name, device, entity=self._entity_name(routine))
+        rt["fail_at"] = now
         await self._async_notify(routine, ok=False, action=routine["action"], reason=reason or "error", trace=trace)
         _trace_step(trace, "result", what="failed")
         self._log(routine, "failed", src, ok=False, act=routine["action"], err=reason, late=late, trace=trace)
@@ -1432,6 +1468,7 @@ class RoutineManager:
         rt.update(revert_due=None, revert_action=None, rretry=0, snapshot=None)
         self._end_done(routine)
         activity.record(hass, "error", "routine", "routine_failed", name, device, entity=self._entity_name(routine))
+        rt["fail_at"] = now
         await self._async_notify(routine, ok=False, action=action, reason=reason or "error", trace=trace)
         _trace_step(trace, "result", what="failed")
         self._log(routine, "failed", "revert", ok=False, act=action, err=reason, trace=trace)
@@ -1460,6 +1497,7 @@ class RoutineManager:
                 self._log(routine, "run", "manual", ok=True, act=routine["action"], trace=trace)
             else:
                 activity.record(self.hass, "error", "routine", "routine_failed", routine["name"], log_device(routine), entity=self._entity_name(routine))
+                rt["fail_at"] = now
                 rt["last"] = {"at": now, "ok": False, "what": "failed", "reason": reason}
                 await self._async_notify(routine, ok=False, action=routine["action"], reason=reason or "error", trace=trace)
                 _trace_step(trace, "result", what="failed")

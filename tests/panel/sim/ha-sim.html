@@ -403,6 +403,7 @@
     }
   };
   window.__uqSet = (entity, status, error = null) => { const x = (window.__uq || []).find((q) => q.entity_id === entity); if (x) { x.status = status; x.error = error; } window.__uqPump(); };
+  if (new URLSearchParams(location.search).has("rtfail")) window.__rtFail = { at: Date.now() / 1000 - 600, devices: { d: Date.now() / 1000 - 600 } };
   function withInstall(d) { if (d.update_install === undefined) d.update_install = new URLSearchParams(location.search).has("updapp") && Boolean(d.update); return d; }
   const off = (min, extra = {}) => ({ online: false, offline_since: ago(min), ...extra });
   const TITLES = {
@@ -1592,6 +1593,13 @@
           T.list.splice(i, 1);
           return { deleted: msg.routine_id };
         }
+        // 2.172.0: Fehlschläge quittieren (das Routinen-Protokoll wurde geöffnet); ?rtfail=1 startet mit einem Fehlschlag am Gerät "d"
+        if (msg.type.endsWith("routine_ack")) {
+          const f = window.__rtFail || { at: null, devices: {} };
+          const rest = Object.fromEntries(Object.entries(f.devices).filter(([k]) => msg.device_id !== undefined && msg.device_id !== null && k !== msg.device_id));
+          window.__rtFail = { at: Math.max(0, ...Object.values(rest)) || null, devices: rest };
+          return window.__rtFail;
+        }
         if (msg.type.endsWith("routine_enable")) {
           const r = T.list.find((x) => x.id === msg.routine_id);
           if (!r) throw { code: "not_found", message: "routine not found" };
@@ -1994,6 +2002,7 @@
           })),
           ai_assessment: Boolean(window.__opts.ai_assessment),
           debug: Boolean(window.__log?.debug), status: window.__statusSum(), wizard: window.__opts.wizard_state,
+          routine_fail: window.__rtFail || { at: null, devices: {} },
           integrations, now: new Date().toISOString(), offline_after: window.__opts.offline_after * 60, battery_low: batLow,
           flaky_outages: flakyN, hide_chips: [...window.__opts.hide_chips], hide_connections: [...window.__opts.hide_connections], connection_order: [...window.__opts.connection_order], chip_order: [...window.__opts.chip_order], pulse: pulse(), incidents,
           areas: window.__areas.map((a) => ({ ...a })), floors: window.__floors.map((f) => ({ ...f })),
