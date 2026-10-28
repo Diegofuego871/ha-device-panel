@@ -7,6 +7,15 @@ Alle nennenswerten Änderungen an dieser Integration stehen in dieser Datei.
 Das Format folgt [Keep a Changelog](https://keepachangelog.com/de/1.1.0/),
 die Versionsnummern folgen [Semantic Versioning](https://semver.org/lang/de/).
 
+## [2.171.0] - 2026-10-28
+
+Routinen: ein- und ausschalten ohne Aufklappen, und weniger Platz für "Gerät öffnen".
+
+### Geändert
+
+- **Fenster Routinen, zugeklappte Karten mit Schaltern:** Sind mehrere Geräte sichtbar, sind alle Karten zugeklappt, in jedem Reiter und auch bei einer Suche (bei genau einem Gerät ist die Karte offen). Eine zugeklappte Karte zeigt jetzt den Schalter ihrer Routine im Kopf anstelle der Zahl; ein Gerät mit mehreren Routinen zeigt unter dem Kopf je Routine eine schlanke Zeile mit eigenem Schalter. So lassen sich Routinen ein- und ausschalten, zum Beispiel im Reiter mit dem Herz, ohne etwas aufzuklappen. Aufgeklappte Karten behalten alle Optionen (Bearbeiten, Ausführen, Protokoll, Löschen, Herz). Bisher starteten die Karten in den gefilterten Reitern und bei einer Suche aufgeklappt, und der Schalter stand nur in der aufgeklappten Karte.
+- **"Gerät öffnen" braucht weniger Platz:** Die eigene Zeile mit Trennlinie unten in einer aufgeklappten Karte (etwa 64 px) entfällt. "Gerät öffnen ›" steht jetzt in der Zeile unter dem Namen, hinter dem Bereich.
+
 ## [2.170.1] - 2026-10-28
 
 Das letzte Lebenszeichen lässt sich nicht mehr ausschliessen, und das Symbol der App "Protokoll" wackelt, solange der Debug-Modus an ist.
@@ -5271,6 +5280,7 @@ Erste Vorabversion.
   GitHub Actions für die Prüfungen von HACS und hassfest sowie die Tests.
 
 [2.6.0]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v2.6.0
+[2.171.0]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v2.171.0
 [2.170.1]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v2.170.1
 [2.170.0]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v2.170.0
 [2.168.0]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v2.168.0

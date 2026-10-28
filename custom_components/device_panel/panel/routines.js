@@ -665,9 +665,11 @@ export class RoutineUi {
     return Boolean(this.allQuery(all)) || (all.filter || "all") !== "all";
   }
 
+  // Aufgeklappt (seit 2.171.0): in jeder Ansicht und auch bei einer Suche zu, sobald mehr als ein Gerät sichtbar ist; bei genau einem Gerät offen.
+  // Eine eigene Wahl (Tipp auf den Kopf) gilt, bis Filter oder Suche wechseln. nGroups = Zahl der sichtbaren Geräte.
   isOpen(all, id, nGroups) {
-    if (this.isFiltering(all)) return all.sopen?.[id] !== false;
-    if (all.open && id in all.open) return all.open[id];
+    const own = this.isFiltering(all) ? all.sopen : all.open;
+    if (own && id in own) return own[id] !== false;
     return nGroups === 1;
   }
 
@@ -680,7 +682,7 @@ export class RoutineUi {
   }
 
   toggleFold(all, devices, id) {
-    const n = this.allGroups(all, devices).length;
+    const n = this.visibleGroups(all, devices).length;
     const open = this.isOpen(all, id, n);
     if (this.isFiltering(all)) (all.sopen ||= {})[id] = !open;
     else (all.open ||= {})[id] = !open;
@@ -688,7 +690,7 @@ export class RoutineUi {
 
   foldAll(all, devices) {
     const groups = this.visibleGroups(all, devices);
-    const n = this.allGroups(all, devices).length;
+    const n = groups.length;
     const anyOpen = groups.some((g) => this.isOpen(all, g.id, n));
     for (const g of groups) {
       if (this.isFiltering(all)) (all.sopen ||= {})[g.id] = !anyOpen;
@@ -741,7 +743,7 @@ export class RoutineUi {
     const esc = (v) => this.esc(v);
     const t = (k, ...a) => this.t(k, ...a);
     const groups = this.visibleGroups(all, devices);
-    const nGroups = this.allGroups(all, devices).length;
+    const nGroups = groups.length;
     const shown = groups.reduce((n, g) => n + g.shown.length, 0);
     all.shown = { n: shown, total: all.routines.length, filtering: this.isFiltering(all) };
     if (!groups.length) return `<p class="mg-note mg-none">${esc(t("listSearchNone"))}</p>`;
@@ -751,27 +753,42 @@ export class RoutineUi {
       const open = this.isOpen(all, g.id, nGroups);
       const offN = g.shown.filter((x) => !x.enabled).length;
       const nextRt = g.shown.filter((x) => x.enabled && x.due_local).sort((a, b) => a.due - b.due)[0];
-      const sum = open
-        ? g.holder ? "" : g.dev?.area || g.dev?.integration?.name ? `<small>${esc([g.dev?.area, g.dev?.integration?.name].filter(Boolean).join(" · "))}</small>` : ""
-        : `<small class="mg-dsum">${esc(t("rtSumRoutines", g.shown.length))}${offN ? ` · ${esc(t("rtSumOff", offN))}` : ""}${nextRt ? ` · <span class="mg-on">${esc(t("rtSumNext", this.localText(nextRt.due_local)))}</span>` : ""}</small>`;
-      html += `<div class="mg-dcard${open ? "" : " closed"}"><button type="button" class="mg-dhead" ${this.a(all, "routine-fold-dev")} data-device="${esc(g.id)}" aria-expanded="${open}">
+      // Aufgeklappt: Bereich und "Gerät öffnen" in der Zeile unter dem Namen (seit 2.171.0, vorher eine eigene Fusszeile); zugeklappt die Zusammenfassung
+      const sub = open
+        ? [g.holder ? "" : [g.dev?.area, g.dev?.integration?.name].filter(Boolean).map(esc).join(" · "), g.holder ? "" : `<span class="mg-dopen" data-rta-open data-device="${esc(g.id)}" role="link">${esc(t("rtAllOpenDevice"))} ›</span>`].filter(Boolean).join(" · ")
+        : `${esc(t("rtSumRoutines", g.shown.length))}${offN ? ` · ${esc(t("rtSumOff", offN))}` : ""}${nextRt ? ` · <span class="mg-on">${esc(t("rtSumNext", this.localText(nextRt.due_local)))}</span>` : ""}`;
+      const sum = sub ? `<small class="${open ? "" : "mg-dsum"}">${sub}</small>` : "";
+      // Zugeklappt (seit 2.171.0): bei genau einer Routine sitzt ihr Schalter im Kopf statt der Zahl, bei mehreren folgt je Routine eine schlanke Zeile mit Schalter
+      const one = !open && g.shown.length === 1 ? g.shown[0] : null;
+      const lead = one ? `<span class="mg-dslot" aria-hidden="true"></span>` : open ? `<span class="mg-badge">${g.shown.length}</span>` : "";
+      html += `<div class="mg-dcard${open ? "" : " closed"}"><div class="mg-dwrap"><button type="button" class="mg-dhead" ${this.a(all, "routine-fold-dev")} data-device="${esc(g.id)}" aria-expanded="${open}">
         <span class="mg-devic" aria-hidden="true">${g.holder ? g.holder.emoji : this.h.typeIcon(g.dev?.type || "other", 18)}</span>
-        <span class="mg-t"><b>${esc(g.name)}</b>${sum}</span><span class="mg-badge">${g.shown.length}</span>${this.chevHtml(open)}</button>`;
-      if (open) {
-        html += g.shown.map((x) => this.overviewCardHtml(x, all)).join("");
-        // Das Protokoll des Geräts öffnet der Knopf im Kopf; ohne "Gerät öffnen" (Halter, kein Gerät) bleibt der Fuss ganz weg
-        if (!g.holder) html += `<div class="mg-dfoot"><button type="button" class="linkbtn" ${this.a(all, "routine-device")} data-device="${esc(g.id)}">${esc(t("rtAllOpenDevice"))} ›</button></div>`;
-      }
+        <span class="mg-t"><b>${esc(g.name)}</b>${sum}</span>${lead}${this.chevHtml(open)}</button>${one ? `<span class="mg-dsw">${this.switchHtml(one, all)}</span>` : ""}</div>`;
+      if (open) html += g.shown.map((x) => this.overviewCardHtml(x, all)).join("");
+      else if (g.shown.length > 1) html += g.shown.map((x) => this.lineHtml(x, all)).join("");
       html += `</div>`;
     }
     return html;
+  }
+
+  // Schalter einer Routine (Kopf der zugeklappten Karte, Zeile und aufgeklappte Karte teilen ihn)
+  switchHtml(rt, all) {
+    return `<label class="switch"><input type="checkbox" ${this.a(all, "routine-toggle")} data-id="${this.esc(rt.id)}"${rt.enabled ? " checked" : ""} aria-label="${this.esc(rt.name)}"><span></span></label>`;
+  }
+
+  // Schlanke Zeile unter dem Kopf einer zugeklappten Karte mit mehreren Routinen (seit 2.171.0): Name, wann als Nächstes, Schalter
+  lineHtml(rt, all) {
+    const esc = (v) => this.esc(v);
+    const t = (k, ...a) => this.t(k, ...a);
+    const next = rt.running ? `<span class="mg-on">${esc(t("rtRunningShort"))}</span>` : rt.kind === "trigger" && rt.enabled ? `<span class="mg-on">${esc(this.waitsText(rt))}</span>` : rt.enabled && rt.due_local ? `${esc(t("rtNextRun"))} <span class="mg-on">${esc(this.localText(rt.due_local))}</span>` : esc(t(rt.enabled ? "rtFilterOn" : "rtFilterOff"));
+    return `<div class="mg-rline${rt.enabled ? "" : " off"}"><span class="mg-t"><b>${esc(rt.name)}</b><small>${next}</small></span>${this.switchHtml(rt, all)}</div>`;
   }
 
   overviewCardHtml(rt, all) {
     const esc = (v) => this.esc(v);
     const t = (k, ...a) => this.t(k, ...a);
     const confirming = all.confirmId === rt.id;
-    const sw = `<label class="switch"><input type="checkbox" ${this.a(all, "routine-toggle")} data-id="${esc(rt.id)}"${rt.enabled ? " checked" : ""} aria-label="${esc(rt.name)}"><span></span></label>`;
+    const sw = this.switchHtml(rt, all);
     const acts = confirming
       ? ""
       : `<div class="mg-acts"><button type="button" class="linkbtn" ${this.a(all, "routine-edit")} data-device="${esc(rt.device_id)}" data-id="${esc(rt.id)}">${esc(t("rtActEdit"))}</button>

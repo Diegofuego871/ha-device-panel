@@ -7974,6 +7974,12 @@ class DevicePanel extends HTMLElement {
         if (field) field.value = "";
         return;
       }
+      // "Gerät öffnen" in der Zeile unter dem Namen (seit 2.171.0): steht im Kopf, der selbst ein Knopf ist, darum kein eigener Knopf
+      const open = ev.target.closest("[data-rta-open]");
+      if (open) {
+        this._openDevice(open.dataset.device, "routine");
+        return;
+      }
       const btn = ev.target.closest("button[data-rta]");
       if (!btn || btn.disabled) return;
       const action = btn.dataset.rta;

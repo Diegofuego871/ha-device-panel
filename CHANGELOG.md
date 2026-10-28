@@ -7,6 +7,15 @@ All notable changes to this integration are documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/).
 
+## [2.171.0] - 2026-10-28
+
+Routines: switch on and off without expanding the cards, and less space for "Open device".
+
+### Changed
+
+- **Routines window, collapsed cards with switches:** if more than one device is visible, all cards are collapsed, in every tab and also while searching (with exactly one device the card is open). A collapsed card now shows the switch of its routine in the header instead of the number; a device with several routines shows one slim row per routine below the header, each with its switch. So you can switch routines on and off, for example in the tab with the heart, without expanding anything. Expanded cards keep all options (edit, run, history, delete, heart). Before, the cards in the filtered tabs and during a search started expanded, and the switch was only in the expanded card.
+- **"Open device" takes less space:** the extra line with a divider at the bottom of an expanded card (about 64 px) is gone. "Open device ›" now stands in the line below the name, behind the area.
+
 ## [2.170.1] - 2026-10-28
 
 Excluding the last sign of life is no longer possible, and the icon of the app "History" shakes while debug mode is on.
@@ -5170,6 +5179,7 @@ First pre-release.
   GitHub Actions for HACS/hassfest validation and tests.
 
 [2.6.0]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v2.6.0
+[2.171.0]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v2.171.0
 [2.170.1]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v2.170.1
 [2.170.0]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v2.170.0
 [2.168.0]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v2.168.0
