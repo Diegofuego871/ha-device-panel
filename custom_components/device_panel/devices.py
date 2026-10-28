@@ -228,11 +228,12 @@ def _liveness_states(hass: HomeAssistant, entries: list[er.RegistryEntry], exclu
     return states, [s for s in states if s.state in dead]
 
 
-def liveness_report(hass: HomeAssistant, device_id: str, limit: int = 8) -> str:
+def liveness_report(hass: HomeAssistant, device_id: str, limit: int = 8, short: bool = False) -> str:
     """
     Die Lebenszeichen-Entitäten eines Geräts mit ihren Zuständen als eine Zeile für das Debug-Protokoll (seit 2.169.0), zum Beispiel
     "Verbindungssensor: binary_sensor.x=off" oder "sensor.a=unavailable, sensor.b=unavailable; ausgeschlossen: sensor.h". Mehr als limit
-    Entitäten werden gekürzt, damit der Eintrag lesbar bleibt.
+    Entitäten werden gekürzt, damit der Eintrag lesbar bleibt. short (seit 2.170.0, für die Einträge ohne Debug-Modus): höchstens 3 Entitäten, die
+    ausgeschlossenen nur als Zahl.
     """
     entries = er.async_entries_for_device(er.async_get(hass), device_id)
     exclude = liveness_exclude(hass, device_id)
@@ -242,6 +243,8 @@ def liveness_report(hass: HomeAssistant, device_id: str, limit: int = 8) -> str:
     from .push import language  # noqa: PLC0415 (push meldet seinerseits hierher)
 
     de = language(hass) == "de"
+    if short:
+        limit = 3
     missing = "fehlt" if de else "missing"
     parts = [f"{e.entity_id}={s.state if (s := hass.states.get(e.entity_id)) is not None else missing}" for e in relevant]
     shown = ", ".join(parts[:limit]) + (f" (+{len(parts) - limit})" if len(parts) > limit else "")
@@ -249,7 +252,9 @@ def liveness_report(hass: HomeAssistant, device_id: str, limit: int = 8) -> str:
     # Ausgeschlossene nur nennen, wenn die Wahl wirkt (bliebe sonst nichts übrig, gilt sie nicht)
     used = {e.entity_id for e in relevant}
     skipped = sorted(x for x in exclude if x not in used and any(e.entity_id == x for e in entries))
-    if skipped:
+    if skipped and short:
+        text += f"; {len(skipped)} {'ausgeschlossen' if de else 'excluded'}"
+    elif skipped:
         text += f"; {'ausgeschlossen' if de else 'excluded'}: {', '.join(skipped[:limit])}" + (f" (+{len(skipped) - limit})" if len(skipped) > limit else "")
     return text
 

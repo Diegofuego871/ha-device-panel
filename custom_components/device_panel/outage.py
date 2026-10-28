@@ -270,7 +270,7 @@ class OutageNotifier:
             else:
                 code = "sent"
             args = {"duration": push.duration(hass, value)} if online else {"time": _local_time(value)}
-            activity.record(hass, "info", "outage", f"{kind}_{code}", name, dev, **args)
+            activity.record(hass, "info", "outage", f"{kind}_{code}", name, dev, entities=liveness_report(hass, dev, short=True), **args)
 
     @callback
     def _schedule(self, opts: dict[str, Any], now: float) -> None:

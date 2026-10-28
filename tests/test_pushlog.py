@@ -45,9 +45,9 @@ async def test_failed_and_missing_push_are_journaled(hass: HomeAssistant, setup)
 async def test_devicelog_links_push_to_row(hass: HomeAssistant, setup) -> None:  # noqa: F811
     async_mock_service(hass, "notify", "handy")
     a, b = _device(hass, "Lampe"), _device(hass, "Stecker")
-    activity.record(hass, "info", "outage", "online_sent", "Lampe", a.id, duration="9 Min.")
-    activity.record(hass, "info", "outage", "online_sent", "Stecker", b.id, duration="1 Min.")
-    activity.record(hass, "info", "outage", "online_off", "Lampe", a.id, duration="1 Min.")  # keine Meldung: nichts zu verbinden
+    activity.record(hass, "info", "outage", "online_sent", "Lampe", a.id, duration="9 Min.", entities="x=on")
+    activity.record(hass, "info", "outage", "online_sent", "Stecker", b.id, duration="1 Min.", entities="x=on")
+    activity.record(hass, "info", "outage", "online_off", "Lampe", a.id, duration="1 Min.", entities="x=on")  # keine Meldung: nichts zu verbinden
     await push.async_push(hass, "notify.handy", "Lampe wieder online", "nach 9 Min.", topic="online", devices=[a.id])
     out = devicelog.query(hass, a.id, since=None, until=time.time() + 5)
     sent = next(e for e in out["entries"] if e.get("code") == "online_sent")
@@ -176,7 +176,7 @@ async def test_quiet_single_mode_keeps_devices_and_topic(hass: HomeAssistant, se
 async def test_system_query_levels_cats_and_debug(hass: HomeAssistant, setup, hass_ws_client) -> None:  # noqa: F811
     """Reiter "System" (2.125.0): Einträge ohne Gerät plus alle Debug-Einträge; Zahlen je Stufe und Kategorie wie die Chips."""
     dev = _device(hass, "Lampe")
-    activity.record(hass, "info", "outage", "online_sent", "Lampe", dev.id, duration="9 Min.")  # gehört dem Gerät: nicht im System
+    activity.record(hass, "info", "outage", "online_sent", "Lampe", dev.id, duration="9 Min.", entities="x=on")  # gehört dem Gerät: nicht im System
     activity.record(hass, "info", "system", "sys_start", "Device Panel", version="2.125.0")
     activity.record(hass, "error", "system", "ai_failed", "Device Panel", reason="Zeit", detail="x", chars=1, task="ai_task.x")
     activity.record(hass, "info", "push", "push_sent", "notify.handy", title="T")

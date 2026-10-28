@@ -173,3 +173,30 @@ async def test_liveness_report_english(hass: HomeAssistant, setup) -> None:
     device, real, helpers = _smarthub(hass)
     await async_set_device_settings(hass, device.id, liveness_exclude=helpers)
     assert "; excluded: " in liveness_report(hass, device.id)
+
+
+async def test_info_log_has_short_liveness_line(hass: HomeAssistant, setup, freezer) -> None:
+    """Auch ohne Debug-Modus: die Einträge zu Ausfall und Rückkehr tragen die Kurzform der Lebenszeichen, höchstens 3 Entitäten (2.170.0)."""
+    from custom_components.device_panel import activity
+    from custom_components.device_panel.devices import async_set_device_settings, liveness_report
+
+    from .test_outage import _device, _entity, _tick
+
+    hass.config.language = "de"
+    assert not activity.get(hass).debug
+    device = _device(hass, "Viele")
+    ents = [_entity(hass, device, "sensor", f"s{n}", "1") for n in range(5)]
+    helper = er.async_get(hass).async_get_or_create("sensor", "template", f"{device.id}-h", device_id=device.id)
+    hass.states.async_set(helper.entity_id, "1")
+    await async_set_device_settings(hass, device.id, liveness_exclude=[helper.entity_id])
+    # Kurzform: drei Entitäten, der Rest als Zahl, Ausgeschlossene nur gezählt
+    short = liveness_report(hass, device.id, short=True)
+    assert short.count("=") == 3 and "(+2)" in short and short.endswith("; 1 ausgeschlossen") and helper.entity_id not in short
+    await _tick(hass, setup, freezer, 1)
+    for e in ents:
+        hass.states.async_set(e, "unavailable")
+    await _tick(hass, setup, freezer, 10)
+    hass.states.async_set(ents[0], "1")
+    await _tick(hass, setup, freezer, 1)
+    infos = [e for e in activity.get(hass).entries if e.get("device_id") == device.id and e["code"].startswith(("outage_", "online_"))]
+    assert infos and all("Lebenszeichen: " in e["detail"] and e["detail"].count("=") <= 3 for e in infos), infos

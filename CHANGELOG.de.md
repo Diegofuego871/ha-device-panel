@@ -7,6 +7,14 @@ Alle nennenswerten Änderungen an dieser Integration stehen in dieser Datei.
 Das Format folgt [Keep a Changelog](https://keepachangelog.com/de/1.1.0/),
 die Versionsnummern folgen [Semantic Versioning](https://semver.org/lang/de/).
 
+## [2.170.0] - 2026-10-28
+
+Das Debug-Protokoll und das normale Protokoll nennen die Entitäten, die einen Ausfall entschieden haben.
+
+### Hinzugefügt
+
+- **Kurze Lebenszeichen-Zeile auch im normalen Protokoll:** Die Einträge zu Ausfall und Rückkehr, die ohne Debug-Modus geschrieben werden ("ausgefallen seit …: Meldung wird gesendet", "wieder online nach …: keine Meldung" und ähnliche), tragen jetzt eine Detailzeile, zum Beispiel `Lebenszeichen: sensor.a=unavailable, sensor.b=unavailable (+2); 1 ausgeschlossen`. Kurzform: höchstens 3 Entitäten mit Zustand, die ausgeschlossenen nur als Zahl; die volle Liste bleibt dem Debug-Modus. So ist der Grund da, auch wenn der Debug-Modus beim Ausfall aus war.
+
 ## [2.169.0] - 2026-10-28
 
 Das Debug-Protokoll nennt die Entitäten, die einen Ausfall entschieden haben.
@@ -14,6 +22,8 @@ Das Debug-Protokoll nennt die Entitäten, die einen Ausfall entschieden haben.
 ### Hinzugefügt
 
 - **Lebenszeichen-Entitäten im Debug-Protokoll:** Bei eingeschaltetem Debug-Modus zeigen die Einträge "als ausgefallen erkannt", "ausgefallen seit … (begann vor einer Lücke)" und "wieder erreichbar" in einer Detailzeile, welche Entitäten als Lebenszeichen zählten und in welchem Zustand, zum Beispiel `Lebenszeichen: sensor.a=unavailable, sensor.b=unavailable; ausgeschlossen: sensor.helfer`. Ein Verbindungssensor ist als solcher gekennzeichnet. Auch die von dir ausgeschlossenen Entitäten werden genannt, eine lange Liste wird gekürzt. So sieht man, warum ein Gerät als ausgefallen (oder wieder online) gilt, ohne Home Assistant zu öffnen. Ohne Debug-Modus ändert sich nichts.
+
+Nicht veröffentlicht; enthalten in 2.170.0.
 
 ## [2.168.0] - 2026-10-28
 
@@ -5249,7 +5259,7 @@ Erste Vorabversion.
   GitHub Actions für die Prüfungen von HACS und hassfest sowie die Tests.
 
 [2.6.0]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v2.6.0
-[2.169.0]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v2.169.0
+[2.170.0]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v2.170.0
 [2.168.0]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v2.168.0
 [2.167.0]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v2.167.0
 [2.166.0]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v2.166.0
