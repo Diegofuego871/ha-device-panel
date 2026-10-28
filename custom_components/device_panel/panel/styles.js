@@ -2498,12 +2498,19 @@ dialog.wizard-dlg[open] { display: flex; flex-direction: column; }
 .upd-bar i { display: block; height: 100%; border-radius: 99px; background: var(--dp-primary); transition: width .4s ease; }
 
 /* App "Geräte-Updates" (seit 2.164.0, docs/mockups/updates-v1, A) */
+/* Grössere Schrift im ganzen Fenster (Rückmeldung des Nutzers, 2.165.0): Fliesstext 16 px, Nebenzeilen 14 px */
+dialog.updapp-dlg .dlg-sub { font-size: 15px; }
+dialog.updapp-dlg .dlg-body { font-size: 16px; }
+dialog.updapp-dlg .nf-note p { font-size: 16px; line-height: 1.5; }
+dialog.updapp-dlg .nf-note p b { font-size: 17px; }
+dialog.updapp-dlg .chip { height: 36px; font-size: 15px; padding: 0 14px; }
+dialog.updapp-dlg .dlg-error { font-size: 15px; }
 .ua-chips { display: flex; flex-wrap: wrap; gap: 8px; margin: 2px 0 12px; }
 .ua-list { display: flex; flex-direction: column; gap: 8px; }
 .ua-row { display: flex; align-items: center; gap: 10px; padding: 8px 10px; border-radius: 14px; background: var(--dp-subtle); }
 .ua-t { flex: 1 1 auto; min-width: 0; display: flex; flex-direction: column; gap: 2px; text-align: left; }
-.ua-t b { font-weight: 500; overflow-wrap: anywhere; }
-.ua-t small { color: var(--dp-text2); font-size: 12.5px; }
+.ua-t b { font-weight: 500; font-size: 16px; overflow-wrap: anywhere; }
+.ua-t small { color: var(--dp-text2); font-size: 14px; }
 .ua-main { display: flex; align-items: center; gap: 10px; flex: 1 1 auto; min-width: 0; padding: 4px 0; border: 0; background: none; color: inherit; font: inherit; text-align: left; cursor: pointer; }
 .ua-cb { position: relative; flex: none; width: 22px; height: 22px; }
 .ua-cb input { position: absolute; inset: 0; width: 100%; height: 100%; margin: 0; opacity: 0; cursor: pointer; }
@@ -2511,7 +2518,7 @@ dialog.wizard-dlg[open] { display: flex; flex-direction: column; }
 .ua-cb input:checked + span { background: var(--dp-primary); border-color: var(--dp-primary); color: #fff; }
 .ua-cb input:focus-visible + span { outline: 2px solid var(--dp-primary); outline-offset: 2px; }
 .ua-row.run { align-items: flex-start; padding: 10px 12px; }
-.ua-st { color: var(--dp-primary) !important; font-size: 14px !important; }
+.ua-st { color: var(--dp-primary) !important; font-size: 15px !important; }
 .ua-st.ok { color: var(--dp-success) !important; }
 .ua-st.bad { color: var(--dp-error) !important; }
 .ua-row.waiting .ua-st { color: var(--dp-text2) !important; }
@@ -2520,8 +2527,8 @@ dialog.wizard-dlg[open] { display: flex; flex-direction: column; }
 .ua-ic.ok { color: var(--dp-success); }
 .ua-ic.bad { color: var(--dp-error); }
 .ua-retry { flex: none; display: grid; place-items: center; width: 28px; height: 28px; border: 1px solid var(--dp-error); border-radius: 50%; background: var(--dp-error-soft); color: var(--dp-error); cursor: pointer; }
-.ua-empty { display: grid; place-items: center; gap: 6px; padding: 60px 0; color: var(--dp-text2); text-align: center; }
+.ua-empty { display: grid; place-items: center; gap: 6px; padding: 60px 0; color: var(--dp-text2); text-align: center; font-size: 16px; }
 .ua-empty svg { color: var(--dp-success); }
-.ua-backup { display: flex; align-items: center; gap: 12px; margin: 14px 0 4px; font-size: 15px; }
-.ua-backup small { display: block; color: var(--dp-text2); font-size: 12.5px; }
+.ua-backup { display: flex; align-items: center; gap: 12px; margin: 14px 0 4px; font-size: 16px; }
+.ua-backup small { display: block; color: var(--dp-text2); font-size: 14px; }
 `;

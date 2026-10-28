@@ -15,6 +15,10 @@ Entitäten lassen sich an einem Gerät als "Lebenszeichen" ausschliessen.
 
 - **Lebenszeichen ausschliessen:** Im Geräte-Popup, Reiter "Entitäten", ist die Marke "Lebenszeichen" jetzt ein Schalter. Ein Tipp schliesst die Entität aus (sie steht durchgestrichen als "kein Lebenszeichen"), ein weiterer Tipp zählt sie wieder mit. Ein Gerät gilt als ausgefallen, wenn alle Entitäten, die noch zählen, nicht verfügbar sind. So verdeckt ein Template-Helfer, den du selbst am Gerät angehängt hast und der immer verfügbar ist, den Ausfall des echten Sensors nicht mehr. Die Wahl ist ein Entwurf wie die übrigen Einstellungen und gilt nach "Speichern"; sie gehört zur Sicherung. Wären alle Entitäten ausgeschlossen, gilt die Wahl nicht, und das Popup sagt es (sonst gäbe es keinen Status). Ein Hinweis erscheint, wenn Entitäten aus Template-Helfern als Lebenszeichen zählen. Für bestehende Geräte ändert sich nichts: ohne Wahl zählt jede Entität wie bisher.
 
+### Geändert
+
+- **Fenster "Geräte-Updates":** grössere Schrift überall (Fliesstext 16 px, Nebenzeilen 14 px, grössere Chips), auch in der Rückfrage und in der Fortschrittsansicht.
+
 ## [2.164.0] - 2026-10-27
 
 Neue App "Geräte-Updates": alle offenen Geräte-Updates in einem Fenster, auf einmal startbar.

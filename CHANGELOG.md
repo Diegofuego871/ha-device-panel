@@ -15,6 +15,10 @@ Entities can be excluded as a "sign of life" on a device.
 
 - **Exclude a sign of life:** in the device pop-up, tab "Entities", the mark "Sign of life" is now a switch. A tap excludes the entity (it is crossed out as "no sign of life"), another tap counts it again. A device counts as offline when all entities that still count are unavailable. So a template helper you attached to the device yourself, which is always available, no longer hides an outage of the real sensor. The choice is a draft like the other settings and applies after "Save"; it belongs to the backup. If all entities were excluded, the choice is ignored and the pop-up says so (otherwise there would be no status). A note appears when entities from template helpers count as a sign of life. Nothing changes for existing devices: without a choice every entity counts as before.
 
+### Changed
+
+- **Window "Device updates":** larger font throughout (body text 16 px, secondary lines 14 px, larger chips), also in the confirmation and the progress view.
+
 ## [2.164.0] - 2026-10-27
 
 New app "Device updates": all open device updates in one window, startable at once.
