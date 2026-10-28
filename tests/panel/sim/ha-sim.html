@@ -2025,6 +2025,8 @@
         window.__uqPump();
         return { queue: window.__uq.map((q) => ({ ...q })) };
       }
+      // Fehlertext der Integration für das Update-Fenster eines Geräts (2.166.0): window.__updStatusError
+      if (msg.type === "device_panel/update_status") return { error: window.__updStatusError ?? null };
       if (msg.type === "device_panel/update_install") {
         if (window.__updFails) throw { code: "invalid_format", message: window.__updFails };
         return { hold_until: Date.now() / 1000 + 300 };

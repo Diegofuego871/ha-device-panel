@@ -156,3 +156,23 @@ async def test_outage_after_hold_is_notified(hass: HomeAssistant, setup, freezer
     async_fire_time_changed(hass)
     await hass.async_block_till_done()
     assert [c.data["title"] for c in notify] == ["🔴 Offline: Lampe"]
+
+
+async def test_update_status_returns_the_integrations_error(hass: HomeAssistant, setup, hass_ws_client) -> None:
+    """Lehnt die Integration das Update ab, fragt das Fenster eines Geräts den Fehlertext ab (seit 2.166.0)."""
+    from homeassistant.exceptions import HomeAssistantError
+
+    async def refuse(call) -> None:
+        raise HomeAssistantError("Device unreachable")
+
+    hass.services.async_register("update", "install", refuse)
+    lamp = _device(hass, "Lampe")
+    fw = _update(hass, lamp, features=5)
+    client = await hass_ws_client(hass)
+    await client.send_json({"id": 1, "type": f"{DOMAIN}/update_status", "entity_id": fw})
+    assert (await client.receive_json())["result"] == {"error": None}
+    await client.send_json({"id": 2, "type": f"{DOMAIN}/update_install", "device_id": lamp.id, "entity_id": fw, "backup": False})
+    assert (await client.receive_json())["success"]
+    await hass.async_block_till_done()
+    await client.send_json({"id": 3, "type": f"{DOMAIN}/update_status", "entity_id": fw})
+    assert (await client.receive_json())["result"] == {"error": "Device unreachable"}

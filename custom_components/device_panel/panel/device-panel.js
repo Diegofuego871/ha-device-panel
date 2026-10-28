@@ -6420,7 +6420,8 @@ class DevicePanel extends HTMLElement {
     window.clearTimeout(u.settleTimer);
     const left = back ? UPD_SETTLE_MS - (Date.now() - u.backAt) : 0;
     if (back && left > 0) u.settleTimer = window.setTimeout(() => this._upd === u && this._renderUpdate(), left + 300);
-    const failed = back && left <= 0;
+    // Lehnt die Integration das Update ab oder beendet es mit einem Fehler, gilt das sofort als fehlgeschlagen (Fehlertext vom Server, siehe _pollUpdate)
+    const failed = (back && left <= 0) || Boolean(u.serverError && !done);
     const settling = back && !failed;
     let body = "";
     let actions = `<button type="button" class="dlg-btn primary" data-upd="close">${mdi("close", 18)}${escape(t("close"))}</button>`;
@@ -6429,7 +6430,8 @@ class DevicePanel extends HTMLElement {
       if (done) {
         body = `<div class="upd-state ok">${mdi("check", 22)}<b>${escape(t("updDone", a.installed_version ?? to))}</b></div>`;
       } else if (failed) {
-        body = `<div class="dlg-error">${escape(t("updFailed"))}</div>`;
+        // Grund: der Fehlertext der Integration, sonst was das Panel gesehen hat (die alte Version steht weiter zur Auswahl)
+        body = `<div class="dlg-error">${escape(t("updFailed"))}</div><p class="dlg-note">${escape(u.serverError || t("appupWhyFailed"))}</p>`;
       } else {
         const label = gone ? t("updRebooting") : running ? (percent != null ? t("updPercent", Math.round(percent)) : t("updRunning")) : settling ? t("updFinishing") : t("updWaiting");
         const bar = percent != null && !gone ? `<div class="upd-bar" role="progressbar" aria-valuenow="${Math.round(percent)}" aria-valuemin="0" aria-valuemax="100"><i style="width:${Math.max(2, Math.min(100, percent))}%"></i></div>` : `<div class="ver-prog"><i></i></div>`;
@@ -6483,6 +6485,7 @@ class DevicePanel extends HTMLElement {
         u.step = "run";
         u.error = null;
         u.started = true;
+        u.serverError = null;
         (this._updRun ||= {})[u.entity] = { from: u.installed, at: Date.now() };
         u.seen = false;
         this._renderUpdate();
@@ -6495,15 +6498,41 @@ class DevicePanel extends HTMLElement {
           u.step = "info";
         }
         this._renderUpdate();
+        if (u.started) this._pollUpdate(u);
       }
     });
     dlg.addEventListener("close", () => {
+      window.clearInterval(this._upd?.poll);
       this._upd = null;
     });
   }
 
+  // Fehlertext der Integration (seit 2.166.0): der Dienst update.install läuft im Hintergrund und meldet einen Fehler erst später; das Fenster
+  // fragt alle 3 Sekunden nach, bis das Update fertig oder fehlgeschlagen ist oder das Fenster zu ist
+  _pollUpdate(u) {
+    window.clearInterval(u.poll);
+    u.poll = window.setInterval(async () => {
+      if (this._upd !== u || !u.started) {
+        window.clearInterval(u.poll);
+        return;
+      }
+      try {
+        const r = await this._hass.callWS({ type: "device_panel/update_status", entity_id: u.entity });
+        if (this._upd !== u) return;
+        if (r?.error) {
+          u.serverError = r.error;
+          window.clearInterval(u.poll);
+          this._renderUpdate();
+        }
+      } catch (_err) {
+        /* beim nächsten Takt wieder */
+      }
+    }, 3000);
+  }
+
   _closeUpdate() {
     const dlg = this.shadowRoot.querySelector("dialog.upd-dlg");
+    window.clearInterval(this._upd?.poll);
     this._upd = null;
     if (dlg?.open) {
       if (typeof dlg.close === "function") dlg.close();

@@ -95,6 +95,19 @@ for (const lang of ["de", "en"]) {
     check(`[${tag}] fehlgeschlagen wird gesagt`, await wait(`return !!r.querySelector("dialog.upd-dlg .dlg-error")`) && L.failed.test(await text("dialog.upd-dlg .dlg-error")));
     await tap('dialog.upd-dlg [data-upd="close"]');
 
+    // Die Integration lehnt das Update ab (Fehler kommt erst nach dem Start): Fenster nennt ihren Text, ohne die Frist von 5 Minuten abzuwarten
+    await setState(state("on"));
+    await tap('button.upd-btn[data-dlg="update-open"]');
+    await wait(`return r.querySelector("dialog.upd-dlg")?.open`);
+    await tap('dialog.upd-dlg [data-upd="next"]');
+    await tap('dialog.upd-dlg [data-upd="go"]');
+    await setState(state("on", { in_progress: true }));
+    await p.evaluate(() => { window.__updStatusError = "Device unreachable"; });
+    check(`[${tag}] Fehlertext der Integration im Fenster`, await wait(`const d=r.querySelector("dialog.upd-dlg"); return !!d?.querySelector(".dlg-error") && d.innerText.includes("Device unreachable")`, 8000));
+    await p.evaluate(() => { window.__updStatusError = null; });
+    await tap('dialog.upd-dlg [data-upd="close"]');
+    await setState(state("on"));
+
     // Fehler beim Start: zurück zur Auswahl mit Meldung (im Dialog bleibt sie sichtbar)
     await p.evaluate(() => { window.__updFails = "no installable update"; });
     await tap('button.upd-btn[data-dlg="update-open"]');

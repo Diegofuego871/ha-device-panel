@@ -26,6 +26,8 @@ from .const import DOMAIN
 _LOGGER = logging.getLogger(__name__)
 
 DATA_UPDATE_HOLD = f"{DOMAIN}_update_hold"
+# Letzter Fehlertext der Integration je Update-Entität (seit 2.166.0): das Fenster eines einzelnen Geräts fragt ihn ab
+DATA_UPDATE_ERRORS = f"{DOMAIN}_update_errors"
 
 # Merkmale der Update-Entität (homeassistant.components.update.UpdateEntityFeature)
 FEATURE_INSTALL = 1
@@ -42,6 +44,11 @@ EXCLUDED_PLATFORMS = frozenset({"hassio", "homeassistant"})
 
 def _hold(hass: HomeAssistant) -> dict[str, float]:
     return hass.data.setdefault(DATA_UPDATE_HOLD, {})
+
+
+def last_error(hass: HomeAssistant, entity_id: str) -> str | None:
+    """Fehlertext, mit dem die Integration das zuletzt gestartete Update dieser Entität abgelehnt oder beendet hat."""
+    return hass.data.get(DATA_UPDATE_ERRORS, {}).get(entity_id)
 
 
 def held_until(hass: HomeAssistant, device_id: str, now: float | None = None) -> float | None:
@@ -89,11 +96,15 @@ def async_install(hass: HomeAssistant, device_id: str, entity_id: str, backup: b
     if backup:
         data["backup"] = True
 
+    errors = hass.data.setdefault(DATA_UPDATE_ERRORS, {})
+    errors.pop(entity_id, None)
+
     async def _run() -> None:
         try:
             await hass.services.async_call("update", "install", data, blocking=True)
         except Exception as err:  # noqa: BLE001 - jede Antwort der Integration ist für den Nutzer ein Grund
             _LOGGER.warning("Update of %s failed: %s", entity_id, err)
+            errors[entity_id] = (str(err) or type(err).__name__)[:300]
             if on_error is not None:
                 on_error(str(err) or type(err).__name__)
 

@@ -116,6 +116,7 @@ from .const import (
 from .push_log import PUSH_STORE_KEY, PushLog
 from .summary import PLATFORMS, SUMMARY_STORE_KEY, SummaryCoordinator
 from .device_update import UpdateError, held_until
+from .device_update import last_error as update_last_error
 from .device_update import async_install as async_install_update
 from .update_queue import DATA_UPDATE_QUEUE, available as update_available, get_queue as get_update_queue
 from .devices import (
@@ -482,6 +483,16 @@ def _ws_updates_start(
 ) -> None:
     """Gewählte Geräte-Updates einreihen und starten (höchstens drei gleichzeitig, eines je Integration)."""
     connection.send_result(msg["id"], {"queue": get_update_queue(hass).enqueue(msg["entity_ids"], msg["backup"])})
+
+
+@websocket_api.websocket_command({vol.Required("type"): f"{DOMAIN}/update_status", vol.Required("entity_id"): str})
+@websocket_api.require_admin
+@callback
+def _ws_update_status(
+    hass: HomeAssistant, connection: websocket_api.ActiveConnection, msg: dict[str, Any]
+) -> None:
+    """Update-Fenster eines Geräts: der Fehlertext der Integration, falls sie das Update abgelehnt oder mit einem Fehler beendet hat."""
+    connection.send_result(msg["id"], {"error": update_last_error(hass, msg["entity_id"])})
 
 
 @websocket_api.websocket_command(
@@ -1347,6 +1358,7 @@ def _async_register_websocket_commands(hass: HomeAssistant) -> None:
     websocket_api.async_register_command(hass, _ws_ai_prompt_preview)
     websocket_api.async_register_command(hass, _ws_device)
     websocket_api.async_register_command(hass, _ws_update_install)
+    websocket_api.async_register_command(hass, _ws_update_status)
     websocket_api.async_register_command(hass, _ws_updates_list)
     websocket_api.async_register_command(hass, _ws_updates_start)
     websocket_api.async_register_command(hass, _ws_availability)

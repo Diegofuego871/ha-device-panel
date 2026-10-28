@@ -22,7 +22,7 @@ Filter "Lebenszeichen" in der Entitätenliste, und Updates werden nicht mehr fä
 ### Behoben
 
 - **Update fälschlich als "Fehlgeschlagen" gezeigt (Fenster "Geräte-Updates" und Update-Fenster eines Geräts):** Viele Integrationen (beobachtet bei Shelly) schalten den Fortschritt aus und bieten noch eine Weile die alte Version an, bevor das neu gestartete Gerät die neue meldet. Das Panel meldete dann einen Fehler, obwohl das Update geklappt hatte. Jetzt zeigt es bis zu 5 Minuten "Update wird abgeschlossen …" und wertet das Update als fertig, sobald die Entität "aktuell" meldet oder sich die installierte Version ändert; ein schon gemeldeter Fehler wird zu "Fertig", wenn die neue Version später erscheint.
-- **Grund eines fehlgeschlagenen Updates:** Lehnt die Integration das Update ab oder beendet sie es mit einem Fehler (zum Beispiel "Gerät nicht erreichbar"), steht dieser Text in der Zeile unter "Fehlgeschlagen". Ohne Fehlertext erklärt die Zeile in Worten, was das Panel gesehen hat (kein Fortschritt innerhalb von 10 Minuten, weiterhin die alte Version, nach 60 Minuten nicht fertig).
+- **Grund eines fehlgeschlagenen Updates:** Lehnt die Integration das Update ab oder beendet sie es mit einem Fehler (zum Beispiel "Gerät nicht erreichbar"), steht dieser Text in der Zeile in "Geräte-Updates" und im Update-Fenster eines einzelnen Geräts unter "Fehlgeschlagen" (das Fenster eines einzelnen Geräts fragt den Server alle 3 Sekunden ab, solange das Update läuft). Ohne Fehlertext erklärt die Zeile in Worten, was das Panel gesehen hat (kein Fortschritt innerhalb von 10 Minuten, weiterhin die alte Version, nach 60 Minuten nicht fertig).
 
 ## [2.165.0] - 2026-10-28
 
