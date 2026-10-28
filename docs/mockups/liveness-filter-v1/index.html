@@ -1,0 +1,72 @@
+<!doctype html><meta charset="utf-8"><title>Filter nach Lebenszeichen</title><style>
+:root{--p:#43a047;--ok:#43a047;--bg:#1c1c1c;--card:#262626;--ln:#3a3a3a;--t2:#9a9a9a;--warn:#f5a623}
+*{box-sizing:border-box}
+body{margin:0;background:#0d0d0d;font:14px/1.35 Roboto,Arial,sans-serif;color:#e6e6e6;padding:24px;display:grid;grid-template-columns:repeat(4,340px);gap:18px;align-items:start}
+.ph{background:var(--bg);border:1px solid var(--ln);border-radius:18px;padding:14px;display:flex;flex-direction:column;gap:10px;min-height:700px}
+.cap{color:#8a8a8a;font-size:12px;letter-spacing:.04em;text-transform:uppercase}
+.hd{color:var(--t2);font-size:12px;letter-spacing:.08em;text-transform:uppercase;margin-top:2px}
+.search{display:flex;align-items:center;gap:8px;border:1px solid var(--ln);border-radius:999px;padding:9px 14px;color:var(--t2);background:#202020}
+.search .sp{flex:1}
+.chips{display:flex;gap:6px;flex-wrap:nowrap;overflow:hidden}
+.chip{display:inline-flex;align-items:center;gap:5px;height:30px;padding:0 9px;border:1px solid var(--ln);border-radius:999px;background:#222;font-size:12.5px;white-space:nowrap;color:#d0d0d0}
+.chip i{font-style:normal;color:var(--t2)}
+.chip.on{background:color-mix(in srgb,var(--p) 20%,transparent);border-color:var(--p);color:var(--p)}.chip.on i{color:var(--p)}
+.list{background:var(--card);border-radius:14px;overflow:hidden}
+.row{display:flex;align-items:center;gap:8px;padding:9px 12px;border-bottom:1px solid var(--ln)}
+.row:last-child{border:0}
+.row .n{flex:1;min-width:0}.row .n b{font-weight:400;display:block}.row .n small{color:var(--t2);font-size:11.5px;display:block;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.row .v{color:#cfcfcf;font-size:13px}
+.pill{border:1.5px solid var(--p);color:var(--p);border-radius:999px;padding:3px 10px;font-size:12px;font-weight:500;background:color-mix(in srgb,var(--p) 10%,transparent)}
+.pill.off{border:1.5px dashed #777;color:var(--t2);text-decoration:line-through;background:#2a2a2a}
+.grp{display:flex;justify-content:space-between;align-items:center;padding:8px 12px;background:#2d2d2d;color:var(--t2);font-size:11.5px;letter-spacing:.07em;text-transform:uppercase}
+.grp b{color:#ddd;font-weight:500}
+.fbtn{width:36px;height:36px;border-radius:50%;border:1px solid var(--ln);display:grid;place-items:center;color:var(--t2);position:relative;flex:none}
+.fbtn.act{border-color:var(--p);color:var(--p);background:color-mix(in srgb,var(--p) 15%,transparent)}
+.fbtn .b{position:absolute;top:-3px;right:-3px;background:var(--p);color:#fff;border-radius:99px;font-size:10px;padding:0 5px}
+.menu{background:#2f2f2f;border:1px solid var(--ln);border-radius:14px;padding:6px;box-shadow:0 8px 24px #0008;margin-left:auto;width:230px}
+.menu div{display:flex;justify-content:space-between;padding:9px 10px;border-radius:9px}.menu .on{background:color-mix(in srgb,var(--p) 18%,transparent);color:var(--p)}
+.note{color:var(--t2);font-size:12px}.rec{color:var(--p);font-size:12.5px}.bad{color:#e5534b;font-size:12px}
+.cost{display:inline-block;background:#333;border-radius:8px;padding:1px 8px;font-size:11px;color:#aaa;width:fit-content}
+</style><body>
+
+<div class="ph"><span class="cap">0 · Heute (2.166.0): Reiterleiste</span>
+<div class="hd">Entitäten · 9</div>
+<div class="search">🔍 Suchen …</div>
+<div style="display:flex;background:#161616;border-radius:14px;padding:4px"><span style="flex:1;text-align:center;padding:8px;border-radius:11px;background:#0e0e0e;color:var(--p)">Alle</span><span style="flex:1;text-align:center;padding:8px;color:var(--t2)">Zählen mit</span><span style="flex:1;text-align:center;padding:8px;color:var(--t2)">Zählen nicht</span></div>
+<div class="list"><div class="row"><span class="n"><b>Eingang 0</b><small>binary_sensor.licht_input_0</small></span><span class="pill">Lebenszeichen</span><span class="v">Ein</span></div><div class="row"><span class="n"><b>Eingang 1</b><small>binary_sensor.licht_input_1</small></span><span class="pill">Lebenszeichen</span><span class="v">Aus</span></div><div class="row"><span class="n"><b>Neu starten</b><small>button.licht_reboot</small></span><span class="v">Unbekannt</span></div></div>
+<span class="bad">Kostet eine ganze Zeile (≈ 48 px) in jedem Gerät, auch wenn nichts zu filtern ist. "Zählen mit / nicht" ist ohne Vorwissen schwer zu lesen.</span></div>
+
+<div class="ph"><span class="cap">A · Ein Chip im Suchfeld</span>
+<div class="hd">Entitäten · 9</div>
+<div class="search">🔍 <span class="sp">Suchen …</span><span class="chip on" style="height:26px">Lebenszeichen <i>4</i></span></div>
+<div class="list"><div class="row"><span class="n"><b>Eingang 0</b><small>binary_sensor.licht_input_0</small></span><span class="pill">Lebenszeichen</span><span class="v">Ein</span></div><div class="row"><span class="n"><b>Eingang 1</b><small>binary_sensor.licht_input_1</small></span><span class="pill">Lebenszeichen</span><span class="v">Aus</span></div><div class="row"><span class="n"><b>Helfer 3</b><small>sensor.helfer_3</small></span><span class="pill">Lebenszeichen</span><span class="v">1.0</span></div><div class="row"><span class="n"><b>Gerät</b><small>light.licht</small></span><span class="pill">Lebenszeichen</span><span class="v">Ein</span></div></div>
+<span class="note">Der Chip sitzt im Suchfeld rechts: nichts zusätzlich in der Höhe. Gewählt (grün) zeigt nur, was als Lebenszeichen zählt. Abgewählt: alle (wie bei jedem Chip im Panel: abgewählt = kein Filter).</span>
+<span class="cost">Kein Platz · 1 Zustand</span>
+<span class="note">Schwäche: Ausgeschlossene siehst du nur in der vollen Liste (durchgestrichen), nicht gesammelt.</span></div>
+
+<div class="ph"><span class="cap">B · Symbol mit Menü (kleinster Platz)</span>
+<div class="hd">Entitäten · 9</div>
+<div style="display:flex;gap:8px;align-items:center"><div class="search" style="flex:1">🔍 Suchen …</div><span class="fbtn act">⚲<span class="b">1</span></span></div>
+<div class="menu"><div>Alle <span>9</span></div><div class="on">Zählen als Lebenszeichen <span>4</span></div><div>Ausgeschlossen <span>2</span></div><div>Übrige <span>3</span></div></div>
+<div class="list"><div class="row"><span class="n"><b>Eingang 0</b><small>binary_sensor.licht_input_0</small></span><span class="pill">Lebenszeichen</span><span class="v">Ein</span></div><div class="row"><span class="n"><b>Eingang 1</b><small>binary_sensor.licht_input_1</small></span><span class="pill">Lebenszeichen</span><span class="v">Aus</span></div></div>
+<span class="note">Ein Filter-Knopf neben dem Suchfeld, Zahl am Knopf, wenn ein Filter aktiv ist. Das Menü nennt die drei Gruppen mit Zahl und klaren Namen.</span>
+<span class="cost">Kein Platz · 1 Tipp mehr</span>
+<span class="note">Schwäche: versteckt, man muss den Knopf kennen. Das Panel nutzt sonst Chips, kein Menü.</span></div>
+
+<div class="ph"><span class="cap">C · Chip-Zeile, nur wenn nötig (Empfehlung)</span>
+<div class="hd">Entitäten · 9</div>
+<div class="search">🔍 Suchen …</div>
+<div class="chips"><span class="chip on">Lebenszeichen <i>4</i></span><span class="chip">Ausgeschlossen <i>2</i></span><span class="chip">Übrige <i>3</i></span></div>
+<div class="list"><div class="row"><span class="n"><b>Helfer 1</b><small>sensor.helfer_1</small></span><span class="pill off">kein Lebenszeichen</span><span class="v">1.0</span></div><div class="row"><span class="n"><b>Helfer 2</b><small>sensor.helfer_2</small></span><span class="pill off">kein Lebenszeichen</span><span class="v">1.0</span></div></div>
+<span class="note">Drei Chips mit festen, klaren Namen und Zahl (eine Zeile, 30 px): "Lebenszeichen" (zählen), "Ausgeschlossen" (von dir), "Übrige" (zählen nie, etwa Diagnose). Abgewählt: alle. Die Zeile erscheint nur, wenn das Gerät mindestens 8 Entitäten hat; bei kleinen Geräten bleibt die Seite wie vor 2.166.0.</span>
+<span class="cost">1 Zeile, nur bei vielen Entitäten</span>
+<span class="rec">Empfehlung: C. Gleiche Chip-Sprache wie überall im Panel, die Namen sagen, was sie zeigen, und kleine Geräte bleiben ruhig.</span></div>
+
+<div class="ph"><span class="cap">D · Gruppiert statt gefiltert</span>
+<div class="hd">Entitäten · 9</div>
+<div class="search">🔍 Suchen …</div>
+<div class="list"><div class="grp"><b>Lebenszeichen · 4</b><span>zählen</span></div><div class="row"><span class="n"><b>Eingang 0</b><small>binary_sensor.licht_input_0</small></span><span class="v">Ein</span></div><div class="row"><span class="n"><b>Eingang 1</b><small>binary_sensor.licht_input_1</small></span><span class="v">Aus</span></div><div class="grp"><b>Ausgeschlossen · 2</b><span>zählen nicht</span></div><div class="row"><span class="n"><b>Helfer 1</b><small>sensor.helfer_1</small></span><span class="v">1.0</span></div><div class="grp"><b>Übrige · 3</b><span>⌄</span></div></div>
+<span class="note">Keine Bedienelemente: die Liste ist in Gruppen geteilt, "Übrige" ist eingeklappt. Man sieht auf einen Blick, was zählt, und die Marke an der Zeile entfällt (die Gruppe sagt es). Umschalten bleibt ein Tipp auf die Zeile.</span>
+<span class="cost">0 Zeilen für Bedienung</span>
+<span class="note">Schwäche: grösserer Umbau der Liste (Reihenfolge ändert sich), und der Knopf zum Ausschliessen müsste an die Zeile statt an die Marke.</span></div>
+</body>
