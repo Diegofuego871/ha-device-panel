@@ -40,7 +40,7 @@ from homeassistant.helpers.storage import Store
 from homeassistant.util import dt as dt_util
 
 from .const import CONF_AVAIL_DAYS, CONF_AVAIL_MB, CONF_OFFLINE_AFTER, CONF_STARTUP_GRACE, DOMAIN
-from .devices import device_back_since, device_down_since, device_offline_after, device_status, status_devices
+from .devices import device_back_since, device_down_since, device_offline_after, device_status, liveness_exclude, status_devices
 from .options_api import effective
 from .storage_util import PeriodicSaver
 
@@ -340,7 +340,8 @@ class AvailabilityLog:
         changes: list[tuple[str, Any, float]] = []
         for device, entries in status_devices(self.hass, opts):
             seen.add(device.id)
-            online, since = device_status(self.hass, entries, now_dt, self._offline_after(opts, device))
+            exclude = liveness_exclude(self.hass, device.id)
+            online, since = device_status(self.hass, entries, now_dt, self._offline_after(opts, device), exclude)
             state = None if online is None else ONLINE if online else OFFLINE
             events = self._events.setdefault(device.id, [])
             last = events[-1] if events else None
@@ -350,7 +351,7 @@ class AvailabilityLog:
             # noch Lebenszeichen. Sonst schrieb jeder Neustart für Geräte, die
             # schon vorher fehlten, ein "online" (last_changed = Start), und
             # die Meldung "wieder online" ging hinaus.
-            if online and device_down_since(self.hass, entries) is not None:
+            if online and device_down_since(self.hass, entries, exclude) is not None:
                 continue
             if last is None and state is None:
                 continue
@@ -359,7 +360,7 @@ class AvailabilityLog:
                     continue
                 at = since.timestamp() if since else now
             elif state == ONLINE:
-                back = device_back_since(self.hass, entries)
+                back = device_back_since(self.hass, entries, exclude)
                 at = back.timestamp() if back else now
             else:
                 at = now

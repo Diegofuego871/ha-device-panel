@@ -233,3 +233,11 @@ async def test_websocket(hass: HomeAssistant, setup, hass_ws_client) -> None:  #
     wrong = await _ws(client, 5, type=f"{DOMAIN}/backup_export", sections=["gibtsnicht"])
     assert not wrong["success"]
     await _options(hass)
+
+
+async def test_every_device_setting_is_in_the_backup(hass: HomeAssistant, setup) -> None:  # noqa: F811
+    """Sicherungsnetz: jede neue Einstellung pro Gerät (Schlüssel in device_settings) muss in die Sicherung, sonst schlägt dieser Test an."""
+    from custom_components.device_panel.devices import device_settings
+
+    stored = set(device_settings(hass)) - {"notify_off", "notify_mute"}  # "notify_mute" ist vorübergehend (24 Std. stumm)
+    assert stored == set(backup._DEVICE_SETTING_KEYS) - {"notify"}

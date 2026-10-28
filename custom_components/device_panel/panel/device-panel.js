@@ -4191,6 +4191,7 @@ class DevicePanel extends HTMLElement {
       if (Object.keys(settings).length) await this._hass.callWS({ type: "device_panel/set_device_settings", device_id: dr.id, ...settings });
       this._devDraft = null;
       this._devSaved = true;
+      if (keys.includes("liveness_exclude")) this._loadDetail(true);
     } catch (err) {
       if (step === "type") this._typeError = errText(err);
       else if (step === "connection") this._connError = errText(err);
@@ -4907,17 +4908,36 @@ class DevicePanel extends HTMLElement {
     const all = this._detail?.data?.entities || [];
     const list = all.filter((e) => this._devMatch(e, this._devQ?.ent));
     if (!list.length) return `<p class="dlg-note mg-none">${escape(this._t("listSearchNone"))}</p>`;
+    // Lebenszeichen (seit 2.165.0): die Marke ist ein Schalter; eine ausgeschlossene Entität zählt nicht, zum Beispiel ein selbst angelegter
+    // Helfer, der immer verfügbar ist. Rechnet mit dem Entwurf (liveness_exclude_setting), bis gespeichert ist.
+    const off = new Set(d.liveness_exclude_setting || []);
+    const base = all.filter((e) => e.liveness_base);
+    const ignored = base.length > 0 && base.every((e) => off.has(e.entity_id));
+    const live = (e) => e.liveness_base && !off.has(e.entity_id);
     const items = list
       .map((e) => {
         const { text, bad } = this._formatState(e);
+        const mark = off.has(e.entity_id)
+          ? `<button type="button" class="pill live off" data-dlg="live-toggle" data-entity="${escape(e.entity_id)}" aria-pressed="false" title="${escape(this._t("livenessOnTip"))}">${escape(this._t("livenessOff"))}</button>`
+          : e.liveness_base
+            ? `<button type="button" class="pill live" data-dlg="live-toggle" data-entity="${escape(e.entity_id)}" aria-pressed="true" title="${escape(this._t("livenessOffTip"))}">${escape(this._t("liveness"))}</button>`
+            : "";
         return `<li class="entity" role="button" tabindex="0" data-dlg="more-info" data-entity="${escape(e.entity_id)}">
           <span class="ent-name">${escape(e.name)}<small>${escape(e.entity_id)}</small></span>
-          ${e.liveness ? `<span class="pill live">${escape(this._t("liveness"))}</span>` : ""}
+          ${mark}
           <span class="ent-state ${bad ? "bad" : ""}">${escape(text)}</span>
           <button type="button" class="ent-copy" data-dlg="copy-id" data-entity="${escape(e.entity_id)}" title="${escape(this._t("entCopy"))}" aria-label="${escape(`${this._t("entCopy")}: ${e.entity_id}`)}">${mdi("copy", 16)}</button></li>`;
       })
       .join("");
-    const hint = list.some((e) => e.liveness) ? `<p class="dlg-note small">${escape(this._t("livenessHint"))}</p>` : "";
+    const tpl = all.some((e) => live(e) && e.platform === "template");
+    const hint = [
+      base.length ? this._t("livenessHint") : "",
+      tpl ? this._t("livenessTemplateHint") : "",
+      ignored ? this._t("livenessIgnored") : "",
+    ]
+      .filter(Boolean)
+      .map((x, i, a) => `<p class="dlg-note small${ignored && i === a.length - 1 ? " warn" : ""}">${escape(x)}</p>`)
+      .join("");
     return `<ul class="entities">${items}</ul>${hint}`;
   }
 
@@ -5142,6 +5162,15 @@ class DevicePanel extends HTMLElement {
     const action = btn.dataset.dlg;
     if (action === "close") this._requestCloseDevice();
     else if (action === "save") this._devSave();
+    else if (action === "live-toggle") {
+      // Marke "Lebenszeichen" einer Entität umschalten (Entwurf wie die übrigen Einstellungen, gilt nach "Speichern")
+      const d = this._devices.find((x) => x.id === this._detailId);
+      const set = new Set(d?.liveness_exclude_setting || []);
+      if (!set.delete(btn.dataset.entity)) set.add(btn.dataset.entity);
+      this._devEdit(this._detailId, { liveness_exclude: set.size ? [...set].sort() : null });
+      this._devForce = true;
+      this._renderDevice();
+    }
     else if (action === "open-integration") {
       // HA-Seite der Integration dieses Geräts (seit 2.84.0); der Domainname kommt aus dem Registry-Eintrag, nicht aus freier Eingabe
       const domain = btn.dataset.domain;

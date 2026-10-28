@@ -620,6 +620,11 @@
     if (d.signal) entities.push({ entity_id: `sensor.${slug}_signal`, name: "Signal", state: String(d.signal.value), unit: d.signal.kind === "dbm" ? "dBm" : "lqi", category: "diagnostic", liveness: false });
     // Für Prüfungen: zusätzliche Entitäten je Gerät (window.__detailExtra = { <Geräte-ID>: [Entität, …] })
     if (window.__detailExtra?.[id]) entities.push(...window.__detailExtra[id]);
+    // Lebenszeichen (2.165.0): Grundwert ohne Markierungen, Markierung des Nutzers, wirksam = Grundwert und nicht markiert
+    {
+      const off = new Set(window.__devSettings.livenessExclude?.[id] || []);
+      for (const e of entities) { e.liveness_base = e.liveness_base ?? e.liveness; e.liveness_off = off.has(e.entity_id); e.liveness = e.liveness_base && !e.liveness_off; e.platform = e.platform || "test"; }
+    }
     const state = id === "a" ? "setup_retry" : "loaded";
     return {
       id,
@@ -706,7 +711,7 @@
   const EMOJI_DEFAULTS = { outage: "🔴", group: "🚨", online: "🟢", battery: "🪫", charge: "🔋", charge_stop: "🔌", new: "✨", updates: "⬆️" };
   window.__services = [];
   // Einstellungen pro Gerät (Batterie, Meldungen), wie .storage/device_panel.devices.
-  window.__devSettings = { battery: {}, notifyOff: new Set(), mute: {}, signal: {}, offline: {}, notifyDelay: {}, charge: {}, chargeLive: {}, chargeFull: {}, chargeRise: {}, chargeStall: {}, chargeStop: {} };
+  window.__devSettings = { battery: {}, notifyOff: new Set(), mute: {}, signal: {}, offline: {}, notifyDelay: {}, charge: {}, chargeLive: {}, chargeFull: {}, chargeRise: {}, chargeStall: {}, chargeStop: {}, livenessExclude: {} };
   window.__connOverrides = {};
   // Labels von Home Assistant (seit 2.155.0): window.__labels = [{ id, name }], window.__devLabels = { Geräte-ID: [Label-IDs] }
   window.__labels = [];
@@ -1207,6 +1212,13 @@
           if (v === null) delete window.__devSettings.offline[msg.device_id];
           else window.__devSettings.offline[msg.device_id] = v;
           out.offline = v;
+        }
+        if ("liveness_exclude" in msg) {
+          const v = msg.liveness_exclude;
+          const s = (window.__devSettings.livenessExclude = window.__devSettings.livenessExclude || {});
+          if (v === null || !v.length) delete s[msg.device_id];
+          else s[msg.device_id] = [...new Set(v)].sort();
+          out.liveness_exclude = v;
         }
         if ("notify_delay" in msg) {
           // Wie das Backend: Minuten 1..1440, nie kürzer als "Ausgefallen nach" des Geräts (nur bei eigenem Wert)
@@ -1935,6 +1947,7 @@
               return Number.isInteger(o) ? Math.max(v, o) : v;
             })(),
             notify_delay_setting: window.__devSettings.notifyDelay[d.id] ?? null,
+            liveness_exclude_setting: window.__devSettings.livenessExclude?.[d.id] ?? null,
             notify_delay_default: (() => { const [k, v] = window.__scopePick(window.__opts.notify_delay_integrations || {}, d, window.__strictestTime); return { minutes: v ?? window.__opts.notify_delay, integration: k, global: window.__opts.notify_delay }; })(),
             offline_default: (() => { const [k, v] = window.__scopePick(offMap, d, window.__strictestTime); return { minutes: v ?? window.__opts.offline_after, integration: k, global: window.__opts.offline_after }; })(),
             notify_default: notifyDefault(d),

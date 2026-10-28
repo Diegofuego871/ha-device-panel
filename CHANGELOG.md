@@ -7,6 +7,14 @@ All notable changes to this integration are documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/).
 
+## [2.165.0] - 2026-10-28
+
+Entities can be excluded as a "sign of life" on a device.
+
+### Added
+
+- **Exclude a sign of life:** in the device pop-up, tab "Entities", the mark "Sign of life" is now a switch. A tap excludes the entity (it is crossed out as "no sign of life"), another tap counts it again. A device counts as offline when all entities that still count are unavailable. So a template helper you attached to the device yourself, which is always available, no longer hides an outage of the real sensor. The choice is a draft like the other settings and applies after "Save"; it belongs to the backup. If all entities were excluded, the choice is ignored and the pop-up says so (otherwise there would be no status). A note appears when entities from template helpers count as a sign of life. Nothing changes for existing devices: without a choice every entity counts as before.
+
 ## [2.164.0] - 2026-10-27
 
 New app "Device updates": all open device updates in one window, startable at once.
@@ -5091,6 +5099,7 @@ First pre-release.
   GitHub Actions for HACS/hassfest validation and tests.
 
 [2.6.0]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v2.6.0
+[2.165.0]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v2.165.0
 [2.164.0]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v2.164.0
 [2.163.0]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v2.163.0
 [2.161.0]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v2.161.0

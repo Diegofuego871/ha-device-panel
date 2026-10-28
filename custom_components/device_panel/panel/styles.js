@@ -1236,6 +1236,9 @@ button.ver-link { border: none; background: none; font: inherit; font-size: 13px
 .ent-name { flex: 1 1 auto; min-width: 0; overflow-wrap: anywhere; }
 .ent-name small { display: block; color: var(--dp-text3); font-size: 12px; }
 .ent-name small.cat { display: inline; margin-left: 6px; }
+button.pill.live { border: 0; font: inherit; font-size: 11px; cursor: pointer; }
+.pill.live.off { color: var(--dp-text2); background: var(--dp-subtle); text-decoration: line-through; }
+.dlg-note.small.warn { color: var(--dp-warning); }
 .pill.live { height: 19px; font-size: 11px; color: var(--dp-primary); background: var(--dp-primary-soft); }
 .ent-state { flex: none; max-width: 45%; text-align: right; overflow-wrap: anywhere; }
 .ent-copy { flex: none; display: grid; place-items: center; width: 32px; height: 32px; margin: -4px -6px -4px 0; padding: 0; border: 0; border-radius: 50%; background: transparent; color: var(--dp-text2); cursor: pointer; }

@@ -112,10 +112,16 @@ Bereich. Vorbild in Aufbau, Arbeitsweise und Design ist die Integration
 3. CHANGELOG-Eintrag in `CHANGELOG.md` und `CHANGELOG.de.md` inkl.
    Link-Fussnote.
 4. README DE und EN nachführen.
-5. Prüfungen (siehe unten) und Tests laufen lassen.
-6. `.pyc`/`__pycache__` nie committen.
-7. Nach dem Push die Release-Angaben ausgeben (siehe "Git und Releases").
-8. Veröffentlichte Tags nie ändern: existiert der Tag schon, neue
+5. Backup und Wiederherstellung prüfen (Einstellungen › Panel › Sichern, `backup.py`): Ist die neue Einstellung oder Funktion etwas, das
+   der Nutzer eingestellt hat (Optionen, Einstellung pro Gerät, eigene Daten wie Routinen), gehört sie in die Sicherung und die
+   Wiederherstellung, mit Prüfung des Werts und einem Test (Sichern, zurücksetzen, wiederherstellen). Neue Optionen erfasst
+   `tests/test_backup.py` selbst (jeder Schlüssel gehört zu einem Bereich), neue Schlüssel in `device_settings` ebenfalls; alles andere
+   (eigene Ablagen) von Hand. Zustand der Installation, Laufzeitdaten und Daten pro Benutzer in HA (Launcher, Ansicht, Sprache) gehören
+   nicht hinein; im Zweifel nachfragen.
+6. Prüfungen (siehe unten) und Tests laufen lassen.
+7. `.pyc`/`__pycache__` nie committen.
+8. Nach dem Push die Release-Angaben ausgeben (siehe "Git und Releases").
+9. Veröffentlichte Tags nie ändern: existiert der Tag schon, neue
    Patch-Version.
 
 ## Prüfungen vor jedem Commit

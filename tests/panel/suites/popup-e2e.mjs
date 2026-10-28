@@ -19,7 +19,7 @@ const TEXT = {
     secs: ["Statistik", "Verbindung", "Gerät"], tabs: ["Übersicht", "Einstellungen", "Entitäten · 3", "Magic Push", "Routinen"], tabOwn: "Einstellungen 1 eigene", setSecs: ["Typ und Verbindung", "Einstellungen für dieses Gerät"], entSecs: ["Entitäten · 3", "Link zu diesem Gerät"],
     tile24: ["Verfügbarkeit 24 Std.", "90,2%", "2 Unterbrüche · längster 2 Std. 14 Min."],
     tile7: ["Unterbrüche 7 Tage", "3", "zusammen 2 Std. 41 Min."], signal: ["Empfang", "LQI 38", "schwach"], battery: ["Batterie", "8%", "niedrig"],
-    update: "Update auf 2.2.0 verfügbar", live: "Lebenszeichen", unavailable: "nicht verfügbar", liveHint: "Markierte Entitäten zeigen, ob das Gerät lebt.",
+    update: "Update auf 2.2.0 verfügbar", live: "Lebenszeichen", unavailable: "nicht verfügbar", liveHint: "Markierte Entitäten zeigen, ob das Gerät lebt: ist keine davon mehr erreichbar, gilt das Gerät als ausgefallen. Tippe auf die Marke, um eine Entität auszuschliessen.",
     statTitle: "Verfügbarkeit", ranges: ["24 Std.", "7 Tage", "30 Tage", "3 Monate", "6 Monate", "12 Monate"], pct24: "90,2%",
     facts24: ["2 Unterbrüche", "zusammen 2 Std. 21 Min.", "längster 2 Std. 14 Min."], ongoing: "läuft", dur: "2 Std. 14 Min.", dur47: "47 Min.", one24: "1 Unterbruch", now: "jetzt",
     legend: ["Online", "Ausgefallen"], tip: "Ausgefallen", days: "Unterbrüche pro Tag", today: "heute", out30: "4 Unterbrüche",
@@ -33,7 +33,7 @@ const TEXT = {
     secs: ["Statistics", "Connection", "Device"], tabs: ["Overview", "Settings", "Entities · 3", "Magic Push", "Routines"], tabOwn: "Settings 1 custom", setSecs: ["Type and connection", "Settings for this device"], entSecs: ["Entities · 3", "Link to this device"],
     tile24: ["Availability 24 h", "90.2%", "2 outages · longest 2 h 14 min"],
     tile7: ["Outages 7 days", "3", "2 h 41 min in total"], signal: ["Signal", "LQI 38", "weak"], battery: ["Battery", "8%", "low"],
-    update: "Update to 2.2.0 available", live: "Sign of life", unavailable: "unavailable", liveHint: "Marked entities show whether the device is alive.",
+    update: "Update to 2.2.0 available", live: "Sign of life", unavailable: "unavailable", liveHint: "Marked entities show whether the device is alive: if none of them is reachable any more, the device counts as down. Tap the mark to exclude an entity.",
     statTitle: "Availability", ranges: ["24 h", "7 days", "30 days", "3 months", "6 months", "12 months"], pct24: "90.2%",
     facts24: ["2 outages", "2 h 21 min in total", "longest 2 h 14 min"], ongoing: "ongoing", dur: "2 h 14 min", dur47: "47 min", one24: "1 outage", now: "now",
     legend: ["Online", "Offline"], tip: "Offline", days: "Outages per day", today: "today", out30: "4 outages",
@@ -120,7 +120,8 @@ for (const lang of ["de", "en"]) {
     await p.screenshot({ path: `${outDir}/popup-${lang}-${mobile ? "mobile" : "desktop"}.png` });
 
     // Entität antippen: HAs Entitäts-Dialog
-    await tap('dialog.device li.entity[data-entity="binary_sensor.bewegungsmelder_flur"]');
+    // auf den Namen: in der Mitte der Zeile liegt seit 2.165.0 die Marke "Lebenszeichen", ein eigener Schalter
+    await tap('dialog.device li.entity[data-entity="binary_sensor.bewegungsmelder_flur"] .ent-name');
     check(`[${tag}] Entitäts-Dialog von HA`, (await p.evaluate(() => window.__moreInfo)).includes("binary_sensor.bewegungsmelder_flur"));
 
     // --- Statistik-Fenster 24 Std. ---

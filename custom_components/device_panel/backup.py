@@ -104,6 +104,7 @@ _DEVICE_SETTING_KEYS = (
     "charge_stall",
     "charge_stop",
     "charge_live",
+    "liveness_exclude",
 )
 _ITEMS_MAX = 400
 _EXAMPLES_MAX = 3
@@ -335,6 +336,8 @@ def _options_part(hass: HomeAssistant, entry: Any, section: str, file_options: A
 def _valid_device_setting(key: str, value: Any) -> bool:
     if key in ("notify", "charge", "charge_stop", "charge_live"):
         return isinstance(value, bool)
+    if key == "liveness_exclude":
+        return isinstance(value, list) and 0 < len(value) <= 500 and all(isinstance(v, str) and 0 < len(v) < 256 for v in value)
     if key == "battery":
         return value == BATTERY_OFF or _in_range(value, CONF_BATTERY_LOW)
     if key == "signal":

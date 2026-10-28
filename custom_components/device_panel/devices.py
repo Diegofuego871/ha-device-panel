@@ -141,7 +141,7 @@ def _device_class(entry: er.RegistryEntry, state: State | None) -> str | None:
     return entry.device_class or entry.original_device_class or _attr(state, "device_class")
 
 
-def liveness_entities(entries: list[er.RegistryEntry]) -> tuple[list[er.RegistryEntry], bool]:
+def liveness_entities(entries: list[er.RegistryEntry], exclude: frozenset[str] | set[str] = frozenset()) -> tuple[list[er.RegistryEntry], bool]:
     """
     Entitäten, die zeigen, dass das Gerät lebt (Standard der Überwachung).
 
@@ -149,8 +149,13 @@ def liveness_entities(entries: list[er.RegistryEntry]) -> tuple[list[er.Registry
     aktivierte Entitäten ohne Kategorie; versteckte und Diagnose-Entitäten
     nur, wenn es nichts anderes gibt, damit Geräte mit wenigen Entitäten
     nicht als "keine Daten" enden.
+
+    exclude (seit 2.165.0): Entitäten, die der Nutzer am Gerät als "kein Lebenszeichen" markiert hat, zum Beispiel selbst angelegte Helfer, die
+    immer verfügbar sind. Bliebe dadurch nichts übrig, gilt die Markierung nicht (statt "keine Daten").
     """
     enabled = [e for e in entries if not e.disabled_by]
+    if exclude and (kept := [e for e in enabled if e.entity_id not in exclude]):
+        enabled = kept
     connectivity = [
         e for e in enabled
         if e.domain == "binary_sensor" and (e.device_class or e.original_device_class) == "connectivity"
@@ -172,6 +177,7 @@ def device_status(
     entries: list[er.RegistryEntry],
     now: datetime,
     offline_after: float = DEFAULT_OFFLINE_AFTER * 60,
+    exclude: frozenset[str] | set[str] = frozenset(),
 ) -> tuple[bool | None, datetime | None]:
     """
     (online, ausgefallen seit). None = keine Daten.
@@ -180,7 +186,7 @@ def device_status(
     kurze Aussetzer und das Hochfahren der Integrationen nach einem Neustart
     zählen nicht.
     """
-    states, down = _liveness_states(hass, entries)
+    states, down = _liveness_states(hass, entries, exclude)
     if not states:
         return None, None
     if len(down) < len(states):
@@ -198,22 +204,23 @@ def live_status(
     offline_after: float,
     log: Any = None,
     device_id: str = "",
+    exclude: frozenset[str] | set[str] = frozenset(),
 ) -> tuple[bool | None, datetime | None]:
     """
     device_status mit der Regel der Liste: Unter der Schwelle, aber ausgefallen
     schon vor einer Lücke im Protokoll (z. B. die ersten Minuten nach einem
     Neustart), läuft der Ausfall weiter.
     """
-    online, since = device_status(hass, entries, now, offline_after)
-    if online and log is not None and (down := device_down_since(hass, entries)) is not None:
+    online, since = device_status(hass, entries, now, offline_after, exclude)
+    if online and log is not None and (down := device_down_since(hass, entries, exclude)) is not None:
         if log.open_outage(device_id)[0] is not None:
             return False, down
     return online, since
 
 
-def _liveness_states(hass: HomeAssistant, entries: list[er.RegistryEntry]) -> tuple[list[State], list[State]]:
+def _liveness_states(hass: HomeAssistant, entries: list[er.RegistryEntry], exclude: frozenset[str] | set[str] = frozenset()) -> tuple[list[State], list[State]]:
     """Zustände der lebenden Entitäten und die davon, die weg sind."""
-    relevant, is_connectivity = liveness_entities(entries)
+    relevant, is_connectivity = liveness_entities(entries, exclude)
     states = [s for e in relevant if (s := hass.states.get(e.entity_id)) is not None]
     # Verbindungssensor: "aus" heisst getrennt; "unknown" (z. B. kurz nach
     # dem Start) ist kein Ausfall.
@@ -221,7 +228,7 @@ def _liveness_states(hass: HomeAssistant, entries: list[er.RegistryEntry]) -> tu
     return states, [s for s in states if s.state in dead]
 
 
-def device_down_since(hass: HomeAssistant, entries: list[er.RegistryEntry]) -> datetime | None:
+def device_down_since(hass: HomeAssistant, entries: list[er.RegistryEntry], exclude: frozenset[str] | set[str] = frozenset()) -> datetime | None:
     """
     Seit wann alle lebenden Entitäten weg sind, auch unter der Schwelle
     "Ausgefallen nach"; None, solange eine lebt.
@@ -230,7 +237,7 @@ def device_down_since(hass: HomeAssistant, entries: list[er.RegistryEntry]) -> d
     Neustart beginnt last_changed aber beim Start: Ein Gerät, das schon vorher
     fehlte, ist dann kein Aussetzer, und ein Lebenszeichen ist es auch nicht.
     """
-    states, down = _liveness_states(hass, entries)
+    states, down = _liveness_states(hass, entries, exclude)
     if not states or len(down) < len(states):
         return None
     return max(s.last_changed for s in down)
@@ -795,9 +802,9 @@ def listed_devices(
     yield from _shown(hass, opts, disabled=opts[CONF_SHOW_DISABLED])
 
 
-def device_back_since(hass: HomeAssistant, entries: list[er.RegistryEntry]) -> datetime | None:
+def device_back_since(hass: HomeAssistant, entries: list[er.RegistryEntry], exclude: frozenset[str] | set[str] = frozenset()) -> datetime | None:
     """Wann das Gerät wieder ein Lebenszeichen gab: frühester Wechsel der lebenden Entitäten."""
-    relevant, is_connectivity = liveness_entities(entries)
+    relevant, is_connectivity = liveness_entities(entries, exclude)
     dead = (STATE_OFF, STATE_UNAVAILABLE) if is_connectivity else (STATE_UNAVAILABLE,)
     times = [s.last_changed for e in relevant if (s := hass.states.get(e.entity_id)) is not None and s.state not in dead]
     return min(times) if times else None
@@ -956,6 +963,8 @@ async def async_load_type_overrides(hass: HomeAssistant) -> None:
             "charge_stop": {str(k): v for k, v in (stored.get("charge_stop") or {}).items() if isinstance(v, bool)},
             # Live-Aktivität beim Laden des Geräts: True/False, ohne Eintrag gilt die Integration (seit 2.19.0).
             "charge_live": {str(k): v for k, v in (stored.get("charge_live") or {}).items() if isinstance(v, bool)},
+            # Entitäten, die am Gerät nicht als Lebenszeichen zählen (seit 2.165.0)
+            "liveness_exclude": {str(k): sorted({str(e) for e in v if isinstance(e, str)}) for k, v in (stored.get("liveness_exclude") or {}).items() if isinstance(v, list) and v},
         }
         conns = stored.get("connections") if isinstance(stored.get("connections"), dict) else {}
         hass.data[DATA_CONNECTION_OVERRIDES] = {str(k): v for k, v in conns.items() if v in CONNECTION_MANUAL}
@@ -980,10 +989,15 @@ async def _async_save_devices(hass: HomeAssistant) -> None:
         data["notify_delay"] = dict(settings["notify_delay"])
     if settings.get("charge"):
         data["charge"] = dict(settings["charge"])
-    for key in ("charge_full", "charge_rise", "charge_stall", "charge_stop", "charge_live"):
+    for key in ("charge_full", "charge_rise", "charge_stall", "charge_stop", "charge_live", "liveness_exclude"):
         if settings.get(key):
             data[key] = dict(settings[key])
     await _types_store(hass).async_save(data)
+
+
+def liveness_exclude(hass: HomeAssistant, device_id: str) -> frozenset[str]:
+    """Entitäten, die der Nutzer an diesem Gerät als "kein Lebenszeichen" markiert hat (seit 2.165.0)."""
+    return frozenset((device_settings(hass).get("liveness_exclude") or {}).get(device_id) or ())
 
 
 @callback
@@ -993,7 +1007,7 @@ def device_settings(hass: HomeAssistant) -> dict[str, Any]:
     "notify_mute": {Gerät: bis}, "signal": {Gerät: Schwelle | "off"},
     "offline": {Gerät: Minuten | "off"}, "charge": {Gerät: bool}}.
     """
-    return hass.data.get(DATA_DEVICE_SETTINGS) or {"battery": {}, "notify_off": set(), "notify_mute": {}, "signal": {}, "offline": {}, "notify_delay": {}, "charge": {}, "charge_full": {}, "charge_rise": {}, "charge_stall": {}, "charge_stop": {}, "charge_live": {}}
+    return hass.data.get(DATA_DEVICE_SETTINGS) or {"battery": {}, "notify_off": set(), "notify_mute": {}, "signal": {}, "offline": {}, "notify_delay": {}, "charge": {}, "charge_full": {}, "charge_rise": {}, "charge_stall": {}, "charge_stop": {}, "charge_live": {}, "liveness_exclude": {}}
 
 
 def signal_limit(d: dict[str, Any]) -> Any:
@@ -1139,7 +1153,8 @@ async def async_set_device_settings(hass: HomeAssistant, device_id: str, **chang
     charge=None (Integration), True/False (Lademeldung, seit 1.30.0);
     charge_full / charge_rise / charge_stall=None (Integration bzw. global) oder eigener Wert (seit 1.35.0, charge_stall seit 1.41.0);
     charge_stop=None (Integration bzw. global), True/False (Push bei beendeter Ladung, seit 1.41.0);
-    charge_live=None (Integration bzw. global), True/False (Live-Aktivität beim Laden, seit 2.19.0).
+    charge_live=None (Integration bzw. global), True/False (Live-Aktivität beim Laden, seit 2.19.0);
+    liveness_exclude=Liste von Entitäten, die nicht als Lebenszeichen zählen (leer = alle zählen, seit 2.165.0).
     """
     await async_load_type_overrides(hass)
     settings = hass.data[DATA_DEVICE_SETTINGS]
@@ -1153,6 +1168,12 @@ async def async_set_device_settings(hass: HomeAssistant, device_id: str, **chang
             settings.setdefault("notify_delay", {}).pop(device_id, None)
         else:
             settings.setdefault("notify_delay", {})[device_id] = changes["notify_delay"]
+    if "liveness_exclude" in changes:
+        ids = sorted({str(e) for e in (changes["liveness_exclude"] or [])})
+        if ids:
+            settings.setdefault("liveness_exclude", {})[device_id] = ids
+        else:
+            settings.setdefault("liveness_exclude", {}).pop(device_id, None)
     if "charge" in changes:
         if changes["charge"] is None:
             settings.setdefault("charge", {}).pop(device_id, None)
@@ -1533,7 +1554,7 @@ async def async_list_devices(hass: HomeAssistant, log: Any = None) -> dict[str, 
         # Ohne Online-Status (seit 2.156.0): überwacht (Batterie, Laden, Empfang), aber ohne Status und Ausfälle
         no_status = not disabled and not unmonitored and device_status_off(hass, opts, device)
         # Deaktiviert, nicht überwacht oder ohne Online-Status: kein Status, keine Ausfälle.
-        online, since = (None, None) if disabled or unmonitored or no_status else live_status(hass, entries, now, offline_after, log, device.id)
+        online, since = (None, None) if disabled or unmonitored or no_status else live_status(hass, entries, now, offline_after, log, device.id, liveness_exclude(hass, device.id))
         at_least = False
         if since is not None:
             since, at_least = outage_start(log, device.id, since, started_at, offline_after)
@@ -1596,6 +1617,7 @@ async def async_list_devices(hass: HomeAssistant, log: Any = None) -> dict[str, 
                 # "Erst melden nach" (seit 2.91.0): wirksam in Minuten (nie kürzer als "Ausgefallen nach"), Einstellung des Geräts, ohne sie.
                 "notify_delay": notify_delay_for(opts, scope, device_settings(hass).get("notify_delay", {}).get(device.id), offline_after),
                 "notify_delay_setting": device_settings(hass).get("notify_delay", {}).get(device.id),
+                "liveness_exclude_setting": device_settings(hass).get("liveness_exclude", {}).get(device.id),
                 "notify_delay_default": _notify_delay_default(opts, scope),
                 # Ausfall-Meldungen ohne Einstellung des Geräts (Herkunft im Popup).
                 "notify_default": _notify_default(opts, scope),
@@ -1736,8 +1758,14 @@ async def async_device_detail(hass: HomeAssistant, device_id: str, log: Any = No
     entries = er.async_entries_for_device(
         er.async_get(hass), device_id, include_disabled_entities=bool(device.disabled_by)
     )
-    relevant, _conn = liveness_entities(entries)
+    excluded = liveness_exclude(hass, device_id)
+    relevant, _conn = liveness_entities(entries, excluded)
     relevant_ids = {e.entity_id for e in relevant}
+    # Ohne Markierungen: welche Entitäten zählen würden (das Popup rechnet damit, solange eine Änderung noch nicht gespeichert ist)
+    base_ids = {e.entity_id for e in liveness_entities(entries)[0]}
+    enabled_ids = {e.entity_id for e in entries if not e.disabled_by}
+    # Hätte die Markierung alle Entitäten ausgeschlossen, gilt sie nicht (siehe liveness_entities); das Popup sagt es
+    excluded_all = bool(excluded & enabled_ids) and enabled_ids <= excluded
     device_name = device.name_by_user or device.name
     entities = []
     for e in sorted(entries, key=lambda x: (x.entity_category is not None, x.entity_id)):
@@ -1752,6 +1780,9 @@ async def async_device_detail(hass: HomeAssistant, device_id: str, log: Any = No
                 "unit": _attr(state, "unit_of_measurement"),
                 "category": e.entity_category.value if e.entity_category else None,
                 "liveness": e.entity_id in relevant_ids,
+                "liveness_base": e.entity_id in base_ids,
+                "liveness_off": e.entity_id in excluded,
+                "platform": e.platform,
             }
         )
     entry_ids = device_entry_ids(device)
@@ -1766,6 +1797,7 @@ async def async_device_detail(hass: HomeAssistant, device_id: str, log: Any = No
     return {
         "id": device.id,
         "entities": entities,
+        "liveness_ignored": excluded_all,
         # Update-Entitäten, die sich aus dem Popup installieren lassen (seit 2.161.0), und Ende der Zurückhaltung der Ausfall-Meldungen
         "updates": installable_updates(hass, device_id),
         "update_hold_until": held_until(hass, device_id),

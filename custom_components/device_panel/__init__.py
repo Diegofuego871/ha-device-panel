@@ -1071,6 +1071,8 @@ def _signal_setting(value: Any) -> Any:
         vol.Optional("charge_stop"): vol.Any(None, bool),
         # Live-Aktivität beim Laden (seit 2.19.0): None = Integration bzw. global.
         vol.Optional("charge_live"): vol.Any(None, bool),
+        # Entitäten, die am Gerät nicht als Lebenszeichen zählen (seit 2.165.0): None oder leer = alle zählen.
+        vol.Optional("liveness_exclude"): vol.Any(None, vol.All([str], vol.Length(max=500))),
     }
 )
 @websocket_api.require_admin
@@ -1082,7 +1084,7 @@ async def _ws_set_device_settings(
     if dr.async_get(hass).async_get(msg["device_id"]) is None:
         connection.send_error(msg["id"], websocket_api.ERR_NOT_FOUND, "device not found")
         return
-    changes = {k: msg[k] for k in ("battery", "notify", "signal", "offline", "notify_delay", "charge", "charge_full", "charge_rise", "charge_stall", "charge_stop", "charge_live") if k in msg}
+    changes = {k: msg[k] for k in ("battery", "notify", "signal", "offline", "notify_delay", "charge", "charge_full", "charge_rise", "charge_stall", "charge_stop", "charge_live", "liveness_exclude") if k in msg}
     # "Erst melden nach" des Geräts nie kürzer als sein "Ausgefallen nach" (seit 2.91.0, wie global und pro Integration): Fehler, nichts gespeichert
     if error := await async_notify_delay_error(hass, msg["device_id"], changes):
         connection.send_error(msg["id"], websocket_api.ERR_INVALID_FORMAT, error)

@@ -38,7 +38,7 @@ from homeassistant.core import HomeAssistant
 from homeassistant.helpers import entity_registry as er
 from homeassistant.util import dt as dt_util
 
-from .devices import liveness_entities
+from .devices import liveness_entities, liveness_exclude
 
 _LOGGER = logging.getLogger(__name__)
 
@@ -55,9 +55,9 @@ _CHATTY_CLASSES = {
 }
 
 
-def candidates(entries: list[er.RegistryEntry]) -> tuple[list[er.RegistryEntry], bool]:
+def candidates(entries: list[er.RegistryEntry], exclude: frozenset[str] | set[str] = frozenset()) -> tuple[list[er.RegistryEntry], bool]:
     """Lebende Entitäten (wie die Bewertung), ruhige zuerst; dazu, ob Verbindungssensor."""
-    relevant, is_connectivity = liveness_entities(entries)
+    relevant, is_connectivity = liveness_entities(entries, exclude)
 
     def rank(e: er.RegistryEntry) -> tuple[int, int, str]:
         cls = e.device_class or e.original_device_class
@@ -209,7 +209,7 @@ async def async_backfill(
         first = first_events.get(device_id)
         if not first or first[0] <= start_dt.timestamp():
             continue
-        picked, is_connectivity = candidates(entries)
+        picked, is_connectivity = candidates(entries, liveness_exclude(hass, device_id))
         dead = (STATE_OFF, STATE_UNAVAILABLE) if is_connectivity else (STATE_UNAVAILABLE,)
         until = dt_util.utc_from_timestamp(first[0])
         timelines: list[list[tuple[float, bool]]] = []
