@@ -8250,6 +8250,12 @@ class DevicePanel extends HTMLElement {
         this._closeMagicAll();
         return;
       }
+      // "Gerät öffnen" in der Zeile unter dem Namen (seit 2.173.0): steht im Kopf, der selbst ein Knopf ist, darum kein eigener Knopf
+      const openDev = ev.target.closest("[data-mga-open]");
+      if (openDev) {
+        this._openDevice(openDev.dataset.device, "magic");
+        return;
+      }
       const clear = ev.target.closest("[data-mga-clear]");
       if (clear) {
         all.query = "";

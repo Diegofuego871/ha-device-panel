@@ -102,9 +102,12 @@ for (const lang of ["de", "en"]) {
 
     // --- Übersicht Magic Push: Knopf Protokoll bei der Karte ---
     await ev(`r.host._openMagicAll()`);
+    await wait(`return r.querySelectorAll('dialog.mgall-dlg .mg-dcard').length > 0`);
+    // Seit 2.173.0 starten die Karten zugeklappt: für die Prüfung der Karte alle aufklappen
+    await ev(`const d = r.querySelector('dialog.mgall-dlg'); if (!d.querySelector('.mg-dcard:not(.closed)')) d.querySelector('[data-mga="magic-fold-all"]')?.click()`);
     await wait(`return r.querySelectorAll('dialog.mgall-dlg .mg-card').length >= 2`);
     check(`[${tag}] Magic Push: Karte hat "${T.title}" neben Bearbeiten und Löschen`, await ev(`const a = r.querySelector('dialog.mgall-dlg .mg-card [data-proto="magic"][data-id="r00000000001"]'); return !!a && a.textContent.trim() === ${JSON.stringify(T.title)} && a.closest(".mg-acts").querySelectorAll("button").length >= 3`));
-    check(`[${tag}] Magic Push: im Fuss der Karte nur "Gerät öffnen", kein "${T.device} ›" mehr`, await ev(`const f = [...r.querySelectorAll('dialog.mgall-dlg .mg-dfoot')]; return f.length > 0 && f.every((x) => !x.querySelector("[data-proto]") && x.querySelectorAll(".linkbtn").length === 1)`));
+    check(`[${tag}] Magic Push: "Gerät öffnen" in der Zeile unter dem Namen (keine Fusszeile), kein "${T.device} ›" mehr`, await ev(`const c = [...r.querySelectorAll('dialog.mgall-dlg .mg-dcard:not(.closed)')]; return c.length > 0 && c.every((x) => !x.querySelector(".mg-dfoot") && !!x.querySelector(".mg-dhead .mg-dopen") && !x.querySelector("[data-proto='all']"))`));
     await tap('dialog.mgall-dlg [data-proto="magic"][data-id="r00000000001"]');
     check(`[${tag}] Protokoll öffnet (Titel "${T.title}", Unterzeile = Gerät und Zahl, die Meldung "Keller kalt" als gewählter Chip)`, await wait(`const d = r.querySelector('${P}'); return d.open && d.querySelector("h2").textContent === ${JSON.stringify(T.title)} && d.querySelector("[data-pr-sub]").textContent !== "Keller kalt" && d.querySelector("[data-pr-sub]").textContent.includes(" · ") && d.querySelector("[data-pr-items] .chip.on")?.textContent.trim() === "Keller kalt"`));
     check(`[${tag}] Kreuz oben rechts und zusätzlich "${T.back}" unten links im Fuss (vor der Zahl der Einträge)`, await ev(`const d = r.querySelector('${P}'); const b = d.querySelector('[data-pr-foot] [data-pr="close"]'); const f = d.querySelector('[data-pr-foot]').getBoundingClientRect(); return !!d.querySelector('.dlg-head .dlg-close[data-pr="close"]') && !!b && b.textContent.trim() === ${JSON.stringify(T.back)} && b.getBoundingClientRect().left - f.left < 40 && b.getBoundingClientRect().left < d.querySelector('[data-pr="copy"]').getBoundingClientRect().left`));
@@ -164,6 +167,8 @@ for (const lang of ["de", "en"]) {
 
     // --- Reiter Routinen im selben Fenster: Zusammenhang = alle Routinen des Geräts, zurück = die einzelne Meldung ---
     await ev(`r.host._openMagicAll()`);
+    await wait(`return r.querySelectorAll('dialog.mgall-dlg .mg-dcard').length > 0`);
+    await ev(`const d = r.querySelector('dialog.mgall-dlg'); if (!d.querySelector('.mg-dcard:not(.closed)')) d.querySelector('[data-mga="magic-fold-all"]')?.click()`);
     await wait(`return r.querySelectorAll('dialog.mgall-dlg .mg-card').length >= 2`);
     await tap('dialog.mgall-dlg [data-proto="magic"][data-id="r00000000001"]');
     await wait(`return r.querySelectorAll('${P} .pr-item').length === 2`);

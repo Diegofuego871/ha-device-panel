@@ -49,6 +49,11 @@ for (const lang of ["de", "en"]) {
     const calls = (type) => p.evaluate((t) => window.__wsCalls.filter((m) => m.type === `device_panel/${t}`), type);
     const body = "dialog.mgall-dlg [data-mga-body]";
     const cards = () => ev(`return r.querySelectorAll('${body} .mg-card').length`);
+    // Seit 2.173.0 starten die Karten zugeklappt (mehrere Geräte): für die Prüfungen der Karten zuerst alle aufklappen
+    const expandAll = async () => {
+      await wait(`return r.querySelectorAll("dialog.mgall-dlg .mg-dcard").length > 0`);
+      await ev(`const d = r.querySelector("dialog.mgall-dlg"); if (!d.querySelector(".mg-dcard:not(.closed)")) d.querySelector('[data-mga="magic-fold-all"]')?.click()`);
+    };
 
     await p.evaluate((rules) => {
       window.__opts.notify_service = "notify.mobile_app_dani_iphone";
@@ -76,6 +81,7 @@ for (const lang of ["de", "en"]) {
 
     // Die App öffnet das eigene Fenster (über den Launcher: launcher-e2e)
     await ev(`r.host._openMagicAll()`);
+    await expandAll();
     check(`[${tag}] Fenster "Magic Push" mit Titel und Untertitel`, await wait(`const d=r.querySelector("dialog.mgall-dlg"); return d?.open && d.querySelector("h2")?.textContent.trim() === "Magic Push" && !!d.querySelector(".dlg-sub")`));
     check(`[${tag}] Fenster mit Knopf "Neue Meldung" unten ( seit 2.102.0; der Ablauf steht in magicadd-e2e)`, !!(await ev(`return !!r.querySelector('dialog.mgall-dlg .dlg-addbar .mg-add[data-mga="magic-add"]')`)));
 
@@ -132,7 +138,7 @@ for (const lang of ["de", "en"]) {
     await p.evaluate(() => { window.__magicLoadFails = null; });
 
     // Gerätekopf: Popup mit der Liste des Geräts
-    await tap(`${body} [data-mga="magic-device"][data-device="h"]`);
+    await tap(`${body} [data-mga-open][data-device="h"]`);
     check(`[${tag}] Gerätekopf öffnet das Popup im Reiter Magic Push (Liste, kein Assistent)`, await wait(`const d=r.querySelector("dialog.device"); return d?.open && !!r.querySelector('.mg-root .mg-card') && !r.querySelector('.mg-root .mg-stephead')`));
     await ev(`r.host._closeDevice()`);
 
@@ -161,6 +167,7 @@ for (const lang of ["de", "en"]) {
     };
     const waitNames = (names) => wait(`return [...r.querySelectorAll('${body} .mg-card .mg-t b')].map(b => b.textContent.trim()).sort().join("|") === ${JSON.stringify(names)}`);
     const cardNames = () => ev(`return [...r.querySelectorAll('${body} .mg-card .mg-t b')].map(b => b.textContent.trim()).sort().join("|")`);
+    await expandAll();
     check(`[${tag}] Suchfeld und vier Filter mit Zahlen (Alle 3, An 2, Aus 1, Ausgelöst 1)`, !!(await handle(input)) && (await ev(`return [...r.querySelectorAll('${body} .mg-filter .sub-tab .tab-s')].map(x => x.textContent.trim()).join()`)) === "3,2,1,1" && (await ev(`return r.querySelectorAll('${body} .mg-filter .sub-tab').length`)) === 4);
     check(`[${tag}] Filter ist eine Reiterleiste mit Kapsel, "Alle" gewählt`, await wait(`return !!r.querySelector('${body} .mg-filter > .seg-pill') && r.querySelector('${body} .mg-filter .sub-tab.on')?.dataset.v === "all"`));
     check(`[${tag}] Gerätekarten: pro Gerät ein Kopf mit Zahl der Meldungen`, (await ev(`return [...r.querySelectorAll('${body} .mg-dhead')].map(h => h.dataset.device + ":" + h.querySelector(".mg-badge").textContent).join()`)) === "d:2,h:1");
@@ -217,7 +224,7 @@ for (const lang of ["de", "en"]) {
     check(`[${tag}] Fenster neu geöffnet nach einer Suche: Feld leer, alle Karten wieder da`, await wait(`return r.querySelector('${input}').value === "" && r.querySelectorAll('${body} .mg-dhead').length > 1`), await ev(`return r.querySelector('${input}').value + "|" + r.querySelectorAll('${body} .mg-dhead').length`));
     // "Gerät öffnen" in der aufgeklappten Karte
     await tap(`${body} .mg-dhead[data-device="h"]`);
-    await tap(`${body} [data-mga="magic-device"][data-device="h"]`);
+    await tap(`${body} [data-mga-open][data-device="h"]`);
     check(`[${tag}] "Gerät öffnen" zeigt das Popup im Reiter Magic Push`, await wait(`return r.querySelector("dialog.device")?.open && !!r.querySelector('.sub-tab[data-tab="magic"].on')`));
     await ev(`r.host._closeDevice()`);
     check(`[${tag}] Übersicht ohne Querscrollen (viele Karten)`, (await ev(`const d=r.querySelector("dialog.mgall-dlg .dlg-body"); return d.scrollWidth - d.clientWidth`)) <= 0);
@@ -235,9 +242,11 @@ for (const lang of ["de", "en"]) {
     // Leer, Fehler
     await p.evaluate(() => { window.__magic.rules = []; });
     await ev(`r.host._closeMagicAll(); r.host._openMagicAll()`);
+    await expandAll();
     check(`[${tag}] ohne Meldungen: Hinweis, wo man sie anlegt`, await wait(`return r.querySelector('${body}')?.textContent.includes(${JSON.stringify(T.empty)})`));
     await p.evaluate(() => { window.__magicListFails = "Verbindung weg"; });
     await ev(`r.host._closeMagicAll(); r.host._openMagicAll()`);
+    await expandAll();
     check(`[${tag}] Laden schlägt fehl: Fehler und Wiederholen`, await wait(`return r.querySelector('${body} .dlg-error')?.textContent.includes(${JSON.stringify(T.err)}) && !!r.querySelector('${body} [data-mga="magic-reload"]')`));
     await p.evaluate(() => { window.__magicListFails = null; });
     await tap(`${body} [data-mga="magic-reload"]`);

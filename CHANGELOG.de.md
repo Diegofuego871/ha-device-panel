@@ -7,6 +7,15 @@ Alle nennenswerten Änderungen an dieser Integration stehen in dieser Datei.
 Das Format folgt [Keep a Changelog](https://keepachangelog.com/de/1.1.0/),
 die Versionsnummern folgen [Semantic Versioning](https://semver.org/lang/de/).
 
+## [2.173.0] - 2026-10-28
+
+Magic Push: die Übersicht funktioniert wie die der Routinen.
+
+### Geändert
+
+- **Fenster Magic Push, zugeklappte Karten mit Schaltern:** Wie im Routinen-Fenster (2.171.0): Sind mehrere Geräte sichtbar, sind alle Karten zugeklappt, in jedem Reiter und auch bei einer Suche (bei genau einem Gerät ist die Karte offen; bisher starteten bis zu drei Geräte aufgeklappt). Eine zugeklappte Karte zeigt den Schalter ihrer Meldung im Kopf anstelle der Zahl; ein Gerät mit mehreren Meldungen zeigt unter dem Kopf je Meldung eine schlanke Zeile mit eigenem Schalter. Aufgeklappte Karten behalten alle Optionen (Bearbeiten, Protokoll, Löschen).
+- **"Gerät öffnen" braucht weniger Platz:** Die eigene Zeile unten in einer aufgeklappten Karte entfällt. "Gerät öffnen ›" steht jetzt in der Zeile unter dem Namen, hinter dem Bereich.
+
 ## [2.172.0] - 2026-10-28
 
 Fehlgeschlagene Routinen fallen auf: Sternschnuppe, wackelndes Symbol, Chip "Fehler" und ein Protokoll, das beim Fehlschlag öffnet.
@@ -16,6 +25,8 @@ Fehlgeschlagene Routinen fallen auf: Sternschnuppe, wackelndes Symbol, Chip "Feh
 - **Fehlgeschlagene Routine, Sternschnuppe und Chip:** Schlägt eine Routine endgültig fehl (nach den Wiederholungen, auch ein fehlgeschlagenes Zurückschalten oder ein Lauf von Hand), fliegt die Sternschnuppe in Rot am Knopf der Routinen in der Kopfzeile (oder am Launcher-Knopf, wenn die App nicht angeheftet ist). Im Launcher wackelt das Symbol der App "Routinen" und trägt den Chip "Fehler". Im Fenster der Routinen kreist die Sternschnuppe um den Knopf "Protokoll" oben, im Popup des betroffenen Geräts um dessen Protokoll-Knopf (andere Geräte bleiben ruhig).
 - **Das Protokoll öffnet beim Fehlschlag:** Solange die Sternschnuppe aktiv ist, öffnet der Knopf "Protokoll" das Routinen-Protokoll mit dem schon gewählten Filter "Fehlgeschlagen", in der Übersicht und im Geräte-Popup (dort auf dem Reiter "Routinen" statt "Alles").
 - **Wie lange:** 24 Stunden nach dem Fehlschlag oder bis du das Routinen-Protokoll einmal öffnest, am Gerät oder in der Übersicht (das Protokoll eines Geräts zu öffnen löscht die Fehlschläge dieses Geräts, aus der Übersicht alle). Der Server merkt sich den Fehlschlag und dass du ihn gesehen hast, auch über Neustarts, so zeigen alle Browser und Handys dasselbe. Nur für Administratoren sichtbar, wie das Protokoll selbst.
+
+Nicht veröffentlicht; enthalten in 2.173.0.
 
 ## [2.171.0] - 2026-10-28
 
@@ -5292,7 +5303,7 @@ Erste Vorabversion.
   GitHub Actions für die Prüfungen von HACS und hassfest sowie die Tests.
 
 [2.6.0]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v2.6.0
-[2.172.0]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v2.172.0
+[2.173.0]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v2.173.0
 [2.170.1]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v2.170.1
 [2.170.0]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v2.170.0
 [2.168.0]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v2.168.0

@@ -7,6 +7,15 @@ All notable changes to this integration are documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/).
 
+## [2.173.0] - 2026-10-28
+
+Magic Push: the overview works like the routines.
+
+### Changed
+
+- **Magic Push window, collapsed cards with switches:** like the routines window (2.171.0): if more than one device is visible, all cards are collapsed, in every tab and also while searching (with exactly one device the card is open; before, up to three devices started expanded). A collapsed card shows the switch of its message in the header instead of the number; a device with several messages shows one slim row per message below the header, each with its switch. Expanded cards keep all options (edit, history, delete).
+- **"Open device" takes less space:** the extra line at the bottom of an expanded card is gone. "Open device ›" now stands in the line below the name, behind the area.
+
 ## [2.172.0] - 2026-10-28
 
 Failed routines are noticed: shooting star, shaking icon, chip "Error" and a history that opens on the failure.
@@ -16,6 +25,8 @@ Failed routines are noticed: shooting star, shaking icon, chip "Error" and a his
 - **Failed routine, shooting star and chip:** when a routine fails for good (after the retries, also a failed switch back or a failed run by hand), the shooting star flies in red at the Routines button of the header (or at the launcher button if the app is not pinned). In the launcher the icon of the app "Routines" shakes and carries the chip "Error". In the Routines window the shooting star circles the History button at the top, and in the pop-up of the affected device the History button of that device (other devices stay quiet).
 - **History opens on the failure:** while the shooting star is active, the History button opens the routine history with the filter "Failed" already chosen, in the overview and in the device pop-up (there on the tab "Routines" instead of "All").
 - **How long:** 24 hours after the failure, or until you open the routine history once, from the device or from the overview (opening the history of a device clears the failures of that device, opening it from the overview clears all). The server remembers the failure and that you have seen it, also across restarts, so every browser and phone shows the same. Shown to administrators only, like the history itself.
+
+Not released; included in 2.173.0.
 
 ## [2.171.0] - 2026-10-28
 
@@ -5191,7 +5202,7 @@ First pre-release.
   GitHub Actions for HACS/hassfest validation and tests.
 
 [2.6.0]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v2.6.0
-[2.172.0]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v2.172.0
+[2.173.0]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v2.173.0
 [2.170.1]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v2.170.1
 [2.170.0]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v2.170.0
 [2.168.0]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v2.168.0

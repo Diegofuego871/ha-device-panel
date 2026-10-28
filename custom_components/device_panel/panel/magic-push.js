@@ -859,19 +859,22 @@ export class MagicPush {
     return Boolean(this.allQuery(all)) || (all.filter || "all") !== "all";
   }
 
+  // Aufgeklappt (seit 2.173.0, wie bei den Routinen): in jeder Ansicht und auch bei einer Suche zu, sobald mehr als ein Gerät sichtbar ist; bei genau
+  // einem Gerät offen. Eine eigene Wahl (Tipp auf den Kopf) gilt, bis Filter oder Suche wechseln. nGroups = Zahl der sichtbaren Geräte.
   isOpen(all, id, nGroups) {
-    if (this.isFiltering(all)) return all.sopen?.[id] ?? true;
-    return all.open?.[id] ?? nGroups <= 3;
+    const own = this.isFiltering(all) ? all.sopen : all.open;
+    if (own && id in own) return own[id] !== false;
+    return nGroups === 1;
   }
 
   toggleFold(all, devices, id) {
     const map = this.isFiltering(all) ? (all.sopen ||= {}) : (all.open ||= {});
-    map[id] = !this.isOpen(all, id, this.allGroups(all, devices).length);
+    map[id] = !this.isOpen(all, id, this.visibleGroups(all, devices).length);
   }
 
   foldAll(all, devices) {
     const groups = this.visibleGroups(all, devices);
-    const anyOpen = groups.some((g) => this.isOpen(all, g.id, this.allGroups(all, devices).length));
+    const anyOpen = groups.some((g) => this.isOpen(all, g.id, groups.length));
     const map = this.isFiltering(all) ? (all.sopen ||= {}) : (all.open ||= {});
     for (const g of groups) map[g.id] = !anyOpen;
   }
@@ -911,7 +914,7 @@ export class MagicPush {
     const esc = (v) => this.esc(v);
     const t = (k, ...a) => this.t(k, ...a);
     const groups = this.visibleGroups(all, devices);
-    const nGroups = this.allGroups(all, devices).length;
+    const nGroups = groups.length;
     const shown = groups.reduce((n, g) => n + g.shown.length, 0);
     all.shown = { n: shown, total: all.rules.length, filtering: this.isFiltering(all) };
     if (!groups.length) return `<p class="mg-note mg-none">${esc(t("listSearchNone"))}</p>`;
@@ -921,28 +924,41 @@ export class MagicPush {
       const open = this.isOpen(all, g.id, nGroups);
       const firing = g.shown.filter((r) => r.enabled && r.active).length;
       const offN = g.shown.filter((r) => !r.enabled).length;
-      const sum = open
-        ? g.sub
-          ? `<small>${esc(g.sub)}</small>`
-          : ""
-        : `<small class="mg-dsum">${esc(t("mgSumMsgs", g.shown.length))}${offN ? ` · ${esc(t("mgSumOff", offN))}` : ""}${firing ? ` · <span class="mg-on">${esc(t("mgSumFired", firing))}</span>` : ""}${g.off ? ` · <span class="mg-warn">${esc(t("mgUnreachable"))}</span>` : ""}</small>`;
-      html += `<div class="mg-dcard${open ? "" : " closed"}"><button type="button" class="mg-dhead" data-mga="magic-fold-dev" data-device="${esc(g.id)}" aria-expanded="${open}">
+      // Aufgeklappt: Bereich und "Gerät öffnen" in der Zeile unter dem Namen (seit 2.173.0, vorher eine eigene Fusszeile); zugeklappt die Zusammenfassung
+      const link = `<span class="mg-dopen" data-mga-open data-device="${esc(g.id)}" role="link">${esc(t("mgAllOpenDevice"))} ›</span>`;
+      const sub = open
+        ? [g.sub ? esc(g.sub) : "", link].filter(Boolean).join(" · ")
+        : `${esc(t("mgSumMsgs", g.shown.length))}${offN ? ` · ${esc(t("mgSumOff", offN))}` : ""}${firing ? ` · <span class="mg-on">${esc(t("mgSumFired", firing))}</span>` : ""}${g.off ? ` · <span class="mg-warn">${esc(t("mgUnreachable"))}</span>` : ""}`;
+      const sum = `<small class="${open ? "" : "mg-dsum"}">${sub}</small>`;
+      // Zugeklappt (seit 2.173.0): bei genau einer Meldung sitzt ihr Schalter im Kopf statt der Zahl, bei mehreren folgt je Meldung eine schlanke Zeile mit Schalter
+      const one = !open && g.shown.length === 1 ? g.shown[0] : null;
+      const lead = one ? `<span class="mg-dslot" aria-hidden="true"></span>` : open ? `<span class="mg-badge">${g.shown.length}</span>` : "";
+      html += `<div class="mg-dcard${open ? "" : " closed"}"><div class="mg-dwrap"><button type="button" class="mg-dhead" data-mga="magic-fold-dev" data-device="${esc(g.id)}" aria-expanded="${open}">
         <span class="mg-devic${g.off ? " off" : ""}" aria-hidden="true">${this.h.typeIcon(g.dev?.type || "other", 18)}</span>
-        <span class="mg-t"><b>${esc(g.name)}</b>${sum}</span>${g.off && open ? `<span class="mg-devoff">${esc(t("statusOffline"))}</span>` : ""}<span class="mg-badge">${g.shown.length}</span>${this.chevHtml(open)}</button>`;
-      if (open) {
-        html += g.shown.map((r) => this.overviewCardHtml(r, all)).join("");
-        html += `<div class="mg-dfoot"><button type="button" class="linkbtn" data-mga="magic-device" data-device="${esc(g.id)}">${esc(t("mgAllOpenDevice"))} ›</button></div>`;
-      }
+        <span class="mg-t"><b>${esc(g.name)}</b>${sum}</span>${g.off && open ? `<span class="mg-devoff">${esc(t("statusOffline"))}</span>` : ""}${lead}${this.chevHtml(open)}</button>${one ? `<span class="mg-dsw">${this.switchHtml(one)}</span>` : ""}</div>`;
+      if (open) html += g.shown.map((r) => this.overviewCardHtml(r, all)).join("");
+      else if (g.shown.length > 1) html += g.shown.map((r) => this.lineHtml(r)).join("");
       html += `</div>`;
     }
     return html;
+  }
+
+  // Schalter einer Meldung (Kopf der zugeklappten Karte, Zeile und aufgeklappte Karte teilen ihn)
+  switchHtml(r) {
+    return `<label class="switch"><input type="checkbox" data-mga="magic-toggle" data-id="${this.esc(r.id)}"${r.enabled ? " checked" : ""} aria-label="${this.esc(r.name)}"><span></span></label>`;
+  }
+
+  // Schlanke Zeile unter dem Kopf einer zugeklappten Karte mit mehreren Meldungen (seit 2.173.0): Name, Stand, Schalter
+  lineHtml(r) {
+    const esc = (v) => this.esc(v);
+    return `<div class="mg-rline${r.enabled ? "" : " off"}"><span class="mg-t"><b>${esc(r.name)}</b><small>${this.statusParts(r).join(" · ")}</small></span>${this.switchHtml(r)}</div>`;
   }
 
   overviewCardHtml(r, all) {
     const esc = (v) => this.esc(v);
     const t = (k, ...a) => this.t(k, ...a);
     const confirming = all.confirmId === r.id;
-    const sw = `<label class="switch"><input type="checkbox" data-mga="magic-toggle" data-id="${esc(r.id)}"${r.enabled ? " checked" : ""} aria-label="${esc(r.name)}"><span></span></label>`;
+    const sw = this.switchHtml(r);
     const acts = confirming
       ? ""
       : `<div class="mg-acts"><button type="button" class="linkbtn" data-mga="magic-edit" data-device="${esc(r.device_id)}" data-id="${esc(r.id)}">${esc(t("mgActEdit"))}</button>
