@@ -4172,7 +4172,7 @@ class DevicePanel extends HTMLElement {
     const dr = this._devDraft;
     const keys = this._devChanges();
     if (!dr || !keys.length || this._devSaving) return;
-    // Alle Lebenszeichen ausgeschlossen (seit 2.171.0): nicht speichern, sonst gäbe es keinen Status; ein Hinweisfenster sagt es
+    // Alle Lebenszeichen ausgeschlossen (seit 2.170.1): nicht speichern, sonst gäbe es keinen Status; ein Hinweisfenster sagt es
     if (keys.includes("liveness_exclude") && this._livenessAllExcluded(dr.id, dr.cur.liveness_exclude || [])) {
       this._askConfirm({ title: "livenessBlockTitle", note: "livenessBlockNote", no: "livenessBlockOk", noIcon: "check" }, () => {});
       return;

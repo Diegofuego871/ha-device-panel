@@ -88,7 +88,7 @@ for (const lang of ["de", "en"]) {
     const first = await ev(`return r.querySelector('dialog.device button.pill.live:not(.off)')?.dataset.entity || ""`);
     if (first) await tap(`dialog.device [data-entity="${first}"][data-dlg="live-toggle"]`);
     check(`[${tag}] alle ausgeschlossen: Warnung "${L.ignored}"`, await wait(`return [...r.querySelectorAll("dialog.device .dlg-note.small.warn")].some((n) => ${L.ignored}.test(n.innerText))`));
-    // "Speichern" bei allen ausgeschlossen (2.171.0): nichts wird gesendet, ein Hinweisfenster erklärt es, die Änderung bleibt als Entwurf
+    // "Speichern" bei allen ausgeschlossen (2.170.1): nichts wird gesendet, ein Hinweisfenster erklärt es, die Änderung bleibt als Entwurf
     const sent = (await calls()).length;
     await tap('dialog.device [data-dlg="save"]');
     check(`[${tag}] "Speichern" bei allen ausgeschlossen: Hinweisfenster "${L.block}"`, await wait(`const d=r.querySelector("dialog.discard-dlg"); return !!d?.open && d.innerText.includes(${JSON.stringify(L.block)}) && d.querySelectorAll("button").length === 1`));
