@@ -4172,6 +4172,11 @@ class DevicePanel extends HTMLElement {
     const dr = this._devDraft;
     const keys = this._devChanges();
     if (!dr || !keys.length || this._devSaving) return;
+    // Alle Lebenszeichen ausgeschlossen (seit 2.171.0): nicht speichern, sonst gäbe es keinen Status; ein Hinweisfenster sagt es
+    if (keys.includes("liveness_exclude") && this._livenessAllExcluded(dr.id, dr.cur.liveness_exclude || [])) {
+      this._askConfirm({ title: "livenessBlockTitle", note: "livenessBlockNote", no: "livenessBlockOk", noIcon: "check" }, () => {});
+      return;
+    }
     this._devSaving = true;
     this._devSetError = null;
     this._renderDevice();
@@ -4235,7 +4240,7 @@ class DevicePanel extends HTMLElement {
     this._discardYes = onYes;
     const args = keys.args || [];
     dlg.innerHTML = `<div class="dd-card" role="alertdialog" aria-labelledby="dd-t"><b id="dd-t">${escape(this._t(keys.title, ...args))}</b><small>${escape(this._t(keys.note, ...args))}</small>
-      <div class="dd-btns"><button type="button" class="dlg-btn" data-dd="no">${mdi(keys.noIcon || "close", 18)}${escape(this._t(keys.no))}</button><button type="button" class="dlg-btn danger" data-dd="yes">${mdi(keys.yesIcon || "check", 18)}${escape(this._t(keys.yes))}</button></div></div>`;
+      <div class="dd-btns"><button type="button" class="dlg-btn" data-dd="no">${mdi(keys.noIcon || "close", 18)}${escape(this._t(keys.no))}</button>${keys.yes ? `<button type="button" class="dlg-btn danger" data-dd="yes">${mdi(keys.yesIcon || "check", 18)}${escape(this._t(keys.yes))}</button>` : ""}</div></div>`;
     if (!dlg.open) {
       if (typeof dlg.showModal === "function") dlg.showModal();
       else dlg.setAttribute("open", "");
@@ -4925,6 +4930,13 @@ class DevicePanel extends HTMLElement {
     return (e) => this._devMatch(e, q) && (mode === "all" || this._entGroup(e, off) === mode);
   }
 
+  // Wären mit dieser Auswahl alle Lebenszeichen des Geräts ausgeschlossen? (der Server würde die Auswahl dann ignorieren)
+  _livenessAllExcluded(deviceId, exclude) {
+    const all = this._detail?.id === deviceId ? this._detail?.data?.entities || [] : [];
+    const base = all.filter((e) => e.liveness_base);
+    return base.length > 0 && base.every((e) => exclude.includes(e.entity_id));
+  }
+
   // Gruppe einer Entität für die Chips (seit 2.166.0): "on" = zählt als Lebenszeichen, "off" = von dir ausgeschlossen, "rest" = zählt nie (Diagnose, versteckt)
   _entGroup(e, off) {
     return off.has(e.entity_id) ? "off" : e.liveness_base ? "on" : "rest";
@@ -4960,7 +4972,7 @@ class DevicePanel extends HTMLElement {
     const hint = [
       base.length ? this._t("livenessHint") : "",
       tpl ? this._t("livenessTemplateHint") : "",
-      ignored ? this._t("livenessIgnored") : "",
+      ignored ? this._t(this._devChanges().includes("liveness_exclude") ? "livenessBlocked" : "livenessIgnored") : "",
     ]
       .filter(Boolean)
       .map((x, i, a) => `<p class="dlg-note small${ignored && i === a.length - 1 ? " warn" : ""}">${escape(x)}</p>`)

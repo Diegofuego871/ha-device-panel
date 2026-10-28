@@ -7,6 +7,14 @@ Alle nennenswerten Änderungen an dieser Integration stehen in dieser Datei.
 Das Format folgt [Keep a Changelog](https://keepachangelog.com/de/1.1.0/),
 die Versionsnummern folgen [Semantic Versioning](https://semver.org/lang/de/).
 
+## [2.171.0] - 2026-10-28
+
+Das letzte Lebenszeichen lässt sich nicht mehr ausschliessen.
+
+### Geändert
+
+- **Lebenszeichen ausschliessen: das letzte lässt sich nicht speichern:** Wären alle Lebenszeichen eines Geräts ausgeschlossen, sagt es der Hinweis unter der Liste sofort ("So lässt sich nicht speichern: mindestens eines muss zählen, sonst gäbe es keinen Status"). Ein Tipp auf "Speichern" speichert nicht, sondern öffnet ein Fenster "Speichern nicht möglich" mit einer Erklärung; die Auswahl bleibt als Entwurf, mit einem Tipp auf die Marke zählt eine Entität wieder mit. Bisher wurde eine solche Wahl gespeichert und still ignoriert. Eine schon gespeicherte Wahl dieser Art (zum Beispiel aus einer Sicherung) wird weiter ignoriert, mit dem bisherigen Hinweis.
+
 ## [2.170.1] - 2026-10-28
 
 Das Symbol der App "Protokoll" wackelt, solange der Debug-Modus an ist.
@@ -14,6 +22,8 @@ Das Symbol der App "Protokoll" wackelt, solange der Debug-Modus an ist.
 ### Behoben
 
 - **App "Protokoll" im Launcher animiert wie die übrigen Apps:** Bei eingeschaltetem Debug-Modus zeigte der Launcher-Knopf schon die Sternschnuppe, das Symbol der App "Protokoll" stand aber als einziges still. Es wackelt jetzt wie das Symbol der "Geräte-Updates" (auch wenn die App im Kopf angeheftet ist). Mit ausgeschalteten "Animationen" in den Einstellungen steht es still, wie bisher.
+
+Nicht veröffentlicht; enthalten in 2.171.0.
 
 ## [2.170.0] - 2026-10-28
 
@@ -5267,7 +5277,7 @@ Erste Vorabversion.
   GitHub Actions für die Prüfungen von HACS und hassfest sowie die Tests.
 
 [2.6.0]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v2.6.0
-[2.170.1]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v2.170.1
+[2.171.0]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v2.171.0
 [2.170.0]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v2.170.0
 [2.168.0]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v2.168.0
 [2.167.0]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v2.167.0

@@ -9,8 +9,8 @@ let ok = true;
 const check = (l, c, i = "") => { ok &&= !!c; console.log(`${c ? "PASS" : "FAIL"} ${l}${i ? " - " + i : ""}`); };
 const R = `document.querySelector("device-panel").shadowRoot`;
 const T = {
-  de: { live: "Lebenszeichen", fOn: "Lebenszeichen", fOff: "Ausgeschlossen", fRest: "Übrige", off: "kein Lebenszeichen", tpl: /Template-Helfern/, ignored: /alle Lebenszeichen ausgeschlossen/ },
-  en: { live: "Sign of life", fOn: "Sign of life", fOff: "Excluded", fRest: "Others", off: "no sign of life", tpl: /template helpers/, ignored: /All signs of life are excluded/ },
+  de: { block: "Speichern nicht möglich", blockOk: "Verstanden", live: "Lebenszeichen", fOn: "Lebenszeichen", fOff: "Ausgeschlossen", fRest: "Übrige", off: "kein Lebenszeichen", tpl: /Template-Helfern/, ignored: /alle Lebenszeichen ausgeschlossen/ },
+  en: { block: "Cannot save", blockOk: "Understood", live: "Sign of life", fOn: "Sign of life", fOff: "Excluded", fRest: "Others", off: "no sign of life", tpl: /template helpers/, ignored: /All signs of life are excluded/ },
 };
 const helper = (n) => ({ entity_id: `sensor.helfer_${n}`, name: `Helfer ${n}`, state: "1.0", unit: null, category: null, liveness: true, platform: "template" });
 
@@ -88,6 +88,13 @@ for (const lang of ["de", "en"]) {
     const first = await ev(`return r.querySelector('dialog.device button.pill.live:not(.off)')?.dataset.entity || ""`);
     if (first) await tap(`dialog.device [data-entity="${first}"][data-dlg="live-toggle"]`);
     check(`[${tag}] alle ausgeschlossen: Warnung "${L.ignored}"`, await wait(`return [...r.querySelectorAll("dialog.device .dlg-note.small.warn")].some((n) => ${L.ignored}.test(n.innerText))`));
+    // "Speichern" bei allen ausgeschlossen (2.171.0): nichts wird gesendet, ein Hinweisfenster erklärt es, die Änderung bleibt als Entwurf
+    const sent = (await calls()).length;
+    await tap('dialog.device [data-dlg="save"]');
+    check(`[${tag}] "Speichern" bei allen ausgeschlossen: Hinweisfenster "${L.block}"`, await wait(`const d=r.querySelector("dialog.discard-dlg"); return !!d?.open && d.innerText.includes(${JSON.stringify(L.block)}) && d.querySelectorAll("button").length === 1`));
+    check(`[${tag}] nichts gesendet, Entwurf bleibt`, (await calls()).length === sent && !!(await handle('dialog.device [data-dlg="save"]')));
+    await tap('dialog.discard-dlg [data-dd="no"]');
+    check(`[${tag}] Hinweisfenster mit "${L.blockOk}" geschlossen`, await wait(`return !r.querySelector("dialog.discard-dlg")?.open`));
     // Kleine Geräte (unter 8 Entitäten) bekommen keine Chip-Zeile
     await p.evaluate(() => { window.__detailExtra = {}; });
     await tap('dialog.device [data-dlg="cancel"], dialog.device [data-dlg="close"]').catch(() => {});
