@@ -41,6 +41,8 @@ for (const lang of ["de", "en"]) {
     const one = c0.find((c) => c.lines === 0), many = c0.find((c) => c.lines > 0);
     check(`[${tag}] eine Routine: Schalter im Kopf, keine Zahl`, !!one && one.sw && !one.badge, JSON.stringify(one));
     check(`[${tag}] zwei Routinen: eine Zeile je Routine mit Schalter, kein Schalter im Kopf`, !!many && many.lines === 2 && !many.sw && !many.badge && (await ev(`return [...r.querySelectorAll("${dlg} .mg-rline")].every((l) => !!l.querySelector("input[data-mga='magic-toggle']"))`)), JSON.stringify(many));
+    // Abstand zwischen Schalter und rundem Pfeil mindestens 24 px (2.173.1)
+    check(`[${tag}] Schalter im Kopf: genug Abstand zum runden Pfeil`, await ev(`const w = r.querySelector("${dlg} .mg-dwrap"); const s = w.querySelector(".mg-dsw").getBoundingClientRect(); const c = w.querySelector(".mg-lchev .cbtn").getBoundingClientRect(); return c.left - s.right >= 24`));
     check(`[${tag}] Schalter im Kopf liegt neben dem Pfeil, nicht über dem Namen`, await ev(`const w = r.querySelector("${dlg} .mg-dwrap"); const s = w.querySelector(".mg-dsw").getBoundingClientRect(); const c = w.querySelector(".mg-lchev").getBoundingClientRect(); const n = w.querySelector(".mg-t b").getBoundingClientRect(); const h = w.getBoundingClientRect(); return s.right <= c.left + 2 && s.left >= n.left && Math.abs((s.top + s.bottom) / 2 - (h.top + h.bottom) / 2) < 3`));
 
     // Schalten ohne Aufklappen

@@ -1845,8 +1845,8 @@ input.mg-pill { cursor: text; }
 .mg-dsum .mg-warn { color: var(--dp-warning); font-weight: 500; }
 /* Routinen, zugeklappte Karte (seit 2.171.0): Schalter im Kopf anstelle der Zahl (liegt über dem Platzhalter, der Kopf ist selbst ein Knopf), bei mehreren Routinen eine Zeile je Routine */
 .mg-dwrap { position: relative; }
-.mg-dslot { flex: none; width: 36px; }
-.mg-dsw { position: absolute; top: 50%; right: 56px; transform: translateY(-50%); display: flex; }
+.mg-dslot { flex: none; width: 48px; }
+.mg-dsw { position: absolute; top: 50%; right: 68px; transform: translateY(-50%); display: flex; }
 .mg-dopen { display: inline-block; padding: 6px 4px; margin: -6px -4px; color: var(--dp-primary); font-weight: 500; cursor: pointer; }
 .mg-dopen:hover { text-decoration: underline; }
 .mg-rline { display: flex; align-items: center; gap: 10px; min-height: 44px; box-sizing: border-box; padding: 6px 14px 6px 54px; border-top: 1px solid var(--dp-divider); }

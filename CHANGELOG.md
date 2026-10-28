@@ -7,6 +7,14 @@ All notable changes to this integration are documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/).
 
+## [2.173.1] - 2026-10-28
+
+More room between the switch and the arrow in the collapsed cards.
+
+### Changed
+
+- **Routines and Magic Push, collapsed cards:** the switch in the header sits a little further left, so there is more space to the round arrow that expands the card (about 28 px instead of 16 px).
+
 ## [2.173.0] - 2026-10-28
 
 Magic Push: the overview works like the routines.
@@ -5202,6 +5210,7 @@ First pre-release.
   GitHub Actions for HACS/hassfest validation and tests.
 
 [2.6.0]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v2.6.0
+[2.173.1]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v2.173.1
 [2.173.0]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v2.173.0
 [2.170.1]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v2.170.1
 [2.170.0]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v2.170.0
