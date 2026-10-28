@@ -51,7 +51,7 @@ for (const lang of ["de", "en"]) {
     await tap('dialog.device [data-entity="sensor.helfer_2"][data-dlg="live-toggle"]');
     check(`[${tag}] zwei Helfer ausgeschlossen: Marke "${L.off}", durchgestrichen`, await wait(`return r.querySelectorAll("dialog.device button.pill.live.off").length === 2`) && (await marks()).filter(([, m]) => m === L.off).length === 2);
     check(`[${tag}] Entwurf: "Speichern" erscheint, noch nichts gesendet`, await wait(`return !!r.querySelector('dialog.device [data-dlg="save"]')`) && (await calls()).length === 0);
-    // Chips unter dem Suchfeld (ab 8 Entitäten): Lebenszeichen | Ausgeschlossen | Übrige, mit Zahl, rechnet mit dem Entwurf; abgewählt = alle
+    // Chips unter dem Suchfeld (sobald eine Entität nicht zählt): Lebenszeichen | Ausgeschlossen | Übrige, mit Zahl, rechnet mit dem Entwurf; abgewählt = alle
     const rows = () => ev(`return r.querySelectorAll("dialog.device .entity").length`);
     const chip = async (v) => { await tap(`dialog.device .ent-chips [data-val="${v}"]`); await wait(`return true`); };
     const chips = () => ev(`return [...r.querySelectorAll("dialog.device .ent-chips .chip")].map((b) => b.innerText.replace(/\\s+/g, " ").trim() + (b.classList.contains("on") ? "*" : ""))`);
@@ -97,7 +97,9 @@ for (const lang of ["de", "en"]) {
     await wait(`return r.querySelector("dialog.device")?.open && r.querySelector('dialog.device .dev-tabs [data-tab="ent"]')`);
     await tap('dialog.device .dev-tabs [data-tab="ent"]');
     await wait(`return r.querySelectorAll("dialog.device .entity").length >= 1`);
-    check(`[${tag}] Gerät mit wenigen Entitäten: Chip-Zeile steht trotzdem`, !!(await handle("dialog.device .ent-chips")) && (await rows()) < 8);
+    // Chip-Zeile nur, wenn mindestens eine Entität nicht als Lebenszeichen zählt (sonst gäbe es nichts zu filtern), unabhängig von der Zahl der Entitäten
+    const nonCount = await ev(`return [...r.querySelectorAll("dialog.device .entity")].filter((x) => !x.querySelector(".pill.live:not(.off)")).length`);
+    check(`[${tag}] Gerät mit wenigen Entitäten: Chip-Zeile steht genau dann, wenn eine Entität nicht zählt (${nonCount})`, !!(await handle("dialog.device .ent-chips")) === nonCount > 0 && (await rows()) < 8);
     check(`[${tag}] keine Skriptfehler`, errors.length === 0, errors.join(" | "));
     await ctx.close();
   }

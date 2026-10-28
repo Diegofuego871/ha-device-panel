@@ -4904,8 +4904,8 @@ class DevicePanel extends HTMLElement {
     if (!cur || (!cur.data && cur.loading)) return { count: 0, html: `<p class="dlg-note">${escape(this._t("loadingDetail"))}</p>` };
     if (!cur.data) return { count: 0, html: `<div class="dlg-error">${escape(this._t("error"))} ${escape(cur.error || "")}</div>` };
     const list = cur.data.entities || [];
-    // Filter "Lebenszeichen" (seit 2.166.0, docs/mockups/liveness-filter-v1, C): drei Chips mit Zahl, abgewählt = alle. Die Zeile steht bei jedem Gerät (seit
-    // 2.168.0, Wunsch des Nutzers); ein Chip ohne Treffer bleibt nur, solange er gewählt ist
+    // Filter "Lebenszeichen" (seit 2.166.0, docs/mockups/liveness-filter-v1, C): drei Chips mit Zahl, abgewählt = alle. Die Zeile steht, sobald mindestens eine Entität
+    // nicht als Lebenszeichen zählt (ausgeschlossen oder nie zählend; seit 2.168.0, Wunsch des Nutzers), sonst gäbe es nichts zu filtern; ein Chip ohne Treffer bleibt nur, solange er gewählt ist
     const off = new Set(d.liveness_exclude_setting || []);
     const counts = { on: 0, off: 0, rest: 0 };
     for (const e of list) counts[this._entGroup(e, off)]++;
@@ -4913,7 +4913,7 @@ class DevicePanel extends HTMLElement {
       .filter(([v]) => counts[v] > 0 || this._entLive === v)
       .map(([v, k]) => `<button type="button" class="chip${this._entLive === v ? " on" : ""}" data-dlg="ent-live" data-val="${v}" aria-pressed="${this._entLive === v}"><span>${escape(this._t(k))}</span><span class="n">${counts[v]}</span></button>`)
       .join("");
-    const bar = chips ? `<div class="chips ent-chips" role="group" aria-label="${escape(this._t("entFilterLabel"))}">${chips}</div>` : "";
+    const bar = chips && (counts.off + counts.rest > 0 || this._entLive) ? `<div class="chips ent-chips" role="group" aria-label="${escape(this._t("entFilterLabel"))}">${chips}</div>` : "";
     return { count: list.length, html: list.length ? `${this._devSearchHtml("ent", list.length)}${bar}<div data-dev-zone="ent">${this._entListHtml(d)}</div>` : "" };
   }
 

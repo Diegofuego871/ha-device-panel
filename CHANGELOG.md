@@ -9,11 +9,11 @@ and this project adheres to [Semantic Versioning](https://semver.org/).
 
 ## [2.168.0] - 2026-10-28
 
-The chips "Sign of life", "Excluded" and "Others" now show on every device.
+The chips "Sign of life", "Excluded" and "Others" now show as soon as an entity does not count.
 
 ### Changed
 
-- **Filter chips in the tab "Entities" on every device:** the chip row used to appear only from eight entities on, so a device with few entities (for example a Shelly with four) showed no chips. It now shows on every device; a chip without entities is left out (unless it is selected).
+- **Filter chips in the tab "Entities" regardless of the number of entities:** the chip row used to appear only from eight entities on, so a device with few entities (for example a Shelly with four) showed no chips. It now shows as soon as at least one entity does not count as a sign of life (excluded by you, or one that never counts such as a diagnostic entity); if all entities count there is nothing to filter and the row stays away. A chip without entities is left out (unless it is selected).
 
 ## [2.167.0] - 2026-10-28
 

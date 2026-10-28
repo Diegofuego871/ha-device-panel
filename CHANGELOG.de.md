@@ -9,11 +9,11 @@ die Versionsnummern folgen [Semantic Versioning](https://semver.org/lang/de/).
 
 ## [2.168.0] - 2026-10-28
 
-Die Chips "Lebenszeichen", "Ausgeschlossen" und "Übrige" erscheinen jetzt bei jedem Gerät.
+Die Chips "Lebenszeichen", "Ausgeschlossen" und "Übrige" erscheinen jetzt, sobald eine Entität nicht zählt.
 
 ### Geändert
 
-- **Filter-Chips im Reiter "Entitäten" bei jedem Gerät:** Die Chip-Zeile erschien bisher erst ab acht Entitäten, ein Gerät mit wenigen Entitäten (zum Beispiel ein Shelly mit vier) zeigte keine Chips. Jetzt steht sie bei jedem Gerät; ein Chip ohne Entitäten entfällt (ausser er ist gewählt).
+- **Filter-Chips im Reiter "Entitäten" unabhängig von der Zahl der Entitäten:** Die Chip-Zeile erschien bisher erst ab acht Entitäten, ein Gerät mit wenigen Entitäten (zum Beispiel ein Shelly mit vier) zeigte keine Chips. Jetzt steht sie, sobald mindestens eine Entität nicht als Lebenszeichen zählt (von dir ausgeschlossen oder eine, die nie zählt, etwa eine Diagnose-Entität); zählen alle, gibt es nichts zu filtern, und die Zeile bleibt weg. Ein Chip ohne Entitäten entfällt (ausser er ist gewählt).
 
 ## [2.167.0] - 2026-10-28
 
