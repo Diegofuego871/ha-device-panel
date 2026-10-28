@@ -56,6 +56,12 @@ for (const lang of ["de", "en"]) {
     await wait(`return !!r.querySelector('dialog.apps-dlg [data-id="updates"]')`);
     check(`[${tag}] Launcher: App "${L.title}" mit Zahl 2`, (await text('dialog.apps-dlg .ap-tile:has([data-id="updates"])')).includes(L.title) && (await text('dialog.apps-dlg .ap-tile:has([data-id="updates"]) .ap-badge')) === "2");
     check(`[${tag}] Symbol wackelt (Animation wie die Rakete)`, await ev(`const s=r.querySelector('dialog.apps-dlg .ap-tile:has([data-id="updates"]) .ap-ico.upd svg'); return !!s && getComputedStyle(s).animationName === "wz-rocket"`));
+    // Protokoll bei eingeschaltetem Debug-Modus (2.170.1): wackelt wie die anderen Apps mit Sternschnuppe, ohne Debug steht es still
+    check(`[${tag}] Protokoll ohne Debug-Modus: still`, await ev(`const s=r.querySelector('dialog.apps-dlg .ap-tile:has([data-id="log"]) .ap-ico svg'); return !!s && getComputedStyle(s).animationName === "none"`));
+    await ev(`r.querySelector("dialog.apps-dlg").close(); r.host._debugOn = true; r.host._apps.paintDots()`);
+    await tap(".apps-btn");
+    await wait(`return !!r.querySelector('dialog.apps-dlg [data-id="log"]')`);
+    check(`[${tag}] Protokoll mit Debug-Modus: wackelt wie die Rakete`, await ev(`const s=r.querySelector('dialog.apps-dlg .ap-tile:has([data-id="log"]) .ap-ico.dbg svg'); return !!s && getComputedStyle(s).animationName === "wz-rocket"`));
     await p.screenshot({ path: `${outDir}/updapp-launcher-${tag.replace("/", "-")}.png` });
 
     // --- Fenster

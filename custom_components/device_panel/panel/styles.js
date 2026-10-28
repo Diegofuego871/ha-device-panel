@@ -198,9 +198,10 @@ button.kwarn:focus-visible { outline: 2px solid var(--dp-primary); outline-offse
 .kt.ee .k svg { color: var(--dp-error); transform-origin: center; animation: ee-thump .85s ease-in-out infinite; }
 /* Einrichtung (seit 2.140.1): die Rakete bebt leicht und hebt kurz ab, mit Pause dazwischen; ohne Bewegung bei reduzierter Animation */
 @keyframes wz-rocket { 0%, 55%, 100% { transform: translate(0, 0) rotate(0); } 60% { transform: translate(-0.7px, 0.5px) rotate(-3deg); } 65% { transform: translate(0.7px, -0.5px) rotate(3deg); } 70% { transform: translate(-0.6px, -1px) rotate(-2deg); } 75% { transform: translate(0.6px, -1.6px) rotate(2deg); } 82% { transform: translate(0, -1.8px) rotate(0); } 90% { transform: translate(0, -0.6px) rotate(0); } }
+/* Protokoll bei eingeschaltetem Debug-Modus (seit 2.170.1): wackelt wie das Symbol der Geräte-Updates, damit alle Apps mit Sternschnuppe gleich wirken */
 /* Dieselbe Rakete auf der Willkommensseite des Assistenten (seit 2.158.1), solange er nicht fertig ist; läuft auch bei "Bewegung reduzieren" (seit 2.158.2), abschaltbar über "Animationen" */
-.ap-ico.wiz svg, .ap-ico.upd svg, .app-pin.upd svg, .wz-hero svg { animation: wz-rocket 3.2s ease-in-out infinite; transform-origin: 50% 70%; }
-:host([data-anim="off"]) .ap-ico.wiz svg, :host([data-anim="off"]) .ap-ico.upd svg, :host([data-anim="off"]) .app-pin.upd svg, :host([data-anim="off"]) .wz-hero svg { animation: none; }
+.ap-ico.wiz svg, .ap-ico.upd svg, .app-pin.upd svg, .ap-ico.dbg svg, .app-pin.dbg svg, .wz-hero svg { animation: wz-rocket 3.2s ease-in-out infinite; transform-origin: 50% 70%; }
+:host([data-anim="off"]) .ap-ico.wiz svg, :host([data-anim="off"]) .ap-ico.upd svg, :host([data-anim="off"]) .app-pin.upd svg, :host([data-anim="off"]) .ap-ico.dbg svg, :host([data-anim="off"]) .app-pin.dbg svg, :host([data-anim="off"]) .wz-hero svg { animation: none; }
 @keyframes ee-reveal { from { clip-path: inset(-12px 100% -12px 0); } to { clip-path: inset(-12px 0 -12px 0); } }
 @keyframes ee-fade { 0%, 88% { opacity: 1; } 100% { opacity: 0; } }
 @keyframes ee-thump { 0%, 100% { transform: scale(1); } 15% { transform: scale(1.3); } 30% { transform: scale(1); } 45% { transform: scale(1.18); } }

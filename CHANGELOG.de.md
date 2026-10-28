@@ -7,6 +7,14 @@ Alle nennenswerten Änderungen an dieser Integration stehen in dieser Datei.
 Das Format folgt [Keep a Changelog](https://keepachangelog.com/de/1.1.0/),
 die Versionsnummern folgen [Semantic Versioning](https://semver.org/lang/de/).
 
+## [2.170.1] - 2026-10-28
+
+Das Symbol der App "Protokoll" wackelt, solange der Debug-Modus an ist.
+
+### Behoben
+
+- **App "Protokoll" im Launcher animiert wie die übrigen Apps:** Bei eingeschaltetem Debug-Modus zeigte der Launcher-Knopf schon die Sternschnuppe, das Symbol der App "Protokoll" stand aber als einziges still. Es wackelt jetzt wie das Symbol der "Geräte-Updates" (auch wenn die App im Kopf angeheftet ist). Mit ausgeschalteten "Animationen" in den Einstellungen steht es still, wie bisher.
+
 ## [2.170.0] - 2026-10-28
 
 Das Debug-Protokoll und das normale Protokoll nennen die Entitäten, die einen Ausfall entschieden haben.
@@ -5259,6 +5267,7 @@ Erste Vorabversion.
   GitHub Actions für die Prüfungen von HACS und hassfest sowie die Tests.
 
 [2.6.0]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v2.6.0
+[2.170.1]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v2.170.1
 [2.170.0]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v2.170.0
 [2.168.0]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v2.168.0
 [2.167.0]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v2.167.0

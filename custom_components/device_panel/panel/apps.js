@@ -595,7 +595,7 @@ export class AppLauncher {
         const icon = this._icon(a, 22);
         // "gear-btn": der angeheftete Knopf der Einstellungen (seit 2.88.0 kein fester Knopf mehr; Tests und Stile kennen ihn so)
         const rs = this.runState?.[a.id];
-        const cls = `rtall-btn app-pin${a.id === "settings" ? " gear-btn" : ""}${dot ? ` has-dot dot-${dot}` : ""}${rs ? ` run-${rs}` : ""}${a.id === "updates" && dot ? " upd" : ""}`;
+        const cls = `rtall-btn app-pin${a.id === "settings" ? " gear-btn" : ""}${dot ? ` has-dot dot-${dot}` : ""}${rs ? ` run-${rs}` : ""}${a.id === "updates" && dot ? " upd" : ""}${a.id === "log" && this.host._debugOn ? " dbg" : ""}`;
         return a.ext
           ? `<a class="${cls}" href="${escape(a.url)}" target="_blank" rel="noopener noreferrer" data-app-pin="${escape(a.id)}" title="${label}" aria-label="${label}">${icon}</a>`
           : `<button type="button" class="${cls}" data-app-pin="${escape(a.id)}" title="${label}" aria-label="${label}">${icon}</button>`;
@@ -633,7 +633,7 @@ export class AppLauncher {
     const style = a.color && !a.favicon ? ` style="background:${a.color};color:#fff"` : "";
     const own = !a.color && !a.favicon ? " own" : "";
     const rs = this.runState?.[a.id];
-    return `<span class="ap-ico${sm ? " sm" : ""}${own}${rs ? ` run-${rs}` : ""}${a.id === "wizard" ? " wiz" : ""}${a.id === "updates" && this.updCount() ? " upd" : ""}"${style}>${this._icon(a, size)}</span>`;
+    return `<span class="ap-ico${sm ? " sm" : ""}${own}${rs ? ` run-${rs}` : ""}${a.id === "wizard" ? " wiz" : ""}${a.id === "updates" && this.updCount() ? " upd" : ""}${a.id === "log" && this.host._debugOn ? " dbg" : ""}"${style}>${this._icon(a, size)}</span>`;
   }
 
   // Knopf oder Verweis einer App: externe Links sind <a> (neuer Tab, kein Zugriff auf das Panel), alles andere <button>

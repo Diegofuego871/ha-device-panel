@@ -7,6 +7,14 @@ All notable changes to this integration are documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/).
 
+## [2.170.1] - 2026-10-28
+
+The icon of the app "History" shakes while debug mode is on.
+
+### Fixed
+
+- **App "History" in the launcher now animates like the other apps:** while debug mode is on, the launcher button already showed the shooting star, but the icon of the app "History" stood still, as the only one. It now shakes like the icon of "Device updates" (also when the app is pinned to the header). With "Animations" switched off in the settings it stays still, as before.
+
 ## [2.170.0] - 2026-10-28
 
 The debug log and the normal log name the entities that decided an outage.
@@ -5158,6 +5166,7 @@ First pre-release.
   GitHub Actions for HACS/hassfest validation and tests.
 
 [2.6.0]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v2.6.0
+[2.170.1]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v2.170.1
 [2.170.0]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v2.170.0
 [2.168.0]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v2.168.0
 [2.167.0]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v2.167.0
