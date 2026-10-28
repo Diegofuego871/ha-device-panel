@@ -216,6 +216,9 @@ for (const lang of ["de", "en"]) {
     await tap(nextBtn);
     await tap(nextBtn);
     await tap(`${win} [data-rt="nav-save"]`);
+    // Seit 2.174.0 sind bei mehr als einer Routine alle zugeklappt: für die Prüfung der Karten alle aufklappen
+    await wait(`return r.querySelectorAll(".rt-root .rt-rowcard, .rt-root .rt-clock").length === 2`);
+    for (let i = 0; i < 2; i++) await ev(`r.querySelector(".rt-root .rt-rowcard .mg-dhead")?.click()`);
     check(`[${tag}] Countdown gespeichert: läuft mit Ring und Restzeit`, await wait(`return r.querySelectorAll(".rt-root .rt-clock").length === 2 && !!r.querySelector(".rt-root .rt-ring [data-rt-left]") && /\\d{2}:\\d{2}/.test(r.querySelector(".rt-root .rt-ring").textContent)`));
     const left1 = await text(".rt-root [data-rt-left]");
     await p.waitForTimeout(2200);

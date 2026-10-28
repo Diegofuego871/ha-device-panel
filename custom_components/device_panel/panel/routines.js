@@ -140,7 +140,8 @@ export class RoutineUi {
     this.wiz = null;
     this.standalone = false;
     this.closeWin();
-    this.ui = { confirmId: null, flash: "", error: "", busy: null };
+    // q, filter, open, sopen (seit 2.174.0): Suche, Filter und Auf-/Zuklappen der Liste im Reiter des Geräts
+    this.ui = { confirmId: null, flash: "", error: "", busy: null, q: "", filter: "all", open: {}, sopen: {} };
     this._pendingEdit = null;
     this._offset = 0;
   }
@@ -468,6 +469,12 @@ export class RoutineUi {
       return;
     }
     if (!this.root?.isConnected) return;
+    // Es wird gerade im Suchfeld getippt (der Reiter baut sich alle 10 s neu auf): nur die Liste neu zeichnen, das Feld behält Fokus und Cursor
+    const typing = this.root.getRootNode?.().activeElement;
+    if (typing?.dataset?.rt === "list-search" && this.root.contains(typing) && this.data?.routines?.length) {
+      this.paintList();
+      return;
+    }
     this.root.innerHTML = this.listHtml();
     this.startTick();
   }
@@ -492,11 +499,83 @@ export class RoutineUi {
     }
     const routines = this.data.routines;
     if (!routines.length) html += `<p class="mg-empty">${esc(this.data.entities.length ? t("rtEmpty") : t("rtNoEntities"))}</p>`;
-    html += routines.map((x) => this.clockHtml(x)).join("");
+    else html += this.listControlsHtml(routines) + `<div data-rt-zone>${this.listZoneHtml()}</div>`;
     const full = routines.length >= this.limit("per_device", 20);
     if (full) html += `<p class="mg-hint">${esc(t("rtLimit", this.limit("per_device", 20)))}</p>`;
     else if (this.data.entities.length) html += `<button type="button" class="mg-add" data-rt="add">${this.h.mdi("plus", 18)}${esc(t("rtAdd"))}</button>`;
     return html;
+  }
+
+  // Suche und Filter über der Liste im Reiter des Geräts (seit 2.174.0, wie im Fenster mit allen Routinen, ohne Herz): immer da, sobald es eine Routine gibt
+  listControlsHtml(routines) {
+    const esc = (v) => this.esc(v);
+    const t = (k, ...a) => this.t(k, ...a);
+    const ph = t("listSearch");
+    const q = this.ui.q || "";
+    const c = this.allCounts(routines);
+    const tabs = [["all", "rtFilterAll"], ["on", "rtFilterOn"], ["off", "rtFilterOff"], ["running", "rtFilterRunning"]];
+    const n = this.listFiltering() ? t("listSearchOf", this.listShown().length, routines.length) : "";
+    return `<label class="list-search" data-for="rt-dev">${this.h.mdi("search", 18)}<input type="search" data-rt="list-search" value="${esc(q)}" placeholder="${esc(ph)}" aria-label="${esc(ph)}" enterkeyhint="search" autocomplete="off" autocapitalize="off" spellcheck="false"><span class="n">${esc(n)}</span>${this.host._fieldClearHtml("data-fc", "", q)}</label>
+      <div class="sub-tabs mg-tabs mg-filter" role="tablist">${tabs
+        .map(([k, label]) => `<button type="button" role="tab" class="sub-tab two${k === (this.ui.filter || "all") ? " on" : ""}" data-rt="list-filter" data-v="${k}" aria-selected="${k === (this.ui.filter || "all")}"><span class="tab-l">${esc(t(label))}</span> <span class="tab-s">${c[k]}</span></button>`)
+        .join("")}</div>`;
+  }
+
+  listFiltering() {
+    return Boolean(String(this.ui.q || "").trim()) || (this.ui.filter || "all") !== "all";
+  }
+
+  listShown() {
+    const q = String(this.ui.q || "").trim();
+    return (this.data?.routines || []).filter((x) => this.passes(x, q, this.ui.filter || "all"));
+  }
+
+  // Aufgeklappt: wie im Fenster mit allen Routinen: sobald mehr als eine zu sehen ist, sind alle zu (auch bei Suche und Filter); eine eigene Wahl gilt, bis Suche oder Filter wechseln
+  listOpen(id, n) {
+    const own = this.listFiltering() ? this.ui.sopen : this.ui.open;
+    if (own && id in own) return own[id] !== false;
+    return n === 1;
+  }
+
+  listZoneHtml() {
+    const shown = this.listShown();
+    if (!shown.length) return `<p class="mg-note mg-none">${this.esc(this.t("listSearchNone"))}</p>`;
+    return shown.map((x) => (this.listOpen(x.id, shown.length) ? this.clockHtml(x, shown.length > 1) : this.rowHtml(x))).join("");
+  }
+
+  // Nur die Liste neu zeichnen (Suche, Filter, Auf- und Zuklappen): das Suchfeld behält seinen Zustand
+  paintList() {
+    const zone = this.root?.querySelector("[data-rt-zone]");
+    if (!zone || !this.data) return;
+    zone.innerHTML = this.listZoneHtml();
+    const n = this.root.querySelector(".list-search .n");
+    if (n) n.textContent = this.listFiltering() ? this.t("listSearchOf", this.listShown().length, this.data.routines.length) : "";
+    this.startTick();
+  }
+
+  // Zugeklappte Routine im Reiter des Geräts: Uhrzeit (oder Auslöser), Name, wann als Nächstes, Schalter im Kopf, Pfeil zum Aufklappen
+  rowHtml(rt) {
+    const esc = (v) => this.esc(v);
+    const t = (k, ...a) => this.t(k, ...a);
+    const domain = rt.domain || this.domainOf(rt.entity_id);
+    const running = rt.running && rt.due;
+    let time;
+    if (running) time = `${esc(this.fmtClock(Math.max(0, rt.due - this.serverNow())))}<small>${esc(t("rtFilterRunning"))}</small>`;
+    else if (rt.kind === "trigger") time = `⚡<small>${esc(t("rtTrigBadge"))}</small>`;
+    else {
+      const sub = rt.kind === "once" ? (rt.date ? this.dateText({ date: rt.date }) : t("rtOnceShort")) : rt.repeat === "monthly" ? t("rtMonthlyOn", rt.mday === -1 ? t("rtLastDayShort") : `${rt.mday}.`) : "";
+      time = `${esc(rt.time || this.localTimeOf(rt))}${sub ? `<small>${esc(sub)}</small>` : ""}`;
+    }
+    let next;
+    if (running) next = `<span class="mg-on">${esc(t("rtRunningShort"))}</span>`;
+    else if (rt.kind === "trigger" && rt.enabled) next = `<span class="mg-on">${esc(this.waitsText(rt))}</span>`;
+    else if (rt.enabled && rt.due_local) next = `${esc(t("rtNextRun"))} <span class="mg-on">${esc(this.localText(rt.due_local))}</span>`;
+    else if (rt.done) next = esc(t("rtDone"));
+    else next = esc(t(rt.enabled ? "rtFilterOn" : "rtDisabled"));
+    const warn = this.statusHtml(rt).find((x) => x.includes("mg-warn"));
+    return `<div class="mg-dcard closed rt-rowcard${rt.enabled ? "" : " off"}"><div class="mg-dwrap"><button type="button" class="mg-dhead" data-rt="list-fold" data-id="${esc(rt.id)}" aria-expanded="false">
+        <span class="rt-rtime" aria-hidden="true">${time}</span>
+        <span class="mg-t"><b>${routineEmoji(domain)} ${esc(rt.name)}</b><small class="mg-dsum">${next}${warn ? ` · ${warn}` : ""}</small></span><span class="mg-dslot" aria-hidden="true"></span>${this.chevHtml(false)}</button><span class="mg-dsw">${this.switchHtml(rt, { dlg: false, rt: true })}</span></div></div>`;
   }
 
   // Zeile unter dem Satz: zuletzt, Fehler, verpasst, Entität
@@ -519,7 +598,7 @@ export class RoutineUi {
   }
 
   // Wecker-Stil (docs/mockups/timer-v1, Variante B): Uhrzeit gross, Wochentage als Zeile, darunter nächster Lauf
-  clockHtml(rt) {
+  clockHtml(rt, foldable = false) {
     const esc = (v) => this.esc(v);
     const t = (k, ...a) => this.t(k, ...a);
     const confirming = this.ui.confirmId === rt.id;
@@ -562,7 +641,8 @@ export class RoutineUi {
       ? `<div class="mg-confirm"><b>${esc(t("rtDeleteAsk", rt.name))}</b><small>${esc(t("rtDeleteNote"))}</small>
           <div class="mg-btns small"><button type="button" class="dlg-btn" data-rt="delete-no">${this.h.mdi("close", 18)}${esc(t("rtCancel"))}</button><button type="button" class="dlg-btn danger" data-rt="delete-yes" data-id="${esc(rt.id)}">${this.h.mdi("trash", 18)}${esc(t("rtDeleteYes"))}</button></div></div>`
       : "";
-    return `<div class="rt-clock${rt.enabled ? "" : " off"}"><div class="top">${left}<span class="grow"></span>${sw}</div>
+    const fold = foldable ? `<button type="button" class="rt-fold" data-rt="list-fold" data-id="${esc(rt.id)}" aria-expanded="true" title="${esc(t("rtFoldOne"))}" aria-label="${esc(t("rtFoldOne"))}">${this.chevHtml(true)}</button>` : "";
+    return `<div class="rt-clock${rt.enabled ? "" : " off"}"><div class="top">${left}<span class="grow"></span>${sw}${fold}</div>
       <div class="name">${routineEmoji(domain)} ${esc(rt.name)}</div><div class="what">${what}</div>${days}
       ${status.length ? `<div class="what">${status.join(" · ")}</div>` : ""}
       <div class="next">${next}${acts}</div>${confirm}</div>`;
@@ -773,6 +853,8 @@ export class RoutineUi {
 
   // Schalter einer Routine (Kopf der zugeklappten Karte, Zeile und aufgeklappte Karte teilen ihn)
   switchHtml(rt, all) {
+    // Reiter des Geräts (seit 2.174.0): derselbe Schalter wie in der aufgeklappten Karte (data-rt="toggle")
+    if (all?.rt) return `<label class="switch"><input type="checkbox" data-rt="toggle" data-id="${this.esc(rt.id)}"${rt.enabled ? " checked" : ""} aria-label="${this.esc(rt.name)}"><span></span></label>`;
     return `<label class="switch"><input type="checkbox" ${this.a(all, "routine-toggle")} data-id="${this.esc(rt.id)}"${rt.enabled ? " checked" : ""} aria-label="${this.esc(rt.name)}"><span></span></label>`;
   }
 
@@ -1853,6 +1935,18 @@ export class RoutineUi {
     const w = this.wiz;
     const id = el.dataset.id;
     switch (el.dataset.rt) {
+      case "list-filter":
+        this.ui.filter = el.dataset.v;
+        this.ui.sopen = {};
+        this.paint();
+        break;
+      case "list-fold": {
+        const shown = this.listShown();
+        const open = this.listOpen(id, shown.length);
+        (this.listFiltering() ? this.ui.sopen : this.ui.open)[id] = !open;
+        this.paintList();
+        break;
+      }
       case "reload":
         this.error = null;
         this.paint();
@@ -2034,6 +2128,12 @@ export class RoutineUi {
 
   onInput(ev) {
     const el = ev.target;
+    if (el.dataset?.rt === "list-search" && this.inScope(el)) {
+      this.ui.q = el.value;
+      this.ui.sopen = {};
+      this.paintList();
+      return;
+    }
     const w = this.wiz;
     if (!w || !this.inScope(el) || !el.dataset?.rt) return;
     const d = w.draft;

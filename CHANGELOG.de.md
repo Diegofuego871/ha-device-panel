@@ -7,6 +7,14 @@ Alle nennenswerten Änderungen an dieser Integration stehen in dieser Datei.
 Das Format folgt [Keep a Changelog](https://keepachangelog.com/de/1.1.0/),
 die Versionsnummern folgen [Semantic Versioning](https://semver.org/lang/de/).
 
+## [2.174.0] - 2026-10-28
+
+Reiter Routinen im Geräte-Popup: Suche, Filter und zugeklappte Zeilen wie in der Übersicht.
+
+### Geändert
+
+- **Reiter "Routinen" eines Geräts:** Es gibt jetzt ein Suchfeld (mit "n von m") und die Filter "Alle", "Aktiv", "Aus" und "Läuft" mit ihren Zahlen, immer da, sobald es eine Routine gibt (kein Reiter und kein Knopf mit dem Herz). Bei mehr als einer Routine sind alle zugeklappt, auch bei Suche und Filter (bei genau einer ist sie offen): Eine Zeile zeigt die Uhrzeit (oder den Auslöser), den Namen, wann sie als Nächstes läuft, den Schalter und den runden Pfeil. Ein Tipp auf die Zeile öffnet die Wecker-Karte mit allen Aktionen (Bearbeiten, Ausführen, Protokoll, Löschen) und einem Pfeil zum Zuklappen; die Uhrzeit ist dort kleiner als bisher (26 statt 34 px), das spart Höhe. Routinen lassen sich ohne Aufklappen ein- und ausschalten. Suche und Filter beginnen neu, wenn du ein anderes Gerät öffnest.
+
 ## [2.173.1] - 2026-10-28
 
 Mehr Abstand zwischen Schalter und Pfeil in den zugeklappten Karten.
@@ -14,6 +22,8 @@ Mehr Abstand zwischen Schalter und Pfeil in den zugeklappten Karten.
 ### Geändert
 
 - **Routinen und Magic Push, zugeklappte Karten:** Der Schalter im Kopf sitzt etwas weiter links, damit mehr Platz zum runden Pfeil bleibt, der die Karte aufklappt (etwa 28 px statt 16 px).
+
+Nicht veröffentlicht; enthalten in 2.174.0.
 
 ## [2.173.0] - 2026-10-28
 
@@ -5311,7 +5321,7 @@ Erste Vorabversion.
   GitHub Actions für die Prüfungen von HACS und hassfest sowie die Tests.
 
 [2.6.0]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v2.6.0
-[2.173.1]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v2.173.1
+[2.174.0]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v2.174.0
 [2.173.0]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v2.173.0
 [2.170.1]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v2.170.1
 [2.170.0]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v2.170.0

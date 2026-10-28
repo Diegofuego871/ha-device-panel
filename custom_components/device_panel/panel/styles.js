@@ -1849,6 +1849,12 @@ input.mg-pill { cursor: text; }
 .mg-dsw { position: absolute; top: 50%; right: 68px; transform: translateY(-50%); display: flex; }
 .mg-dopen { display: inline-block; padding: 6px 4px; margin: -6px -4px; color: var(--dp-primary); font-weight: 500; cursor: pointer; }
 .mg-dopen:hover { text-decoration: underline; }
+/* Reiter "Routinen" im Geräte-Popup (seit 2.174.0): zugeklappte Zeile mit Uhrzeit, Schalter im Kopf wie bei den Karten der Übersicht; aufgeklappt die Wecker-Karte mit Pfeil zum Zuklappen */
+.rt-rowcard { margin-top: 8px; }
+.rt-rtime { flex: none; min-width: 52px; font-size: 20px; font-weight: 300; line-height: 1.05; letter-spacing: -.01em; font-variant-numeric: tabular-nums; }
+.rt-rtime small { display: block; margin-top: 1px; color: var(--dp-text2); font-size: 11px; font-weight: 400; letter-spacing: 0; }
+.rt-rowcard.off .mg-t b { opacity: .72; }
+.rt-clock .rt-fold { flex: none; display: grid; place-items: center; padding: 0; margin: -6px -6px -6px 0; border: 0; background: none; color: inherit; cursor: pointer; }
 .mg-rline { display: flex; align-items: center; gap: 10px; min-height: 44px; box-sizing: border-box; padding: 6px 14px 6px 54px; border-top: 1px solid var(--dp-divider); }
 .mg-rline .mg-t b { font-size: 14.5px; font-weight: 500; }
 .mg-rline.off .mg-t b { opacity: .72; }
@@ -1950,7 +1956,7 @@ dialog.magic-dlg[open] > .mgw-body.two { display: flex; gap: 22px; overflow: hid
 .rt-clock { margin-top: 8px; padding: 12px 14px; border-radius: 16px; background: var(--dp-subtle); }
 .rt-clock.off { opacity: .7; }
 .rt-clock .top { display: flex; align-items: center; gap: 10px; }
-.rt-clock .time { font-size: 34px; font-weight: 300; letter-spacing: -.02em; line-height: 1; font-variant-numeric: tabular-nums; }
+.rt-clock .time { font-size: 26px; font-weight: 300; letter-spacing: -.02em; line-height: 1; font-variant-numeric: tabular-nums; }
 .rt-clock .time small { font-size: 14px; font-weight: 400; margin-left: 6px; color: var(--dp-text2); letter-spacing: 0; }
 .rt-clock .grow { flex: 1; min-width: 0; }
 /* Schalter die Routine-Karte etwas grösser als der Standard (44 × 24 statt 36 × 20 px, Wunsch des Nutzers) */
