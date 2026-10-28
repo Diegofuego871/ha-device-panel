@@ -101,6 +101,8 @@ const MATTER_REFRESH_MS = 3600000;
 // Popup: Entitäten und Kurzstatistik höchstens 30 s alt, Verlauf 60 s.
 // Frist, bis ein Update, dessen Entität wieder auf "verfügbar" steht, als fehlgeschlagen gilt (siehe _renderUpdate; gleich update_queue.SETTLE_SECONDS)
 const UPD_SETTLE_MS = 5 * 60 * 1000;
+// Ab so vielen Entitäten zeigt der Reiter "Entitäten" die Chips "Lebenszeichen" (siehe _entitiesHtml)
+const ENT_FILTER_MIN = 8;
 const DETAIL_MAX_AGE_MS = 30000;
 const HISTORY_MAX_AGE_MS = 60000;
 // Batterie-Verlauf (seit 0.22.0, docs/mockups/battery-history-v1, A): dazu 3 Monate.
@@ -4904,10 +4906,16 @@ class DevicePanel extends HTMLElement {
     if (!cur || (!cur.data && cur.loading)) return { count: 0, html: `<p class="dlg-note">${escape(this._t("loadingDetail"))}</p>` };
     if (!cur.data) return { count: 0, html: `<div class="dlg-error">${escape(this._t("error"))} ${escape(cur.error || "")}</div>` };
     const list = cur.data.entities || [];
-    // Filter "Lebenszeichen" (seit 2.166.0, Reiterleiste wie überall): bei Geräten mit vielen Entitäten gleich sehen, welche zählen und welche nicht
-    const bar = `<div class="sub-tabs ent-filter" role="tablist" aria-label="${escape(this._t("entFilterLabel"))}">${[["all", "entFilterAll"], ["on", "entFilterOn"], ["off", "entFilterOff"]]
-      .map(([v, k]) => `<button type="button" role="tab" class="sub-tab${this._entLive === v ? " on" : ""}" data-dlg="ent-live" data-val="${v}" aria-selected="${this._entLive === v}">${escape(this._t(k))}</button>`)
-      .join("")}</div>`;
+    // Filter "Lebenszeichen" (seit 2.166.0, docs/mockups/liveness-filter-v1, C): drei Chips mit Zahl, abgewählt = alle. Die Zeile erscheint nur bei
+    // Geräten mit mindestens ENT_FILTER_MIN Entitäten (sonst gibt es nichts zu suchen); ein Chip ohne Treffer bleibt nur, solange er gewählt ist
+    const off = new Set(d.liveness_exclude_setting || []);
+    const counts = { on: 0, off: 0, rest: 0 };
+    for (const e of list) counts[this._entGroup(e, off)]++;
+    const chips = [["on", "entFilterOn"], ["off", "entFilterOff"], ["rest", "entFilterRest"]]
+      .filter(([v]) => counts[v] > 0 || this._entLive === v)
+      .map(([v, k]) => `<button type="button" class="chip${this._entLive === v ? " on" : ""}" data-dlg="ent-live" data-val="${v}" aria-pressed="${this._entLive === v}"><span>${escape(this._t(k))}</span><span class="n">${counts[v]}</span></button>`)
+      .join("");
+    const bar = list.length >= ENT_FILTER_MIN && chips ? `<div class="chips ent-chips" role="group" aria-label="${escape(this._t("entFilterLabel"))}">${chips}</div>` : "";
     return { count: list.length, html: list.length ? `${this._devSearchHtml("ent", list.length)}${bar}<div data-dev-zone="ent">${this._entListHtml(d)}</div>` : "" };
   }
 
@@ -4916,7 +4924,12 @@ class DevicePanel extends HTMLElement {
     const off = new Set(d.liveness_exclude_setting || []);
     const q = this._devQ?.ent;
     const mode = this._entLive || "all";
-    return (e) => this._devMatch(e, q) && (mode === "all" || (mode === "on") === Boolean(e.liveness_base && !off.has(e.entity_id)));
+    return (e) => this._devMatch(e, q) && (mode === "all" || this._entGroup(e, off) === mode);
+  }
+
+  // Gruppe einer Entität für die Chips (seit 2.166.0): "on" = zählt als Lebenszeichen, "off" = von dir ausgeschlossen, "rest" = zählt nie (Diagnose, versteckt)
+  _entGroup(e, off) {
+    return off.has(e.entity_id) ? "off" : e.liveness_base ? "on" : "rest";
   }
 
   // Die Liste der Entitäten (mit dem Suchtext des Reiters) und der Hinweis zum Lebenszeichen
@@ -5179,7 +5192,9 @@ class DevicePanel extends HTMLElement {
     if (action === "close") this._requestCloseDevice();
     else if (action === "save") this._devSave();
     else if (action === "ent-live") {
-      this._entLive = ["all", "on", "off"].includes(btn.dataset.val) ? btn.dataset.val : "all";
+      // Ein gewählter Chip wird mit dem zweiten Tipp wieder abgewählt (= alle), wie alle Chips im Panel
+      const v = ["on", "off", "rest"].includes(btn.dataset.val) ? btn.dataset.val : "all";
+      this._entLive = this._entLive === v ? "all" : v;
       this._devForce = true;
       this._renderDevice();
     } else if (action === "live-toggle") {

@@ -7,6 +7,18 @@ All notable changes to this integration are documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/).
 
+## [2.167.0] - 2026-10-28
+
+The sign-of-life filter is now a slim chip row, and the Software tile shows its outline in the light theme too.
+
+### Changed
+
+- **Filter by sign of life as chips:** the tab bar below the search field in the tab "Entities" takes too much room. It is now a slim chip row "Sign of life", "Excluded" and "Others", each with its number, and only appears on devices with eight or more entities. "Sign of life" shows the entities that count (and are not excluded), "Excluded" those you excluded, "Others" all that never count (such as diagnostic entities). A tap on a chip filters, a second tap shows everything again. It still works together with the search and follows an unsaved change at once.
+
+### Fixed
+
+- **Software tile without outline in the light theme:** the outline in the main color for an available update was overridden by the light theme; it now shows in both themes.
+
 ## [2.166.0] - 2026-10-28
 
 Filter "Sign of life" in the entity list, and updates are no longer wrongly shown as failed.
@@ -5120,6 +5132,7 @@ First pre-release.
   GitHub Actions for HACS/hassfest validation and tests.
 
 [2.6.0]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v2.6.0
+[2.167.0]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v2.167.0
 [2.166.0]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v2.166.0
 [2.165.0]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v2.165.0
 [2.164.0]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v2.164.0

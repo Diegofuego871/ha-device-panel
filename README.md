@@ -32,6 +32,7 @@
 - **Switches tab:** every device with something to switch shows it as tiles; a tap opens the Home Assistant controls (dimming, colour, position)
 - **Charging and updates:** "Charging" chip with a charge bar, push when a device is full, live activity (iPhone) or live update (Android 16), and an update reminder that replaces your own automations
 - **New devices:** a "New" mark and chip for three days, and an optional push with all devices that appeared
+- **Device updates:** all open updates of devices in one window, chips by integration, a queue that keeps running with the window closed, progress, restart and reasons for a failure
 - **App launcher and history:** one button for useful pages of Home Assistant and your own links, plus the history with a tab "System" that shows what the notifications decide and why one did not come
 - **Optional AI assessment:** a guess at the cause on a button press, only with an AI task of Home Assistant
 - **Yours alone:** columns, sort order, filters, favorites and start page are saved per user, on phone and desktop alike
@@ -100,6 +101,12 @@ One window with everything about a device: outages and returns with the duration
 | All (list by day) | Magic Push (evaluation) |
 |---|---|
 | <img src="https://raw.githubusercontent.com/Diegofuego871/ha-device-panel/main/docs/screenshots/en/devicelog.png" alt="History of a device: list by day with chips for outage, reception, updates, Magic Push and routines"> | <img src="https://raw.githubusercontent.com/Diegofuego871/ha-device-panel/main/docs/screenshots/en/devicelog-magic.png" alt="History of a device, tab Magic Push: key figures, bar chart and table"> |
+
+### Sign of life of an entity
+
+In tab "Entities" the mark "Sign of life" shows which entities decide whether a device counts as offline. The mark is a button: a tap excludes the entity (dashed border, crossed out), another tap counts it again; "Save" applies the choice. That is how you keep a helper you attached yourself, which is always available, from hiding an outage.
+
+<p align="center"><img src="https://raw.githubusercontent.com/Diegofuego871/ha-device-panel/main/docs/screenshots/en/entities-liveness.png" alt="Device pop-up, tab Entities, with the chips Sign of life, Excluded and Others and the buttons Sign of life" width="720"></p>
 
 ### Settings per device
 
@@ -227,6 +234,17 @@ Switches an entity of a device once or on a schedule, without an automation.
 
 <p align="center"><img src="https://raw.githubusercontent.com/Diegofuego871/ha-device-panel/main/docs/screenshots/en/routines-all.png" alt="Window with all routines, one card per device" width="720"></p>
 
+## Device updates
+
+The app "Device updates" (administrators) lists all open updates of devices in one window, not Home Assistant itself, its apps or HACS. Chips by integration preselect, checkboxes refine, one button starts the selection after a confirmation (optionally with a backup first). The integration works the selection off in a queue, so it keeps running with the window closed.
+
+<p align="center"><img src="https://raw.githubusercontent.com/Diegofuego871/ha-device-panel/main/docs/screenshots/en/updates.png" alt="Window Device updates with chips by integration and a selection" width="720"></p>
+<p align="center"><img src="https://raw.githubusercontent.com/Diegofuego871/ha-device-panel/main/docs/screenshots/en/updates-run.png" alt="Window Device updates while updates run, with waiting, progress and done" width="720"></p>
+
+If a new version is available for a device, its tile "Software" in the pop-up gets an outline in the main color; a tap opens the update window of this device, and a running update shows its progress in the tile too.
+
+<p align="center"><img src="https://raw.githubusercontent.com/Diegofuego871/ha-device-panel/main/docs/screenshots/en/software-update.png" alt="Device pop-up with the tile Software outlined in the main color" width="720"></p>
+
 ## App launcher and history
 
 A button in the header opens a launcher with useful pages, in the symbols and colors of the settings of Home Assistant. Administrators also find a power button there that restarts Home Assistant, always after a confirmation.
@@ -329,7 +347,7 @@ The same panel as cards, with the same pop-ups, windows and assistants in full s
 
 ## Good to know
 
-- **How "offline" is detected:** a device is online as long as at least one of its entities that count as a sign of life is available; it is offline when all of them are `unavailable` (not `unknown`) for longer than "Offline after". A connectivity sensor (`binary_sensor`, device class `connectivity`) counts alone and takes precedence (`off` also means disconnected). Otherwise the enabled, visible entities without a category count (hidden and diagnostic ones only if nothing else exists). In the device pop-up, tab "Entities", the mark "Sign of life" shows which ones count. A tap on the mark excludes an entity (for example a template helper you attached yourself that is always available, so the device would never be offline); tap again to count it again. A tab bar below the search field ("All", "Counting", "Not counting") filters the list, which helps on devices with many entities. The choice applies after "Save", is part of the backup, and if all entities are excluded it is ignored (with a note), otherwise there would be no status. Alternative: a template `binary_sensor` with device class `connectivity` on the device says directly whether the device is online.
+- **How "offline" is detected:** a device is online as long as at least one of its entities that count as a sign of life is available; it is offline when all of them are `unavailable` (not `unknown`) for longer than "Offline after". A connectivity sensor (`binary_sensor`, device class `connectivity`) counts alone and takes precedence (`off` also means disconnected). Otherwise the enabled, visible entities without a category count (hidden and diagnostic ones only if nothing else exists). In the device pop-up, tab "Entities", the mark "Sign of life" shows which ones count. A tap on the mark excludes an entity (for example a template helper you attached yourself that is always available, so the device would never be offline); tap again to count it again. On devices with eight or more entities, a chip row below the search field ("Sign of life", "Excluded", "Others", each with its number) filters the list; a tap on a chip filters, a second tap shows everything again. The choice applies after "Save", is part of the backup, and if all entities are excluded it is ignored (with a note), otherwise there would be no status. Alternative: a template `binary_sensor` with device class `connectivity` on the device says directly whether the device is online.
 - A device counts as offline after 2 minutes without a sign of life (adjustable, per integration, per label and per device).
 - A signal counts as weak below -80 dBm or LQI 61. The warning threshold can be set per connection type, globally, per integration, per label and per device, or switched off.
 - An outage lasts until Home Assistant sees the device online again, also across restarts. "At least" (≥) means the start is not known.

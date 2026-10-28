@@ -7,6 +7,18 @@ Alle nennenswerten Änderungen an dieser Integration stehen in dieser Datei.
 Das Format folgt [Keep a Changelog](https://keepachangelog.com/de/1.1.0/),
 die Versionsnummern folgen [Semantic Versioning](https://semver.org/lang/de/).
 
+## [2.167.0] - 2026-10-28
+
+Der Filter nach Lebenszeichen ist jetzt eine schlanke Chip-Zeile, und die Kachel Software zeigt ihre Umrandung auch im hellen Design.
+
+### Geändert
+
+- **Filter nach Lebenszeichen als Chips:** Die Reiterleiste unter dem Suchfeld im Reiter "Entitäten" nahm zu viel Platz ein. Sie ist jetzt eine schlanke Chip-Zeile "Lebenszeichen", "Ausgeschlossen" und "Übrige", je mit Anzahl, und erscheint nur bei Geräten mit acht oder mehr Entitäten. "Lebenszeichen" zeigt die Entitäten, die zählen (und nicht ausgeschlossen sind), "Ausgeschlossen" die von dir ausgeschlossenen, "Übrige" alle, die nie zählen (etwa Diagnose-Entitäten). Ein Tipp auf einen Chip filtert, ein zweiter zeigt wieder alles. Er wirkt weiterhin zusammen mit der Suche und folgt einer noch nicht gespeicherten Änderung sofort.
+
+### Behoben
+
+- **Kachel Software ohne Umrandung im hellen Design:** Die Umrandung in der Hauptfarbe bei verfügbarem Update wurde vom hellen Design überschrieben; sie erscheint jetzt in beiden Designs.
+
 ## [2.166.0] - 2026-10-28
 
 Filter "Lebenszeichen" in der Entitätenliste, und Updates werden nicht mehr fälschlich als fehlgeschlagen gezeigt.
@@ -5221,6 +5233,7 @@ Erste Vorabversion.
   GitHub Actions für die Prüfungen von HACS und hassfest sowie die Tests.
 
 [2.6.0]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v2.6.0
+[2.167.0]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v2.167.0
 [2.166.0]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v2.166.0
 [2.165.0]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v2.165.0
 [2.164.0]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v2.164.0

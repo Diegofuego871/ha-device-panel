@@ -31,7 +31,7 @@ for (const lang of langs) {
       ? { viewport: { width: 390, height: 844 }, isMobile: true, hasTouch: true, deviceScaleFactor: 2, locale }
       : { viewport: { width: 1280, height: 860 }, deviceScaleFactor: 1.5, locale });
     const p = await ctx.newPage();
-    await p.goto(`http://127.0.0.1:8950/ha-sim.html?lang=${lang}&theme=${mobile ? "dark" : "light"}&nobrands=1`);
+    await p.goto(`http://127.0.0.1:8950/ha-sim.html?lang=${lang}&theme=${mobile ? "dark" : "light"}&nobrands=1&updapp=1`);
     const frameEl = await p.waitForSelector("#panel-frame");
     const f = await frameEl.contentFrame();
     await f.waitForFunction(new Function(`return ${R}?.querySelectorAll(".dev").length > 1`), null, { timeout: 15000 });
@@ -421,6 +421,60 @@ for (const lang of langs) {
       await tap("[data-area-open]");
       await p.waitForTimeout(500);
       await shot("area");
+    });
+    // Geräte-Updates (2.164.0), Lebenszeichen ausschliessen (2.165.0, Chips 2.166.0), Kachel "Software" mit Update (2.163.0)
+    await step("updates", async () => {
+      const de = lang === "de";
+      const mk = (id, platform, name, a, b) => ({ entity_id: `update.${id}`, device_id: id, platform, features: 13, installed: a, latest: b, title: name });
+      await p.evaluate((l) => { window.__appUpdates = l; window.__uq = []; }, [
+        mk("s1", "shelly", de ? "Licht Bad" : "Bathroom light", "1.7.5", "1.7.6"), mk("s2", "shelly", de ? "Wandschalter Flur" : "Hallway switch", "1.7.5", "1.7.6"),
+        mk("s3", "shelly", de ? "Steckdose Büro" : "Office plug", "1.7.4", "1.7.6"), mk("s4", "shelly", de ? "Rollladen Küche" : "Kitchen shutter", "1.7.5", "1.7.6"),
+        mk("z1", "zha", de ? "Bewegungsmelder Keller" : "Basement motion sensor", "2.1", "2.2"), mk("z2", "zha", de ? "Leuchte Wohnzimmer" : "Living room lamp", "1.0.3", "1.0.4"),
+        mk("e1", "esphome", de ? "Stromzähler Haus" : "House power meter", "2026.9", "2026.10"),
+      ]);
+      await ev(`r.host._updApp.open()`);
+      await wait(`return r.querySelectorAll("dialog.updapp-dlg .ua-row").length === 7`);
+      await shotDlg("updates", "dialog.updapp-dlg");
+      await tap('dialog.updapp-dlg [data-ua="next"]');
+      await tap('dialog.updapp-dlg [data-ua="go"]');
+      await wait(`return r.querySelectorAll("dialog.updapp-dlg .ua-row.run").length === 7`);
+      await p.evaluate(() => {
+        const ha = document.querySelector("home-assistant").hass;
+        const st = (id, attrs) => ({ entity_id: id, state: "on", attributes: { supported_features: 13, ...attrs } });
+        ha.states = { ...ha.states, "update.s1": st("update.s1", { in_progress: true, update_percentage: 62 }), "update.z1": { entity_id: "update.z1", state: "unavailable", attributes: {} }, "update.e1": st("update.e1", { in_progress: true, update_percentage: 18 }) };
+        window.__uqSet("update.s1", "running");
+        window.__pushHass();
+      });
+      await ev(`return r.host._updApp.load().then(() => true)`);
+      await wait(`return r.querySelector("dialog.updapp-dlg .upd-bar")`);
+      await shotDlg("updates-run", "dialog.updapp-dlg");
+      await p.evaluate(() => { window.__uq = []; window.__appUpdates = null; });
+    });
+    await step("entities-liveness", async () => {
+      const de = lang === "de";
+      const helper = (id, name) => ({ entity_id: `sensor.${id}`, name, state: "0.0", unit: null, category: null, liveness: true, platform: "template" });
+      await p.evaluate((l) => { window.__detailExtra = { e: l }; window.__devSettings.livenessExclude = {}; }, [
+        helper("kosten_heute", de ? "Kosten heute" : "Cost today"), helper("kosten_monat", de ? "Kosten Monat" : "Cost month"), helper("kosten_jahr", de ? "Kosten Jahr" : "Cost year"),
+        helper("preis_aktuell", de ? "Preis aktuell" : "Current price"), helper("verbrauch_summe", de ? "Verbrauch Summe" : "Total usage"),
+      ]);
+      await open("e");
+      await tap('dialog.device .dev-tabs [data-tab="ent"]');
+      await wait(`return r.querySelectorAll("dialog.device .entity").length >= 8`);
+      for (const id of ["kosten_heute", "kosten_monat", "kosten_jahr"]) await tap(`dialog.device [data-entity="sensor.${id}"][data-dlg="live-toggle"]`);
+      await tap('dialog.device [data-dlg="save"]');
+      await wait(`return !r.querySelector('dialog.device [data-dlg="save"]') && r.querySelectorAll("dialog.device button.pill.live.off").length === 3`);
+      await ev(`r.querySelector("dialog.device .ent-chips")?.scrollIntoView({ block: "center" })`);
+      await shotDlg("entities-liveness", "dialog.device");
+      await p.evaluate(() => { window.__detailExtra = {}; window.__devSettings.livenessExclude = {}; });
+    });
+    await step("software-update", async () => {
+      if (mobile) return; // am Handy liegt die Kachel unter dem Falz, das Bild bliebe beim Scrollen mit dem klebenden Kopf stehen
+      await p.evaluate(() => { window.__updates = { h: [{ entity_id: "update.stromzaehler_firmware", features: 29 }] }; });
+      await open("h");
+      await wait(`return !!r.querySelector("dialog.device .tile.has-upd")`);
+      await ev(`r.querySelector("dialog.device .tile.has-upd").scrollIntoView({ block: "center" })`);
+      await shotDlg("software-update", "dialog.device");
+      await p.evaluate(() => { window.__updates = {}; });
     });
     await ctx.close();
   }

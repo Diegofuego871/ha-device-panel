@@ -9,8 +9,8 @@ let ok = true;
 const check = (l, c, i = "") => { ok &&= !!c; console.log(`${c ? "PASS" : "FAIL"} ${l}${i ? " - " + i : ""}`); };
 const R = `document.querySelector("device-panel").shadowRoot`;
 const T = {
-  de: { live: "Lebenszeichen", fAll: "Alle", fOn: "Zählen mit", fOff: "Zählen nicht", off: "kein Lebenszeichen", tpl: /Template-Helfern/, ignored: /alle Lebenszeichen ausgeschlossen/ },
-  en: { live: "Sign of life", fAll: "All", fOn: "Counting", fOff: "Not counting", off: "no sign of life", tpl: /template helpers/, ignored: /All signs of life are excluded/ },
+  de: { live: "Lebenszeichen", fOn: "Lebenszeichen", fOff: "Ausgeschlossen", fRest: "Übrige", off: "kein Lebenszeichen", tpl: /Template-Helfern/, ignored: /alle Lebenszeichen ausgeschlossen/ },
+  en: { live: "Sign of life", fOn: "Sign of life", fOff: "Excluded", fRest: "Others", off: "no sign of life", tpl: /template helpers/, ignored: /All signs of life are excluded/ },
 };
 const helper = (n) => ({ entity_id: `sensor.helfer_${n}`, name: `Helfer ${n}`, state: "1.0", unit: null, category: null, liveness: true, platform: "template" });
 
@@ -38,38 +38,43 @@ for (const lang of ["de", "en"]) {
     const text = (s) => ev(`return (r.querySelector(${JSON.stringify(s)})?.innerText || "").replace(/\\s+/g," ").trim()`);
     const calls = () => p.evaluate(() => window.__wsCalls.filter((m) => m.type === "device_panel/set_device_settings"));
 
-    await p.evaluate((h) => { window.__detailExtra = { a: h }; }, [helper(1), helper(2), helper(3)]);
+    await p.evaluate((h) => { window.__detailExtra = { a: h }; }, [helper(1), helper(2), helper(3), helper(4), helper(5)]);
     await ev(`r.host._openDevice("a")`);
     await wait(`return r.querySelector("dialog.device")?.open && r.querySelector('dialog.device .dev-tabs [data-tab="ent"]')`);
     await tap('dialog.device .dev-tabs [data-tab="ent"]');
-    await wait(`return r.querySelectorAll("dialog.device .entity").length >= 4`);
+    await wait(`return r.querySelectorAll("dialog.device .entity").length >= 8`);
     const marks = () => ev(`return [...r.querySelectorAll("dialog.device .entity")].map((x) => [x.querySelector(".ent-name small")?.textContent, x.querySelector(".pill.live")?.innerText.trim() || ""])`);
 
-    check(`[${tag}] Marke "${L.live}" an Gerät und Helfern, ein Schalter (Knopf)`, (await ev(`return r.querySelectorAll('dialog.device button.pill.live[data-dlg="live-toggle"]').length`)) === 4);
+    check(`[${tag}] Marke "${L.live}" an Gerät und Helfern, ein Schalter (Knopf)`, (await ev(`return r.querySelectorAll('dialog.device button.pill.live[data-dlg="live-toggle"]').length`)) === 6);
     check(`[${tag}] Hinweis auf Template-Helfer`, L.tpl.test(await text("dialog.device .dlg-note.small")) || (await ev(`return [...r.querySelectorAll("dialog.device .dlg-note.small")].some((n) => ${L.tpl}.test(n.innerText))`)));
     await tap('dialog.device [data-entity="sensor.helfer_1"][data-dlg="live-toggle"]');
     await tap('dialog.device [data-entity="sensor.helfer_2"][data-dlg="live-toggle"]');
     check(`[${tag}] zwei Helfer ausgeschlossen: Marke "${L.off}", durchgestrichen`, await wait(`return r.querySelectorAll("dialog.device button.pill.live.off").length === 2`) && (await marks()).filter(([, m]) => m === L.off).length === 2);
     check(`[${tag}] Entwurf: "Speichern" erscheint, noch nichts gesendet`, await wait(`return !!r.querySelector('dialog.device [data-dlg="save"]')`) && (await calls()).length === 0);
-    // Filter (Reiterleiste unter dem Suchfeld): Alle | Zählen mit | Zählen nicht, rechnet mit dem Entwurf
+    // Chips unter dem Suchfeld (ab 8 Entitäten): Lebenszeichen | Ausgeschlossen | Übrige, mit Zahl, rechnet mit dem Entwurf; abgewählt = alle
     const rows = () => ev(`return r.querySelectorAll("dialog.device .entity").length`);
-    const filt = async (v) => { await tap(`dialog.device .ent-filter [data-val="${v}"]`); await wait(`return r.querySelector('dialog.device .ent-filter [data-val="${v}"]').classList.contains("on")`); };
-    check(`[${tag}] Filterleiste: ${L.fAll} | ${L.fOn} | ${L.fOff}, "${L.fAll}" gewählt`, JSON.stringify(await ev(`return [...r.querySelectorAll("dialog.device .ent-filter .sub-tab")].map((b) => b.innerText.trim() + (b.classList.contains("on") ? "*" : ""))`)) === JSON.stringify([L.fAll + "*", L.fOn, L.fOff]) && (await ev(`return !!r.querySelector("dialog.device .ent-filter .seg-pill")`)));
-    await filt("on");
-    check(`[${tag}] "${L.fOn}": Gerät und Helfer 3 (Helfer 1 und 2 sind im Entwurf ausgeschlossen)`, await wait(`return r.querySelectorAll("dialog.device .entity").length === 2`) && (await ev(`return [...r.querySelectorAll("dialog.device .entity .ent-name small")].map((x) => x.textContent).includes("sensor.helfer_3")`)));
-    await filt("off");
-    check(`[${tag}] "${L.fOff}": 4 Entitäten (2 ausgeschlossen, Batterie, Signal), mit Zahl im Suchfeld`, (await wait(`return r.querySelectorAll("dialog.device .entity").length === 4`)) && (await text("dialog.device .list-search .n")).length > 0);
-    await filt("all");
-    check(`[${tag}] "${L.fAll}": alle 6, keine Zahl im Suchfeld`, (await wait(`return r.querySelectorAll("dialog.device .entity").length === 6`)) && (await text("dialog.device .list-search .n")) === "");
-    // Ausschliessen im Filter "Zählen mit": die Zeile wandert sofort hinüber
-    await filt("on");
+    const chip = async (v) => { await tap(`dialog.device .ent-chips [data-val="${v}"]`); await wait(`return true`); };
+    const chips = () => ev(`return [...r.querySelectorAll("dialog.device .ent-chips .chip")].map((b) => b.innerText.replace(/\\s+/g, " ").trim() + (b.classList.contains("on") ? "*" : ""))`);
+    check(`[${tag}] Chips: ${L.fOn} 4 | ${L.fOff} 2 | ${L.fRest} 2, keiner gewählt`, JSON.stringify(await chips()) === JSON.stringify([`${L.fOn} 4`, `${L.fOff} 2`, `${L.fRest} 2`]), JSON.stringify(await chips()));
+    await chip("on");
+    check(`[${tag}] "${L.fOn}": 4 Zeilen (Gerät, Helfer 3 bis 5), Chip gewählt, Zahl im Suchfeld`, (await wait(`return r.querySelectorAll("dialog.device .entity").length === 4`)) && (await chips())[0].endsWith("*") && (await text("dialog.device .list-search .n")).length > 0);
+    await chip("on");
+    check(`[${tag}] zweiter Tipp wählt ab: alle 8, keine Zahl`, (await wait(`return r.querySelectorAll("dialog.device .entity").length === 8`)) && (await text("dialog.device .list-search .n")) === "");
+    await chip("off");
+    check(`[${tag}] "${L.fOff}": Helfer 1 und 2`, (await wait(`return r.querySelectorAll("dialog.device .entity").length === 2`)) && (await ev(`return [...r.querySelectorAll("dialog.device .entity .ent-name small")].map((x) => x.textContent).join()`)) === "sensor.helfer_1,sensor.helfer_2");
+    await chip("rest");
+    check(`[${tag}] "${L.fRest}": Batterie und Signal (zählen nie)`, (await wait(`return r.querySelectorAll("dialog.device .entity").length === 2`)) && (await ev(`return [...r.querySelectorAll("dialog.device .entity .ent-name small")].map((x) => x.textContent).every((t) => /batterie|signal/.test(t))`)));
+    await chip("rest");
+    // Ausschliessen im Filter "Lebenszeichen": die Zeile verschwindet, der Zähler wandert
+    await chip("on");
     await tap('dialog.device [data-entity="sensor.helfer_3"][data-dlg="live-toggle"]');
-    check(`[${tag}] im Filter "${L.fOn}" ausgeschlossen: Zeile verschwindet`, await wait(`return r.querySelectorAll("dialog.device .entity").length === 1`));
-    await tap('dialog.device .ent-filter [data-val="off"]');
+    check(`[${tag}] im Filter "${L.fOn}" ausgeschlossen: Zeile weg, Chips ${L.fOn} 3 | ${L.fOff} 3`, (await wait(`return r.querySelectorAll("dialog.device .entity").length === 3`)) && JSON.stringify((await chips()).slice(0, 2)) === JSON.stringify([`${L.fOn} 3*`, `${L.fOff} 3`]), JSON.stringify(await chips()));
+    await chip("on");
+    await chip("off");
     await tap('dialog.device [data-entity="sensor.helfer_3"][data-dlg="live-toggle"]');
-    await filt("all");
-    await p.waitForTimeout(600);
-    check(`[${tag}] Kapsel steht unter dem gewählten Knopf`, await ev(`const bar=r.querySelector("dialog.device .ent-filter"); const on=bar.querySelector(".sub-tab.on").getBoundingClientRect(); const pill=bar.querySelector(".seg-pill").getBoundingClientRect(); return Math.abs(on.left - pill.left) < 6 && Math.abs(on.width - pill.width) < 6`));
+    await chip("off");
+    check(`[${tag}] wieder eingeschlossen, ohne Filter alle 8`, await wait(`return r.querySelectorAll("dialog.device .entity").length === 8`));
+    await p.waitForTimeout(300);
     await p.screenshot({ path: `${outDir}/liveness-${tag.replace("/", "-")}.png` });
     await tap('dialog.device [data-dlg="save"]');
     check(`[${tag}] gesendet: genau die zwei Entitäten`, await wait(`return true`) && await p.evaluate(() => { const c = window.__wsCalls.filter((m) => m.type === "device_panel/set_device_settings").at(-1); return JSON.stringify(c?.liveness_exclude) === JSON.stringify(["sensor.helfer_1", "sensor.helfer_2"]); }));
@@ -79,10 +84,20 @@ for (const lang of ["de", "en"]) {
     await tap('dialog.device [data-entity="sensor.helfer_1"][data-dlg="live-toggle"]');
     check(`[${tag}] zweimal geschaltet: keine offene Änderung`, await wait(`return !r.querySelector('dialog.device [data-dlg="save"]')`));
     // alle ausschliessen: Hinweis, dass die Wahl dann nicht gilt
-    for (const id of ["sensor.helfer_3"]) await tap(`dialog.device [data-entity="${id}"][data-dlg="live-toggle"]`);
+    for (const id of ["sensor.helfer_3", "sensor.helfer_4", "sensor.helfer_5"]) await tap(`dialog.device [data-entity="${id}"][data-dlg="live-toggle"]`);
     const first = await ev(`return r.querySelector('dialog.device button.pill.live:not(.off)')?.dataset.entity || ""`);
     if (first) await tap(`dialog.device [data-entity="${first}"][data-dlg="live-toggle"]`);
     check(`[${tag}] alle ausgeschlossen: Warnung "${L.ignored}"`, await wait(`return [...r.querySelectorAll("dialog.device .dlg-note.small.warn")].some((n) => ${L.ignored}.test(n.innerText))`));
+    // Kleine Geräte (unter 8 Entitäten) bekommen keine Chip-Zeile
+    await p.evaluate(() => { window.__detailExtra = {}; });
+    await tap('dialog.device [data-dlg="cancel"], dialog.device [data-dlg="close"]').catch(() => {});
+    await wait(`return !r.querySelector("dialog.device")?.open || !!r.querySelector('dialog.discard-dlg[open]')`, 2000);
+    if (await ev(`return !!r.querySelector('dialog.discard-dlg[open]')`)) await tap('dialog.discard-dlg [data-d="yes"], dialog.discard-dlg button.primary, dialog.discard-dlg .dlg-btn:last-child').catch(() => {});
+    await ev(`r.host._openDevice("c")`);
+    await wait(`return r.querySelector("dialog.device")?.open && r.querySelector('dialog.device .dev-tabs [data-tab="ent"]')`);
+    await tap('dialog.device .dev-tabs [data-tab="ent"]');
+    await wait(`return r.querySelectorAll("dialog.device .entity").length >= 1`);
+    check(`[${tag}] Gerät mit wenigen Entitäten: keine Chip-Zeile`, !(await handle("dialog.device .ent-chips")) && (await rows()) < 8);
     check(`[${tag}] keine Skriptfehler`, errors.length === 0, errors.join(" | "));
     await ctx.close();
   }

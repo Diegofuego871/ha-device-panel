@@ -32,6 +32,7 @@
 - **Reiter Schalter:** jedes Gerät mit etwas Schaltbarem zeigt es als Kacheln; ein Tipp öffnet die Bedienung von Home Assistant (Dimmen, Farbe, Position)
 - **Laden und Updates:** Chip "Lädt" mit Ladebalken, Push, wenn ein Gerät voll ist, Live-Aktivität (iPhone) oder Live-Update (Android 16) und eine Update-Erinnerung, die deine eigenen Automationen ersetzt
 - **Neue Geräte:** eine Markierung "Neu" und ein Chip für drei Tage, dazu ein optionaler Push mit allen neu erschienenen Geräten
+- **Geräte-Updates:** alle offenen Updates von Geräten in einem Fenster, Chips pro Integration, eine Warteschlange, die bei geschlossenem Fenster weiterläuft, Fortschritt, Neustart und Gründe bei einem Fehler
 - **App-Launcher und Protokoll:** ein Knopf für nützliche Seiten von Home Assistant und eigene Links, dazu das Protokoll mit einem Reiter "System", das zeigt, was die Meldungen entscheiden und warum eine nicht kam
 - **Optionale KI-Einschätzung:** eine Vermutung zur Ursache auf Knopfdruck, nur mit einer KI-Aufgabe von Home Assistant
 - **Ganz deine Ansicht:** Spalten, Sortierung, Filter, Favoriten und Startseite werden pro Benutzer gespeichert, auf Handy und Desktop
@@ -100,6 +101,12 @@ Ein Fenster mit allem zu einem Gerät: Ausfälle und Rückkehr mit der Dauer, Ba
 | Alles (Liste nach Tagen) | Magic Push (Auswertung) |
 |---|---|
 | <img src="https://raw.githubusercontent.com/Diegofuego871/ha-device-panel/main/docs/screenshots/de/devicelog.png" alt="Protokoll eines Geräts: Liste nach Tagen mit Chips für Ausfall, Empfang, Updates, Magic Push und Routinen"> | <img src="https://raw.githubusercontent.com/Diegofuego871/ha-device-panel/main/docs/screenshots/de/devicelog-magic.png" alt="Protokoll eines Geräts, Reiter Magic Push: Kennzahlen, Balkendiagramm und Tabelle"> |
+
+### Lebenszeichen einer Entität
+
+Im Reiter "Entitäten" zeigt die Marke "Lebenszeichen", welche Entitäten entscheiden, ob ein Gerät als ausgefallen gilt. Die Marke ist ein Knopf: ein Tipp schliesst die Entität aus (gestrichelter Rand, durchgestrichen), ein weiterer zählt sie wieder mit; "Speichern" übernimmt die Wahl. So verhindert man, dass ein selbst angehängter Helfer, der immer verfügbar ist, einen Ausfall verdeckt.
+
+<p align="center"><img src="https://raw.githubusercontent.com/Diegofuego871/ha-device-panel/main/docs/screenshots/de/entities-liveness.png" alt="Geräte-Pop-up, Reiter Entitäten, mit den Chips Lebenszeichen, Ausgeschlossen und Übrige und den Knöpfen Lebenszeichen" width="720"></p>
 
 ### Einstellungen pro Gerät
 
@@ -227,6 +234,17 @@ Schaltet eine Entität eines Geräts einmalig oder nach Zeitplan, ohne Automatio
 
 <p align="center"><img src="https://raw.githubusercontent.com/Diegofuego871/ha-device-panel/main/docs/screenshots/de/routines-all.png" alt="Fenster mit allen Routinen, eine Karte pro Gerät" width="720"></p>
 
+## Geräte-Updates
+
+Die App "Geräte-Updates" (Administratoren) listet alle offenen Updates von Geräten in einem Fenster, nicht Home Assistant selbst, dessen Apps oder HACS. Chips pro Integration wählen vor, Häkchen verfeinern, ein Knopf startet die Auswahl nach einer Bestätigung (auf Wunsch mit vorheriger Sicherung). Die Integration arbeitet die Auswahl in einer Warteschlange ab, sie läuft also auch bei geschlossenem Fenster weiter.
+
+<p align="center"><img src="https://raw.githubusercontent.com/Diegofuego871/ha-device-panel/main/docs/screenshots/de/updates.png" alt="Fenster Geräte-Updates mit Chips pro Integration und einer Auswahl" width="720"></p>
+<p align="center"><img src="https://raw.githubusercontent.com/Diegofuego871/ha-device-panel/main/docs/screenshots/de/updates-run.png" alt="Fenster Geräte-Updates während der Updates, mit Wartend, Fortschritt und Fertig" width="720"></p>
+
+Ist für ein Gerät eine neue Version verfügbar, ist seine Kachel "Software" im Pop-up in der Hauptfarbe umrandet; ein Tipp öffnet das Update-Fenster dieses Geräts, und ein laufendes Update zeigt seinen Fortschritt auch in der Kachel.
+
+<p align="center"><img src="https://raw.githubusercontent.com/Diegofuego871/ha-device-panel/main/docs/screenshots/de/software-update.png" alt="Geräte-Pop-up mit der Kachel Software in der Hauptfarbe umrandet" width="720"></p>
+
 ## App-Launcher und Protokoll
 
 Ein Knopf in der Kopfzeile öffnet einen Launcher mit nützlichen Seiten, in den Symbolen und Farben der Einstellungen von Home Assistant. Administratoren finden dort auch einen Ein/Aus-Knopf, der Home Assistant neu startet, immer nach einer Rückfrage.
@@ -329,7 +347,7 @@ Dasselbe Panel als Karten, mit denselben Pop-ups, Fenstern und Assistenten im Vo
 
 ## Gut zu wissen
 
-- **So wird "ausgefallen" erkannt:** ein Gerät ist online, solange mindestens eine seiner Entitäten, die als Lebenszeichen zählen, verfügbar ist; ausgefallen ist es, wenn alle länger als "Ausgefallen nach" `unavailable` sind (nicht `unknown`). Ein Verbindungssensor (`binary_sensor`, Geräteklasse `connectivity`) zählt allein und hat Vorrang (`off` heisst auch getrennt). Sonst zählen die aktivierten, sichtbaren Entitäten ohne Kategorie (versteckte und Diagnose-Entitäten nur, wenn es nichts anderes gibt). Im Geräte-Popup, Reiter "Entitäten", zeigt die Marke "Lebenszeichen", welche zählen. Ein Tipp auf die Marke schliesst eine Entität aus (zum Beispiel einen selbst angehängten Template-Helfer, der immer verfügbar ist und das Gerät nie ausfallen liesse); ein weiterer Tipp zählt sie wieder mit. Eine Reiterleiste unter dem Suchfeld ("Alle", "Zählen mit", "Zählen nicht") filtert die Liste, das hilft bei Geräten mit vielen Entitäten. Die Wahl gilt nach "Speichern", gehört zur Sicherung und wird ignoriert (mit Hinweis), wenn alle Entitäten ausgeschlossen wären, sonst gäbe es keinen Status. Alternative: ein Template-`binary_sensor` mit Geräteklasse `connectivity` am Gerät sagt direkt, ob das Gerät online ist.
+- **So wird "ausgefallen" erkannt:** ein Gerät ist online, solange mindestens eine seiner Entitäten, die als Lebenszeichen zählen, verfügbar ist; ausgefallen ist es, wenn alle länger als "Ausgefallen nach" `unavailable` sind (nicht `unknown`). Ein Verbindungssensor (`binary_sensor`, Geräteklasse `connectivity`) zählt allein und hat Vorrang (`off` heisst auch getrennt). Sonst zählen die aktivierten, sichtbaren Entitäten ohne Kategorie (versteckte und Diagnose-Entitäten nur, wenn es nichts anderes gibt). Im Geräte-Popup, Reiter "Entitäten", zeigt die Marke "Lebenszeichen", welche zählen. Ein Tipp auf die Marke schliesst eine Entität aus (zum Beispiel einen selbst angehängten Template-Helfer, der immer verfügbar ist und das Gerät nie ausfallen liesse); ein weiterer Tipp zählt sie wieder mit. Bei Geräten mit acht oder mehr Entitäten filtert eine Chip-Zeile unter dem Suchfeld ("Lebenszeichen", "Ausgeschlossen", "Übrige", je mit Anzahl) die Liste; ein Tipp auf einen Chip filtert, ein zweiter zeigt wieder alles. Die Wahl gilt nach "Speichern", gehört zur Sicherung und wird ignoriert (mit Hinweis), wenn alle Entitäten ausgeschlossen wären, sonst gäbe es keinen Status. Alternative: ein Template-`binary_sensor` mit Geräteklasse `connectivity` am Gerät sagt direkt, ob das Gerät online ist.
 - Ein Gerät gilt nach 2 Minuten ohne Lebenszeichen als ausgefallen (einstellbar, pro Integration, pro Label und pro Gerät).
 - Ein Empfang gilt als schwach unter -80 dBm oder LQI 61. Die Warnschwelle lässt sich pro Verbindungsart, allgemein, pro Integration, pro Label und pro Gerät einstellen oder abschalten.
 - Ein Ausfall dauert, bis Home Assistant das Gerät wieder online sieht, auch über Neustarts. "Mindestens" (≥) heisst: Der Beginn ist nicht bekannt.

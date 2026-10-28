@@ -1236,7 +1236,9 @@ button.ver-link { border: none; background: none; font: inherit; font-size: 13px
 .ent-name { flex: 1 1 auto; min-width: 0; overflow-wrap: anywhere; }
 .ent-name small { display: block; color: var(--dp-text3); font-size: 12px; }
 .ent-name small.cat { display: inline; margin-left: 6px; }
-.sub-tabs.ent-filter { margin: 4px 0 10px; }
+:host([light]) dialog.device .tile.has-upd { border-color: var(--dp-primary); box-shadow: 0 0 0 1px var(--dp-primary) inset; background: color-mix(in srgb, var(--dp-primary) 8%, var(--dp-card)); } /* helles Thema setzt sonst alle Kacheln auf "ohne Schatten" zurück */
+.chips.ent-chips { position: static; margin: 4px 0 10px; padding: 0; background: none; gap: 6px; }
+.ent-chips .chip { height: 30px; padding: 0 10px; font-size: 13px; gap: 5px; }
 /* Die Marke "Lebenszeichen" ist ein Schalter (seit 2.165.0) und sieht seit 2.166.0 so aus: kräftiger Rand in der Akzentfarbe, höher, mit Druckeffekt;
    ausgeschlossen: gestrichelter, grauer Rand und durchgestrichener Text */
 button.pill.live { height: 26px; padding: 0 11px; border: 1.5px solid var(--dp-primary); font: inherit; font-size: 12px; font-weight: 500; cursor: pointer; box-shadow: 0 1px 0 color-mix(in srgb, var(--dp-primary) 35%, transparent); transition: background .12s, transform .08s; }
