@@ -7,6 +7,16 @@ All notable changes to this integration are documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/).
 
+## [2.178.0] - 2026-10-29
+
+Setup assistant: a bar per step, with direct jumps.
+
+### Changed
+
+- **Setup assistant, progress bar:** the fluid bar on top is replaced by one bar per step with small gaps, like in the assistants for routines and Magic Push. Every bar is a button: a tap jumps straight to that page, back or forward. Forward only works while the current page is valid (otherwise the later bars are locked), so an error cannot be skipped. The draft is kept as before.
+
+Not released: 2.177.1; included in this version.
+
 ## [2.177.1] - 2026-10-29
 
 More room around the button to Home Assistant, routine switches are named "Routine: …", and their entity ID can be copied.
@@ -16,6 +26,8 @@ More room around the button to Home Assistant, routine switches are named "Routi
 - **Settings › Panel:** the button "Open integration in HA" sat too close to the top edge of the section; there is now more space above and below it.
 - **Switch per routine:** its name now starts with "Routine: " (for example "Routine: Garden light"), so it is clear in Home Assistant that the switch means the routine and not the device it switches. The entity ID of existing switches stays.
 - **Assistant of a routine, entity ID with copy button:** the entity ID of the switch now stands in a block of its own further down, with a button to copy it (as on the device card). Before the first save there is a hint instead. The fallback for copying also works inside pop-up windows now.
+
+Not released; included in 2.178.0.
 
 ## [2.177.0] - 2026-10-29
 
@@ -5294,7 +5306,7 @@ First pre-release.
   GitHub Actions for HACS/hassfest validation and tests.
 
 [2.6.0]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v2.6.0
-[2.177.1]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v2.177.1
+[2.178.0]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v2.178.0
 [2.177.0]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v2.177.0
 [2.176.0]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v2.176.0
 [2.175.0]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v2.175.0

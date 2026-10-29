@@ -561,8 +561,14 @@ export class WizardUi {
     } else {
       const list = this.steps();
       const n = list.indexOf(s.step) + 1;
-      const pct = Math.round((100 * n) / list.length);
-      top = `<div class="wz-top"><div class="wz-stp"><span><b>${escape(t("wzStep", n, list.length))}</b> · ${escape(t(`wzS_${s.step}`))}</span>${close}</div><div class="wz-prog"><i style="width:${pct}%"></i></div></div>`;
+      // Ein Balken je Schritt (seit 2.178.0, wie bei Routinen und Magic Push); jeder ist ein Knopf zum direkten Springen.
+      // Vorwärts nur, solange die Seite gültig ist (sonst könnte man einen Fehler überspringen).
+      const stuck = Boolean(this.invalid());
+      const bars = list.map((st, i) => {
+        const label = `${t("wzStep", i + 1, list.length)}: ${t(`wzS_${st}`)}`;
+        return `<button type="button" class="mg-stp${i < n ? " on" : ""}" data-wz="goto" data-step="${st}"${i + 1 > n && stuck ? " disabled" : ""} aria-label="${escape(label)}"${i + 1 === n ? ' aria-current="step"' : ""}></button>`;
+      }).join("");
+      top = `<div class="wz-top"><div class="wz-stp"><span><b>${escape(t("wzStep", n, list.length))}</b> · ${escape(t(`wzS_${s.step}`))}</span>${close}</div><div class="mg-steps wz-steps">${bars}</div></div>`;
       body = this[`${s.step}Html`]();
       const last = s.step === "done";
       foot = `<button type="button" class="dlg-btn" data-wz="back"${s.busy ? " disabled" : ""}>${mdi("arrowLeft", 18)}${escape(t("wzBack"))}</button>
@@ -1122,6 +1128,12 @@ export class WizardUi {
       if (a === "close") this.requestClose();
       else if (a === "start" || a === "next") this.next();
       else if (a === "back") this.back();
+      else if (a === "goto") {
+        const list = this.steps();
+        const to = btn.dataset.step;
+        // Vorwärts nur mit gültiger Seite; zurück und auf die eigene Seite immer
+        if (list.includes(to) && (list.indexOf(to) <= list.indexOf(this.s.step) || !this.invalid())) this.go(to);
+      }
       else if (a === "ask-no") {
         this.s.ask = false;
         this.render();

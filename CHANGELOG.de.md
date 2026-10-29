@@ -7,6 +7,16 @@ Alle nennenswerten Änderungen an dieser Integration stehen in dieser Datei.
 Das Format folgt [Keep a Changelog](https://keepachangelog.com/de/1.1.0/),
 die Versionsnummern folgen [Semantic Versioning](https://semver.org/lang/de/).
 
+## [2.178.0] - 2026-10-29
+
+Einrichtungsassistent: ein Balken je Schritt, mit direktem Springen.
+
+### Geändert
+
+- **Einrichtungsassistent, Fortschrittsbalken:** Der fliessende Balken oben ist durch einen Balken je Schritt mit kleinen Lücken ersetzt, wie in den Assistenten für Routinen und Magic Push. Jeder Balken ist ein Knopf: Ein Tipp springt direkt auf diese Seite, zurück oder vorwärts. Vorwärts geht nur, solange die jetzige Seite gültig ist (sonst sind die späteren Balken gesperrt), so lässt sich kein Fehler überspringen. Der Entwurf bleibt wie bisher erhalten.
+
+Nicht veröffentlicht: 2.177.1; in dieser Version enthalten.
+
 ## [2.177.1] - 2026-10-29
 
 Mehr Platz um den Knopf zu Home Assistant, Routinen-Schalter heissen "Routine: …", und ihre Entity-ID lässt sich kopieren.
@@ -16,6 +26,8 @@ Mehr Platz um den Knopf zu Home Assistant, Routinen-Schalter heissen "Routine: �
 - **Einstellungen › Panel:** Der Knopf "Integration in HA öffnen" sass zu nah am oberen Rand des Abschnitts; darüber und darunter ist jetzt mehr Platz.
 - **Schalter pro Routine:** Der Name beginnt jetzt mit "Routine: " (zum Beispiel "Routine: Gartenlicht"), damit in Home Assistant klar ist, dass der Schalter die Routine meint und nicht das Gerät, das sie schaltet. Die Entity-ID bestehender Schalter bleibt.
 - **Assistent einer Routine, Entity-ID mit Kopierknopf:** Die Entity-ID des Schalters steht jetzt in einem eigenen Block weiter unten, mit einem Knopf zum Kopieren (wie auf der Gerätekarte). Vor dem ersten Speichern steht stattdessen ein Hinweis. Der Ersatzweg zum Kopieren funktioniert jetzt auch in Fenstern.
+
+Nicht veröffentlicht; enthalten in 2.178.0.
 
 ## [2.177.0] - 2026-10-29
 
@@ -5395,7 +5407,7 @@ Erste Vorabversion.
   GitHub Actions für die Prüfungen von HACS und hassfest sowie die Tests.
 
 [2.6.0]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v2.6.0
-[2.177.1]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v2.177.1
+[2.178.0]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v2.178.0
 [2.177.0]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v2.177.0
 [2.176.0]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v2.176.0
 [2.175.0]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v2.175.0
