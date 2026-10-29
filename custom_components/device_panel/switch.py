@@ -101,7 +101,8 @@ class RoutineSwitch(SwitchEntity):
     @property
     def name(self) -> str:
         routine = self._routine
-        return routine["name"] if routine else self.routine_id
+        # "Routine: " davor, damit klar ist, dass der Schalter die Routine meint und nicht das Gerät, das sie schaltet
+        return f"Routine: {routine['name']}" if routine else f"Routine: {self.routine_id}"
 
     @property
     def available(self) -> bool:

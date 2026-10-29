@@ -9,11 +9,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/).
 
 ## [2.177.1] - 2026-10-29
 
-More room around the button to Home Assistant.
+More room around the button to Home Assistant, and routine switches are named "Routine: …".
 
 ### Fixed
 
 - **Settings › Panel:** the button "Open integration in HA" sat too close to the top edge of the section; there is now more space above and below it.
+- **Switch per routine:** its name now starts with "Routine: " (for example "Routine: Garden light"), so it is clear in Home Assistant that the switch means the routine and not the device it switches. The entity ID of existing switches stays.
 
 ## [2.177.0] - 2026-10-29
 

@@ -9,11 +9,12 @@ die Versionsnummern folgen [Semantic Versioning](https://semver.org/lang/de/).
 
 ## [2.177.1] - 2026-10-29
 
-Mehr Platz um den Knopf zu Home Assistant.
+Mehr Platz um den Knopf zu Home Assistant, und Routinen-Schalter heissen "Routine: …".
 
 ### Behoben
 
 - **Einstellungen › Panel:** Der Knopf "Integration in HA öffnen" sass zu nah am oberen Rand des Abschnitts; darüber und darunter ist jetzt mehr Platz.
+- **Schalter pro Routine:** Der Name beginnt jetzt mit "Routine: " (zum Beispiel "Routine: Gartenlicht"), damit in Home Assistant klar ist, dass der Schalter die Routine meint und nicht das Gerät, das sie schaltet. Die Entity-ID bestehender Schalter bleibt.
 
 ## [2.177.0] - 2026-10-29
 

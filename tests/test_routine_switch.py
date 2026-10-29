@@ -42,7 +42,7 @@ async def test_routine_switch_follows_the_checkbox(hass: HomeAssistant, setup) -
     await hass.async_block_till_done()
     entity_id = _entity_id(hass, f"routine_{saved['id']}")
     assert entity_id and hass.states.get(entity_id).state == STATE_ON
-    assert hass.states.get(entity_id).attributes["friendly_name"].endswith("Gartenlicht")
+    assert hass.states.get(entity_id).attributes["friendly_name"].endswith("Routine: Gartenlicht")
     assert manager.switch_entity_id(saved["id"]) == entity_id
     # Schalter in HA: Routine aus, und umgekehrt (Panel)
     await hass.services.async_call("switch", "turn_off", {"entity_id": entity_id}, blocking=True)
@@ -54,7 +54,7 @@ async def test_routine_switch_follows_the_checkbox(hass: HomeAssistant, setup) -
     # Umbenennen: Anzeigename folgt, Entity-ID bleibt
     await manager.async_save_routine({**manager.get(saved["id"]), "name": "Terrassenlicht"})
     await hass.async_block_till_done()
-    assert hass.states.get(entity_id).attributes["friendly_name"].endswith("Terrassenlicht")
+    assert hass.states.get(entity_id).attributes["friendly_name"].endswith("Routine: Terrassenlicht")
     # Haken abwählen: Schalter und Eintrag in der Registry verschwinden
     await manager.async_save_routine({**manager.get(saved["id"]), "ha_switch": False})
     await hass.async_block_till_done()
