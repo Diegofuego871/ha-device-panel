@@ -64,7 +64,7 @@ for (const lang of ["de", "en"]) {
       await tap(`dialog.routine-dlg [data-rt="nav-next"]`);
       await wait(`return true`);
     }
-    check(`[${tag}] Entity-ID in eigenem Block unter den Schaltern, mit Beschriftung und Knopf zum Kopieren`, await ev(`const h = r.querySelector("dialog.routine-dlg .rt-ha-sep"); const row = r.querySelector('[data-rt="ha-switch"]').closest(".mg-optrow"); return !!h && /^switch\./.test(h.querySelector("code").textContent) && !!h.querySelector('[data-rt="copy-ha"] svg') && !!(row.compareDocumentPosition(h) & Node.DOCUMENT_POSITION_FOLLOWING) && !row.querySelector("code")`));
+    check(`[${tag}] Entity-IDs von Schalter und Knopf in eigenem Block unter den Schaltern, je mit Knopf zum Kopieren`, await ev(`const h = r.querySelector("dialog.routine-dlg .rt-ha-sep"); const row = r.querySelector('[data-rt="ha-switch"]').closest(".mg-optrow"); return !!h && /^switch\./.test(h.querySelector("code").textContent) && h.querySelectorAll("code").length === 2 && /^button\\./.test(h.querySelectorAll("code")[1].textContent) && h.querySelectorAll('[data-rt="copy-ha"] svg').length === 2 && !!(row.compareDocumentPosition(h) & Node.DOCUMENT_POSITION_FOLLOWING) && !row.querySelector("code")`));
     await p.screenshot({ path: `${process.env.OUT || "output"}/routine-ha-id-${tag.replace("/", "-")}.png` });
     await tap(`dialog.routine-dlg [data-rt="copy-ha"]`);
     check(`[${tag}] Kopieren: Symbol zeigt kurz den Haken`, await wait(`return !!r.querySelector('dialog.routine-dlg [data-rt="copy-ha"].done')`));

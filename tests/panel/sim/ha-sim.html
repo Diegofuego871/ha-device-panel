@@ -1545,7 +1545,8 @@
             running: r.kind === "countdown" && r.enabled && Boolean(r.__due), entity_name: e ? e.name : r.entity_id, set_text: r.action === "set" ? (r.options.option ?? `${r.options.value}${(e?.options?.[0]?.unit) ? ` ${e.options[0].unit}` : ""}`) : "", entity_state: e ? e.state : null, entity_missing: !e, domain: String(r.entity_id).split(".")[0], actions: e ? e.actions : [],
             next_runs: r.enabled && r.kind !== "countdown" ? runsOf(r, now) : [], device_name: (window.__devices.find((d) => d.id === r.device_id) || {}).name || "",
             condition_entities: condEnts(r), waiting_end: Boolean(r.__waiting), reverting: Boolean(r.__revert || r.__waiting),
-            ha_entity: r.ha_switch ? `switch.device_panel_${String(r.name).toLowerCase().replace(/[^a-z0-9]+/g, "_")}` : null };
+            ha_entity: r.ha_switch ? `switch.device_panel_${String(r.name).toLowerCase().replace(/[^a-z0-9]+/g, "_")}` : null,
+            ha_button: r.ha_switch ? `button.device_panel_run_routine_${String(r.name).toLowerCase().replace(/[^a-z0-9]+/g, "_")}` : null };
         };
         const strip = (r) => Object.fromEntries(Object.entries(r).filter(([k]) => !k.startsWith("__")));
         const today = () => ymd(new Date());

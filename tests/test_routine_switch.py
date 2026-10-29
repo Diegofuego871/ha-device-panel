@@ -8,7 +8,7 @@ from homeassistant.helpers import entity_registry as er
 
 from custom_components.device_panel.const import DATA_ROUTINES, DOMAIN
 
-from .test_outage_notify import _device, setup  # noqa: F401  (Fixture "setup")
+from .test_outage_notify import _device, _options, setup  # noqa: F401  (Fixture "setup")
 from .test_routines import _raw, _switch, _zurich  # noqa: F401  (Fixture "_zurich")
 
 
@@ -104,3 +104,36 @@ async def test_ha_switch_is_part_of_the_backup(hass: HomeAssistant, setup) -> No
     await hass.async_block_till_done()
     assert manager.get(saved["id"])["ha_switch"] is True
     assert _entity_id(hass, f"routine_{saved['id']}")
+
+
+def _button_id(hass: HomeAssistant, routine_id: str) -> str | None:
+    entry = hass.config_entries.async_entries(DOMAIN)[0]
+    return er.async_get(hass).async_get_entity_id("button", DOMAIN, f"{entry.entry_id}_routine_run_{routine_id}")
+
+
+async def test_routine_button_runs_the_routine_always(hass: HomeAssistant, setup) -> None:  # noqa: F811
+    """Mit dem Haken gibt es auch den Knopf "Jetzt ausführen"; er läuft immer, auch bei Pause und ausgeschalteter Routine."""
+    from pytest_homeassistant_custom_component.common import async_mock_service
+
+    on = async_mock_service(hass, "switch", "turn_on")
+    manager = hass.data[DATA_ROUTINES]
+    device = _device(hass, "Steckdose")
+    plug = _switch(hass, device)
+    saved = await manager.async_save_routine(_raw(device, plug, name="Gartenlicht", kind="repeat", repeat="daily", time="06:30", delay_s=None, ha_switch=True))
+    await hass.async_block_till_done()
+    button = _button_id(hass, saved["id"])
+    assert button and hass.states.get(button).attributes["friendly_name"].endswith("Routine ausführen: Gartenlicht")
+    assert manager.button_entity_id(saved["id"]) == button
+    # Pause an, Routine aus: der Knopf schaltet trotzdem
+    await manager.async_set_enabled(saved["id"], False)
+    await _options(hass, routines_pause=True)
+    await hass.async_block_till_done()
+    assert manager.paused() is True
+    await hass.services.async_call("button", "press", {"entity_id": button}, blocking=True)
+    await hass.async_block_till_done()
+    assert len(on) == 1 and on[0].data["entity_id"] == plug
+    # Haken abwählen: Schalter und Knopf verschwinden
+    await manager.async_save_routine({**manager.get(saved["id"]), "ha_switch": False})
+    await hass.async_block_till_done()
+    assert _button_id(hass, saved["id"]) is None and _entity_id(hass, f"routine_{saved['id']}") is None
+    assert hass.states.get(button) is None

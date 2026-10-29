@@ -998,6 +998,7 @@ export class RoutineUi {
       push: false,
       ha_switch: false,
       ha_entity: "",
+      ha_button: "",
       target: "",
       name: "",
       touched: { name: false },
@@ -1035,6 +1036,7 @@ export class RoutineUi {
       push: Boolean(rt.push),
       ha_switch: Boolean(rt.ha_switch),
       ha_entity: rt.ha_entity || "",
+      ha_button: rt.ha_button || "",
       target: rt.target || "",
       name: rt.name,
       touched: { name: true },
@@ -1096,7 +1098,7 @@ export class RoutineUi {
     this.reset();
     this.standalone = true;
     this.view = "wizard";
-    const draft = { id: null, device_id: null, entity_id: "", action: "on", options: {}, back_mode: "opposite", back_s: 0, ...triggerDefaults(), backOwn: { text: "", unit: 60 }, kind: "repeat", delay_s: 1800, delayOwn: { text: "", unit: 60 }, date: "", time: "06:30", repeat: "daily", weekdays: [0, 1, 2, 3, 4], mday: 1, mdayOwn: false, enabled: true, push: false, ha_switch: false, ha_entity: "", target: "", name: "" };
+    const draft = { id: null, device_id: null, entity_id: "", action: "on", options: {}, back_mode: "opposite", back_s: 0, ...triggerDefaults(), backOwn: { text: "", unit: 60 }, kind: "repeat", delay_s: 1800, delayOwn: { text: "", unit: 60 }, date: "", time: "06:30", repeat: "daily", weekdays: [0, 1, 2, 3, 4], mday: 1, mdayOwn: false, enabled: true, push: false, ha_switch: false, ha_entity: "", ha_button: "", target: "", name: "" };
     const w = (this.wiz = { pick: true, step: 0, editing: false, draft, pv: null, pvError: "", test: null, targetOpen: false, error: "", saving: false, devices: null, devQuery: "", pickId: "", pickEnt: "", loadingDev: false });
     w.snap = JSON.stringify(draft);
     this.paint();
@@ -1902,8 +1904,9 @@ export class RoutineUi {
     const esc = (v) => this.esc(v);
     const t = (k, ...a) => this.t(k, ...a);
     if (!d.ha_entity) return `<p class="mg-hint rt-ha-sep">${esc(t("rtHaIdAfterSave"))}</p>`;
-    return `<div class="rt-ha-sep"><div class="mg-k">${esc(t("rtHaId"))}</div>
-      <div class="rt-ha-id"><code>${esc(d.ha_entity)}</code><button type="button" class="ent-copy" data-rt="copy-ha" data-entity="${esc(d.ha_entity)}" title="${esc(t("entCopy"))}" aria-label="${esc(`${t("entCopy")}: ${d.ha_entity}`)}">${this.h.mdi("copy", 16)}</button></div></div>`;
+    const row = (id, label) => `<div class="mg-k">${esc(label)}</div>
+      <div class="rt-ha-id"><code>${esc(id)}</code><button type="button" class="ent-copy" data-rt="copy-ha" data-entity="${esc(id)}" title="${esc(t("entCopy"))}" aria-label="${esc(`${t("entCopy")}: ${id}`)}">${this.h.mdi("copy", 16)}</button></div>`;
+    return `<div class="rt-ha-sep">${row(d.ha_entity, t("rtHaId"))}${d.ha_button ? row(d.ha_button, t("rtHaIdButton")) : ""}</div>`;
   }
 
   summaryHtml() {

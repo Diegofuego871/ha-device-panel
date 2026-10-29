@@ -887,6 +887,9 @@ class RoutineManager:
         self._add_switches: Any = None
         self._switch_entry_id: str | None = None
         self._switches: dict[str, Any] = {}
+        # Knopf "Jetzt ausführen" je Routine mit Haken (seit 2.179.0), Plattform "button"
+        self._add_buttons: Any = None
+        self._buttons: dict[str, Any] = {}
 
     # -- Start, Stopp -------------------------------------------------------------
 
@@ -1071,6 +1074,29 @@ class RoutineManager:
         self._add_switches = None
         self._switches = {}
 
+    @callback
+    def attach_buttons(self, entry_id: str, add: Any) -> None:
+        """Die Plattform "button" meldet sich an: der Knopf "Jetzt ausführen" gehört zum selben Haken wie der Schalter."""
+        self._switch_entry_id = entry_id
+        self._add_buttons = add
+        self._buttons = {}
+        self._sync_switches()
+
+    @callback
+    def detach_buttons(self) -> None:
+        self._add_buttons = None
+        self._buttons = {}
+
+    @staticmethod
+    def button_unique_id(entry_id: str, routine_id: str) -> str:
+        return f"{entry_id}_routine_run_{routine_id}"
+
+    def button_entity_id(self, routine_id: str) -> str | None:
+        """Entity-ID des Knopfes einer Routine (für das Panel); None, wenn es keinen gibt."""
+        if self._switch_entry_id is None:
+            return None
+        return er.async_get(self.hass).async_get_entity_id("button", DOMAIN, self.button_unique_id(self._switch_entry_id, routine_id))
+
     @staticmethod
     def switch_unique_id(entry_id: str, routine_id: str) -> str:
         return f"{entry_id}_routine_{routine_id}"
@@ -1084,23 +1110,36 @@ class RoutineManager:
     @callback
     def _sync_switches(self) -> None:
         """Schalter anlegen für Routinen mit Haken; entfernen für gelöschte oder abgewählte (samt Eintrag in der Registry)."""
-        if self._add_switches is None or self._switch_entry_id is None:
+        if self._switch_entry_id is None:
             return
-        from .switch import RoutineSwitch  # noqa: PLC0415 - switch.py importiert diese Datei
-
         wanted = {r["id"] for r in self._routines.values() if r.get("ha_switch")}
-        new = [RoutineSwitch(self, self._switch_entry_id, rid) for rid in sorted(wanted - set(self._switches))]
-        for entity in new:
-            self._switches[entity.routine_id] = entity
-        if new:
-            self._add_switches(new)
+        if self._add_switches is not None:
+            from .switch import RoutineSwitch  # noqa: PLC0415 - switch.py importiert diese Datei
+
+            new = [RoutineSwitch(self, self._switch_entry_id, rid) for rid in sorted(wanted - set(self._switches))]
+            for entity in new:
+                self._switches[entity.routine_id] = entity
+            if new:
+                self._add_switches(new)
+        if self._add_buttons is not None:
+            from .button import RoutineButton  # noqa: PLC0415 - button.py importiert diese Datei
+
+            new_buttons = [RoutineButton(self, self._switch_entry_id, rid) for rid in sorted(wanted - set(self._buttons))]
+            for entity in new_buttons:
+                self._buttons[entity.routine_id] = entity
+            if new_buttons:
+                self._add_buttons(new_buttons)
         registry = er.async_get(self.hass)
-        prefix = self.switch_unique_id(self._switch_entry_id, "")
-        for entry in er.async_entries_for_config_entry(registry, self._switch_entry_id):
-            unique = str(entry.unique_id)
-            if entry.domain == "switch" and unique.startswith(prefix) and unique[len(prefix) :] not in wanted:
-                self._switches.pop(unique[len(prefix) :], None)
-                registry.async_remove(entry.entity_id)
+        # Schalter und Knopf einer abgewählten oder gelöschten Routine samt Eintrag in der Registry entfernen
+        for domain, prefix, known in (
+            ("switch", self.switch_unique_id(self._switch_entry_id, ""), self._switches),
+            ("button", self.button_unique_id(self._switch_entry_id, ""), self._buttons),
+        ):
+            for entry in er.async_entries_for_config_entry(registry, self._switch_entry_id):
+                unique = str(entry.unique_id)
+                if entry.domain == domain and unique.startswith(prefix) and unique[len(prefix) :] not in wanted:
+                    known.pop(unique[len(prefix) :], None)
+                    registry.async_remove(entry.entity_id)
 
     @callback
     def changed(self, routine_id: str | None = None) -> None:
@@ -1962,6 +2001,7 @@ def routine_payload(hass: HomeAssistant, manager: RoutineManager, routine: dict[
         "device_name": manager._device_name(routine),
         # Entity-ID des Schalters in HA (seit 2.177.0), sobald der Haken gesetzt und der Schalter angelegt ist
         "ha_entity": manager.switch_entity_id(routine["id"]) if routine.get("ha_switch") else None,
+        "ha_button": manager.button_entity_id(routine["id"]) if routine.get("ha_switch") else None,
     }
 
 

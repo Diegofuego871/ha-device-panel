@@ -7,6 +7,14 @@ All notable changes to this integration are documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/).
 
+## [2.179.0] - 2026-10-29
+
+A button per routine in Home Assistant: run it now.
+
+### Added
+
+- **Button "Run routine: <name>":** the option in the assistant of a routine is now "As a switch and button in Home Assistant". With the tick, a routine gets two entities: the switch (on and off, as before) and a button that runs the routine at once, like "Run now" in the panel. The button always runs, also while all routines are paused or the routine itself is off. It switches the entity, plans the switch back, sends the routine's push if it has one, and writes a log entry with the source "by hand" (an error entry if it fails; then the button reports the error in Home Assistant). The schedule stays as it is. Routines that already had the tick get the button after the update. The assistant shows both entity IDs with a copy button each. Untick the option or delete the routine and both entities are removed.
+
 ## [2.178.0] - 2026-10-29
 
 Setup assistant: a bar per step, with direct jumps.
@@ -5306,6 +5314,7 @@ First pre-release.
   GitHub Actions for HACS/hassfest validation and tests.
 
 [2.6.0]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v2.6.0
+[2.179.0]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v2.179.0
 [2.178.0]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v2.178.0
 [2.177.0]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v2.177.0
 [2.176.0]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v2.176.0

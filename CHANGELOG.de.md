@@ -7,6 +7,14 @@ Alle nennenswerten Änderungen an dieser Integration stehen in dieser Datei.
 Das Format folgt [Keep a Changelog](https://keepachangelog.com/de/1.1.0/),
 die Versionsnummern folgen [Semantic Versioning](https://semver.org/lang/de/).
 
+## [2.179.0] - 2026-10-29
+
+Ein Knopf pro Routine in Home Assistant: jetzt ausführen.
+
+### Hinzugefügt
+
+- **Knopf "Routine ausführen: <Name>":** Die Option im Assistenten einer Routine heisst jetzt "Als Schalter und Knopf in Home Assistant". Mit dem Haken bekommt eine Routine zwei Entitäten: den Schalter (ein und aus, wie bisher) und einen Knopf, der die Routine sofort ausführt, wie "Jetzt ausführen" im Panel. Der Knopf läuft immer, auch bei pausierten Routinen oder ausgeschalteter Routine. Er schaltet die Entität, plant das Zurückschalten, sendet den Push der Routine, falls sie einen hat, und schreibt einen Protokolleintrag mit der Quelle "von Hand" (bei einem Fehler einen Fehlereintrag; der Knopf meldet den Fehler dann in Home Assistant). Der Zeitplan bleibt unberührt. Routinen, die den Haken schon hatten, bekommen den Knopf nach dem Update. Der Assistent zeigt beide Entity-IDs mit je einem Kopierknopf. Haken abwählen oder Routine löschen entfernt beide Entitäten.
+
 ## [2.178.0] - 2026-10-29
 
 Einrichtungsassistent: ein Balken je Schritt, mit direktem Springen.
@@ -5407,6 +5415,7 @@ Erste Vorabversion.
   GitHub Actions für die Prüfungen von HACS und hassfest sowie die Tests.
 
 [2.6.0]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v2.6.0
+[2.179.0]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v2.179.0
 [2.178.0]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v2.178.0
 [2.177.0]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v2.177.0
 [2.176.0]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v2.176.0
