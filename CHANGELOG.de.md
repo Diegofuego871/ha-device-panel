@@ -7,6 +7,14 @@ Alle nennenswerten Änderungen an dieser Integration stehen in dieser Datei.
 Das Format folgt [Keep a Changelog](https://keepachangelog.com/de/1.1.0/),
 die Versionsnummern folgen [Semantic Versioning](https://semver.org/lang/de/).
 
+## [2.179.1] - 2026-10-29
+
+Mehr Platz um den Knopf "KI-Vorschläge in Home Assistant öffnen".
+
+### Behoben
+
+- **Einstellungen › KI-Einschätzung:** Der Knopf "KI-Vorschläge in Home Assistant öffnen" sass direkt unter dem Trennstrich; darüber und darunter ist jetzt mehr Platz.
+
 ## [2.179.0] - 2026-10-29
 
 Ein Knopf pro Routine in Home Assistant: jetzt ausführen.
@@ -5415,6 +5423,7 @@ Erste Vorabversion.
   GitHub Actions für die Prüfungen von HACS und hassfest sowie die Tests.
 
 [2.6.0]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v2.6.0
+[2.179.1]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v2.179.1
 [2.179.0]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v2.179.0
 [2.178.0]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v2.178.0
 [2.177.0]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v2.177.0
