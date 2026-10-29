@@ -132,9 +132,11 @@ button { font: inherit; color: inherit; }
 
 /* Kopf */
 /* Breite der ersten zwei Kacheln (Verfügbarkeit, Gerade ausgefallen): auch das Suchfeld endet dort (seit 2.36.0, siehe .tb-main) */
-:host { --hero-c1: 300px; --hero-c2: 380px; }
+:host { --hero-c1: 300px; --hero-c2: 380px; --hero-pulse-max: 720px; }
 /* Kopf, Chips und Fuss bleiben beim seitlichen Verschieben der breiten Tabelle stehen (iPad): nur die Tabelle wandert */
 .hero { display: grid; grid-template-columns: minmax(260px, var(--hero-c1)) minmax(300px, var(--hero-c2)) minmax(280px, 1fr); gap: 12px; position: sticky; left: 0; }
+/* Puls-Kachel höchstens so breit (seit 2.180.0); die Spalte bleibt, der Platz rechts davon bleibt frei */
+@media (min-width: 1101px) { .hero .kt.pul { max-width: var(--hero-pulse-max); } }
 .kt { background: var(--dp-card); border-radius: 20px; padding: 16px 18px; border: 1px solid var(--dp-divider); position: relative; overflow: hidden; min-width: 0; }
 .kt .k { font-size: 12px; letter-spacing: .04em; text-transform: uppercase; color: var(--dp-text2); font-weight: 500; display: flex; align-items: center; gap: 8px; }
 .kt.ring { display: grid; grid-template-columns: 108px minmax(0, 1fr); gap: 16px; align-items: center; }

@@ -7,6 +7,16 @@ Alle nennenswerten Änderungen an dieser Integration stehen in dieser Datei.
 Das Format folgt [Keep a Changelog](https://keepachangelog.com/de/1.1.0/),
 die Versionsnummern folgen [Semantic Versioning](https://semver.org/lang/de/).
 
+## [2.180.0] - 2026-10-29
+
+Die Kachel "Ausfall-Puls" hat auf grossen Bildschirmen eine Höchstbreite.
+
+### Geändert
+
+- **Ausfall-Puls, Höchstbreite:** Auf breiten Desktop-Bildschirmen nahm die Kachel "Ausfall-Puls" den ganzen übrigen Platz ein (über 1400 px bei 2000 px Bildschirmbreite), der Messpunkt raste darüber, und die Kachel wirkte gedehnt. Sie ist jetzt höchstens 720 px breit und steht neben den anderen zwei Kacheln; der freie Platz rechts bleibt frei. Bis 1100 px Bildschirmbreite und auf dem Handy ändert sich nichts.
+
+Nicht veröffentlicht: 2.179.1; in dieser Version enthalten.
+
 ## [2.179.1] - 2026-10-29
 
 Mehr Platz um den Knopf "KI-Vorschläge in Home Assistant öffnen".
@@ -14,6 +24,8 @@ Mehr Platz um den Knopf "KI-Vorschläge in Home Assistant öffnen".
 ### Behoben
 
 - **Einstellungen › KI-Einschätzung:** Der Knopf "KI-Vorschläge in Home Assistant öffnen" sass direkt unter dem Trennstrich; darüber und darunter ist jetzt mehr Platz.
+
+Nicht veröffentlicht; enthalten in 2.180.0.
 
 ## [2.179.0] - 2026-10-29
 
@@ -5423,7 +5435,7 @@ Erste Vorabversion.
   GitHub Actions für die Prüfungen von HACS und hassfest sowie die Tests.
 
 [2.6.0]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v2.6.0
-[2.179.1]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v2.179.1
+[2.180.0]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v2.180.0
 [2.179.0]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v2.179.0
 [2.178.0]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v2.178.0
 [2.177.0]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v2.177.0
