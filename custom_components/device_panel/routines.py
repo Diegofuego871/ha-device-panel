@@ -52,6 +52,7 @@ from homeassistant.components.cover import CoverEntityFeature
 from homeassistant.components.fan import FanEntityFeature
 from homeassistant.components.media_player import MediaPlayerEntityFeature
 from homeassistant.core import CALLBACK_TYPE, Event, HomeAssistant, State, callback
+from homeassistant.helpers.dispatcher import async_dispatcher_send
 from homeassistant.helpers import device_registry as dr
 from homeassistant.helpers import entity_registry as er
 from homeassistant.helpers.event import async_call_later, async_track_point_in_utc_time, async_track_state_change_event
@@ -67,6 +68,7 @@ from .const import (
     CONF_ROUTINES_PAUSE,
     CONF_ROUTINES_PAUSE_UNTIL,
     DATA_PROTOCOL,
+    SIGNAL_ROUTINES,
     DOMAIN,
     NOTIFY_NONE,
     STORAGE_VERSION,
@@ -700,6 +702,8 @@ ROUTINE_SCHEMA = vol.Schema(
         vol.Optional("mday", default=None): vol.Any(None, vol.All(int, vol.Range(min=-1, max=31)), msg="Tag des Monats ungültig"),
         vol.Optional("enabled", default=True): bool,
         vol.Optional("push", default=False): bool,
+        # Schalter in Home Assistant (seit 2.177.0): die Routine als Entität ein- und ausschalten
+        vol.Optional("ha_switch", default=False): bool,
         vol.Optional("target", default=None): vol.Any(None, "", vol.All(str, vol.Match(_NOTIFY_RE)), msg="Empfänger ungültig"),
         vol.Optional("created"): vol.Coerce(float),
     },
@@ -879,6 +883,10 @@ class RoutineManager:
         self._holds: dict[tuple[str, str], CALLBACK_TYPE] = {}
         self._tracked: frozenset[str] = frozenset()
         self._track: CALLBACK_TYPE | None = None
+        # Schalter in HA (seit 2.177.0): Funktion zum Hinzufügen (kommt von der Plattform "switch") und die angelegten Schalter
+        self._add_switches: Any = None
+        self._switch_entry_id: str | None = None
+        self._switches: dict[str, Any] = {}
 
     # -- Start, Stopp -------------------------------------------------------------
 
@@ -1048,10 +1056,63 @@ class RoutineManager:
         until = opts[CONF_ROUTINES_PAUSE_UNTIL]
         return float(until) if opts[CONF_ROUTINES_PAUSE] and until else None
 
+    # -- Schalter in Home Assistant (seit 2.177.0) ----------------------------------------------
+
+    @callback
+    def attach_switches(self, entry_id: str, add: Any) -> None:
+        """Die Plattform "switch" meldet sich an: ab jetzt legt der Manager die Schalter der Routinen an und entfernt sie."""
+        self._switch_entry_id = entry_id
+        self._add_switches = add
+        self._switches = {}
+        self._sync_switches()
+
+    @callback
+    def detach_switches(self) -> None:
+        self._add_switches = None
+        self._switches = {}
+
+    @staticmethod
+    def switch_unique_id(entry_id: str, routine_id: str) -> str:
+        return f"{entry_id}_routine_{routine_id}"
+
+    def switch_entity_id(self, routine_id: str) -> str | None:
+        """Entity-ID des Schalters einer Routine (für das Panel); None, wenn es keinen gibt."""
+        if self._switch_entry_id is None:
+            return None
+        return er.async_get(self.hass).async_get_entity_id("switch", DOMAIN, self.switch_unique_id(self._switch_entry_id, routine_id))
+
+    @callback
+    def _sync_switches(self) -> None:
+        """Schalter anlegen für Routinen mit Haken; entfernen für gelöschte oder abgewählte (samt Eintrag in der Registry)."""
+        if self._add_switches is None or self._switch_entry_id is None:
+            return
+        from .switch import RoutineSwitch  # noqa: PLC0415 - switch.py importiert diese Datei
+
+        wanted = {r["id"] for r in self._routines.values() if r.get("ha_switch")}
+        new = [RoutineSwitch(self, self._switch_entry_id, rid) for rid in sorted(wanted - set(self._switches))]
+        for entity in new:
+            self._switches[entity.routine_id] = entity
+        if new:
+            self._add_switches(new)
+        registry = er.async_get(self.hass)
+        prefix = self.switch_unique_id(self._switch_entry_id, "")
+        for entry in er.async_entries_for_config_entry(registry, self._switch_entry_id):
+            unique = str(entry.unique_id)
+            if entry.domain == "switch" and unique.startswith(prefix) and unique[len(prefix) :] not in wanted:
+                self._switches.pop(unique[len(prefix) :], None)
+                registry.async_remove(entry.entity_id)
+
+    @callback
+    def changed(self, routine_id: str | None = None) -> None:
+        """Eine Routine (oder die Pause) hat sich geändert: Schalter nachführen und ihren Stand neu schreiben lassen."""
+        self._sync_switches()
+        async_dispatcher_send(self.hass, SIGNAL_ROUTINES, routine_id)
+
     @callback
     def async_options_changed(self) -> None:
-        """Optionen geändert: das Ende einer befristeten Pause neu planen."""
+        """Optionen geändert: das Ende einer befristeten Pause neu planen, den Pause-Schalter in HA nachführen."""
         self._plan_resume()
+        self.changed(None)
 
     @callback
     def _plan_resume(self) -> None:
@@ -1133,7 +1194,8 @@ class RoutineManager:
             if entry is None or entry.device_id != routine["device_id"]:
                 raise vol.Invalid("Die Entität gehört nicht zu diesem Gerät")
         domain = routine["entity_id"].split(".", 1)[0]
-        if domain not in SERVICES:
+        own = registry.async_get(routine["entity_id"])
+        if domain not in SERVICES or (own is not None and own.platform == DOMAIN):
             raise vol.Invalid("Diese Entität lässt sich nicht schalten")
         if routine["action"] not in SERVICES[domain]:
             raise vol.Invalid("Diese Aktion gibt es für diese Entität nicht")
@@ -1196,6 +1258,7 @@ class RoutineManager:
         self._init_met(routine["id"])
         self._retrack()
         await self._store.async_save(self._data())
+        self.changed(routine["id"])
         return routine
 
     def _rearm_runtime(self, routine: dict[str, Any], rt: dict[str, Any]) -> None:
@@ -1208,6 +1271,7 @@ class RoutineManager:
         self._forget(routine_id)
         self._retrack()
         await self._store.async_save(self._data())
+        self.changed(routine_id)
         if (proto := self.hass.data.get(DATA_PROTOCOL)) is not None:
             await proto.async_forget(routine_id)
         return True
@@ -1229,6 +1293,7 @@ class RoutineManager:
         self._init_met(routine_id)
         self._retrack()
         await self._store.async_save(self._data())
+        self.changed(routine_id)
         return routine
 
     def _forget(self, routine_id: str) -> None:
@@ -1249,6 +1314,7 @@ class RoutineManager:
             if done is not None and now - done > COUNTDOWN_KEEP_S:
                 self._forget(routine["id"])
                 self._save()
+                self.changed(routine["id"])
 
     # -- Planen -------------------------------------------------------------------
 
@@ -1346,6 +1412,8 @@ class RoutineManager:
 
     def _log(self, routine: dict[str, Any], k: str, src: str, *, ok: bool, act: str | None = None, err: str | None = None, late: float | None = None, trace: list[dict[str, Any]] | None = None) -> None:
         """Eintrag im Protokoll der Routine (seit 2.104.0); ein Fehler hier stört die Routine nie."""
+        # Nach jedem Lauf den Schalter in HA nachführen (letztes Ergebnis, nächster Lauf); der Lauf hat "last" schon gesetzt
+        self.changed(routine.get("id"))
         proto = self.hass.data.get(DATA_PROTOCOL)
         if proto is None or not routine.get("id"):
             return
@@ -1478,6 +1546,7 @@ class RoutineManager:
                 rt["done"] = now
                 routine["enabled"] = False
                 self._retrack()
+                self.changed(routine["id"])
             return
         if routine["kind"] == "repeat":
             nxt = occurrence_after(routine, dt_util.utc_from_timestamp(max(now, rt["due"] or now)).astimezone(self.tz), self.tz)
@@ -1486,6 +1555,7 @@ class RoutineManager:
             rt["due"] = None
             rt["done"] = now
             routine["enabled"] = False
+            self.changed(routine["id"])
 
     async def _async_revert(self, routine: dict[str, Any], rt: dict[str, Any], now: float) -> None:
         hass = self.hass
@@ -1821,7 +1891,8 @@ def switchable_entities(hass: HomeAssistant, device_id: str) -> list[dict[str, A
         payloads = [entity_payload(hass, eid) for eid in holder_entity_ids(hass, device_id)]
         return [p for p in payloads if p["actions"]]
     entries = er.async_entries_for_device(er.async_get(hass), device_id)
-    wanted = [e for e in entries if e.domain in SERVICES and e.disabled_by is None]
+    # Die eigenen Schalter (Pause, Routinen) schaltet keine Routine: sonst würde eine Routine die Routinen anhalten oder sich selbst schalten
+    wanted = [e for e in entries if e.domain in SERVICES and e.disabled_by is None and e.platform != DOMAIN]
     payloads = [entity_payload(hass, e.entity_id) for e in sorted(wanted, key=lambda e: (e.entity_category is not None, e.entity_id))]
     # Klima und Medien ohne jede Aktion (Gerät kann weder ein noch aus noch etwas einstellen) sind nicht schaltbar
     return [p for p in payloads if p["actions"]]
@@ -1834,7 +1905,7 @@ def switchable_devices(hass: HomeAssistant) -> list[dict[str, Any]]:
     devices = dr.async_get(hass)
     for entry in er.async_get(hass).entities.values():
         state = hass.states.get(entry.entity_id)
-        if entry.device_id and entry.domain in SERVICES and entry.disabled_by is None and actions_for_state(entry.domain, state):
+        if entry.device_id and entry.domain in SERVICES and entry.platform != DOMAIN and entry.disabled_by is None and actions_for_state(entry.domain, state):
             counts[entry.device_id] = counts.get(entry.device_id, 0) + 1
             # Namen der Entitäten, damit die Suche im Assistenten auch eine Szene oder Lampe in einem Gerät findet (seit 2.63.0)
             names.setdefault(entry.device_id, []).append(entity_label(entry.entity_id, entry, devices.async_get(entry.device_id), state))
@@ -1889,6 +1960,8 @@ def routine_payload(hass: HomeAssistant, manager: RoutineManager, routine: dict[
         "set_text": manager.set_value_text(routine) if routine["action"] == "set" else "",
         "next_runs": next_runs(routine, time.time(), manager.tz) if routine["enabled"] and routine["kind"] != "countdown" else [],
         "device_name": manager._device_name(routine),
+        # Entity-ID des Schalters in HA (seit 2.177.0), sobald der Haken gesetzt und der Schalter angelegt ist
+        "ha_entity": manager.switch_entity_id(routine["id"]) if routine.get("ha_switch") else None,
     }
 
 

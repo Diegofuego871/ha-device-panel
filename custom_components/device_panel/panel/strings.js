@@ -856,6 +856,8 @@ export const STRINGS = {
     rtNameHint: "Leer lassen: der Name der Entität. Er erscheint in der Liste, im Protokoll und in der Meldung.",
     rtEnabled: "Routine aktiv",
     rtEnabledNote: "Ausgeschaltet bleibt sie gespeichert, schaltet aber nicht.",
+    rtHaSwitch: "Als Schalter in Home Assistant",
+    rtHaSwitchNote: "Legt einen Schalter an, mit dem du diese Routine ein- und ausschaltest, auch aus Automationen, Dashboards und per Sprache.",
     rtSumPush: (to) => `Push an ${to}, wenn die Routine schaltet.`,
     // Einstellungen
     secRoutines: "Routinen",
@@ -3427,6 +3429,8 @@ export const STRINGS = {
     rtNameHint: "Leave empty: the name of the entity. It appears in the list, in the log and in the notification.",
     rtEnabled: "Routine on",
     rtEnabledNote: "When off it stays saved but does not switch.",
+    rtHaSwitch: "As a switch in Home Assistant",
+    rtHaSwitchNote: "Creates a switch to turn this routine on and off, also from automations, dashboards and by voice.",
     rtSumPush: (to) => `Push to ${to} when the routine switches.`,
     // Settings
     secRoutines: "Routines",

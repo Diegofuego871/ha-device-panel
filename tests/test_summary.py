@@ -36,7 +36,7 @@ async def test_entities_exist_with_service_device(hass: HomeAssistant, setup) ->
     keys = {e.unique_id.split("_", 1)[1] for e in ent_reg.entities.values() if e.platform == DOMAIN}
     assert keys == {
         "active", "hidden", "offline", "warning", "battery", "battery_low", "charging", "signal_weak", "new", "updates", "errors",
-        "outage", "problem", "acknowledge_errors",
+        "outage", "problem", "acknowledge_errors", "routines_paused",
     }
     device = dr.async_get(hass).async_get_device(identifiers={(DOMAIN, "panel")})
     assert device is not None and device.entry_type is dr.DeviceEntryType.SERVICE and device.name == "Device Panel"

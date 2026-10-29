@@ -7,6 +7,22 @@ Alle nennenswerten Änderungen an dieser Integration stehen in dieser Datei.
 Das Format folgt [Keep a Changelog](https://keepachangelog.com/de/1.1.0/),
 die Versionsnummern folgen [Semantic Versioning](https://semver.org/lang/de/).
 
+## [2.177.0] - 2026-10-29
+
+Schalter in Home Assistant: "Routinen pausiert" und, wenn du willst, ein Schalter pro Routine.
+
+### Hinzugefügt
+
+- **Schalter "Routinen pausiert":** immer da (Gerät "Device Panel"). Er entspricht dem Schalter "Alle Routinen pausieren" im Panel: an pausiert alle Routinen ohne Ende, aus beendet die Pause (auch ein "Pausieren bis"). Das Attribut `paused_until` trägt das Ende einer befristeten Pause. Nutzbar in Automationen, zum Beispiel für die Ferien.
+- **Schalter pro Routine, freiwillig:** Im Assistenten einer Routine legt auf der letzten Seite der Schalter "Als Schalter in Home Assistant" eine Schalter-Entität für diese Routine an (die Entity-ID steht dort nach dem Speichern). Sie schaltet die Routine ein und aus, wie der Schalter im Panel, und beide bleiben im Gleichschritt, auch wenn sich eine einmalige Routine nach ihrem Lauf selbst ausschaltet. Attribute: `next_run`, `last_run`, `last_result` und `failed`. Der Name folgt der Routine, die Entity-ID bleibt beim Umbenennen. Abwählen oder Löschen der Routine entfernt die Entität. Die Wahl gehört zur Sicherung der Routine.
+
+### Geändert
+
+- **Einstellungen › Panel, Knopf zu Home Assistant:** Ganz oben im Abschnitt "Panel" steht ein Knopf "Integration in HA öffnen" in derselben Gestalt wie auf der Gerätekarte. Er öffnet die Seite der Integration in Home Assistant (bei ungespeicherten Änderungen kommt zuerst die übliche Rückfrage).
+- Die eigenen Schalter der Integration lassen sich nicht als Ziel einer Routine wählen (sonst könnte eine Routine alle Routinen pausieren oder sich selbst schalten).
+
+Nicht veröffentlicht: 2.176.1; in dieser Version enthalten.
+
 ## [2.176.1] - 2026-10-29
 
 Mehr Platz unter der Pause-Zeile.
@@ -14,6 +30,8 @@ Mehr Platz unter der Pause-Zeile.
 ### Behoben
 
 - **Fenster Routinen:** Der Strich unter "Alle Routinen pausieren" sass zu nah am Text darunter; dazwischen ist jetzt mehr Abstand.
+
+Nicht veröffentlicht; enthalten in 2.177.0.
 
 ## [2.176.0] - 2026-10-29
 
@@ -5367,7 +5385,7 @@ Erste Vorabversion.
   GitHub Actions für die Prüfungen von HACS und hassfest sowie die Tests.
 
 [2.6.0]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v2.6.0
-[2.176.1]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v2.176.1
+[2.177.0]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v2.177.0
 [2.176.0]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v2.176.0
 [2.175.0]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v2.175.0
 [2.173.0]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v2.173.0

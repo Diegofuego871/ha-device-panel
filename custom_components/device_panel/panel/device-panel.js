@@ -9820,6 +9820,8 @@ class DevicePanel extends HTMLElement {
       // Wie Geräte erscheinen, nicht ob (seit 1.0.0).
       // Allgemein (Startseite) und Updates des Panels (seit 2.87.0): die Startseite gilt nur für den Benutzer, alles andere für die Instanz; die Versionszeile steht oben ausserhalb
       updates:
+        // Knopf zur Integrationsseite in Home Assistant, ganz oben im Abschnitt "Panel" (seit 2.177.0), gleiche Gestalt wie auf der Gerätekarte
+        `<div class="dlg-quick pn-ha"><button type="button" class="qbtn" data-set="open-ha">${mdi("open", 17)}<span class="q-t">${escape(t("openIntegPage"))}</span></button></div>` +
         subTabs("panel", [["pstart", "subPanelStart"], ["pupdates", "subPanelUpdates"], ["pstorage", "subPanelStorage"]], panelTab) +
         (panelTab === "pstart"
           ? `<div class="nf-note view-own">${mdi("info", 16)}<div><p>${escape(t("startOwnNote"))}</p></div></div>` + ttl("ttlStart") + startRow() + ttl("ttlLang") + langRow() + ttl("ttlAccent") + accentRow() + ttl("ttlAnim") + animRow() + this._backupChapterHtml(changes.size > 0) + this._wizardChapterHtml(changes.size > 0)
@@ -10058,6 +10060,9 @@ class DevicePanel extends HTMLElement {
         this._wizard.open("settings");
       } else if (action === "bk-export" || action === "bk-import") {
         this._openBackup(action === "bk-export" ? "export" : "import");
+      } else if (action === "open-ha") {
+        // Wie auf der Gerätekarte: erst die Rückfrage bei ungespeicherten Änderungen, dann die Seite der Integration in HA
+        this._requestCloseSettings(() => this._navigate("/config/integrations/integration/device_panel"));
       } else if (action === "pause-until") {
         if (!st.draft?.routines_pause) return;
         this._openPauseUntil(st.draft.routines_pause_until || 0, (until) => {

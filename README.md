@@ -50,7 +50,7 @@ Offline devices with the time they have been gone, unstable devices (three or mo
 
 ### Search, filter, sort
 
-Search runs over all columns. Filter chips narrow the list: warnings, offline, battery, charging, new devices, devices with their own settings, favorites, each connection type, and an area, an integration and a label filter (only while a device carries a label) that combine with the chips. Hidden devices, integrations and device types are neither shown nor monitored. The language of the panel (automatic, English or German) and the accent colour can be chosen per user (Settings › Panel › General): Home Assistant or one of nine colours. The animations (measuring dot on the outage pulse, shooting star at the dot of the buttons) are on by default and can be switched off there as well.
+Search runs over all columns. Filter chips narrow the list: warnings, offline, battery, charging, new devices, devices with their own settings, favorites, each connection type, and an area, an integration and a label filter (only while a device carries a label) that combine with the chips. Hidden devices, integrations and device types are neither shown nor monitored. At the top of the section "Panel" in the settings, a button opens the page of the integration in Home Assistant. The language of the panel (automatic, English or German) and the accent colour can be chosen per user (Settings › Panel › General): Home Assistant or one of nine colours. The animations (measuring dot on the outage pulse, shooting star at the dot of the buttons) are on by default and can be switched off there as well.
 
 | Warnings | Battery | Area filter |
 |---|---|---|
@@ -332,6 +332,7 @@ The integration creates its own service device **"Device Panel"** with entities,
 
 - **Sensors (counts):** devices active, hidden, offline, with warning, with battery, with low battery, charging, with weak reception, new (last 3 days) and with an update. Every sensor carries the names of the devices as attribute `names` (at most 20, `more` counts the rest). A warning is counted like in the panel (unstable, low battery, weak reception or no data; an outage counts as outage, not as warning). Disabled and unmonitored devices are not counted.
 - **Binary sensors:** **Outage** (on when at least one device is offline) and **Problem** (on when there is an error in the log or a part of the integration is not running, see the status app).
+- **Switches:** **Routines paused** (always; the same as "Pause all routines" in the panel, attribute `paused_until`) and, if you tick "As a switch in Home Assistant" in the assistant of a routine, one switch per routine that turns it on and off (attributes `next_run`, `last_run`, `last_result`, `failed`); removed with the routine or when the option is switched off
 - **Error counter:** the sensor **"Errors (24 hours)"** counts the entries of level "error" in the panel log of the last 24 hours, with `last`, `last_category` and `last_at` as attributes. The button **"Acknowledge errors"** sets the counter to zero (the log stays untouched).
 - Entities you do not need, you can disable in Home Assistant as usual. The own service device does not appear in the device list of the panel.
 

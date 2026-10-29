@@ -7,6 +7,22 @@ All notable changes to this integration are documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/).
 
+## [2.177.0] - 2026-10-29
+
+Switches in Home Assistant: "Routines paused" and, if you like, one switch per routine.
+
+### Added
+
+- **Switch "Routines paused":** always there (device "Device Panel"). It is the same as the switch "Pause all routines" in the panel: on pauses all routines without an end, off ends the pause (also a "Pause until"). The attribute `paused_until` carries the end of a timed pause. Use it in automations, for example for holidays.
+- **Switch per routine, optional:** in the assistant of a routine, on the last page, the switch "As a switch in Home Assistant" creates a switch entity for this routine (the entity ID is shown there after saving). It turns the routine on and off, like the switch in the panel, and both stay in step, also when a once-only routine switches itself off after its run. Attributes: `next_run`, `last_run`, `last_result` and `failed`. The name follows the routine, the entity ID stays when you rename it. Switching the option off or deleting the routine removes the entity. The choice is part of the backup of the routine.
+
+### Changed
+
+- **Settings › Panel, button to Home Assistant:** at the very top of the section "Panel" there is a button "Open integration in HA" with the same look as on the device card. It opens the page of the integration in Home Assistant (with the usual question first if there are unsaved changes).
+- The integration's own switches cannot be chosen as the target of a routine (a routine could otherwise pause all routines or switch itself).
+
+Not released: 2.176.1; included in this version.
+
 ## [2.176.1] - 2026-10-29
 
 More room under the pause line.
@@ -14,6 +30,8 @@ More room under the pause line.
 ### Fixed
 
 - **Routines window:** the divider under "Pause all routines" sat too close to the text below; there is now more space between them.
+
+Not released; included in 2.177.0.
 
 ## [2.176.0] - 2026-10-29
 
@@ -5266,7 +5284,7 @@ First pre-release.
   GitHub Actions for HACS/hassfest validation and tests.
 
 [2.6.0]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v2.6.0
-[2.176.1]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v2.176.1
+[2.177.0]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v2.177.0
 [2.176.0]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v2.176.0
 [2.175.0]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v2.175.0
 [2.173.0]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v2.173.0

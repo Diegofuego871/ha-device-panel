@@ -1544,7 +1544,8 @@
           return { ...r, due: r.enabled ? r.__due : null, due_local: r.enabled && r.__due ? local(r.__due) : null, revert_due: r.__revert || null, revert_local: r.__revert ? local(r.__revert) : null, reverting: Boolean(r.__revert), last: r.__last || null, done: r.__done || null,
             running: r.kind === "countdown" && r.enabled && Boolean(r.__due), entity_name: e ? e.name : r.entity_id, set_text: r.action === "set" ? (r.options.option ?? `${r.options.value}${(e?.options?.[0]?.unit) ? ` ${e.options[0].unit}` : ""}`) : "", entity_state: e ? e.state : null, entity_missing: !e, domain: String(r.entity_id).split(".")[0], actions: e ? e.actions : [],
             next_runs: r.enabled && r.kind !== "countdown" ? runsOf(r, now) : [], device_name: (window.__devices.find((d) => d.id === r.device_id) || {}).name || "",
-            condition_entities: condEnts(r), waiting_end: Boolean(r.__waiting), reverting: Boolean(r.__revert || r.__waiting) };
+            condition_entities: condEnts(r), waiting_end: Boolean(r.__waiting), reverting: Boolean(r.__revert || r.__waiting),
+            ha_entity: r.ha_switch ? `switch.device_panel_${String(r.name).toLowerCase().replace(/[^a-z0-9]+/g, "_")}` : null };
         };
         const strip = (r) => Object.fromEntries(Object.entries(r).filter(([k]) => !k.startsWith("__")));
         const today = () => ymd(new Date());
@@ -1583,7 +1584,7 @@
             back_mode: (raw.back_s || (raw.back_kind && raw.back_kind !== "none")) && raw.back_mode === "restore" ? "restore" : "opposite", back_s: raw.back_kind === "duration" || (!raw.back_kind && raw.back_s) ? raw.back_s || null : null, kind: raw.kind,
             delay_s: raw.kind === "countdown" ? raw.delay_s : null, date: raw.kind === "once" && raw.date ? raw.date : null, time: raw.kind === "countdown" ? null : raw.time, repeat: raw.kind === "repeat" ? raw.repeat : null,
             weekdays: raw.kind === "repeat" && raw.repeat === "weekly" ? [...raw.weekdays].sort() : null, mday: raw.kind === "repeat" && raw.repeat === "monthly" ? raw.mday : null,
-            enabled: raw.enabled !== false, push: Boolean(raw.push), target: raw.target || null, created: old ? old.created : Date.now() / 1000 };
+            enabled: raw.enabled !== false, push: Boolean(raw.push), ha_switch: Boolean(raw.ha_switch), target: raw.target || null, created: old ? old.created : Date.now() / 1000 };
           r.__due = r.enabled ? firstDue(r, Date.now() / 1000) : null;
           if (old) T.list.splice(T.list.indexOf(old), 1);
           T.list.push(r);

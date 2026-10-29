@@ -996,6 +996,8 @@ export class RoutineUi {
       mdayOwn: false,
       enabled: true,
       push: false,
+      ha_switch: false,
+      ha_entity: "",
       target: "",
       name: "",
       touched: { name: false },
@@ -1031,6 +1033,8 @@ export class RoutineUi {
       // (Schalter in Schritt 5, Schalter in der Liste oder "Nochmal"); bis 2.32.0 schaltete das Bearbeiten ihn von selbst wieder ein.
       enabled: rt.enabled,
       push: Boolean(rt.push),
+      ha_switch: Boolean(rt.ha_switch),
+      ha_entity: rt.ha_entity || "",
       target: rt.target || "",
       name: rt.name,
       touched: { name: true },
@@ -1057,6 +1061,7 @@ export class RoutineUi {
       mday: d.kind === "repeat" && d.repeat === "monthly" ? d.mday : null,
       enabled: d.enabled,
       push: d.push,
+      ha_switch: Boolean(d.ha_switch),
       target: d.target || null,
     };
     if (d.id) raw.id = d.id;
@@ -1091,7 +1096,7 @@ export class RoutineUi {
     this.reset();
     this.standalone = true;
     this.view = "wizard";
-    const draft = { id: null, device_id: null, entity_id: "", action: "on", options: {}, back_mode: "opposite", back_s: 0, ...triggerDefaults(), backOwn: { text: "", unit: 60 }, kind: "repeat", delay_s: 1800, delayOwn: { text: "", unit: 60 }, date: "", time: "06:30", repeat: "daily", weekdays: [0, 1, 2, 3, 4], mday: 1, mdayOwn: false, enabled: true, push: false, target: "", name: "" };
+    const draft = { id: null, device_id: null, entity_id: "", action: "on", options: {}, back_mode: "opposite", back_s: 0, ...triggerDefaults(), backOwn: { text: "", unit: 60 }, kind: "repeat", delay_s: 1800, delayOwn: { text: "", unit: 60 }, date: "", time: "06:30", repeat: "daily", weekdays: [0, 1, 2, 3, 4], mday: 1, mdayOwn: false, enabled: true, push: false, ha_switch: false, ha_entity: "", target: "", name: "" };
     const w = (this.wiz = { pick: true, step: 0, editing: false, draft, pv: null, pvError: "", test: null, targetOpen: false, error: "", saving: false, devices: null, devQuery: "", pickId: "", pickEnt: "", loadingDev: false });
     w.snap = JSON.stringify(draft);
     this.paint();
@@ -1886,7 +1891,8 @@ export class RoutineUi {
       <input id="rt-name" class="mg-input" type="text" maxlength="${this.limit("name", 60)}" data-rt="name" value="${esc(d.name)}" placeholder="${esc(placeholder)}" autocomplete="off">
       <p class="mg-hint">${esc(t("rtNameHint"))}</p>
       <div data-rt-zone="summary">${this.summaryHtml()}</div>
-      <div class="mg-optrow"><div>${esc(t("rtEnabled"))}<small>${esc(t("rtEnabledNote"))}</small></div><label class="switch"><input type="checkbox" data-rt="enabled"${d.enabled ? " checked" : ""} aria-label="${esc(t("rtEnabled"))}"><span></span></label></div>`;
+      <div class="mg-optrow"><div>${esc(t("rtEnabled"))}<small>${esc(t("rtEnabledNote"))}</small></div><label class="switch"><input type="checkbox" data-rt="enabled"${d.enabled ? " checked" : ""} aria-label="${esc(t("rtEnabled"))}"><span></span></label></div>
+      <div class="mg-optrow"><div>${esc(t("rtHaSwitch"))}<small>${esc(t("rtHaSwitchNote"))}</small>${d.ha_switch && d.ha_entity ? `<small class="rt-ha-id">${esc(d.ha_entity)}</small>` : ""}</div><label class="switch"><input type="checkbox" data-rt="ha-switch"${d.ha_switch ? " checked" : ""} aria-label="${esc(t("rtHaSwitch"))}"><span></span></label></div>`;
   }
 
   summaryHtml() {
@@ -2308,6 +2314,10 @@ export class RoutineUi {
       case "enabled":
         d.enabled = el.checked;
         this.requestPreview();
+        break;
+      case "ha-switch":
+        d.ha_switch = el.checked;
+        this.paint();
         break;
       case "time":
         d.time = el.value;

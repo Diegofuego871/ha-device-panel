@@ -31,7 +31,7 @@ from .options_api import effective
 _LOGGER = logging.getLogger(__name__)
 
 SUMMARY_STORE_KEY = f"{DOMAIN}.summary"
-PLATFORMS = ("sensor", "binary_sensor", "button")
+PLATFORMS = ("sensor", "binary_sensor", "button", "switch")
 UPDATE_SECONDS = 30
 ERROR_WINDOW_S = 86400
 # Namen im Attribut: HA speichert Attribute im Verlauf, darum nicht beliebig viele

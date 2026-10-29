@@ -13,7 +13,7 @@ PANEL_HTML_FILE = "panel.html"
 STATIC_URL_PATH = f"/{DOMAIN}"
 PANEL_STATIC_URL_PATH = f"{STATIC_URL_PATH}/panel"
 # Cache-Buster: bei jeder Änderung unter panel/ von Hand erhöhen.
-PANEL_VERSION = "400"
+PANEL_VERSION = "401"
 PANEL_PAGE_URL = f"{PANEL_STATIC_URL_PATH}/{PANEL_HTML_FILE}?v={PANEL_VERSION}"
 
 # Mitgeliefertes Bild für Push-Meldungen (Companion-App, "icon_url"), wie in
@@ -432,6 +432,8 @@ DATA_SIGNAL = f"{DOMAIN}_signal"
 # Magic Push (seit 2.6.0): Regeln pro Gerät, magic.py
 DATA_MAGIC = f"{DOMAIN}_magic"
 DATA_ROUTINES = f"{DOMAIN}_routines"
+# Signal: eine Routine oder die Pause hat sich geändert (die Schalter in HA schreiben ihren Stand neu); Wert: Routine-ID oder None
+SIGNAL_ROUTINES = f"{DOMAIN}_routines_changed"
 DATA_PROTOCOL = f"{DOMAIN}_protocol"
 # Bluetooth: zuletzt gewählter stärkster Empfänger je Adresse (devices._ble_best)
 DATA_BLE_BEST = f"{DOMAIN}_ble_best"

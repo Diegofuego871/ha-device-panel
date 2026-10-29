@@ -336,6 +336,11 @@
       "acknowledge_errors": {
         "name": "Fehler quittieren"
       }
+    },
+    "switch": {
+      "routines_paused": {
+        "name": "Routinen pausiert"
+      }
     }
   }
 }

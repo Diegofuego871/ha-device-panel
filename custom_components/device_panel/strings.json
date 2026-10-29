@@ -336,6 +336,11 @@
       "acknowledge_errors": {
         "name": "Acknowledge errors"
       }
+    },
+    "switch": {
+      "routines_paused": {
+        "name": "Routines paused"
+      }
     }
   }
 }
