@@ -1892,7 +1892,18 @@ export class RoutineUi {
       <p class="mg-hint">${esc(t("rtNameHint"))}</p>
       <div data-rt-zone="summary">${this.summaryHtml()}</div>
       <div class="mg-optrow"><div>${esc(t("rtEnabled"))}<small>${esc(t("rtEnabledNote"))}</small></div><label class="switch"><input type="checkbox" data-rt="enabled"${d.enabled ? " checked" : ""} aria-label="${esc(t("rtEnabled"))}"><span></span></label></div>
-      <div class="mg-optrow"><div>${esc(t("rtHaSwitch"))}<small>${esc(t("rtHaSwitchNote"))}</small>${d.ha_switch && d.ha_entity ? `<small class="rt-ha-id">${esc(d.ha_entity)}</small>` : ""}</div><label class="switch"><input type="checkbox" data-rt="ha-switch"${d.ha_switch ? " checked" : ""} aria-label="${esc(t("rtHaSwitch"))}"><span></span></label></div>`;
+      <div class="mg-optrow"><div>${esc(t("rtHaSwitch"))}<small>${esc(t("rtHaSwitchNote"))}</small></div><label class="switch"><input type="checkbox" data-rt="ha-switch"${d.ha_switch ? " checked" : ""} aria-label="${esc(t("rtHaSwitch"))}"><span></span></label></div>${this.haIdHtml(d)}`;
+  }
+
+  // Entity-ID des Schalters in HA (seit 2.177.1): eigener Block weiter unten mit Knopf zum Kopieren wie auf der Gerätekarte;
+  // vor dem ersten Speichern gibt es sie noch nicht, dann steht ein Hinweis
+  haIdHtml(d) {
+    if (!d.ha_switch) return "";
+    const esc = (v) => this.esc(v);
+    const t = (k, ...a) => this.t(k, ...a);
+    if (!d.ha_entity) return `<p class="mg-hint rt-ha-sep">${esc(t("rtHaIdAfterSave"))}</p>`;
+    return `<div class="rt-ha-sep"><div class="mg-k">${esc(t("rtHaId"))}</div>
+      <div class="rt-ha-id"><code>${esc(d.ha_entity)}</code><button type="button" class="ent-copy" data-rt="copy-ha" data-entity="${esc(d.ha_entity)}" title="${esc(t("entCopy"))}" aria-label="${esc(`${t("entCopy")}: ${d.ha_entity}`)}">${this.h.mdi("copy", 16)}</button></div></div>`;
   }
 
   summaryHtml() {
@@ -1950,6 +1961,9 @@ export class RoutineUi {
     const w = this.wiz;
     const id = el.dataset.id;
     switch (el.dataset.rt) {
+      case "copy-ha":
+        this.host._copyId(el);
+        break;
       case "list-filter":
         this.ui.filter = el.dataset.v;
         this.ui.sopen = {};

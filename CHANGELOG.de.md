@@ -9,12 +9,13 @@ die Versionsnummern folgen [Semantic Versioning](https://semver.org/lang/de/).
 
 ## [2.177.1] - 2026-10-29
 
-Mehr Platz um den Knopf zu Home Assistant, und Routinen-Schalter heissen "Routine: …".
+Mehr Platz um den Knopf zu Home Assistant, Routinen-Schalter heissen "Routine: …", und ihre Entity-ID lässt sich kopieren.
 
 ### Behoben
 
 - **Einstellungen › Panel:** Der Knopf "Integration in HA öffnen" sass zu nah am oberen Rand des Abschnitts; darüber und darunter ist jetzt mehr Platz.
 - **Schalter pro Routine:** Der Name beginnt jetzt mit "Routine: " (zum Beispiel "Routine: Gartenlicht"), damit in Home Assistant klar ist, dass der Schalter die Routine meint und nicht das Gerät, das sie schaltet. Die Entity-ID bestehender Schalter bleibt.
+- **Assistent einer Routine, Entity-ID mit Kopierknopf:** Die Entity-ID des Schalters steht jetzt in einem eigenen Block weiter unten, mit einem Knopf zum Kopieren (wie auf der Gerätekarte). Vor dem ersten Speichern steht stattdessen ein Hinweis. Der Ersatzweg zum Kopieren funktioniert jetzt auch in Fenstern.
 
 ## [2.177.0] - 2026-10-29
 

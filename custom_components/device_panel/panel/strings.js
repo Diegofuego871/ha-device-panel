@@ -857,6 +857,8 @@ export const STRINGS = {
     rtEnabled: "Routine aktiv",
     rtEnabledNote: "Ausgeschaltet bleibt sie gespeichert, schaltet aber nicht.",
     rtHaSwitch: "Als Schalter in Home Assistant",
+    rtHaId: "Entity-ID in Home Assistant",
+    rtHaIdAfterSave: "Die Entity-ID erscheint hier nach dem Speichern.",
     rtHaSwitchNote: "Legt einen Schalter an, mit dem du diese Routine ein- und ausschaltest, auch aus Automationen, Dashboards und per Sprache.",
     rtSumPush: (to) => `Push an ${to}, wenn die Routine schaltet.`,
     // Einstellungen
@@ -3430,6 +3432,8 @@ export const STRINGS = {
     rtEnabled: "Routine on",
     rtEnabledNote: "When off it stays saved but does not switch.",
     rtHaSwitch: "As a switch in Home Assistant",
+    rtHaId: "Entity ID in Home Assistant",
+    rtHaIdAfterSave: "The entity ID appears here after saving.",
     rtHaSwitchNote: "Creates a switch to turn this routine on and off, also from automations, dashboards and by voice.",
     rtSumPush: (to) => `Push to ${to} when the routine switches.`,
     // Settings

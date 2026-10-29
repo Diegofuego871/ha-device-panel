@@ -9,12 +9,13 @@ and this project adheres to [Semantic Versioning](https://semver.org/).
 
 ## [2.177.1] - 2026-10-29
 
-More room around the button to Home Assistant, and routine switches are named "Routine: …".
+More room around the button to Home Assistant, routine switches are named "Routine: …", and their entity ID can be copied.
 
 ### Fixed
 
 - **Settings › Panel:** the button "Open integration in HA" sat too close to the top edge of the section; there is now more space above and below it.
 - **Switch per routine:** its name now starts with "Routine: " (for example "Routine: Garden light"), so it is clear in Home Assistant that the switch means the routine and not the device it switches. The entity ID of existing switches stays.
+- **Assistant of a routine, entity ID with copy button:** the entity ID of the switch now stands in a block of its own further down, with a button to copy it (as on the device card). Before the first save there is a hint instead. The fallback for copying also works inside pop-up windows now.
 
 ## [2.177.0] - 2026-10-29
 

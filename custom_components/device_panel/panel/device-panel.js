@@ -6215,7 +6215,7 @@ class DevicePanel extends HTMLElement {
   }
 
   // Text in die Zwischenablage; die Beschriftung des Knopfes sagt kurz "Kopiert".
-  async _copyText(text, btn) {
+  async _copyText(text, btn, host = null) {
     let ok = false;
     try {
       await navigator.clipboard.writeText(text);
@@ -6225,7 +6225,8 @@ class DevicePanel extends HTMLElement {
       const ta = document.createElement("textarea");
       ta.value = text;
       ta.style.cssText = "position:fixed;opacity:0";
-      this.shadowRoot.appendChild(ta);
+      // Im modalen Fenster liegt alles ausserhalb davon still (inert): das Feld dorthin setzen, sonst schlägt das Kopieren fehl
+      (host || this.shadowRoot).appendChild(ta);
       ta.select();
       try {
         ok = document.execCommand("copy");
@@ -6369,7 +6370,7 @@ class DevicePanel extends HTMLElement {
 
   // Entitäts-ID in die Zwischenablage; das Symbol zeigt kurz einen Haken.
   async _copyId(btn) {
-    if (!(await this._copyText(btn.dataset.entity, null))) return;
+    if (!(await this._copyText(btn.dataset.entity, null, btn.closest("dialog")))) return;
     btn.classList.add("done");
     btn.innerHTML = mdi("check", 16);
     window.setTimeout(() => {

@@ -45,10 +45,29 @@ for (const lang of ["de", "en"]) {
     const was = await ev(`return r.querySelector('[data-rt="ha-switch"]').checked`);
     await tap(`[data-rt="ha-switch"]`);
     check(`[${tag}] Schalter umlegen ändert den Entwurf`, (await ev(`return r.querySelector('[data-rt="ha-switch"]').checked`)) === !was);
+    check(`[${tag}] Haken gesetzt, noch nicht gespeichert: Hinweis statt Entity-ID`, await ev(`const h = r.querySelector("dialog.routine-dlg .rt-ha-sep"); return !!h && !h.querySelector("code") && !r.querySelector("dialog.routine-dlg .rt-ha-id")`));
     await tap(`dialog.routine-dlg [data-rt="nav-save"]`);
     await wait(`return !r.querySelector('[data-rt="ha-switch"]')`);
     const saved = (await calls("device_panel/routine_save")).at(-1)?.routine;
     check(`[${tag}] gespeichert: ha_switch im Entwurf`, saved && saved.ha_switch === !was, JSON.stringify(saved && { ha_switch: saved.ha_switch }));
+    // Routine mit Schalter (Nachtlicht): eigener Block mit Entity-ID und Knopf zum Kopieren
+    await ctx.grantPermissions(["clipboard-read", "clipboard-write"]).catch(() => {});
+    await ev(`r.host._openDevice("d", "routine")`);
+    await wait(`return r.querySelectorAll(".rt-root .rt-rowcard, .rt-root .rt-clock").length >= 1`);
+    const names = await ev(`return [...r.querySelectorAll(".rt-root .rt-rowcard .mg-t b, .rt-root .rt-clock .mg-t b")].map((x) => x.textContent.trim())`);
+    const idx = names.findIndex((n) => /Nachtlicht/.test(n));
+    await ev(`const c = r.querySelectorAll(".rt-root .rt-rowcard")[${Math.max(0, idx)}]; if (c) c.querySelector(".mg-dhead").click()`);
+    await wait(`return !!r.querySelector(".rt-root .rt-clock [data-rt='edit']")`);
+    await tap(`.rt-root .rt-clock [data-rt='edit']`);
+    for (let i = 0; i < 8 && !(await ev(`return !!r.querySelector('[data-rt="ha-switch"]')`)); i++) {
+      if (!(await ev(`const n = r.querySelector('dialog.routine-dlg [data-rt="nav-next"]'); return !!n && !n.disabled`))) break;
+      await tap(`dialog.routine-dlg [data-rt="nav-next"]`);
+      await wait(`return true`);
+    }
+    check(`[${tag}] Entity-ID in eigenem Block unter den Schaltern, mit Beschriftung und Knopf zum Kopieren`, await ev(`const h = r.querySelector("dialog.routine-dlg .rt-ha-sep"); const row = r.querySelector('[data-rt="ha-switch"]').closest(".mg-optrow"); return !!h && /^switch\./.test(h.querySelector("code").textContent) && !!h.querySelector('[data-rt="copy-ha"] svg') && !!(row.compareDocumentPosition(h) & Node.DOCUMENT_POSITION_FOLLOWING) && !row.querySelector("code")`));
+    await p.screenshot({ path: `${process.env.OUT || "output"}/routine-ha-id-${tag.replace("/", "-")}.png` });
+    await tap(`dialog.routine-dlg [data-rt="copy-ha"]`);
+    check(`[${tag}] Kopieren: Symbol zeigt kurz den Haken`, await wait(`return !!r.querySelector('dialog.routine-dlg [data-rt="copy-ha"].done')`));
     check(`[${tag}] keine Skriptfehler`, errors.length === 0, errors.join(";"));
     await ctx.close();
   }

@@ -2011,6 +2011,10 @@ dialog.magic-dlg[open] > .mgw-body.two { display: flex; gap: 22px; overflow: hid
 .rt-timein, .rt-datein { box-sizing: border-box; height: 46px; font-size: 20px; font-variant-numeric: tabular-nums; }
 .rt-timein { width: 160px; }
 .rt-datein { width: 220px; max-width: 100%; }
+.rt-ha-sep { margin-top: 22px; padding-top: 14px; border-top: 1px solid var(--dp-divider); }
+.rt-ha-id { display: flex; align-items: center; gap: 8px; margin-top: 4px; padding: 6px 6px 6px 14px; border-radius: 14px; background: var(--dp-subtle); }
+.rt-ha-id code { flex: 1 1 auto; min-width: 0; overflow-wrap: anywhere; font: inherit; font-size: 13px; color: var(--dp-text); }
+.rt-ha-id .ent-copy { margin: 0; }
 .rt-next { margin-top: 8px; border-radius: 14px; background: var(--dp-subtle); padding: 4px 14px; }
 .rt-next div { display: flex; flex-wrap: wrap; justify-content: space-between; gap: 10px; padding: 8px 0; font-size: 13.5px; border-top: 1px solid var(--dp-divider); }
 .rt-next div:first-child { border-top: 0; }
