@@ -9445,7 +9445,7 @@ class DevicePanel extends HTMLElement {
       const on = Boolean(d.routines_pause);
       const until = d.routines_pause_until > 0 ? d.routines_pause_until : 0;
       const control = `<span class="opt-input wide${errors.routines_pause_until ? " bad" : ""}"><input type="datetime-local" data-opt="routines_pause_until" value="${escape(this._localInput(until))}"${on ? "" : " disabled"} aria-label="${escape(t("optRoutinesPauseUntil"))}"></span>
-        <button type="button" class="lnk" data-set="pause-until-clear"${on && until ? "" : " disabled"}>${escape(t("optRoutinesPauseUntilClear"))}</button>`;
+        <button type="button" class="lnk" data-set="pause-until-clear"${on ? "" : " disabled"}>${escape(t("optRoutinesPauseUntilClear"))}</button>`;
       return row("routines_pause_until", t("optRoutinesPauseUntil"), control, on ? t(until ? "optRoutinesPauseUntilShortSet" : "optRoutinesPauseUntilShort") : t("optRoutinesPauseUntilNeedsPause"), null);
     };
     // Push zum Panel-Update (seit 2.25.0): Schalter, darunter der Empfänger (nur wenn an)
@@ -10140,6 +10140,12 @@ class DevicePanel extends HTMLElement {
     dialog.addEventListener("change", (ev) => {
       const st = this._settings;
       const el = ev.target;
+      if (st?.draft && el.type === "datetime-local" && el.dataset.opt) {
+        const ms = el.value ? new Date(el.value).getTime() : NaN;
+        st.draft[el.dataset.opt] = Number.isFinite(ms) ? Math.floor(ms / 1000) : 0;
+        this._renderSettings();
+        return;
+      }
       if (st?.draft && el.tagName === "SELECT" && el.dataset.cfull !== undefined) {
         // "own": mit einem Wert ausserhalb der Stufen beginnen (der bisherige eigene Wert, sonst 85).
         st.draft.charge_full = el.value === "own" ? (Number.isInteger(st.draft.charge_full) && !CHARGE_FULL_PRESETS.includes(st.draft.charge_full) ? st.draft.charge_full : CHARGE_FULL_OWN_START) : Number(el.value);
@@ -10471,7 +10477,7 @@ class DevicePanel extends HTMLElement {
       row.classList.toggle("invalid", Boolean(errors.routines_pause_until));
       row.classList.toggle("changed", changes.includes("routines_pause_until"));
       const clear = row.querySelector('[data-set="pause-until-clear"]');
-      if (clear) clear.disabled = untilInput.disabled || !st.draft.routines_pause_until;
+      if (clear) clear.disabled = untilInput.disabled;
       const line = row.querySelector("[data-short]");
       if (line) {
         line.className = errors.routines_pause_until ? "opt-error" : "opt-short";

@@ -14,6 +14,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/).
 ### Fixed
 
 - **Settings, "Pause until":** a tap on "No end" now also empties the date field on the screen (on the phone the typed date stayed visible although the pause was set to no end).
+- **Settings, "Pause until", unsaved input:** "No end" can be used as soon as the pause is on, also for a date that was just typed and not yet saved (before, the button stayed locked until the draft knew the date). The date is also taken over when the phone only reports it after the picker closes.
 
 ## [2.175.0] - 2026-10-28
 

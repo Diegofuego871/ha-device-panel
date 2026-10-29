@@ -70,8 +70,9 @@ for (const lang of ["de", "en"]) {
     await tap('[data-set="section"][data-id="routines"]');
     await wait(`return !!r.querySelector('${until}')`);
     check(`[${tag}] Einstellungen zeigen den gespeicherten Zeitpunkt`, await ev(`return r.querySelector('${until}').value.endsWith("T07:30")`));
-    // Wie auf dem Handy: das Feld wurde getippt (Wert gesetzt), "Ohne Ende" muss es trotzdem leeren
-    await ev(`const i = r.querySelector('${until}'); i.value = "2031-01-01T08:00"; i.dispatchEvent(new Event("input", { bubbles: true }))`);
+    // Wie auf dem Handy: das Feld wurde getippt, nur "change" kam (kein "input"), noch nicht gespeichert: "Ohne Ende" muss bedienbar sein und das Feld leeren
+    await ev(`const i = r.querySelector('${until}'); i.value = "2031-01-01T08:00"; i.dispatchEvent(new Event("change", { bubbles: true }))`);
+    check(`[${tag}] getipptes Datum (nur change): "Ohne Ende" bedienbar`, await ev(`return !r.querySelector('dialog.settings [data-set="pause-until-clear"]').disabled && r.querySelector('${until}').value === "2031-01-01T08:00"`));
     await tap('dialog.settings [data-set="pause-until-clear"]');
     check(`[${tag}] "Ohne Ende": Feld leer, Änderung gezählt`, await wait(`return r.querySelector('${until}').value === "" && !r.querySelector('dialog.settings [data-set="save"]').disabled`));
     await tap('dialog.settings [data-set="save"]');

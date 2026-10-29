@@ -14,6 +14,7 @@ die Versionsnummern folgen [Semantic Versioning](https://semver.org/lang/de/).
 ### Behoben
 
 - **Einstellungen, "Pausieren bis":** Ein Tipp auf "Ohne Ende" leert jetzt auch das Datumsfeld auf dem Bildschirm (auf dem Handy blieb das getippte Datum sichtbar, obwohl die Pause ohne Ende eingestellt war).
+- **Einstellungen, "Pausieren bis", nicht gespeicherte Eingabe:** "Ohne Ende" ist bedienbar, sobald die Pause an ist, auch für ein Datum, das gerade getippt und noch nicht gespeichert ist (vorher blieb der Knopf gesperrt, bis der Entwurf das Datum kannte). Das Datum wird auch übernommen, wenn das Handy es erst nach dem Schliessen der Auswahl meldet.
 
 ## [2.175.0] - 2026-10-28
 
