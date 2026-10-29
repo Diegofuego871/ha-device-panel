@@ -580,7 +580,7 @@ dialog.status-dlg .dlg-title h2 { margin: 0; }
 .chip.hint.fv svg { color: var(--dp-error); }
 .chip.hint.fv.on { background: var(--dp-error-soft); border-color: var(--dp-error); }
 .dlg-quick { display: flex; flex-wrap: wrap; gap: 8px; padding: 0 22px 14px; }
-.dlg-quick.pn-ha { padding: 0 0 12px; }
+.dlg-quick.pn-ha { padding: 16px 0 8px; }
 .qbtn { display: inline-flex; align-items: center; gap: 8px; height: 34px; padding: 0 14px; border-radius: 99px; border: 1px solid var(--dp-divider);
   background: none; color: var(--dp-text); font-size: 13px; cursor: pointer; }
 .qbtn svg { color: var(--dp-text2); flex: none; }

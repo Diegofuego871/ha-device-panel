@@ -7,6 +7,14 @@ Alle nennenswerten Änderungen an dieser Integration stehen in dieser Datei.
 Das Format folgt [Keep a Changelog](https://keepachangelog.com/de/1.1.0/),
 die Versionsnummern folgen [Semantic Versioning](https://semver.org/lang/de/).
 
+## [2.177.1] - 2026-10-29
+
+Mehr Platz um den Knopf zu Home Assistant.
+
+### Behoben
+
+- **Einstellungen › Panel:** Der Knopf "Integration in HA öffnen" sass zu nah am oberen Rand des Abschnitts; darüber und darunter ist jetzt mehr Platz.
+
 ## [2.177.0] - 2026-10-29
 
 Schalter in Home Assistant: "Routinen pausiert" und, wenn du willst, ein Schalter pro Routine.
@@ -5385,6 +5393,7 @@ Erste Vorabversion.
   GitHub Actions für die Prüfungen von HACS und hassfest sowie die Tests.
 
 [2.6.0]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v2.6.0
+[2.177.1]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v2.177.1
 [2.177.0]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v2.177.0
 [2.176.0]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v2.176.0
 [2.175.0]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v2.175.0

@@ -7,6 +7,14 @@ All notable changes to this integration are documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/).
 
+## [2.177.1] - 2026-10-29
+
+More room around the button to Home Assistant.
+
+### Fixed
+
+- **Settings › Panel:** the button "Open integration in HA" sat too close to the top edge of the section; there is now more space above and below it.
+
 ## [2.177.0] - 2026-10-29
 
 Switches in Home Assistant: "Routines paused" and, if you like, one switch per routine.
@@ -5284,6 +5292,7 @@ First pre-release.
   GitHub Actions for HACS/hassfest validation and tests.
 
 [2.6.0]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v2.6.0
+[2.177.1]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v2.177.1
 [2.177.0]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v2.177.0
 [2.176.0]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v2.176.0
 [2.175.0]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v2.175.0
