@@ -760,6 +760,25 @@ button.ai-head:focus-visible { outline: 2px solid #7c4dff; outline-offset: -2px;
 .opt-warn { display: flex; align-items: flex-start; gap: 6px; margin-top: 6px; padding: 7px 10px; border-radius: 8px;
   background: var(--dp-warning-soft); color: color-mix(in srgb, var(--dp-warning) 80%, var(--dp-text)); font-size: 12px; line-height: 1.35; }
 .rt-paused-note { margin: 0 0 10px; }
+/* "Pausieren bis": Chip neben dem Schalter und Fenster (seit 2.176.0) */
+.pu-chip { display: inline-flex; align-items: center; gap: 5px; flex: 0 1 auto; min-width: 0; margin-left: auto; padding: 3px 10px; border: 1px solid var(--dp-primary); border-radius: 999px; background: transparent; color: var(--dp-primary); font: inherit; font-size: 12.5px; white-space: nowrap; cursor: pointer; }
+.pu-chip:disabled { opacity: 0.45; cursor: default; }
+.rt-pause .pu-chip { margin: 0 12px 0 auto; }
+.opt-line > .pu-val { margin-left: auto; color: var(--dp-text2); font-size: 13.5px; text-align: right; }
+.opt-line > .pu-val + .pu-chip { margin: 0 0 0 10px; }
+.pu-card { text-align: left; display: flex; flex-direction: column; gap: 12px; }
+.pu-card small { margin-top: 0; }
+.pu-quick { width: 100%; }
+.pu-quick .sub-tab { white-space: normal; line-height: 1.15; }
+.pu-field { display: flex; align-items: center; justify-content: space-between; gap: 10px; padding: 8px 12px; border: 1px solid var(--dp-divider); border-radius: 12px; background: var(--dp-input, transparent); font-size: 13.5px; }
+.pu-field:focus-within { border-color: var(--dp-primary); }
+.pu-field > span { white-space: nowrap; }
+.pu-field input { min-width: 0; border: none; outline: none; background: none; color: var(--dp-text); font: inherit; color-scheme: light dark; }
+.pu-field.bad { border-color: var(--dp-error); }
+.pu-res { color: var(--dp-primary); font-size: 13px; }
+.pu-res.bad { color: var(--dp-error); }
+.pu-card .lnk { align-self: flex-start; }
+.pu-card .dd-btns { margin-top: 4px; }
 .opt-warn svg { flex: none; margin-top: 1px; }
 .info-btn { display: inline-grid; place-items: center; width: 26px; height: 26px; padding: 0; border: none; border-radius: 50%; background: none; color: var(--dp-text3); cursor: pointer; }
 .info-btn:hover, .info-btn.on { color: var(--dp-primary); }

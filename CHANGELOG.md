@@ -7,6 +7,17 @@ All notable changes to this integration are documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/).
 
+## [2.176.0] - 2026-10-29
+
+"Pause until" as a small window: the Routines window needs no extra space for it.
+
+### Changed
+
+- **Routines window, one line for the pause:** the switch "Pause all routines" stays a single line; the warning and the explanation below it are gone, so the cards below get the room. While the pause is on, a chip next to the switch shows how long ("until Fri, 30.10., 07:30" or "no end"). A tap on the chip opens the window "Pause until" with the quick choices "1 h", "This evening" (18:00), "Tomorrow morning" (07:00) and "1 week", a field for your own time and "No end". A time is always optional: the window opens with nothing chosen, and "Pause" without a time pauses without an end (a second tap on a chosen quick choice takes it back); "Pause" saves at once, "Cancel" changes nothing. The switch itself still pauses at once without an end, as before.
+- **Settings, Routines:** the date field is replaced by the line "Pause until" with the time (or "No end") and the button "Change", which opens the same window; the choice is a draft until you press "Save". The button is locked while the pause is off.
+
+Not released: 2.175.1; included in this version.
+
 ## [2.175.1] - 2026-10-29
 
 "No end" empties the field "Pause until".
@@ -15,6 +26,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/).
 
 - **Settings, "Pause until":** a tap on "No end" now also empties the date field on the screen (on the phone the typed date stayed visible although the pause was set to no end).
 - **Settings, "Pause until", unsaved input:** "No end" can be used as soon as the pause is on, also for a date that was just typed and not yet saved (before, the button stayed locked until the draft knew the date). The date is also taken over when the phone only reports it after the picker closes.
+
+Not released; included in 2.176.0.
 
 ## [2.175.0] - 2026-10-28
 
@@ -5245,7 +5258,7 @@ First pre-release.
   GitHub Actions for HACS/hassfest validation and tests.
 
 [2.6.0]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v2.6.0
-[2.175.1]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v2.175.1
+[2.176.0]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v2.176.0
 [2.175.0]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v2.175.0
 [2.173.0]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v2.173.0
 [2.170.1]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v2.170.1

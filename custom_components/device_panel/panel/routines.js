@@ -790,9 +790,11 @@ export class RoutineUi {
     const esc = (v) => this.esc(v);
     const t = (k, ...a) => this.t(k, ...a);
     const label = esc(t("optRoutinesPause"));
-    return `<div class="opt rt-pause${all.paused ? " on" : ""}"><div class="opt-line"><span class="opt-label">${label}</span>
-        <label class="switch"><input type="checkbox" data-rta="routines-pause" ${all.paused ? "checked" : ""}${all.pauseBusy ? " disabled" : ""} aria-label="${label}"><span></span></label></div>
-        ${all.paused ? `<div class="opt-warn" role="status">${this.h.mdi("alert", 14)}<span>${esc(this.pausedNote(all.pausedUntil))}</span></div>` : `<div class="opt-short">${esc(t("optRoutinesPauseShort"))}</div>`}</div>`;
+    // Eine Zeile (seit 2.176.0, docs/mockups/routine-pause-v1, A): bei Pause der Chip "bis …", er öffnet das Fenster "Pausieren bis"
+    const when = all.pausedUntil > 0 ? t("puChip", this.host._fmtTime(all.pausedUntil, true, false)) : t("puChipNone");
+    const chip = all.paused ? `<button type="button" class="pu-chip" data-rta="pause-until"${all.pauseBusy ? " disabled" : ""} aria-label="${esc(t("puTitle"))}">${esc(when)}${this.h.mdi("pencil", 12)}</button>` : "";
+    return `<div class="opt rt-pause${all.paused ? " on" : ""}"><div class="opt-line"><span class="opt-label">${label}</span>${chip}
+        <label class="switch"><input type="checkbox" data-rta="routines-pause" ${all.paused ? "checked" : ""}${all.pauseBusy ? " disabled" : ""} aria-label="${label}"><span></span></label></div></div>`;
   }
 
   overviewHtml(all, devices) {

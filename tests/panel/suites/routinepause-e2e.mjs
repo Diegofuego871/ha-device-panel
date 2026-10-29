@@ -1,5 +1,6 @@
-// Globale Pause der Routinen (2.175.0): Hinweis im Reiter "Routinen" des Geräts, "Pausieren bis" in den Einstellungen (Datum und Uhrzeit),
-// Warntext mit Zeitpunkt, Ausschalten setzt "bis" zurück. Deutsch und Englisch, Desktop und Handy.
+// Globale Pause der Routinen (2.175.0, "Pausieren bis" als Fenster seit 2.176.0, docs/mockups/routine-pause-v1, A):
+// Hinweis im Reiter "Routinen" des Geräts; im Fenster Routinen eine Zeile mit Schalter und Chip "bis …", der das Fenster öffnet;
+// in den Einstellungen "Pausiert bis" mit "Ändern" (gleiches Fenster, Entwurf). Deutsch und Englisch, Desktop und Handy.
 import { chromium } from "playwright-core";
 import { launchOptions } from "../lib.mjs";
 
@@ -29,6 +30,10 @@ for (const lang of ["de", "en"]) {
     await p.evaluate((rts) => { (window.__routines ||= { list: [], seq: 1, runs: [], tests: [] }).list.push(...rts); }, [SEED("aaaaaaaaaaa1", "d", "Bewässerung")]);
     const root = ".rt-root";
     const noteText = () => ev(`return r.querySelector("${root} .rt-paused-note")?.textContent.trim() || ""`);
+    const dlg = "dialog.pause-dlg";
+    const setField = (v) => ev(`const i = r.querySelector('${dlg} [data-pu-field]'); i.value = ${JSON.stringify(v)}; i.dispatchEvent(new Event("input", { bubbles: true })); i.dispatchEvent(new Event("change", { bubbles: true }))`);
+    const localIn = (days, hm) => ev(`const d = new Date(Date.now() + ${days} * 864e5); const p = (n) => String(n).padStart(2, "0"); return d.getFullYear() + "-" + p(d.getMonth() + 1) + "-" + p(d.getDate()) + "T${hm}"`);
+    const epoch = (local) => ev(`return Math.floor(new Date(${JSON.stringify(local)}).getTime() / 1000)`);
 
     // Ohne Pause: kein Hinweis im Reiter des Geräts
     await ev(`r.host._openDevice("d", "routine")`);
@@ -36,51 +41,88 @@ for (const lang of ["de", "en"]) {
     check(`[${tag}] ohne Pause: kein Hinweis im Reiter`, !(await noteText()));
     await ev(`r.host._closeDevice?.()`);
 
-    // Einstellungen: Pause einschalten, "Pausieren bis" wird bedienbar
-    await tap(".gear-btn");
-    await wait(`return !!r.querySelector("dialog.settings .set-sec")`);
-    await tap('[data-set="section"][data-id="routines"]');
-    await wait(`return !!r.querySelector('dialog.settings input[data-opt="routines_pause_until"]')`);
-    const until = 'dialog.settings input[data-opt="routines_pause_until"]';
-    check(`[${tag}] "Pausieren bis" gesperrt, solange nicht pausiert`, await ev(`return r.querySelector('${until}').disabled && r.querySelector('dialog.settings [data-set="pause-until-clear"]').disabled`));
-    await tap('dialog.settings input[data-opt="routines_pause"]');
-    check(`[${tag}] Pause an: Feld bedienbar`, await wait(`return !r.querySelector('${until}').disabled`));
-    // Zeit in der Vergangenheit: Fehler, Speichern gesperrt
-    await ev(`const i = r.querySelector('${until}'); i.value = "2020-01-01T08:00"; i.dispatchEvent(new Event("input", { bubbles: true }))`);
-    check(`[${tag}] Zeit in der Vergangenheit: Fehler, Speichern gesperrt`, await wait(`return !!r.querySelector('${until}').closest(".opt").querySelector(".opt-error") && r.querySelector('dialog.settings [data-set="save"]').disabled`));
-    // Zeit in 2 Tagen um 07:30 (Browserzeit)
-    const target = await ev(`const d = new Date(Date.now() + 2 * 864e5); d.setHours(7, 30, 0, 0); const p = (n) => String(n).padStart(2, "0"); const i = r.querySelector('${until}'); i.value = d.getFullYear() + "-" + p(d.getMonth() + 1) + "-" + p(d.getDate()) + "T07:30"; i.dispatchEvent(new Event("input", { bubbles: true })); return Math.floor(d.getTime() / 1000)`);
-    check(`[${tag}] gültige Zeit: kein Fehler, Speichern möglich`, await wait(`return !r.querySelector('${until}').closest(".opt").querySelector(".opt-error") && !r.querySelector('dialog.settings [data-set="save"]').disabled`));
-    await tap('dialog.settings [data-set="save"]');
-    await wait(`return r.querySelector("dialog.settings .set-count.saved")`);
+    // Fenster Routinen: Schalter pausiert sofort unbefristet, eine Zeile mit Chip "ohne Ende"
+    await tap(".rtall-btn");
+    const body = "dialog.rtall-dlg [data-rta-body]";
+    await wait(`return !!r.querySelector("${body} .rt-pause")`);
+    await tap(`${body} input[data-rta="routines-pause"]`);
+    check(`[${tag}] Schalter: Pause sofort, Chip "ohne Ende", keine Warnzeile`, await wait(`const f = r.querySelector("${body} .rt-pause"); return f.querySelector("input").checked && !!f.querySelector(".pu-chip") && !f.querySelector(".opt-warn")`));
+    // Chip öffnet das Fenster; Schnellwahl "Morgen früh" ist vorgewählt
+    await tap(`${body} .pu-chip`);
+    check(`[${tag}] Chip öffnet das Fenster "Pausieren bis": nichts gewählt, Feld leer, "Pausieren" möglich (Zeit ist optional)`, await wait(`const d = r.querySelector("${dlg}"); return d.open && !d.querySelector(".sub-tab.on") && d.querySelector("[data-pu-field]").value === "" && !d.querySelector('[data-pu="apply"]').disabled && d.querySelector('[data-pu="none"]').disabled`));
+    // Ohne Zeit bestätigen: Pause ohne Ende
+    await tap(`${dlg} [data-pu="apply"]`);
+    await wait(`return !r.querySelector("${dlg}").open`);
+    check(`[${tag}] "Pausieren" ohne Zeit: Pause bleibt, Zeitpunkt 0`, (await calls("device_panel/set_options")).at(-1)?.values?.routines_pause_until === 0);
+    await tap(`${body} .pu-chip`);
+    await wait(`return r.querySelector("${dlg}").open`);
+    // Schnellwahl antippen und wieder abwählen
+    await tap(`${dlg} [data-v="hour"]`);
+    check(`[${tag}] Schnellwahl "1 Std." setzt eine Zeit`, await ev(`const d = r.querySelector("${dlg}"); return d.querySelector(".sub-tab.on")?.dataset.v === "hour" && !!d.querySelector("[data-pu-field]").value`));
+    await tap(`${dlg} [data-v="hour"]`);
+    check(`[${tag}] zweiter Tipp nimmt die Schnellwahl zurück: wieder ohne Zeit`, await wait(`const d = r.querySelector("${dlg}"); return !d.querySelector(".sub-tab.on") && d.querySelector("[data-pu-field]").value === ""`));
+    await p.screenshot({ path: `${process.env.OUT || "output"}/routine-pause-dlg-${tag.replace("/", "-")}.png` });
+    // Eigene Zeit in der Vergangenheit: Fehler, "Pausieren" gesperrt
+    await setField("2020-01-01T08:00");
+    check(`[${tag}] Zeit in der Vergangenheit: Fehler, "Pausieren" gesperrt, keine Schnellwahl gewählt`, await wait(`const d = r.querySelector("${dlg}"); return !!d.querySelector(".pu-res.bad") && d.querySelector('[data-pu="apply"]').disabled && !d.querySelector(".sub-tab.on")`));
+    // Schnellwahl "1 Woche"
+    await tap(`${dlg} [data-v="week"]`);
+    check(`[${tag}] "1 Woche": Zeit rund 7 Tage später`, await ev(`const d = r.querySelector("${dlg}"); const t = new Date(d.querySelector("[data-pu-field]").value).getTime() - Date.now(); return d.querySelector(".sub-tab.on")?.dataset.v === "week" && t > 6.99 * 864e5 && t < 7.01 * 864e5 && !d.querySelector('[data-pu="apply"]').disabled`));
+    // Eigene Zeit
+    const target = await localIn(2, "07:30");
+    await setField(target);
+    const want = await epoch(target);
+    await tap(`${dlg} [data-pu="apply"]`);
+    await wait(`return !r.querySelector("${dlg}").open`);
     const so = (await calls("device_panel/set_options")).at(-1)?.values;
-    check(`[${tag}] gespeichert: Pause und Zeitpunkt`, so && so.routines_pause === true && so.routines_pause_until === target, JSON.stringify(so));
-    check(`[${tag}] Zusammenfassung nennt den Zeitpunkt`, /(bis|until)/.test(await ev(`return r.querySelector('[data-id="routines"] .set-sec-sum').textContent`)));
-    await tap('dialog.settings .dlg-actions [data-set="close"]');
+    check(`[${tag}] "Pausieren": sofort gespeichert mit Zeitpunkt`, so && so.routines_pause === true && so.routines_pause_until === want, JSON.stringify(so));
+    check(`[${tag}] Chip zeigt "bis …" mit Datum`, await wait(`const c = r.querySelector("${body} .pu-chip"); return !!c && /(bis|until)/.test(c.textContent) && /\\d/.test(c.textContent)`));
+    // Abbrechen ändert nichts
+    await tap(`${body} .pu-chip`);
+    await wait(`return r.querySelector("${dlg}").open`);
+    check(`[${tag}] Fenster zeigt den gespeicherten Zeitpunkt`, await ev(`return r.querySelector("${dlg} [data-pu-field]").value === ${JSON.stringify(target)}`));
+    const before = (await calls("device_panel/set_options")).length;
+    await tap(`${dlg} [data-pu="cancel"]`);
+    check(`[${tag}] "Abbrechen": nichts gespeichert`, (await wait(`return !r.querySelector("${dlg}").open`)) && (await calls("device_panel/set_options")).length === before);
+    // "Ohne Ende"
+    await tap(`${body} .pu-chip`);
+    await wait(`return r.querySelector("${dlg}").open`);
+    await tap(`${dlg} [data-pu="none"]`);
+    check(`[${tag}] "Ohne Ende": Feld leer, Text "ohne Ende"`, await wait(`const d = r.querySelector("${dlg}"); return d.querySelector("[data-pu-field]").value === "" && !d.querySelector(".pu-res.bad")`));
+    await tap(`${dlg} [data-pu="apply"]`);
+    await wait(`return !r.querySelector("${dlg}").open`);
+    check(`[${tag}] gespeichert: Pause bleibt, Zeitpunkt 0`, (await calls("device_panel/set_options")).at(-1)?.values?.routines_pause_until === 0);
+    // Zeitpunkt wieder setzen für den Reiter des Geräts
+    await tap(`${body} .pu-chip`);
+    await wait(`return r.querySelector("${dlg}").open`);
+    await setField(target);
+    await tap(`${dlg} [data-pu="apply"]`);
+    await wait(`return !r.querySelector("${dlg}").open`);
+    await ev(`r.host._closeRtAll()`);
 
     // Reiter des Geräts: Hinweis mit Zeitpunkt
     await ev(`r.host._openDevice("d", "routine")`);
     check(`[${tag}] Reiter des Geräts: Hinweis "pausiert bis" mit Datum`, await wait(`return !!r.querySelector("${root} .rt-paused-note")`) && /(bis|until)/i.test(await noteText()) && /\d/.test(await noteText()), await noteText());
-    await p.screenshot({ path: `${process.env.OUT || "output"}/routine-pause-${tag.replace("/", "-")}.png` });
     await ev(`r.host._closeDevice?.()`);
 
-    // Pause ohne Ende (Knopf): Hinweis ohne Datum
+    // Einstellungen: Zeile "Pausiert bis" mit "Ändern", gleiches Fenster, Entwurf
     await tap(".gear-btn");
     await wait(`return !!r.querySelector("dialog.settings .set-sec")`);
     await tap('[data-set="section"][data-id="routines"]');
-    await wait(`return !!r.querySelector('${until}')`);
-    check(`[${tag}] Einstellungen zeigen den gespeicherten Zeitpunkt`, await ev(`return r.querySelector('${until}').value.endsWith("T07:30")`));
-    // Wie auf dem Handy: das Feld wurde getippt, nur "change" kam (kein "input"), noch nicht gespeichert: "Ohne Ende" muss bedienbar sein und das Feld leeren
-    await ev(`const i = r.querySelector('${until}'); i.value = "2031-01-01T08:00"; i.dispatchEvent(new Event("change", { bubbles: true }))`);
-    check(`[${tag}] getipptes Datum (nur change): "Ohne Ende" bedienbar`, await ev(`return !r.querySelector('dialog.settings [data-set="pause-until-clear"]').disabled && r.querySelector('${until}').value === "2031-01-01T08:00"`));
-    await tap('dialog.settings [data-set="pause-until-clear"]');
-    check(`[${tag}] "Ohne Ende": Feld leer, Änderung gezählt`, await wait(`return r.querySelector('${until}').value === "" && !r.querySelector('dialog.settings [data-set="save"]').disabled`));
+    await wait(`return !!r.querySelector('dialog.settings [data-set="pause-until"]')`);
+    check(`[${tag}] Einstellungen: Zeile "Pausiert bis" mit Zeitpunkt, kein Datumsfeld im Formular`, await ev(`const o = r.querySelector('dialog.settings [data-set="pause-until"]').closest(".opt"); return /\\d/.test(o.querySelector(".pu-val").textContent) && !r.querySelector('dialog.settings input[type="datetime-local"]')`));
+    const nSet = (await calls("device_panel/set_options")).length;
+    await tap('dialog.settings [data-set="pause-until"]');
+    await wait(`return r.querySelector("${dlg}").open`);
+    await tap(`${dlg} [data-pu="none"]`);
+    await tap(`${dlg} [data-pu="apply"]`);
+    check(`[${tag}] "Ändern" > "Ohne Ende": nur Entwurf (noch nichts gespeichert), Änderung gezählt`, (await wait(`return !r.querySelector("${dlg}").open && !r.querySelector('dialog.settings [data-set="save"]').disabled && /(Ohne Ende|No end)/.test(r.querySelector('dialog.settings .pu-val').textContent)`)) && (await calls("device_panel/set_options")).length === nSet);
     await tap('dialog.settings [data-set="save"]');
     await wait(`return r.querySelector("dialog.settings .set-count.saved")`);
-    check(`[${tag}] gespeichert: Pause bleibt, Zeitpunkt 0`, await (async () => { const v = (await calls("device_panel/set_options")).at(-1)?.values; return v?.routines_pause_until === 0; })());
-    // Ausschalten: "bis" wird zurückgesetzt, Feld gesperrt
+    check(`[${tag}] gespeichert: Zeitpunkt 0`, (await calls("device_panel/set_options")).at(-1)?.values?.routines_pause_until === 0);
+    // Pause aus: "Ändern" gesperrt
     await tap('dialog.settings input[data-opt="routines_pause"]');
-    check(`[${tag}] Pause aus: Feld wieder gesperrt`, await wait(`return r.querySelector('${until}').disabled`));
+    check(`[${tag}] Pause aus: "Ändern" gesperrt`, await wait(`return r.querySelector('dialog.settings [data-set="pause-until"]').disabled`));
     await tap('dialog.settings [data-set="save"]');
     await wait(`return r.querySelector("dialog.settings .set-count.saved")`);
     await tap('dialog.settings .dlg-actions [data-set="close"]');

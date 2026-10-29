@@ -42,17 +42,17 @@ for (const lang of ["de", "en"]) {
     // "Alle Routinen pausieren" ganz oben (2.79.0): Spiegel der Einstellung, gilt sofort ohne "Speichern"
     const body = "dialog.rtall-dlg [data-rta-body]";
     const pauseSw = `${body} input[data-rta="routines-pause"]`;
-    check(`[${tag}] Pause: "${T.pause}" ganz oben (vor dem Hinweis), aus, mit dem Satz "${T.short}"`, await wait(`const b = r.querySelector("${body}"); const first = b.firstElementChild; return !!first && first.classList.contains("rt-pause") && first.querySelector(".opt-label").textContent.trim() === ${JSON.stringify(T.pause)} && !first.querySelector("input").checked && first.textContent.includes(${JSON.stringify(T.short)}) && !!(first.compareDocumentPosition(b.querySelector(".mg-note")) & Node.DOCUMENT_POSITION_FOLLOWING)`));
+    check(`[${tag}] Pause: "${T.pause}" ganz oben (vor dem Hinweis), aus, eine Zeile ohne Chip`, await wait(`const b = r.querySelector("${body}"); const first = b.firstElementChild; return !!first && first.classList.contains("rt-pause") && first.querySelector(".opt-label").textContent.trim() === ${JSON.stringify(T.pause)} && !first.querySelector("input").checked && !first.querySelector(".pu-chip") && first.querySelectorAll(".opt-line").length === 1 && !!(first.compareDocumentPosition(b.querySelector(".mg-note")) & Node.DOCUMENT_POSITION_FOLLOWING)`));
     await p.screenshot({ path: `${outDir}/routineall-pause-off-${tag.replace("/", "-")}.png` });
     await p.evaluate(() => { window.__wsCalls = []; });
     await tap(pauseSw);
-    check(`[${tag}] Pause einschalten: sofort set_options routines_pause true, Schalter an, Warnung "${T.note}"`, await wait(`const f = r.querySelector("${body} .rt-pause"); return f.querySelector("input").checked && f.classList.contains("on") && !!f.querySelector(".opt-warn") && f.textContent.includes(${JSON.stringify(T.note)})`) && JSON.stringify((await calls("device_panel/set_options")).at(-1)?.values) === '{"routines_pause":true,"routines_pause_until":0}' && await p.evaluate(() => window.__opts.routines_pause === true));
+    check(`[${tag}] Pause einschalten: sofort set_options routines_pause true, Schalter an, Chip "ohne Ende" statt Warnung`, await wait(`const f = r.querySelector("${body} .rt-pause"); return f.querySelector("input").checked && f.classList.contains("on") && !f.querySelector(".opt-warn") && !!f.querySelector(".pu-chip") && /(ohne Ende|no end)/.test(f.querySelector(".pu-chip").textContent)`) && JSON.stringify((await calls("device_panel/set_options")).at(-1)?.values) === '{"routines_pause":true,"routines_pause_until":0}' && await p.evaluate(() => window.__opts.routines_pause === true));
     await p.screenshot({ path: `${outDir}/routineall-pause-${tag.replace("/", "-")}.png` });
     // Das Fenster neu öffnen: der Stand bleibt (kommt aus dem Server)
     await ev(`r.host._closeRtAll(); r.host._openRtAll()`);
     check(`[${tag}] Pause: nach Neuöffnen noch an`, await wait(`const f = r.querySelector("${body} .rt-pause"); return !!f && f.querySelector("input").checked`));
     await tap(pauseSw);
-    check(`[${tag}] Pause ausschalten: set_options routines_pause false, Warnung weg`, await wait(`const f = r.querySelector("${body} .rt-pause"); return !f.querySelector("input").checked && !f.querySelector(".opt-warn")`) && JSON.stringify((await calls("device_panel/set_options")).at(-1)?.values) === '{"routines_pause":false,"routines_pause_until":0}');
+    check(`[${tag}] Pause ausschalten: set_options routines_pause false, Chip weg`, await wait(`const f = r.querySelector("${body} .rt-pause"); return !f.querySelector("input").checked && !f.querySelector(".pu-chip")`) && JSON.stringify((await calls("device_panel/set_options")).at(-1)?.values) === '{"routines_pause":false,"routines_pause_until":0}');
     // Speichern schlägt fehl: Fehler im Fenster, der Schalter bleibt aus
     await p.evaluate(() => { window.__setOptsFails = "Verbindung weg"; });
     await tap(pauseSw);

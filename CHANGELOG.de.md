@@ -7,6 +7,17 @@ Alle nennenswerten Änderungen an dieser Integration stehen in dieser Datei.
 Das Format folgt [Keep a Changelog](https://keepachangelog.com/de/1.1.0/),
 die Versionsnummern folgen [Semantic Versioning](https://semver.org/lang/de/).
 
+## [2.176.0] - 2026-10-29
+
+"Pausieren bis" als kleines Fenster: das Fenster Routinen braucht dafür keinen zusätzlichen Platz.
+
+### Geändert
+
+- **Fenster Routinen, eine Zeile für die Pause:** Der Schalter "Alle Routinen pausieren" bleibt eine einzige Zeile; die Warnung und der Erklärtext darunter entfallen, so bleibt der Platz für die Karten. Solange die Pause an ist, zeigt ein Chip neben dem Schalter, wie lange ("bis Fr., 30.10., 07:30" oder "ohne Ende"). Ein Tipp auf den Chip öffnet das Fenster "Pausieren bis" mit den Schnellwahlen "1 Std.", "Heute Abend" (18:00), "Morgen früh" (07:00) und "1 Woche", einem Feld für eine eigene Zeit und "Ohne Ende". Eine Zeit ist immer freiwillig: das Fenster öffnet ohne Wahl, und "Pausieren" ohne Zeit pausiert ohne Ende (ein zweiter Tipp auf eine gewählte Schnellwahl nimmt sie zurück); "Pausieren" speichert sofort, "Abbrechen" ändert nichts. Der Schalter selbst pausiert wie bisher sofort und ohne Ende.
+- **Einstellungen, Routinen:** Das Datumsfeld ist durch die Zeile "Pausieren bis" mit der Zeit (oder "Ohne Ende") und den Knopf "Ändern" ersetzt, der dasselbe Fenster öffnet; die Wahl ist ein Entwurf, bis du "Speichern" drückst. Bei ausgeschalteter Pause ist der Knopf gesperrt.
+
+Nicht veröffentlicht: 2.175.1; in dieser Version enthalten.
+
 ## [2.175.1] - 2026-10-29
 
 "Ohne Ende" leert das Feld "Pausieren bis".
@@ -15,6 +26,8 @@ die Versionsnummern folgen [Semantic Versioning](https://semver.org/lang/de/).
 
 - **Einstellungen, "Pausieren bis":** Ein Tipp auf "Ohne Ende" leert jetzt auch das Datumsfeld auf dem Bildschirm (auf dem Handy blieb das getippte Datum sichtbar, obwohl die Pause ohne Ende eingestellt war).
 - **Einstellungen, "Pausieren bis", nicht gespeicherte Eingabe:** "Ohne Ende" ist bedienbar, sobald die Pause an ist, auch für ein Datum, das gerade getippt und noch nicht gespeichert ist (vorher blieb der Knopf gesperrt, bis der Entwurf das Datum kannte). Das Datum wird auch übernommen, wenn das Handy es erst nach dem Schliessen der Auswahl meldet.
+
+Nicht veröffentlicht; enthalten in 2.176.0.
 
 ## [2.175.0] - 2026-10-28
 
@@ -5346,7 +5359,7 @@ Erste Vorabversion.
   GitHub Actions für die Prüfungen von HACS und hassfest sowie die Tests.
 
 [2.6.0]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v2.6.0
-[2.175.1]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v2.175.1
+[2.176.0]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v2.176.0
 [2.175.0]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v2.175.0
 [2.173.0]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v2.173.0
 [2.170.1]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v2.170.1

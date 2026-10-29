@@ -1614,7 +1614,7 @@ class DevicePanel extends HTMLElement {
       </div>
       <div class="area-pop" role="dialog" aria-label="${escape(this._t("areaTitle"))}" hidden></div>
       <div class="content"><div class="hstrip"></div><div class="hero"></div><div class="chips"></div><div class="viewline"></div><div class="list"></div><div class="foot"></div></div>
-      <dialog class="device"></dialog><dialog class="magic-dlg"></dialog><dialog class="magic-dlg routine-dlg"></dialog><dialog class="stat-dlg"></dialog><dialog class="settings"></dialog><dialog class="area-sheet"></dialog><dialog class="pulse-dlg"></dialog><dialog class="log-dlg proto-dlg"></dialog><dialog class="apps-dlg"></dialog><dialog class="app-dlg"></dialog><dialog class="rtall-dlg"></dialog><dialog class="mgall-dlg"></dialog><dialog class="status-dlg"></dialog><dialog class="prompt-dlg"></dialog><dialog class="notes-dlg"></dialog><dialog class="notes-dlg backup-dlg"></dialog><dialog class="notes-dlg upd-dlg"></dialog><dialog class="notes-dlg updapp-dlg"></dialog><dialog class="rename-dlg"></dialog><dialog class="discard-dlg"></dialog><dialog class="wizard-dlg"></dialog>
+      <dialog class="device"></dialog><dialog class="magic-dlg"></dialog><dialog class="magic-dlg routine-dlg"></dialog><dialog class="stat-dlg"></dialog><dialog class="settings"></dialog><dialog class="area-sheet"></dialog><dialog class="pulse-dlg"></dialog><dialog class="log-dlg proto-dlg"></dialog><dialog class="apps-dlg"></dialog><dialog class="app-dlg"></dialog><dialog class="rtall-dlg"></dialog><dialog class="mgall-dlg"></dialog><dialog class="status-dlg"></dialog><dialog class="prompt-dlg"></dialog><dialog class="notes-dlg"></dialog><dialog class="notes-dlg backup-dlg"></dialog><dialog class="notes-dlg upd-dlg"></dialog><dialog class="notes-dlg updapp-dlg"></dialog><dialog class="rename-dlg"></dialog><dialog class="discard-dlg"></dialog><dialog class="discard-dlg pause-dlg"></dialog><dialog class="wizard-dlg"></dialog>
       <div class="toast" role="status" aria-live="polite" hidden></div>`;
     const root = this.shadowRoot;
     this._apps.bind(root);
@@ -1646,7 +1646,8 @@ class DevicePanel extends HTMLElement {
       run();
     });
     this._bindSettings(root.querySelector("dialog.settings"));
-    this._bindDiscard(root.querySelector("dialog.discard-dlg"));
+    this._bindDiscard(root.querySelector("dialog.discard-dlg:not(.pause-dlg)"));
+    this._bindPauseUntil(root.querySelector("dialog.pause-dlg"));
     this._bindRename(root.querySelector("dialog.rename-dlg"));
     this._wizard.bind(root.querySelector("dialog.wizard-dlg"));
     const search = root.querySelector(".search");
@@ -4253,7 +4254,7 @@ class DevicePanel extends HTMLElement {
 
   // Dieselbe Rückfrage für andere Entscheidungen (zum Beispiel "Home Assistant neu starten?"); keys: Textschlüssel
   _askConfirm(keys, onYes) {
-    const dlg = this.shadowRoot.querySelector("dialog.discard-dlg");
+    const dlg = this.shadowRoot.querySelector("dialog.discard-dlg:not(.pause-dlg)");
     if (!dlg) {
       onYes();
       return;
@@ -4280,6 +4281,98 @@ class DevicePanel extends HTMLElement {
     } catch (err) {
       if (!isConnectionError(err)) apps?.snack(`${this._t("verRestartError")} ${errText(err)}`);
     }
+  }
+
+  // "Pausieren bis" als kleines Fenster (seit 2.176.0, docs/mockups/routine-pause-v1, A): Schnellwahl, eigene Zeit, "Ohne Ende".
+  // onApply(sekunden) bekommt den Zeitpunkt (0 = ohne Ende); das Fenster speichert nichts selbst (Fenster Routinen sofort, Einstellungen als Entwurf).
+  _openPauseUntil(until, onApply) {
+    const dlg = this.shadowRoot.querySelector("dialog.pause-dlg");
+    if (!dlg) return;
+    const now = Date.now() / 1000;
+    const keep = until > now;
+    // Eine Zeit ist immer optional: ohne bisherigen Zeitpunkt steht nichts gewählt, "Pausieren" gilt dann ohne Ende
+    this._pu = { until: keep ? until : 0, sel: null, onApply };
+    this._renderPauseUntil();
+    if (!dlg.open) {
+      if (typeof dlg.showModal === "function") dlg.showModal();
+      else dlg.setAttribute("open", "");
+    }
+    dlg.querySelector('[data-pu="cancel"]')?.focus({ preventScroll: true });
+  }
+
+  // Schnellwahlen: 1 Stunde, heute 18:00 (ist es vorbei, morgen), nächster Morgen 07:00, 1 Woche; Zeit des Browsers
+  _pausePreset(key) {
+    const d = new Date();
+    if (key === "hour") return Math.floor(d.getTime() / 1000) + 3600;
+    if (key === "week") return Math.floor(d.getTime() / 1000) + 7 * 86400;
+    const hour = key === "evening" ? 18 : 7;
+    d.setHours(hour, 0, 0, 0);
+    if (d.getTime() <= Date.now()) d.setDate(d.getDate() + 1);
+    return Math.floor(d.getTime() / 1000);
+  }
+
+  _renderPauseUntil() {
+    const dlg = this.shadowRoot.querySelector("dialog.pause-dlg");
+    const pu = this._pu;
+    if (!dlg || !pu) return;
+    const t = (k, ...a) => this._t(k, ...a);
+    const quick = [["hour", "puHour"], ["evening", "puEvening"], ["morning", "puMorning"], ["week", "puWeek"]];
+    const bad = pu.until > 0 && pu.until * 1000 <= Date.now();
+    setHtml(dlg, `<div class="dd-card pu-card" role="dialog" aria-labelledby="pu-t"><b id="pu-t">${escape(t("puTitle"))}</b><small>${escape(t("puNote"))}</small>
+      <div class="sub-tabs pu-quick" role="tablist">${quick.map(([k, label]) => `<button type="button" role="tab" class="sub-tab${pu.sel === k ? " on" : ""}" data-dlg="pu-q" data-v="${k}" aria-selected="${pu.sel === k}">${escape(t(label))}</button>`).join("")}</div>
+      <label class="pu-field${bad ? " bad" : ""}"><span>${escape(t("puCustom"))}</span><input type="datetime-local" data-pu-field value="${escape(this._localInput(pu.until))}" aria-label="${escape(t("puCustom"))}"></label>
+      <div class="pu-res${bad ? " bad" : ""}" data-pu-res>${escape(bad ? t("pauseUntilPast") : pu.until > 0 ? t("puResult", this._fmtTime(pu.until, true, true)) : t("puResultNone"))}</div>
+      <button type="button" class="lnk" data-pu="none"${pu.until > 0 ? "" : " disabled"}>${escape(t("puNone"))}</button>
+      <div class="dd-btns"><button type="button" class="dlg-btn" data-pu="cancel">${mdi("close", 18)}${escape(t("puCancel"))}</button><button type="button" class="dlg-btn primary" data-pu="apply"${bad ? " disabled" : ""}>${mdi("check", 18)}${escape(t("puApply"))}</button></div></div>`);
+  }
+
+  _bindPauseUntil(dlg) {
+    const close = () => {
+      this._pu = null;
+      if (typeof dlg.close === "function") dlg.close();
+      else dlg.removeAttribute("open");
+    };
+    dlg.addEventListener("click", (ev) => {
+      const pu = this._pu;
+      if (!pu) return;
+      const q = ev.target.closest('[data-dlg="pu-q"]');
+      if (q) {
+        // Zweiter Tipp auf die gewählte Schnellwahl nimmt sie zurück (wieder ohne Zeit)
+        pu.sel = pu.sel === q.dataset.v ? null : q.dataset.v;
+        pu.until = pu.sel ? this._pausePreset(pu.sel) : 0;
+        this._renderPauseUntil();
+        return;
+      }
+      const btn = ev.target.closest("[data-pu]");
+      if (!btn || btn.disabled) return;
+      if (btn.dataset.pu === "none") {
+        pu.until = 0;
+        pu.sel = null;
+        this._renderPauseUntil();
+        const f = dlg.querySelector("[data-pu-field]");
+        if (f) f.value = "";
+      } else if (btn.dataset.pu === "apply") {
+        const run = pu.onApply;
+        const until = pu.until;
+        close();
+        run?.(until);
+      } else if (btn.dataset.pu === "cancel") close();
+    });
+    // Eigene Zeit: iOS meldet sie oft erst beim Schliessen der Auswahl ("change"), andere Browser schon beim Tippen ("input")
+    const field = (ev) => {
+      const pu = this._pu;
+      const el = ev.target;
+      if (!pu || !el.matches?.("[data-pu-field]")) return;
+      const ms = el.value ? new Date(el.value).getTime() : NaN;
+      pu.until = Number.isFinite(ms) ? Math.floor(ms / 1000) : 0;
+      pu.sel = null;
+      if (ev.type === "change") this._renderPauseUntil();
+    };
+    dlg.addEventListener("input", field);
+    dlg.addEventListener("change", field);
+    dlg.addEventListener("close", () => {
+      this._pu = null;
+    });
   }
 
   _bindDiscard(dlg) {
@@ -7254,7 +7347,6 @@ class DevicePanel extends HTMLElement {
       const v = st.draft[key];
       if (!Number.isInteger(v) || v < min || v > max) errors[key] = this._t("settingsRange", min, max);
     }
-    if (st.draft.routines_pause && st.draft.routines_pause_until > 0 && st.draft.routines_pause_until * 1000 <= Date.now() && st.draft.routines_pause_until !== st.data.values.routines_pause_until) errors.routines_pause_until = this._t("pauseUntilPast");
     if (st.draft.update_check_time && !/^([01]\d|2[0-3]):[0-5]\d$/.test(String(st.draft.update_check_time))) errors.update_check_time = this._t("timeError");
     if (Array.isArray(st.draft.quiet_days) && st.draft.quiet_days.some((x) => x.on && !(/^([01]\d|2[0-3]):[0-5]\d$/.test(String(x.from || "")) && /^([01]\d|2[0-3]):[0-5]\d$/.test(String(x.to || ""))))) errors.quiet_days = this._t("timeError");
     if ("updates_time" in st.draft && !/^([01]\d|2[0-3]):[0-5]\d$/.test(String(st.draft.updates_time || ""))) errors.updates_time = this._t("timeError");
@@ -8051,7 +8143,9 @@ class DevicePanel extends HTMLElement {
       all.flash = "";
       all.err = "";
       if (action !== "routine-run") all.ran = null;
-      if (action === "routine-reload") {
+      if (action === "pause-until") {
+        this._openPauseUntil(all.pausedUntil || 0, (until) => this._rtAllPause(true, until));
+      } else if (action === "routine-reload") {
         all.error = null;
         this._loadRtAll();
       } else if (action === "routine-device") {
@@ -8141,15 +8235,15 @@ class DevicePanel extends HTMLElement {
   }
 
   // "Alle Routinen pausieren" im Fenster (seit 2.79.0): speichert sofort die Option routines_pause, wie die Einstellung "Routinen"
-  async _rtAllPause(paused) {
+  async _rtAllPause(paused, until = 0) {
     const all = this._rtAll;
     if (!all || all.pauseBusy) return;
     all.pauseBusy = true;
     all.err = "";
     try {
-      await this._hass.callWS({ type: "device_panel/set_options", values: { routines_pause: paused, routines_pause_until: 0 } });
+      await this._hass.callWS({ type: "device_panel/set_options", values: { routines_pause: paused, routines_pause_until: paused ? until : 0 } });
       all.paused = paused;
-      all.pausedUntil = 0;
+      all.pausedUntil = paused ? until : 0;
     } catch (err) {
       all.err = this._t("rtToggleError", errText(err));
     }
@@ -9444,8 +9538,8 @@ class DevicePanel extends HTMLElement {
     const pauseUntilRow = () => {
       const on = Boolean(d.routines_pause);
       const until = d.routines_pause_until > 0 ? d.routines_pause_until : 0;
-      const control = `<span class="opt-input wide${errors.routines_pause_until ? " bad" : ""}"><input type="datetime-local" data-opt="routines_pause_until" value="${escape(this._localInput(until))}"${on ? "" : " disabled"} aria-label="${escape(t("optRoutinesPauseUntil"))}"></span>
-        <button type="button" class="lnk" data-set="pause-until-clear"${on ? "" : " disabled"}>${escape(t("optRoutinesPauseUntilClear"))}</button>`;
+      const value = on ? (until ? this._fmtTime(until, true, true) : t("puNoneShort")) : "–";
+      const control = `<span class="pu-val">${escape(value)}</span><button type="button" class="pu-chip" data-set="pause-until"${on ? "" : " disabled"}>${escape(t("puChange"))}${mdi("pencil", 12)}</button>`;
       return row("routines_pause_until", t("optRoutinesPauseUntil"), control, on ? t(until ? "optRoutinesPauseUntilShortSet" : "optRoutinesPauseUntilShort") : t("optRoutinesPauseUntilNeedsPause"), null);
     };
     // Push zum Panel-Update (seit 2.25.0): Schalter, darunter der Empfänger (nur wenn an)
@@ -9964,13 +10058,13 @@ class DevicePanel extends HTMLElement {
         this._wizard.open("settings");
       } else if (action === "bk-export" || action === "bk-import") {
         this._openBackup(action === "bk-export" ? "export" : "import");
-      } else if (action === "pause-until-clear") {
-        if (!st.draft) return;
-        st.draft.routines_pause_until = 0;
-        this._renderSettings();
-        // Ein getipptes Feld behält seinen Wert, wenn nur das Attribut wechselt (setHtml): die Eigenschaft ausdrücklich leeren
-        const field = this.shadowRoot.querySelector('dialog.settings input[data-opt="routines_pause_until"]');
-        if (field) field.value = "";
+      } else if (action === "pause-until") {
+        if (!st.draft?.routines_pause) return;
+        this._openPauseUntil(st.draft.routines_pause_until || 0, (until) => {
+          if (!this._settings?.draft) return;
+          this._settings.draft.routines_pause_until = until;
+          this._renderSettings();
+        });
       } else if (action === "check-time-auto") {
         // Uhrzeit der Prüfung zurück auf "automatisch"
         if (!st.draft) return;
@@ -10110,13 +10204,6 @@ class DevicePanel extends HTMLElement {
         this._updateSettingsMeta();
         return;
       }
-      if (st?.draft && el.type === "datetime-local" && el.dataset.opt) {
-        // Leer oder unvollständig = kein Zeitpunkt (die Pause gilt dann bis zum Ausschalten)
-        const ms = el.value ? new Date(el.value).getTime() : NaN;
-        st.draft[el.dataset.opt] = Number.isFinite(ms) ? Math.floor(ms / 1000) : 0;
-        this._updateSettingsMeta();
-        return;
-      }
       if (st?.draft && el.type === "time" && el.dataset.opt) {
         st.draft[el.dataset.opt] = el.value;
         this._updateSettingsMeta();
@@ -10140,12 +10227,6 @@ class DevicePanel extends HTMLElement {
     dialog.addEventListener("change", (ev) => {
       const st = this._settings;
       const el = ev.target;
-      if (st?.draft && el.type === "datetime-local" && el.dataset.opt) {
-        const ms = el.value ? new Date(el.value).getTime() : NaN;
-        st.draft[el.dataset.opt] = Number.isFinite(ms) ? Math.floor(ms / 1000) : 0;
-        this._renderSettings();
-        return;
-      }
       if (st?.draft && el.tagName === "SELECT" && el.dataset.cfull !== undefined) {
         // "own": mit einem Wert ausserhalb der Stufen beginnen (der bisherige eigene Wert, sonst 85).
         st.draft.charge_full = el.value === "own" ? (Number.isInteger(st.draft.charge_full) && !CHARGE_FULL_PRESETS.includes(st.draft.charge_full) ? st.draft.charge_full : CHARGE_FULL_OWN_START) : Number(el.value);
@@ -10468,21 +10549,6 @@ class DevicePanel extends HTMLElement {
       row.classList.toggle("changed", changes.includes("update_check_time"));
       const auto = row.querySelector('[data-set="check-time-auto"]');
       if (auto) auto.disabled = checkInput.disabled || !checkInput.value;
-    }
-    // "Pausieren bis" (seit 2.175.0): Markierung und Fehler nachführen, ohne Neuaufbau (Fokus bleibt im Feld)
-    const untilInput = dialog.querySelector('input[type="datetime-local"][data-opt]');
-    if (untilInput) {
-      const row = untilInput.closest(".opt");
-      untilInput.closest(".opt-input").classList.toggle("bad", Boolean(errors.routines_pause_until));
-      row.classList.toggle("invalid", Boolean(errors.routines_pause_until));
-      row.classList.toggle("changed", changes.includes("routines_pause_until"));
-      const clear = row.querySelector('[data-set="pause-until-clear"]');
-      if (clear) clear.disabled = untilInput.disabled;
-      const line = row.querySelector("[data-short]");
-      if (line) {
-        line.className = errors.routines_pause_until ? "opt-error" : "opt-short";
-        line.textContent = errors.routines_pause_until || this._t(st.draft.routines_pause_until ? "optRoutinesPauseUntilShortSet" : "optRoutinesPauseUntilShort");
-      }
     }
     for (const input of dialog.querySelectorAll('input[type="number"][data-opt]')) {
       const key = input.dataset.opt;
