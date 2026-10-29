@@ -763,6 +763,7 @@ button.ai-head:focus-visible { outline: 2px solid #7c4dff; outline-offset: -2px;
 /* "Pausieren bis": Chip neben dem Schalter und Fenster (seit 2.176.0) */
 .pu-chip { display: inline-flex; align-items: center; gap: 5px; flex: 0 1 auto; min-width: 0; margin-left: auto; padding: 3px 10px; border: 1px solid var(--dp-primary); border-radius: 999px; background: transparent; color: var(--dp-primary); font: inherit; font-size: 12.5px; white-space: nowrap; cursor: pointer; }
 .pu-chip:disabled { opacity: 0.45; cursor: default; }
+.rt-pause + .mg-note { margin-top: 12px; }
 .rt-pause .pu-chip { margin: 0 12px 0 auto; }
 .opt-line > .pu-val { margin-left: auto; color: var(--dp-text2); font-size: 13.5px; text-align: right; }
 .opt-line > .pu-val + .pu-chip { margin: 0 0 0 10px; }

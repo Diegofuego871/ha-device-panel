@@ -7,6 +7,14 @@ All notable changes to this integration are documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/).
 
+## [2.176.1] - 2026-10-29
+
+More room under the pause line.
+
+### Fixed
+
+- **Routines window:** the divider under "Pause all routines" sat too close to the text below; there is now more space between them.
+
 ## [2.176.0] - 2026-10-29
 
 "Pause until" as a small window: the Routines window needs no extra space for it.
@@ -5258,6 +5266,7 @@ First pre-release.
   GitHub Actions for HACS/hassfest validation and tests.
 
 [2.6.0]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v2.6.0
+[2.176.1]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v2.176.1
 [2.176.0]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v2.176.0
 [2.175.0]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v2.175.0
 [2.173.0]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v2.173.0

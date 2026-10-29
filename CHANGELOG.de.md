@@ -7,6 +7,14 @@ Alle nennenswerten Änderungen an dieser Integration stehen in dieser Datei.
 Das Format folgt [Keep a Changelog](https://keepachangelog.com/de/1.1.0/),
 die Versionsnummern folgen [Semantic Versioning](https://semver.org/lang/de/).
 
+## [2.176.1] - 2026-10-29
+
+Mehr Platz unter der Pause-Zeile.
+
+### Behoben
+
+- **Fenster Routinen:** Der Strich unter "Alle Routinen pausieren" sass zu nah am Text darunter; dazwischen ist jetzt mehr Abstand.
+
 ## [2.176.0] - 2026-10-29
 
 "Pausieren bis" als kleines Fenster: das Fenster Routinen braucht dafür keinen zusätzlichen Platz.
@@ -5359,6 +5367,7 @@ Erste Vorabversion.
   GitHub Actions für die Prüfungen von HACS und hassfest sowie die Tests.
 
 [2.6.0]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v2.6.0
+[2.176.1]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v2.176.1
 [2.176.0]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v2.176.0
 [2.175.0]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v2.175.0
 [2.173.0]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v2.173.0
