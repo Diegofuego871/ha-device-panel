@@ -7,6 +7,14 @@ All notable changes to this integration are documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/).
 
+## [2.175.1] - 2026-10-29
+
+"No end" empties the field "Pause until".
+
+### Fixed
+
+- **Settings, "Pause until":** a tap on "No end" now also empties the date field on the screen (on the phone the typed date stayed visible although the pause was set to no end).
+
 ## [2.175.0] - 2026-10-28
 
 Global pause of the routines: clear in the device tab, and "Pause until" with date and time.
@@ -5236,6 +5244,7 @@ First pre-release.
   GitHub Actions for HACS/hassfest validation and tests.
 
 [2.6.0]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v2.6.0
+[2.175.1]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v2.175.1
 [2.175.0]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v2.175.0
 [2.173.0]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v2.173.0
 [2.170.1]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v2.170.1

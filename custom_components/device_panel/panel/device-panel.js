@@ -9968,6 +9968,9 @@ class DevicePanel extends HTMLElement {
         if (!st.draft) return;
         st.draft.routines_pause_until = 0;
         this._renderSettings();
+        // Ein getipptes Feld behält seinen Wert, wenn nur das Attribut wechselt (setHtml): die Eigenschaft ausdrücklich leeren
+        const field = this.shadowRoot.querySelector('dialog.settings input[data-opt="routines_pause_until"]');
+        if (field) field.value = "";
       } else if (action === "check-time-auto") {
         // Uhrzeit der Prüfung zurück auf "automatisch"
         if (!st.draft) return;
