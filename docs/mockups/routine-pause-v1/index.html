@@ -1,0 +1,113 @@
+<!doctype html><meta charset="utf-8"><title>Routinen pausieren bis, Fenster</title><style>
+:root{--p:#43a047;--bg:#1c1c1c;--card:#2a2a2a;--ln:#3a3a3a;--t2:#9a9a9a;--red:#e5534b;--warn:#f5a524}
+*{box-sizing:border-box}
+body{margin:0;background:#0d0d0d;font:14px/1.35 Roboto,Arial,sans-serif;color:#e6e6e6;padding:24px;width:1560px}
+h2{margin:26px 0 4px;font-size:17px}h2 .rec{color:var(--p)}
+.sub{color:var(--t2);font-size:13px;margin:0 0 12px;max-width:1400px}
+.row4{display:grid;grid-template-columns:repeat(4,360px);gap:18px;align-items:start}
+.ph{background:var(--bg);border:1px solid var(--ln);border-radius:18px;padding:14px;display:flex;flex-direction:column;gap:10px;position:relative;height:560px;overflow:hidden}
+.cap{color:#8a8a8a;font-size:12px;letter-spacing:.04em;text-transform:uppercase;min-height:16px}
+.hd{display:flex;align-items:center;gap:10px}.hi{width:40px;height:40px;border-radius:12px;background:#1f3a24;display:grid;place-items:center;color:var(--p)}
+.hd b{font-size:20px}.hd small{display:block;color:var(--t2);font-size:12px}
+.pr{display:flex;align-items:center;gap:10px;min-height:36px}.pr .l{flex:1;font-size:15px}
+.sw{width:42px;height:24px;border-radius:99px;background:#555;position:relative;flex:none}.sw::after{content:"";position:absolute;top:3px;left:3px;width:18px;height:18px;border-radius:50%;background:#fff}
+.sw.on{background:var(--p)}.sw.on::after{left:21px}
+.chip{border:1px solid var(--p);color:var(--p);border-radius:99px;padding:3px 10px;font-size:12.5px;white-space:nowrap}
+.warn{display:flex;gap:8px;align-items:center;background:#3a2c10;color:var(--warn);border-radius:8px;padding:7px 10px;font-size:12.5px}
+.warn .a{margin-left:auto;color:var(--p);white-space:nowrap}
+.search{display:flex;align-items:center;gap:8px;border:1px solid var(--ln);border-radius:999px;padding:9px 14px;color:var(--t2);background:#202020}
+.tabs{display:flex;background:#161616;border-radius:14px;padding:4px;font-size:12.5px;color:var(--t2)}.tabs span{flex:1;text-align:center;padding:5px 0;border-radius:11px;line-height:1.15}.tabs span small{display:block;font-size:11px}.tabs .on{background:#0b0b0b;color:var(--p)}
+.cnt{color:var(--t2);font-size:12.5px}
+.card{background:var(--card);border-radius:14px;padding:10px 12px;display:flex;align-items:center;gap:10px}.card .t{flex:1}.card .t b{display:block}.card .t small{color:var(--t2);font-size:12px}
+.cv{width:24px;height:24px;border:1.5px solid var(--p);border-radius:50%;display:grid;place-items:center;color:var(--p);font-size:11px}
+.gain{border:1.5px dashed var(--p);color:var(--p);border-radius:12px;text-align:center;padding:10px;opacity:.8}
+.dim{opacity:.35}
+.scrim{position:absolute;inset:0;background:rgba(0,0,0,.55);display:flex;align-items:flex-end;padding:12px}
+.dlg{background:#2b2b2b;border:1px solid #444;border-radius:18px;padding:16px;width:100%;display:flex;flex-direction:column;gap:12px}
+.dlg h3{margin:0;font-size:18px}.dlg p{margin:0;color:var(--t2);font-size:13px}
+.seg{display:flex;background:#161616;border-radius:14px;padding:4px;gap:2px}.seg span{flex:1;text-align:center;padding:7px 0;border-radius:11px;font-size:13px;color:var(--t2)}.seg .on{background:#0b0b0b;color:var(--p)}
+.fld{display:flex;align-items:center;justify-content:space-between;border:1px solid var(--p);border-radius:10px;padding:9px 12px;background:#202020}
+.res{color:var(--p);font-size:13px}
+.btns{display:flex;gap:10px}.btns span{flex:1;text-align:center;padding:10px;border-radius:12px;border:1px solid #555}.btns .pri{background:#2e6b33;border-color:#2e6b33;color:#fff}
+.opt{display:flex;align-items:center;gap:10px;border-top:1px solid var(--ln);padding:12px 0}.opt .l{flex:1}.opt small{display:block;color:var(--t2);font-size:12px}
+.note{color:var(--t2);font-size:12.5px}
+.cost{display:inline-block;background:#333;border-radius:8px;padding:1px 8px;font-size:11px;color:#aaa}
+</style><body><h2>A · Schalter plus Chip "bis …" <span class="cost">Platz: 0 Zeilen mehr als heute, 1 Zeile weniger (Erklärtext entfällt)</span></h2>
+<p class="sub">Der Schalter pausiert sofort (unbefristet, wie heute). Der Chip daneben erscheint bei Pause und öffnet das Fenster, in dem du eine Zeit wählst. Eine Zeile, keine Warnung.</p>
+<div class="row4"><div class="ph"><div class="cap">Aus</div><div class="hd"><div class="hi">⚡</div><div><b>Routinen</b><small>Alle Geräte</small></div></div><div class="pr"><span class="l">Alle Routinen pausieren</span><div class="sw"></div></div><div class="search">🔍 Suchen … <span style="margin-left:auto">2 von 6</span></div>
+<div class="tabs"><span>Alle<small>6</small></span><span>Aktiv<small>4</small></span><span>Aus<small>2</small></span><span>Läuft<small>0</small></span><span class="on">♥<small>2</small></span></div>
+<div class="cnt">2 Routinen auf 2 Geräten</div>
+<div class="card"><div class="t"><b>Beispiel Steckdose A</b><small>1 Routine · 1 aus</small></div><div class="sw"></div><div class="cv">⌄</div></div>
+<div class="card"><div class="t"><b>Beispiel Steckdose B</b><small>1 Routine · 1 aus</small></div><div class="sw"></div><div class="cv">⌄</div></div>
+<div class="gain">+ Neue Routine</div></div><div class="ph"><div class="cap">Chip antippen (Fenster)</div><div class="hd"><div class="hi">⚡</div><div><b>Routinen</b><small>Alle Geräte</small></div></div><div class="pr"><span class="l">Alle Routinen pausieren</span><span class="chip">bis Fr. 07:30 ✎</span><div class="sw on"></div></div><div class="search dim">🔍 Suchen … <span style="margin-left:auto">2 von 6</span></div>
+<div class="tabs dim"><span>Alle<small>6</small></span><span>Aktiv<small>4</small></span><span>Aus<small>2</small></span><span>Läuft<small>0</small></span><span class="on">♥<small>2</small></span></div>
+<div class="cnt dim">2 Routinen auf 2 Geräten</div>
+<div class="card dim"><div class="t"><b>Beispiel Steckdose A</b><small>1 Routine · 1 aus</small></div><div class="sw"></div><div class="cv">⌄</div></div>
+<div class="card dim"><div class="t"><b>Beispiel Steckdose B</b><small>1 Routine · 1 aus</small></div><div class="sw"></div><div class="cv">⌄</div></div>
+<div class="gain dim">+ Neue Routine</div><div class="scrim"><div class="dlg"><h3>Pausieren bis</h3><p>Danach laufen alle Routinen von selbst wieder.</p>
+<div class="seg"><span>1 Std.</span><span>Heute Abend</span><span class="on">Morgen früh</span><span>1 Woche</span></div>
+<div class="fld"><span>Eigene Zeit: Fr., 30.10.2026, 07:30</span><span>📅</span></div>
+<div class="res">Pausiert bis Fr., 30.10.2026, 07:30</div>
+
+<div class="btns"><span>Abbrechen</span><span class="pri">Pausieren</span></div></div></div></div><div class="ph"><div class="cap">Pausiert bis …</div><div class="hd"><div class="hi">⚡</div><div><b>Routinen</b><small>Alle Geräte</small></div></div><div class="pr"><span class="l">Alle Routinen pausieren</span><span class="chip">bis Fr. 07:30 ✎</span><div class="sw on"></div></div><div class="search">🔍 Suchen … <span style="margin-left:auto">2 von 6</span></div>
+<div class="tabs"><span>Alle<small>6</small></span><span>Aktiv<small>4</small></span><span>Aus<small>2</small></span><span>Läuft<small>0</small></span><span class="on">♥<small>2</small></span></div>
+<div class="cnt">2 Routinen auf 2 Geräten</div>
+<div class="card"><div class="t"><b>Beispiel Steckdose A</b><small>1 Routine · 1 aus</small></div><div class="sw"></div><div class="cv">⌄</div></div>
+<div class="card"><div class="t"><b>Beispiel Steckdose B</b><small>1 Routine · 1 aus</small></div><div class="sw"></div><div class="cv">⌄</div></div>
+<div class="gain">+ Neue Routine</div></div><div class="ph"><div class="cap">Einstellungen › Routinen (gilt für A, B, C)</div>
+<div class="opt" style="border:0"><div class="l">Alle Routinen pausieren<small>Nichts schaltet, bis du wieder einschaltest.</small></div><div class="sw on"></div></div>
+<div class="opt"><div class="l">Pausiert bis<small>Fr., 30.10.2026, 07:30</small></div><span class="chip">Ändern</span></div>
+<div class="opt"><div class="l">Verpasste Routinen nachholen<small>0 = nie</small></div><div class="fld" style="border-color:#444;padding:6px 12px">10 Min.</div></div>
+<div class="note">Statt des Datumsfelds öffnet "Ändern" dasselbe Fenster wie im Fenster Routinen. Eine Zeile statt zwei, kein Datumsfeld im Formular.</div></div></div><h2>B · Schalter öffnet das Fenster <span class="rec">(Empfehlung)</span> <span class="cost">Platz: Warnzeile nur bei Pause, sonst 1 Zeile</span></h2>
+<p class="sub">Schalter einschalten öffnet das Fenster: Zeit wählen (Schnellwahl, eigene Zeit oder "Ohne Ende") und "Pausieren". "Abbrechen" lässt den Schalter aus. Bei Pause steht eine schlanke Warnzeile mit "Ändern"; Ausschalten setzt alles sofort zurück. Der Erklärtext "Nichts schaltet …" wandert ins Fenster.</p>
+<div class="row4"><div class="ph"><div class="cap">Aus</div><div class="hd"><div class="hi">⚡</div><div><b>Routinen</b><small>Alle Geräte</small></div></div><div class="pr"><span class="l">Alle Routinen pausieren</span><div class="sw"></div></div><div class="search">🔍 Suchen … <span style="margin-left:auto">2 von 6</span></div>
+<div class="tabs"><span>Alle<small>6</small></span><span>Aktiv<small>4</small></span><span>Aus<small>2</small></span><span>Läuft<small>0</small></span><span class="on">♥<small>2</small></span></div>
+<div class="cnt">2 Routinen auf 2 Geräten</div>
+<div class="card"><div class="t"><b>Beispiel Steckdose A</b><small>1 Routine · 1 aus</small></div><div class="sw"></div><div class="cv">⌄</div></div>
+<div class="card"><div class="t"><b>Beispiel Steckdose B</b><small>1 Routine · 1 aus</small></div><div class="sw"></div><div class="cv">⌄</div></div>
+<div class="gain">+ Neue Routine</div></div><div class="ph"><div class="cap">Schalter an: Fenster</div><div class="hd"><div class="hi">⚡</div><div><b>Routinen</b><small>Alle Geräte</small></div></div><div class="pr"><span class="l">Alle Routinen pausieren</span><div class="sw"></div></div><div class="search dim">🔍 Suchen … <span style="margin-left:auto">2 von 6</span></div>
+<div class="tabs dim"><span>Alle<small>6</small></span><span>Aktiv<small>4</small></span><span>Aus<small>2</small></span><span>Läuft<small>0</small></span><span class="on">♥<small>2</small></span></div>
+<div class="cnt dim">2 Routinen auf 2 Geräten</div>
+<div class="card dim"><div class="t"><b>Beispiel Steckdose A</b><small>1 Routine · 1 aus</small></div><div class="sw"></div><div class="cv">⌄</div></div>
+<div class="card dim"><div class="t"><b>Beispiel Steckdose B</b><small>1 Routine · 1 aus</small></div><div class="sw"></div><div class="cv">⌄</div></div>
+<div class="gain dim">+ Neue Routine</div><div class="scrim"><div class="dlg"><h3>Pausieren bis</h3><p>Danach laufen alle Routinen von selbst wieder.</p>
+<div class="seg"><span>1 Std.</span><span>Heute Abend</span><span class="on">Morgen früh</span><span>1 Woche</span></div>
+<div class="fld"><span>Eigene Zeit: Fr., 30.10.2026, 07:30</span><span>📅</span></div>
+<div class="res">Pausiert bis Fr., 30.10.2026, 07:30</div>
+<div class="note">Leer ("Ohne Ende"): bis du die Pause ausschaltest.</div>
+<div class="btns"><span>Abbrechen</span><span class="pri">Pausieren</span></div></div></div></div><div class="ph"><div class="cap">Pausiert bis …</div><div class="hd"><div class="hi">⚡</div><div><b>Routinen</b><small>Alle Geräte</small></div></div><div class="pr"><span class="l">Alle Routinen pausieren</span><div class="sw on"></div></div><div class="warn">⚠ Pausiert bis Fr., 30.10., 07:30 <span class="a">Ändern</span></div><div class="search">🔍 Suchen … <span style="margin-left:auto">2 von 6</span></div>
+<div class="tabs"><span>Alle<small>6</small></span><span>Aktiv<small>4</small></span><span>Aus<small>2</small></span><span>Läuft<small>0</small></span><span class="on">♥<small>2</small></span></div>
+<div class="cnt">2 Routinen auf 2 Geräten</div>
+<div class="card"><div class="t"><b>Beispiel Steckdose A</b><small>1 Routine · 1 aus</small></div><div class="sw"></div><div class="cv">⌄</div></div>
+<div class="card"><div class="t"><b>Beispiel Steckdose B</b><small>1 Routine · 1 aus</small></div><div class="sw"></div><div class="cv">⌄</div></div>
+<div class="gain">+ Neue Routine</div></div><div class="ph"><div class="cap">Einstellungen › Routinen (gilt für A, B, C)</div>
+<div class="opt" style="border:0"><div class="l">Alle Routinen pausieren<small>Nichts schaltet, bis du wieder einschaltest.</small></div><div class="sw on"></div></div>
+<div class="opt"><div class="l">Pausiert bis<small>Fr., 30.10.2026, 07:30</small></div><span class="chip">Ändern</span></div>
+<div class="opt"><div class="l">Verpasste Routinen nachholen<small>0 = nie</small></div><div class="fld" style="border-color:#444;padding:6px 12px">10 Min.</div></div>
+<div class="note">Statt des Datumsfelds öffnet "Ändern" dasselbe Fenster wie im Fenster Routinen. Eine Zeile statt zwei, kein Datumsfeld im Formular.</div></div></div><h2>C · Knopf statt Schalter <span class="cost">Platz: 1 Zeile, Warnzeile mit Knopf bei Pause</span></h2>
+<p class="sub">Kein Schalter mehr: "Pausieren …" öffnet das Fenster, bei Pause zeigt die Warnzeile den Zeitpunkt, "Jetzt fortsetzen" beendet sie. Weicht von der Einstellung "Alle Routinen pausieren" (Schalter) ab, dort bliebe der Schalter.</p>
+<div class="row4"><div class="ph"><div class="cap">Läuft</div><div class="hd"><div class="hi">⚡</div><div><b>Routinen</b><small>Alle Geräte</small></div></div><div class="pr"><span class="l">Routinen laufen</span><span class="chip">⏸ Pausieren …</span></div><div class="search">🔍 Suchen … <span style="margin-left:auto">2 von 6</span></div>
+<div class="tabs"><span>Alle<small>6</small></span><span>Aktiv<small>4</small></span><span>Aus<small>2</small></span><span>Läuft<small>0</small></span><span class="on">♥<small>2</small></span></div>
+<div class="cnt">2 Routinen auf 2 Geräten</div>
+<div class="card"><div class="t"><b>Beispiel Steckdose A</b><small>1 Routine · 1 aus</small></div><div class="sw"></div><div class="cv">⌄</div></div>
+<div class="card"><div class="t"><b>Beispiel Steckdose B</b><small>1 Routine · 1 aus</small></div><div class="sw"></div><div class="cv">⌄</div></div>
+<div class="gain">+ Neue Routine</div></div><div class="ph"><div class="cap">Pausieren …: Fenster</div><div class="hd"><div class="hi">⚡</div><div><b>Routinen</b><small>Alle Geräte</small></div></div><div class="pr"><span class="l">Routinen laufen</span><span class="chip">⏸ Pausieren …</span></div><div class="search dim">🔍 Suchen … <span style="margin-left:auto">2 von 6</span></div>
+<div class="tabs dim"><span>Alle<small>6</small></span><span>Aktiv<small>4</small></span><span>Aus<small>2</small></span><span>Läuft<small>0</small></span><span class="on">♥<small>2</small></span></div>
+<div class="cnt dim">2 Routinen auf 2 Geräten</div>
+<div class="card dim"><div class="t"><b>Beispiel Steckdose A</b><small>1 Routine · 1 aus</small></div><div class="sw"></div><div class="cv">⌄</div></div>
+<div class="card dim"><div class="t"><b>Beispiel Steckdose B</b><small>1 Routine · 1 aus</small></div><div class="sw"></div><div class="cv">⌄</div></div>
+<div class="gain dim">+ Neue Routine</div><div class="scrim"><div class="dlg"><h3>Routinen pausieren bis</h3><p>Danach laufen alle Routinen von selbst wieder.</p>
+<div class="seg"><span>1 Std.</span><span>Heute Abend</span><span class="on">Morgen früh</span><span>1 Woche</span></div>
+<div class="fld"><span>Eigene Zeit: Fr., 30.10.2026, 07:30</span><span>📅</span></div>
+<div class="res">Pausiert bis Fr., 30.10.2026, 07:30</div>
+
+<div class="btns"><span>Abbrechen</span><span class="pri">Pausieren</span></div></div></div></div><div class="ph"><div class="cap">Pausiert</div><div class="hd"><div class="hi">⚡</div><div><b>Routinen</b><small>Alle Geräte</small></div></div><div class="warn">⏸ Pausiert bis Fr., 30.10., 07:30 <span class="a">Ändern</span></div><div class="pr"><span class="l"></span><span class="chip" style="background:#2e6b33;color:#fff;border-color:#2e6b33">▶ Jetzt fortsetzen</span></div><div class="search">🔍 Suchen … <span style="margin-left:auto">2 von 6</span></div>
+<div class="tabs"><span>Alle<small>6</small></span><span>Aktiv<small>4</small></span><span>Aus<small>2</small></span><span>Läuft<small>0</small></span><span class="on">♥<small>2</small></span></div>
+<div class="cnt">2 Routinen auf 2 Geräten</div>
+<div class="card"><div class="t"><b>Beispiel Steckdose A</b><small>1 Routine · 1 aus</small></div><div class="sw"></div><div class="cv">⌄</div></div>
+<div class="card"><div class="t"><b>Beispiel Steckdose B</b><small>1 Routine · 1 aus</small></div><div class="sw"></div><div class="cv">⌄</div></div>
+<div class="gain">+ Neue Routine</div></div><div class="ph"><div class="cap">Einstellungen › Routinen (gilt für A, B, C)</div>
+<div class="opt" style="border:0"><div class="l">Alle Routinen pausieren<small>Nichts schaltet, bis du wieder einschaltest.</small></div><div class="sw on"></div></div>
+<div class="opt"><div class="l">Pausiert bis<small>Fr., 30.10.2026, 07:30</small></div><span class="chip">Ändern</span></div>
+<div class="opt"><div class="l">Verpasste Routinen nachholen<small>0 = nie</small></div><div class="fld" style="border-color:#444;padding:6px 12px">10 Min.</div></div>
+<div class="note">Statt des Datumsfelds öffnet "Ändern" dasselbe Fenster wie im Fenster Routinen. Eine Zeile statt zwei, kein Datumsfeld im Formular.</div></div></div>
