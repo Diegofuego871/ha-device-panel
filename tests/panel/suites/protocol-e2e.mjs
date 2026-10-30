@@ -137,7 +137,9 @@ for (const lang of ["de", "en"]) {
     await tap(`${P} [data-fc]`);
     check(`[${tag}] X leert die Suche: wieder fünf Zeilen`, await wait(`return r.querySelectorAll('${P} .pr-item').length === 5 && r.querySelector('${P} input[data-pr-search]').value === ""`));
     // Tipp auf einen Balken: eigener Zeitraum dieser Woche
-    await tap(`${P} .pr-bar:has(.pr-col)`);
+    // Der jüngste Balken mit Inhalt (die Balken laufen von alt nach neu): unabhängig vom heutigen Datum die Woche der Einträge von vor 3 und 2 Tagen
+    await ev(`[...r.querySelectorAll('${P} .pr-bar')].filter((x) => x.querySelector(".pr-col")).pop().setAttribute("data-last", "1")`);
+    await tap(`${P} .pr-bar[data-last]`);
     check(`[${tag}] Balken antippen setzt "eigenen Zeitraum" (Reiter gewählt, zwei Datumsfelder)`, await wait(`const bar = r.querySelector('${P} [data-pr-ranges] .sub-tabs'); return bar.querySelector(".sub-tab.on").dataset.v === "own" && r.querySelectorAll('${P} input[type="date"]').length === 2`));
     // Datumsfelder: die ganzen letzten 5 Tage
     await ev(`const d = new Date(Date.now() - 5 * 86400000); const iso = d.getFullYear() + "-" + String(d.getMonth() + 1).padStart(2, "0") + "-" + String(d.getDate()).padStart(2, "0"); const i = r.querySelector('${P} input[data-pr-date="from"]'); i.value = iso; i.dispatchEvent(new Event("change", { bubbles: true }))`);
