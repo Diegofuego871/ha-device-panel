@@ -482,7 +482,7 @@ export class RoutineUi {
     if ((rt.targets || []).length < 2) return "";
     const esc = (v) => this.esc(v);
     const rows = rt.targets
-      .map((x) => `<div class="rt-tgt-row${x.device_id === here ? " here" : ""}"><span class="mg-ic" aria-hidden="true">${routineEmoji(x.domain)}</span><span class="mg-t"><b>${esc(x.entity_name || x.entity_id)}</b><small>${esc([x.device_name, this.targetSub(x)].filter(Boolean).join(" · "))}</small></span></div>`)
+      .map((x) => `<div class="rt-tgt-row${x.device_id === here ? " here" : ""}"><span class="mg-ic" aria-hidden="true">${routineEmoji(x.domain)}</span><span class="mg-t"><b>${esc(x.entity_name || x.entity_id)}</b><small>${esc([x.device_name, this.targetSummary(x)].filter(Boolean).join(" · "))}</small></span></div>`)
       .join("");
     return `<div class="rt-tgts"><div class="mg-k">${esc(this.t("rtTgSwitches", rt.targets.length))}</div>${rows}</div>`;
   }
@@ -1104,7 +1104,7 @@ export class RoutineUi {
   }
 
   // "Einschalten · 80 %", "Ausschalten", "auf 21 °C setzen"
-  targetSub(x) {
+  targetSummary(x) {
     const domain = this.domainOf(x.entity_id);
     if (x.action === "set") return this.t("rtVerbSet", this.setText({ options: x.options, entity_id: x.entity_id }));
     const parts = x.action === "on" ? this.optionParts(x.options) : [];
@@ -1203,7 +1203,7 @@ export class RoutineUi {
         if (i === cur) return "";
         const dev = this.targetDevice(x);
         return `<div class="rt-tgt"><span class="mg-ic" aria-hidden="true">${routineEmoji(this.domainOf(x.entity_id))}</span>
-          <span class="mg-t"><b>${esc(this.targetName(x))}</b><small>${esc([dev, this.targetSub(x)].filter(Boolean).join(" · "))}</small></span>
+          <span class="mg-t"><b>${esc(this.targetName(x))}</b><small>${esc([dev, this.targetSummary(x)].filter(Boolean).join(" · "))}</small></span>
           <button type="button" class="rt-tgt-btn" data-rt="tg-edit" data-i="${i}" title="${esc(t("rtTgEdit"))}" aria-label="${esc(t("rtTgEdit"))}">${this.h.mdi("pencil", 16)}</button>
           <button type="button" class="rt-tgt-btn" data-rt="tg-del" data-i="${i}" title="${esc(t("rtTgRemove"))}" aria-label="${esc(t("rtTgRemove"))}">${this.h.mdi("close", 16)}</button></div>`;
       })
