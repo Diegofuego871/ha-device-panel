@@ -8,6 +8,7 @@
 <a href="https://hacs.xyz/"><img src="https://img.shields.io/badge/HACS-Default-41BDF5.svg" alt="HACS Default"></a>
 <a href="https://github.com/Diegofuego871/ha-device-panel/releases"><img src="https://img.shields.io/github/v/release/Diegofuego871/ha-device-panel?label=Release" alt="Neuste Version"></a>
 <img src="https://img.shields.io/badge/Home%20Assistant-2024.12%2B-41BDF5.svg" alt="Home Assistant 2024.12+">
+<a href="https://analytics.home-assistant.io/custom_integrations.json"><img src="https://img.shields.io/badge/dynamic/json?url=https%3A%2F%2Fanalytics.home-assistant.io%2Fcustom_integrations.json&amp;query=%24.device_panel.total&amp;label=aktive%20Installationen&amp;color=41BDF5" alt="Aktive Installationen (Home-Assistant-Statistik)"></a>
 <a href="https://github.com/Diegofuego871/ha-device-panel/blob/main/LICENSE"><img src="https://img.shields.io/github/license/Diegofuego871/ha-device-panel?label=Lizenz" alt="Lizenz: MIT"></a>
 <a href="https://github.com/Diegofuego871/ha-device-panel/actions/workflows/tests.yml"><img src="https://img.shields.io/github/actions/workflow/status/Diegofuego871/ha-device-panel/tests.yml?branch=main&label=Tests" alt="Tests"></a>
 <a href="https://github.com/Diegofuego871/ha-device-panel/actions/workflows/validate.yml"><img src="https://img.shields.io/github/actions/workflow/status/Diegofuego871/ha-device-panel/validate.yml?branch=main&label=HACS%20%2F%20hassfest" alt="HACS / hassfest"></a>
