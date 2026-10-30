@@ -120,6 +120,25 @@ for (const lang of ["de", "en"]) {
     await wait(`return !r.querySelector('${W} [data-rt="goto"]')`);
     const again = (await calls("device_panel/routine_save")).at(-1)?.routine;
     check(`[${tag}] Gespeichert mit zwei Zielen (eines in "more")`, again && again.more?.length === 1 && Boolean(again.id) && !saved.id, JSON.stringify(again && again.more));
+    // Mit Seite "Optionen" (Licht mit Helligkeit): der Knopf steht dort; sind alle Karten zugeklappt, auch auf der Seite "Was"
+    await p.evaluate(() => { window.__routineEntities.d = [{ entity_id: "light.hell", name: "Lampe Hell", domain: "light", state: "off", available: true, actions: ["on", "off", "toggle"], options: [{ key: "brightness_pct", type: "percent", min: 1, max: 100 }] }, { entity_id: "light.hell2", name: "Lampe Hell 2", domain: "light", state: "off", available: true, actions: ["on", "off", "toggle"], options: [{ key: "brightness_pct", type: "percent", min: 1, max: 100 }] }]; });
+    await ev(`r.host._openDevice("d", "routine")`);
+    await wait(`return !!r.querySelector('.rt-root [data-rt="add"]')`);
+    await tap(`.rt-root [data-rt="add"]`);
+    await wait(`return !!r.querySelector('${W} [data-rt="pick"]')`);
+    await tap(`${W} [data-rt="pick"][data-id="light.hell"]`);
+    check(`[${tag}] Licht mit Optionen: auf der Seite "Was" noch kein Knopf "+ Gerät hinzufügen"`, await ev(`return !r.querySelector('${W} [data-rt="tg-add"]')`));
+    await tap(`${W} [data-rt="nav-next"]`);
+    await wait(`return !!r.querySelector('${W} [data-rt="tg-add"]')`);
+    await tap(`${W} [data-rt="tg-add"]`);
+    await tap(`${W} [data-rt="dev"][data-id="d"]`);
+    await tap(`${W} [data-rt="nav-next"]`);
+    await wait(`return !!r.querySelector('${W} [data-rt="pick"][data-id="light.hell2"]')`);
+    await tap(`${W} [data-rt="pick"][data-id="light.hell2"]`);
+    // Beide Karten schliessen: zuerst die offene (untere), dann die obere ist schon zu
+    await tap(`${W} .rt-card.open .rt-card-chev`);
+    check(`[${tag}] Alle Karten zu: der Knopf "+ Gerät hinzufügen" bleibt sichtbar`, await wait(`return r.querySelectorAll('${W} .rt-card.open').length === 0 && !!r.querySelector('${W} [data-rt="tg-add"]')`));
+    await tap(`${W} [data-rt="nav-cancel"], ${W} [data-rt="target-drop"]`).catch(() => {});
     check(`[${tag}] keine Skriptfehler`, errors.length === 0, errors.join(";"));
     await ctx.close();
   }

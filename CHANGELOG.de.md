@@ -7,6 +7,14 @@ Alle nennenswerten Änderungen an dieser Integration stehen in dieser Datei.
 Das Format folgt [Keep a Changelog](https://keepachangelog.com/de/1.1.0/),
 die Versionsnummern folgen [Semantic Versioning](https://semver.org/lang/de/).
 
+## [2.181.3] - 2026-10-30
+
+"+ Gerät hinzufügen" bleibt erreichbar, wenn alle Karten zu sind.
+
+### Behoben
+
+- **Routine mit mehreren Geräten, Assistent:** Bei Geräten mit der Seite "Optionen" (zum Beispiel ein Licht mit Helligkeit) steht der Knopf "+ Gerät hinzufügen" nur auf dieser Seite. Wer auf der Seite "Was schalten" alle Karten zuklappte, hatte ihn nicht mehr. Er erscheint jetzt auch dort, sobald alle Karten zu sind.
+
 ## [2.181.2] - 2026-10-30
 
 Die Pfeilknöpfe an den Karten einer Routine funktionieren.
@@ -5472,6 +5480,7 @@ Erste Vorabversion.
   GitHub Actions für die Prüfungen von HACS und hassfest sowie die Tests.
 
 [2.6.0]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v2.6.0
+[2.181.3]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v2.181.3
 [2.181.2]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v2.181.2
 [2.181.1]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v2.181.1
 [2.181.0]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v2.181.0

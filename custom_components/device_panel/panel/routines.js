@@ -1770,7 +1770,8 @@ export class RoutineUi {
     if (d.action === "set") html += this.setValueHtml(e);
     else if (!opposite(d.action)) html += `<p class="mg-hint">${esc(t(e.domain === "scene" ? "rtSceneNoBack" : "rtToggleNoBack"))}</p>`;
     // Ohne Seite "Optionen" ist dies die letzte Seite des Ziels: hier steht "+ Gerät hinzufügen"
-    return this.targetPage(`${html}<div data-rt-zone="result">${this.resultHtml()}</div>`, !this.hasOptions());
+    // Sind alle Karten zugeklappt, steht der Knopf auch hier (sonst wäre er hinter der Seite "Optionen" nicht zu erreichen)
+    return this.targetPage(`${html}<div data-rt-zone="result">${this.resultHtml()}</div>`, !this.hasOptions() || Boolean(this.wiz.tgFold));
   }
 
   // Der Wert zum Setzen (Zahl: Regler und Zahlenfeld; Auswahl: Knöpfe oder Liste), auf der Seite "Was" unter der Aktion

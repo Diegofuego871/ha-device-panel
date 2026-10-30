@@ -7,6 +7,14 @@ All notable changes to this integration are documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/).
 
+## [2.181.3] - 2026-10-30
+
+"+ Add device" stays reachable when all cards are closed.
+
+### Fixed
+
+- **Routine with several devices, assistant:** for devices with a page "Options" (a light with brightness, for example) the button "+ Add device" only stands on that page. If you closed all cards on the page "What to switch", it was gone. It now also shows there as soon as all cards are closed.
+
 ## [2.181.2] - 2026-10-30
 
 The arrow buttons on the cards of a routine work.
@@ -5371,6 +5379,7 @@ First pre-release.
   GitHub Actions for HACS/hassfest validation and tests.
 
 [2.6.0]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v2.6.0
+[2.181.3]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v2.181.3
 [2.181.2]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v2.181.2
 [2.181.1]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v2.181.1
 [2.181.0]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v2.181.0
