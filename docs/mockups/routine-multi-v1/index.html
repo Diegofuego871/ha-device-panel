@@ -1,0 +1,195 @@
+<!doctype html><meta charset="utf-8"><title>Routine mit mehreren Geräten</title><style>
+:root{--p:#03a9f4;--bg:#1c1c1c;--card:#2a2a2a;--ln:#3a3a3a;--t2:#9a9a9a;--red:#e5534b;--ok:#43a047}
+*{box-sizing:border-box}
+body{margin:0;background:#0d0d0d;font:14px/1.35 Roboto,Arial,sans-serif;color:#e6e6e6;padding:24px;width:1500px}
+h2{margin:30px 0 4px;font-size:18px}h2 .rec{color:var(--ok)}
+.sub{color:var(--t2);font-size:13px;margin:0 0 12px;max-width:1400px}
+.row{display:grid;grid-template-columns:repeat(3,430px);gap:24px;align-items:start}
+.cap{color:#8a8a8a;font-size:12px;letter-spacing:.04em;text-transform:uppercase;margin-bottom:6px}
+.ph{width:390px;height:720px;background:var(--bg);border:1px solid var(--ln);border-radius:22px;padding:16px;display:flex;flex-direction:column;gap:10px;overflow:hidden;position:relative}
+.dsk{width:900px;background:var(--bg);border:1px solid var(--ln);border-radius:18px;padding:18px 22px;display:flex;flex-direction:column;gap:10px;position:relative}
+.hd{display:flex;justify-content:space-between;align-items:flex-start}.hd b{font-size:20px;font-weight:400;display:block}.hd small{color:var(--t2);font-size:13px}
+.x{width:36px;height:36px;border:1px solid #555;border-radius:50%;display:grid;place-items:center;color:#aaa;font-size:16px;flex:none}
+.stp{display:flex;justify-content:space-between;color:var(--t2);font-size:12.5px}
+.bars{display:flex;gap:6px}.bars i{flex:1;height:5px;border-radius:3px;background:#444}.bars i.on{background:var(--p)}
+h3{margin:2px 0 0;font-size:20px}
+.hint{color:var(--t2);font-size:12.5px}
+.lbl{color:var(--t2);font-size:12.5px;margin-top:2px}
+.seg{display:flex;background:#2a2a2a;border-radius:14px;padding:4px;gap:2px}.seg span{flex:1;text-align:center;padding:8px 0;border-radius:11px;font-size:13.5px;color:#aaa}.seg .on{background:#0e0e0e;color:var(--p)}
+.opt{display:flex;align-items:center;gap:10px;background:#242424;border-radius:14px;padding:9px 12px}.opt .ic{width:34px;height:34px;border-radius:50%;background:#16384a;display:grid;place-items:center;font-size:16px;flex:none}
+.opt .t{flex:1;min-width:0}.opt .t b{display:block;font-weight:600;font-size:14px}.opt .t small{color:var(--t2);font-size:12px}
+.rad{width:20px;height:20px;border-radius:50%;border:2px solid #666;flex:none}.rad.on{border-color:var(--p);background:radial-gradient(var(--p) 40%,transparent 45%)}
+.val{color:#ccc;font-size:13px;font-weight:600}
+.fld{border:1px solid #555;border-radius:12px;padding:10px 12px;display:flex;justify-content:space-between;color:#ccc}
+.add{border:1.5px dashed var(--p);color:var(--p);border-radius:14px;text-align:center;padding:11px;font-weight:500}
+.addsolid{border:1.5px solid var(--p);color:var(--p);border-radius:14px;text-align:center;padding:10px;font-weight:500;background:#16384a33}
+.ft{margin-top:auto;display:flex;gap:8px;border-top:1px solid var(--ln);padding-top:12px;margin-left:-16px;margin-right:-16px;padding-left:16px;padding-right:16px}
+.ft span{flex:1;text-align:center;padding:11px 6px;border-radius:14px;border:1px solid #555;font-size:14px}.ft .sv{border-color:var(--p);color:var(--p)}.ft .go{background:var(--p);border-color:var(--p);color:#fff;font-weight:500;flex:1.3}
+.chips{display:flex;gap:8px;flex-wrap:wrap}.chip{border:1px solid #555;border-radius:99px;padding:6px 12px;font-size:13px;display:flex;gap:6px;align-items:center}.chip.on{border-color:var(--p);color:var(--p);background:#16384a55}.chip em{font-style:normal;color:#888;font-size:12px}
+.mini{display:flex;align-items:center;gap:10px;background:#242424;border-radius:14px;padding:8px 12px}.mini .ic{width:30px;height:30px;border-radius:50%;background:#16384a;display:grid;place-items:center;font-size:14px;flex:none}.mini .t{flex:1;min-width:0}.mini .t b{display:block;font-size:13.5px;font-weight:600}.mini .t small{color:var(--t2);font-size:12px}.mini .a{color:#888;font-size:15px;padding:0 4px}
+.cur{border:1px solid var(--p);border-radius:16px;padding:10px;display:flex;flex-direction:column;gap:8px;background:#1f1f1f}
+.tag{color:var(--p);font-size:12px;font-weight:600;letter-spacing:.03em}
+.note{color:var(--t2);font-size:12.5px;max-width:1400px;margin:8px 0 0}
+.cost{display:inline-block;background:#333;border-radius:8px;padding:1px 8px;font-size:11px;color:#aaa;margin-left:6px}
+.bad{color:var(--red)}.good{color:var(--ok)}
+.sw{width:42px;height:24px;border-radius:99px;background:#555;position:relative;flex:none}.sw::after{content:"";position:absolute;top:3px;left:3px;width:18px;height:18px;border-radius:50%;background:#fff}.sw.on{background:var(--p)}.sw.on::after{left:21px}
+.card{background:var(--card);border-radius:14px;padding:10px 12px;display:flex;flex-direction:column;gap:6px}
+.card .top{display:flex;align-items:center;gap:10px}.card .top .t{flex:1}.card .top .t b{display:block}.card .top .t small{color:var(--t2);font-size:12px}
+.card .rt{border-top:1px solid var(--ln);padding-top:8px;display:flex;align-items:center;gap:10px}.rt .t{flex:1;min-width:0}.rt .t b{display:block;font-size:14px}.rt .t small{color:var(--t2);font-size:12px}
+.pill{border:1px solid var(--p);color:var(--p);border-radius:99px;padding:1px 9px;font-size:11.5px;white-space:nowrap}
+.srch{border:1px solid #444;border-radius:99px;padding:9px 14px;color:var(--t2);background:#202020}
+.sum{background:#16303d;border-radius:16px;padding:12px 14px;font-size:14.5px}
+.cv{width:24px;height:24px;border:1.5px solid var(--p);border-radius:50%;display:grid;place-items:center;color:var(--p);font-size:12px;flex:none}
+</style><body>
+
+<h2>1 · Seite "Was schalten", mehrere Geräte und der Knopf "+ Gerät hinzufügen"</h2>
+<p class="sub">Schritt 1 des Assistenten, nachdem das erste Gerät gewählt und die Aktion festgelegt ist. Der Knopf steht unten im Inhalt (nicht in der Fusszeile, dort sind schon drei Knöpfe). Die Seiten Gerät → Was → Optionen wiederholen sich für das neue Gerät.</p>
+<div class="row">
+<div><div class="cap">A · Chips oben, Knopf unter dem Inhalt</div><div class="ph">
+<div class="hd"><div><b>Neue Routine</b><small>Abendlicht</small></div><div class="x">✕</div></div>
+<div class="stp"><span>Schritt 1 von 5</span><span>Was schalten</span></div><div class="bars"><i class="on"></i><i></i><i></i><i></i><i></i></div>
+<div class="chips"><span class="chip on">1 Lampe Küche</span><span class="chip">2 Steckdose Bad <em>✕</em></span></div>
+<h3>Was soll geschaltet werden?</h3>
+<div class="opt"><div class="ic">💡</div><div class="t"><b>Lampe Küche</b><small>light.kueche</small></div><span class="val">ein</span><div class="rad on"></div></div>
+<div class="lbl">Aktion</div><div class="seg"><span class="on">Einschalten</span><span>Ausschalten</span><span>Umschalten</span></div>
+<div class="lbl">Helligkeit</div><div class="fld"><span>80 %</span><span>▾</span></div>
+<div class="add">+ Gerät hinzufügen</div>
+<div class="ft"><span>← Zurück</span><span class="sv">Speichern</span><span class="go">Weiter →</span></div></div>
+<p class="note">Chips zeigen die Ziele, ein Tipp springt hin. Bei 5 bis 10 Zielen wird die Reihe lang (sie umbricht in mehrere Zeilen und verdrängt den Inhalt). Der Knopf ist leicht zu übersehen.</p></div>
+
+<div><div class="cap">B · Liste der Ziele, Knopf am Ende der Liste <span class="good">(Empfehlung)</span></div><div class="ph">
+<div class="hd"><div><b>Neue Routine</b><small>Abendlicht</small></div><div class="x">✕</div></div>
+<div class="stp"><span>Schritt 1 von 5</span><span>Was schalten</span></div><div class="bars"><i class="on"></i><i></i><i></i><i></i><i></i></div>
+<h3>Was soll geschaltet werden?</h3>
+<div class="mini"><div class="ic">💡</div><div class="t"><b>Lampe Küche</b><small>Einschalten · 80 %</small></div><span class="a">✎</span><span class="a">✕</span></div>
+<div class="cur"><span class="tag">ZIEL 2 · STECKDOSE BAD</span>
+<div class="opt"><div class="ic">🔌</div><div class="t"><b>Steckdose Bad</b><small>switch.bad</small></div><div class="rad on"></div></div>
+<div class="seg"><span class="on">Einschalten</span><span>Ausschalten</span><span>Umschalten</span></div></div>
+<div class="add">+ Gerät hinzufügen</div>
+<div class="hint">2 von höchstens 10 Geräten. Zeit, Zurückschalten, Meldung und Name gelten für alle zusammen.</div>
+<div class="ft"><span>← Zurück</span><span class="sv">Speichern</span><span class="go">Weiter →</span></div></div>
+<p class="note">Fertige Ziele schrumpfen zu einer Zeile (bearbeiten, entfernen), das aktuelle ist offen. Der Knopf steht am Ende der Liste und rückt mit jedem Ziel nach unten. Bei 10 Zielen scrollt die Seite, der Knopf bleibt am Ende der Liste.</p></div>
+
+<div><div class="cap">C · Knopf in der Fusszeile</div><div class="ph">
+<div class="hd"><div><b>Neue Routine</b><small>Abendlicht</small></div><div class="x">✕</div></div>
+<div class="stp"><span>Schritt 1 von 5</span><span>Was schalten</span></div><div class="bars"><i class="on"></i><i></i><i></i><i></i><i></i></div>
+<div class="hint">Ziel 1 von 1</div>
+<h3>Was soll geschaltet werden?</h3>
+<div class="opt"><div class="ic">💡</div><div class="t"><b>Lampe Küche</b><small>light.kueche</small></div><span class="val">ein</span><div class="rad on"></div></div>
+<div class="lbl">Aktion</div><div class="seg"><span class="on">Einschalten</span><span>Ausschalten</span><span>Umschalten</span></div>
+<div class="lbl">Helligkeit</div><div class="fld"><span>80 %</span><span>▾</span></div>
+<div class="ft" style="flex-wrap:wrap"><span class="addsolid" style="flex-basis:100%">+ Gerät hinzufügen</span><span>← Zurück</span><span class="go">Weiter →</span></div></div>
+<p class="note">Immer sichtbar, ohne Scrollen. Dafür fehlt "Speichern" (oder wandert als Symbol nach oben), und es gibt keine Übersicht über die schon gewählten Ziele. Nicht empfohlen.</p></div>
+</div>
+
+<h2>2 · Nach "+ Gerät hinzufügen": die Seiten wiederholen sich für das neue Gerät</h2>
+<p class="sub">Gezeigt für Variante B. Erste Seite wie beim Anlegen einer Routine (alle Geräte, Gruppen, Szenen mit Suche). Das schon gewählte Ziel bleibt oben als Zeile stehen. "Zurück" auf dieser Seite verwirft nur das neue Ziel.</p>
+<div class="row">
+<div><div class="cap">Gerät für Ziel 2 wählen (Handy)</div><div class="ph">
+<div class="hd"><div><b>Neue Routine</b><small>Abendlicht · Ziel 2</small></div><div class="x">✕</div></div>
+<div class="stp"><span>Schritt 1 von 5</span><span>Gerät wählen</span></div><div class="bars"><i class="on"></i><i></i><i></i><i></i><i></i></div>
+<div class="mini"><div class="ic">💡</div><div class="t"><b>Lampe Küche</b><small>Einschalten · 80 %</small></div><span class="a">✎</span></div>
+<h3>Welches Gerät kommt dazu?</h3>
+<div class="srch">🔍 Suchen …</div>
+<div class="chips"><span class="chip on">Alle</span><span class="chip">Geräte</span><span class="chip">Gruppen</span><span class="chip">Szenen</span></div>
+<div class="opt"><div class="ic">🔌</div><div class="t"><b>Steckdose Bad</b><small>Beispiel AG · Bad</small></div><div class="rad on"></div></div>
+<div class="opt"><div class="ic">💡</div><div class="t"><b>LED-Ring</b><small>Beispiel AG · Wohnzimmer</small></div><div class="rad"></div></div>
+<div class="opt"><div class="ic">🪟</div><div class="t"><b>Rollladen Terrasse</b><small>Beispiel AG · Terrasse</small></div><div class="rad"></div></div>
+<div class="opt" style="opacity:.45"><div class="ic">💡</div><div class="t"><b>Lampe Küche</b><small>schon in dieser Routine</small></div><div class="rad"></div></div>
+<div class="ft"><span>← Ziel verwerfen</span><span class="go">Weiter →</span></div></div>
+<p class="note">Geräte, deren Entität schon in der Routine steckt, sind abgeblendet. Gerätewahl, Was und Optionen wie heute.</p></div>
+<div style="grid-column:span 2"><div class="cap">Gleiche Seite auf dem Desktop (Variante B)</div><div class="dsk" style="width:880px">
+<div class="hd"><div><b>Neue Routine</b><small>Abendlicht</small></div><div class="x">✕</div></div>
+<div class="stp"><span>Schritt 1 von 5</span><span>Was schalten</span></div><div class="bars"><i class="on"></i><i></i><i></i><i></i><i></i></div>
+<h3>Was soll geschaltet werden?</h3>
+<div class="mini"><div class="ic">💡</div><div class="t"><b>Lampe Küche</b><small>Einschalten · 80 %</small></div><span class="a">✎</span><span class="a">✕</span></div>
+<div class="mini"><div class="ic">🔌</div><div class="t"><b>Steckdose Bad</b><small>Einschalten</small></div><span class="a">✎</span><span class="a">✕</span></div>
+<div class="add" style="width:260px">+ Gerät hinzufügen</div>
+<div class="hint">2 von höchstens 10 Geräten. Zeit, Zurückschalten, Meldung und Name gelten für alle zusammen.</div>
+<div class="ft" style="margin:0;padding:12px 0 0"><span style="flex:0 0 140px">✕ Abbrechen</span><span class="sv" style="flex:1">Speichern</span><span class="go" style="flex:1">Weiter →</span></div></div></div>
+</div>
+
+<h2>3 · Seite "Zurückschalten": Zeitpunkt gemeinsam, "Danach" je Gerät</h2>
+<p class="sub">Wann zurückgeschaltet wird (Nach Dauer, Zu einer Zeit, Durch einen Auslöser, "Spätestens nach") gilt für alle. Was dabei geschieht (Ausschalten oder Wie vorher), steht je Gerät. Mit einem Ziel sieht die Seite aus wie heute.</p>
+<div class="row">
+<div><div class="cap">A · Je Gerät eine Zeile mit Wahl <span class="good">(Empfehlung)</span></div><div class="ph">
+<div class="hd"><div><b>Neue Routine</b><small>Abendlicht</small></div><div class="x">✕</div></div>
+<div class="stp"><span>Schritt 3 von 5</span><span>Zurückschalten</span></div><div class="bars"><i class="on"></i><i class="on"></i><i class="on"></i><i></i><i></i></div>
+<h3>Wann zurückschalten?</h3>
+<div class="seg"><span>Nie</span><span class="on">Nach Dauer</span><span>Zu einer Zeit</span><span>Auslöser</span></div>
+<div class="fld"><span>Nach 3 Std.</span><span>▾</span></div>
+<div class="lbl">Danach, je Gerät</div>
+<div class="opt" style="flex-direction:column;align-items:stretch;gap:8px"><div style="display:flex;gap:10px;align-items:center"><div class="ic">💡</div><div class="t"><b>Lampe Küche</b></div></div><div class="seg"><span>Ausschalten</span><span class="on">Wie vorher</span></div></div>
+<div class="opt" style="flex-direction:column;align-items:stretch;gap:8px"><div style="display:flex;gap:10px;align-items:center"><div class="ic">🔌</div><div class="t"><b>Steckdose Bad</b></div></div><div class="seg"><span class="on">Ausschalten</span><span>Wie vorher</span></div></div>
+<div class="hint">Szenen werden nicht zurückgeschaltet und erscheinen hier nicht.</div>
+<div class="ft"><span>← Zurück</span><span class="sv">Speichern</span><span class="go">Weiter →</span></div></div>
+<p class="note">Klar, jede Zeile zeigt, was passiert. Kostet etwa 70 px pro Gerät.</p></div>
+<div><div class="cap">B · Eine Wahl für alle, "Je Gerät anders" klappt auf</div><div class="ph">
+<div class="hd"><div><b>Neue Routine</b><small>Abendlicht</small></div><div class="x">✕</div></div>
+<div class="stp"><span>Schritt 3 von 5</span><span>Zurückschalten</span></div><div class="bars"><i class="on"></i><i class="on"></i><i class="on"></i><i></i><i></i></div>
+<h3>Wann zurückschalten?</h3>
+<div class="seg"><span>Nie</span><span class="on">Nach Dauer</span><span>Zu einer Zeit</span><span>Auslöser</span></div>
+<div class="fld"><span>Nach 3 Std.</span><span>▾</span></div>
+<div class="lbl">Danach</div>
+<div class="seg"><span class="on">Ausschalten</span><span>Wie vorher</span></div>
+<div class="add" style="border-style:solid;border-color:#555;color:#ccc">Je Gerät anders …</div>
+<div class="ft"><span>← Zurück</span><span class="sv">Speichern</span><span class="go">Weiter →</span></div></div>
+<p class="note">Kürzer im Normalfall (alle gleich). Wer es je Gerät will, klappt die Liste von A auf. Gemischte Wahl ist versteckt und wird leicht übersehen.</p></div>
+</div>
+
+<h2>4 · Anzeige: die Routine steht bei jedem beteiligten Gerät</h2>
+<p class="sub">Entscheid: in der Übersicht "Alle Routinen" nicht getrennt, sondern in der Karte jedes Geräts, das vorkommt; ebenso im Reiter "Routinen" jedes Geräts. Es ist dieselbe Routine: derselbe Schalter, dieselbe Zeit. Ein Chip nennt die anderen Geräte.</p>
+<div class="row">
+<div><div class="cap">Übersicht "Alle Routinen"</div><div class="ph">
+<div class="hd"><div><b>Routinen</b><small>Alle Geräte</small></div><div class="x">✕</div></div>
+<div class="srch">🔍 Suchen …</div>
+<div class="seg"><span class="on">Alle<br><small>4</small></span><span>Aktiv<br><small>3</small></span><span>Aus<br><small>1</small></span><span>Läuft<br><small>0</small></span></div>
+<div class="hint">4 Routinen auf 3 Geräten</div>
+<div class="card"><div class="top"><div class="t"><b>Lampe Küche</b><small>2 Routinen</small></div><div class="cv">⌄</div></div>
+<div class="rt"><div class="t"><b>Abendlicht</b><small>18:30 täglich · <span class="pill">+1 Gerät: Steckdose Bad</span></small></div><div class="sw on"></div></div>
+<div class="rt"><div class="t"><b>Nachtlicht</b><small>wenn die Tür öffnet</small></div><div class="sw on"></div></div></div>
+<div class="card"><div class="top"><div class="t"><b>Steckdose Bad</b><small>1 Routine</small></div><div class="cv">⌄</div></div>
+<div class="rt"><div class="t"><b>Abendlicht</b><small>18:30 täglich · <span class="pill">+1 Gerät: Lampe Küche</span></small></div><div class="sw on"></div></div></div>
+<div class="card"><div class="top"><div class="t"><b>Rollladen Terrasse</b><small>1 Routine</small></div><div class="cv">⌄</div></div></div>
+<div class="add">+ Neue Routine</div></div>
+<p class="note">"Abendlicht" steht zweimal, bei Küche und Bad. Es ist dieselbe Routine, der Schalter in beiden Karten schaltet sie zugleich. Die Zahl "4 Routinen" zählt sie einmal. Der Chip nennt das andere Gerät (bei mehr: "+2 Geräte").</p></div>
+
+<div><div class="cap">Reiter "Routinen" im Gerät "Steckdose Bad"</div><div class="ph">
+<div class="hd"><div><b>Steckdose Bad</b><small>Beispiel AG · Bad</small></div><div class="x">✕</div></div>
+<div class="seg"><span>Übersicht</span><span>Verlauf</span><span class="on">Routinen</span><span>Meldungen</span></div>
+<div class="srch">🔍 Suchen …</div>
+<div class="card"><div class="top"><div class="t"><b>Abendlicht</b><small>18:30 täglich</small></div><div class="sw on"></div><div class="cv">⌃</div></div>
+<div class="rt" style="flex-direction:column;align-items:stretch;gap:6px"><div class="lbl" style="margin:0">Schaltet 2 Geräte</div>
+<div class="mini" style="background:#1f3a24"><div class="ic">🔌</div><div class="t"><b>Steckdose Bad <span class="pill">dieses Gerät</span></b><small>Einschalten, danach aus</small></div></div>
+<div class="mini"><div class="ic">💡</div><div class="t"><b>Lampe Küche</b><small>Einschalten · 80 %, danach wie vorher</small></div><span class="a">›</span></div>
+<div class="hint">Nach 3 Std. zurück · Push an Handy Dani · nächster Lauf heute 18:30</div>
+<div class="hint" style="color:var(--p)">Bearbeiten · Ausführen · Protokoll · Löschen</div></div></div>
+<div class="add">+ Neue Routine</div></div>
+<p class="note">Aufgeklappt: alle Ziele der Routine, das aktuelle Gerät markiert, die anderen mit Pfeil zum jeweiligen Gerät. "Bearbeiten" öffnet den Assistenten mit allen Zielen. Löschen löscht die ganze Routine (mit Rückfrage, die die Geräte nennt).</p></div>
+
+<div><div class="cap">Letzte Seite "Name und Prüfung"</div><div class="ph">
+<div class="hd"><div><b>Neue Routine</b><small>Abendlicht</small></div><div class="x">✕</div></div>
+<div class="stp"><span>Schritt 5 von 5</span><span>Name und Prüfung</span></div><div class="bars"><i class="on"></i><i class="on"></i><i class="on"></i><i class="on"></i><i class="on"></i></div>
+<h3>Name und Prüfung</h3>
+<div class="lbl">Name</div><div class="fld"><span>Abendlicht</span></div>
+<div class="hint">Vorschlag aus dem ersten Gerät: "Lampe Küche +1".</div>
+<div class="sum"><b>Täglich um 18:30:</b><br>Lampe Küche einschalten (80 %), Steckdose Bad einschalten. Nach 3 Std.: Lampe Küche wie vorher, Steckdose Bad aus.</div>
+<div class="opt" style="gap:8px"><div class="t"><b>Routine aktiv</b><small>Für alle Geräte</small></div><div class="sw on"></div></div>
+<div class="opt" style="gap:8px"><div class="t"><b>Als Schalter und Knopf in Home Assistant</b><small>Ein Schalter und ein Knopf für die ganze Routine</small></div><div class="sw on"></div></div>
+<div class="lbl">Entity-ID des Schalters</div><div class="fld"><span>switch.device_panel_abendlicht</span><span>⧉</span></div>
+<div class="ft"><span>← Zurück</span><span class="go">Speichern</span></div></div>
+<p class="note">Eine Zusammenfassung in einem Satz je Gerät. Schalter, Knopf und Entity-ID gibt es einmal je Routine.</p></div>
+</div>
+
+<h2>5 · Wenn etwas schiefgeht</h2>
+<p class="sub">Alle Geräte werden zugleich geschaltet, ein Fehler stoppt die anderen nicht.</p>
+<div class="row">
+<div style="grid-column:span 3"><div class="dsk" style="width:1400px;flex-direction:row;gap:30px">
+<div style="flex:1"><div class="cap">Protokoll der Routine</div>
+<div class="card" style="gap:4px"><b>Heute 18:30 · Abendlicht · <span style="color:#f5a524">teilweise (1 von 2)</span></b><small class="hint">Lampe Küche: eingeschaltet (80 %)<br>Steckdose Bad: <span class="bad">keine Antwort nach 10 Sekunden</span></small></div>
+<div class="card" style="gap:4px;margin-top:8px"><b>Gestern 21:30 · Zurückschalten · <span class="good">ok</span></b><small class="hint">Lampe Küche: wie vorher (30 %)<br>Steckdose Bad: ausgeschaltet</small></div></div>
+<div style="flex:1"><div class="cap">Push-Meldung (eine je Lauf)</div>
+<div class="card" style="gap:4px"><b>Abendlicht: 1 von 2 geschaltet</b><small class="hint">Lampe Küche eingeschaltet. Steckdose Bad hat nicht geantwortet.</small></div>
+<p class="note" style="margin-top:12px">Beim Zurückschalten werden nur Geräte zurückgeschaltet, die vorher erfolgreich geschaltet wurden. Der Fehlerzähler zählt einen Fehler je Lauf. Wie heute ist der Zähler im Panel mit "Fehler quittieren" zurückzusetzen.</p></div>
+</div></div>
+</div>

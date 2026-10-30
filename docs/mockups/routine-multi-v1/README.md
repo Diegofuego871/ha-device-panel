@@ -57,17 +57,19 @@ aktiviert und beim Zurückschalten übersprungen.
 - Push: eine Meldung je Lauf, Text nennt die Ziele (die ersten drei, dann "+N") und bei "teilweise" "3 von 4".
 - Schalter und Knopf in Home Assistant: wie heute je Routine; der Knopf führt alle Ziele aus.
 
-## Anzeige
+## Anzeige (Entscheid des Nutzers)
 
-- Reiter "Routinen" jedes beteiligten Geräts zeigt die Routine, mit dem Chip "+N weitere" (aufgeklappt: die anderen Ziele).
-- Übersicht "Alle Routinen": Eine Mehrziel-Routine steht in einer Karte "Mehrere Geräte" (wie Szenen und Gruppen ohne Gerät),
-  nicht doppelt unter jedem Gerät. Zu entscheiden: oder zusätzlich in jeder Gerätekarte.
+- Keine getrennte Karte in der Übersicht "Alle Routinen": Die Routine steht in der Karte jedes Geräts, das in ihr vorkommt, und im
+  Reiter "Routinen" jedes dieser Geräte. Es ist dieselbe Routine (ein Schalter, eine Zeit); ein Chip nennt die anderen Geräte
+  ("+1 Gerät: Steckdose Bad"). Zahlen in der Übersicht zählen sie einmal.
+- Aufgeklappt zeigt die Routine alle Ziele (das aktuelle Gerät markiert, die anderen mit Pfeil zu ihrem Gerät).
+- Löschen löscht die ganze Routine, die Rückfrage nennt die Geräte.
 - Protokoll: Titel der Routine, in der Spur ein Schritt je Ziel.
 
 ## Umsetzung (Vorschlag)
 
-1. Mockups: Seite "+ Gerät hinzufügen" mit Ziel-Chips (Desktop, Handy), Seite "Zurückschalten" mit Wahl je Ziel, Karte
-   "Mehrere Geräte" und Chip "+N" im Geräte-Reiter. Varianten für die Chips und die Wahl je Ziel; der Nutzer entscheidet.
+1. Mockups (`index.html`, `routine-multi-v1.png`): Seite "Was schalten" (A Chips, B Liste, C Fusszeile), Gerät für Ziel 2,
+   Seite "Zurückschalten" (A je Gerät, B eine Wahl), Anzeige bei jedem Gerät, Fehlerfall. Der Nutzer entscheidet.
 2. Backend: Schema, `targets()`, Engine, Protokoll, Teilfehler, Laufzeitdaten je Ziel, Sicherung, Tests (pytest).
 3. Panel: Assistent (Ziele, Chips, Wiederholung der Seiten), Liste, Karte, Texte DE/EN, Simulator, Suiten (Desktop und Handy).
 4. Doku: README DE/EN, CHANGELOG DE/EN, CONCEPT; Version 2.181.0.
