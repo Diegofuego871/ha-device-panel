@@ -1,0 +1,101 @@
+<!doctype html><meta charset="utf-8"><title>Routine mit mehreren Geräten, Ziele bearbeiten</title><style>
+:root{--p:#2e8b57;--ps:#e3f1e9;--bg:#fff;--card:#f1f1f1;--ln:#dcdcdc;--t2:#6b6b6b;--red:#c62828}
+*{box-sizing:border-box}
+body{margin:0;background:#e9ecef;font:14px/1.35 Roboto,Arial,sans-serif;color:#1d1d1d;padding:24px;width:1640px}
+h2{margin:30px 0 4px;font-size:18px}.rec{color:var(--p)}
+.sub{color:var(--t2);font-size:13px;margin:0 0 12px;max-width:1400px}
+.row{display:flex;gap:24px;align-items:flex-start}
+.cap{color:#777;font-size:12px;letter-spacing:.04em;text-transform:uppercase;margin-bottom:6px}
+.dsk{width:760px;background:var(--bg);border-radius:18px;padding:18px 22px;display:flex;flex-direction:column;gap:10px;box-shadow:0 2px 14px #0002}
+.ph{width:390px;background:var(--bg);border-radius:22px;padding:16px;display:flex;flex-direction:column;gap:10px;box-shadow:0 2px 14px #0002}
+.hd{display:flex;justify-content:space-between}.hd b{font-size:19px;font-weight:500;display:block}.hd small{color:var(--t2);font-size:13px}
+.x{width:34px;height:34px;border:1px solid #bbb;border-radius:50%;display:grid;place-items:center;color:#555}
+.stp{display:flex;justify-content:space-between;color:var(--t2);font-size:12.5px}.bars{display:flex;gap:6px}.bars i{flex:1;height:5px;border-radius:3px;background:#ddd}.bars i.on{background:var(--p)}
+h3{margin:2px 0 0;font-size:19px}
+.hint{color:var(--t2);font-size:12.5px}
+.seg{display:flex;background:#ececec;border-radius:14px;padding:4px;gap:2px}.seg span{flex:1;text-align:center;padding:8px 0;border-radius:11px;font-size:13.5px;color:#555}.seg .on{background:#fff;color:var(--p);box-shadow:0 1px 3px #0002}
+.cardT{border:1px solid var(--ln);border-radius:16px;background:#fafafa;overflow:hidden}
+.cardT.open{border-color:var(--p);background:#fff;box-shadow:0 0 0 1px var(--p) inset}
+.ch{display:flex;align-items:center;gap:10px;padding:9px 12px}.ch .ic{width:34px;height:34px;border-radius:50%;background:var(--ps);display:grid;place-items:center;font-size:16px;flex:none}
+.ch .t{flex:1;min-width:0}.ch .t b{display:block;font-size:14px}.ch .t small{color:var(--t2);font-size:12px}
+.cb{width:24px;height:24px;border:1.5px solid var(--p);border-radius:50%;display:grid;place-items:center;color:var(--p);font-size:11px;flex:none}
+.xx{color:#777;font-size:15px;padding:0 4px}
+.body{padding:4px 12px 12px;display:flex;flex-direction:column;gap:8px;border-top:1px solid var(--ln)}
+.opt{display:flex;align-items:center;gap:10px;background:var(--card);border-radius:14px;padding:9px 12px}.opt .ic{width:34px;height:34px;border-radius:50%;background:var(--ps);display:grid;place-items:center;flex:none}
+.opt .t{flex:1}.opt .t b{display:block;font-size:14px}.opt .t small{color:var(--t2);font-size:12px}.val{font-weight:600;color:#444}
+.rad{width:20px;height:20px;border-radius:50%;border:2px solid #999;flex:none}.rad.on{border-color:var(--p);background:radial-gradient(var(--p) 40%,transparent 45%)}
+.lbl{color:var(--t2);font-size:12.5px}
+.try{border:1px solid var(--p);color:var(--p);border-radius:14px;padding:9px 14px;width:max-content;font-weight:500}
+.add{border:1.5px dashed var(--p);color:var(--p);border-radius:14px;text-align:center;padding:11px;font-weight:500}
+.ft{display:flex;gap:8px;border-top:1px solid var(--ln);padding-top:12px;margin-top:6px}
+.ft span{flex:1;text-align:center;padding:11px 6px;border-radius:14px;border:1px solid #bbb;font-size:14px}.ft .sv{border-color:var(--p);color:var(--p)}.ft .go{background:var(--p);border-color:var(--p);color:#fff;font-weight:500}
+.tabs{display:flex;gap:6px;background:#ececec;border-radius:14px;padding:4px;overflow:hidden}.tabs span{padding:8px 12px;border-radius:11px;font-size:13px;color:#555;white-space:nowrap;display:flex;gap:6px;align-items:center}.tabs .on{background:#fff;color:var(--p);box-shadow:0 1px 3px #0002}.tabs .plus{margin-left:auto;color:var(--p);font-weight:600}
+.note{color:var(--t2);font-size:12.5px;max-width:760px;margin-top:8px}
+.srch{border:1px solid #ccc;border-radius:99px;padding:9px 14px;color:var(--t2)}
+.cost{display:inline-block;background:#ddd;border-radius:8px;padding:1px 8px;font-size:11px;color:#555;margin-left:6px}
+</style><body>
+
+<h2>A · Aufklappen: alle Ziele als Karten in fester Reihenfolge <span class="rec">(Empfehlung)</span></h2>
+<p class="sub">Die Reihenfolge ändert sich nie. Die Karte, die du bearbeitest, ist offen und enthält die Seiten Gerät, Was und Optionen; die anderen sind zugeklappt und zeigen eine Zeile. Ein Tipp auf eine zugeklappte Karte öffnet sie und klappt die bisherige zu. "ZIEL 1 VON 2" entfällt.</p>
+<div class="row">
+<div><div class="cap">Desktop · Ziel 1 offen</div><div class="dsk">
+<div class="hd"><div><b>Neue Routine</b><small>AP U7 Pro XG Schlafzimmer</small></div><div class="x">✕</div></div>
+<div class="stp"><span>Schritt 2 von 6</span><span>Was schalten</span></div><div class="bars"><i class="on"></i><i class="on"></i><i></i><i></i><i></i><i></i></div>
+<h3>Was soll geschaltet werden?</h3>
+<div class="cardT open"><div class="ch"><div class="ic">💡</div><div class="t"><b>1 · LED</b><small>Bluetooth Proxy Wohnzimmer · Einschalten</small></div><span class="xx">✕</span><div class="cb" style="transform:rotate(180deg)">⌄</div></div>
+<div class="body"><div class="opt"><div class="ic">💡</div><div class="t"><b>LED</b><small>light.ap_u7_pro_xg_schlafzimmer_led</small></div><span class="val">aus</span><div class="rad on"></div></div>
+<div class="lbl">Aktion</div><div class="seg"><span class="on">Einschalten</span><span>Ausschalten</span><span>Umschalten</span></div>
+<div class="hint">Ergebnis: LED einschalten.</div><div class="try">▶ Jetzt ausführen</div></div></div>
+<div class="cardT"><div class="ch"><div class="ic">🔌</div><div class="t"><b>2 · Steckdose Bad</b><small>Beispiel AG · Einschalten</small></div><span class="xx">✕</span><div class="cb">⌄</div></div></div>
+<div class="add">+ Gerät hinzufügen</div>
+<div class="hint">2 von höchstens 10 Geräten. Zeit, Zurückschalten, Meldung und Name gelten für alle zusammen.</div>
+<div class="ft"><span>← Zurück</span><span class="sv">Speichern</span><span class="go">Weiter →</span></div></div></div>
+
+<div><div class="cap">Handy · Ziel 2 offen</div><div class="ph">
+<div class="hd"><div><b>Neue Routine</b><small>AP U7 Pro XG Schlafzimmer</small></div><div class="x">✕</div></div>
+<div class="stp"><span>Schritt 2 von 6</span><span>Was schalten</span></div><div class="bars"><i class="on"></i><i class="on"></i><i></i><i></i><i></i><i></i></div>
+<h3>Was soll geschaltet werden?</h3>
+<div class="cardT"><div class="ch"><div class="ic">💡</div><div class="t"><b>1 · LED</b><small>Einschalten</small></div><span class="xx">✕</span><div class="cb">⌄</div></div></div>
+<div class="cardT open"><div class="ch"><div class="ic">🔌</div><div class="t"><b>2 · Steckdose Bad</b><small>Einschalten</small></div><span class="xx">✕</span><div class="cb" style="transform:rotate(180deg)">⌄</div></div>
+<div class="body"><div class="opt"><div class="ic">🔌</div><div class="t"><b>Steckdose Bad</b><small>switch.bad</small></div><div class="rad on"></div></div>
+<div class="lbl">Aktion</div><div class="seg"><span class="on">Einschalten</span><span>Aus</span><span>Umschalten</span></div></div></div>
+<div class="add">+ Gerät hinzufügen</div>
+<div class="ft"><span>← Zurück</span><span class="go">Weiter →</span></div></div></div>
+
+<div><div class="cap">Handy · "+ Gerät hinzufügen": neue Karte, gleich offen</div><div class="ph">
+<div class="hd"><div><b>Neue Routine</b><small>AP U7 Pro XG Schlafzimmer</small></div><div class="x">✕</div></div>
+<div class="stp"><span>Schritt 1 von 6</span><span>Gerät</span></div><div class="bars"><i class="on"></i><i></i><i></i><i></i><i></i><i></i></div>
+<h3>Was soll geschaltet werden?</h3>
+<div class="cardT"><div class="ch"><div class="ic">💡</div><div class="t"><b>1 · LED</b><small>Einschalten</small></div><span class="xx">✕</span><div class="cb">⌄</div></div></div>
+<div class="cardT open"><div class="ch"><div class="ic">➕</div><div class="t"><b>2 · Neues Gerät</b><small>Gerät wählen</small></div><span class="xx">✕</span><div class="cb" style="transform:rotate(180deg)">⌄</div></div>
+<div class="body"><div class="srch">🔍 Suchen …</div>
+<div class="opt"><div class="ic">🔌</div><div class="t"><b>Steckdose Bad</b><small>Beispiel AG · Bad</small></div><div class="rad on"></div></div>
+<div class="opt"><div class="ic">💡</div><div class="t"><b>LED-Ring</b><small>Beispiel AG · Wohnzimmer</small></div><div class="rad"></div></div></div></div>
+<div class="ft"><span>✕ Ziel verwerfen</span><span class="go">Weiter →</span></div></div></div>
+</div>
+<p class="note">Das ✕ oben rechts in der Karte entfernt das Ziel (mit "Ziel verwerfen" auf der ersten Seite eines neuen Ziels). Der Pfeil klappt auf und zu. Bei 10 Zielen sind 9 zugeklappt: eine Zeile je Ziel, die Seite bleibt übersichtlich.</p>
+
+<h2>B · Reiter oben: "1 LED | 2 Steckdose Bad | +"</h2>
+<p class="sub">Ein Reiter je Ziel, wie die Reiterleisten sonst im Panel. Der gewählte Reiter bestimmt den Inhalt darunter; die Reihenfolge der Reiter ändert sich nie.</p>
+<div class="row">
+<div><div class="cap">Desktop · Reiter 1</div><div class="dsk">
+<div class="hd"><div><b>Neue Routine</b><small>AP U7 Pro XG Schlafzimmer</small></div><div class="x">✕</div></div>
+<div class="stp"><span>Schritt 2 von 6</span><span>Was schalten</span></div><div class="bars"><i class="on"></i><i class="on"></i><i></i><i></i><i></i><i></i></div>
+<h3>Was soll geschaltet werden?</h3>
+<div class="tabs"><span class="on">1 LED <b style="color:#999">✕</b></span><span>2 Steckdose Bad <b style="color:#999">✕</b></span><span class="plus">+ Gerät</span></div>
+<div class="opt"><div class="ic">💡</div><div class="t"><b>LED</b><small>light.ap_u7_pro_xg_schlafzimmer_led</small></div><span class="val">aus</span><div class="rad on"></div></div>
+<div class="lbl">Aktion</div><div class="seg"><span class="on">Einschalten</span><span>Ausschalten</span><span>Umschalten</span></div>
+<div class="hint">Ergebnis: LED einschalten.</div><div class="try">▶ Jetzt ausführen</div>
+<div class="hint">2 von höchstens 10 Geräten. Zeit, Zurückschalten, Meldung und Name gelten für alle zusammen.</div>
+<div class="ft"><span>← Zurück</span><span class="sv">Speichern</span><span class="go">Weiter →</span></div></div></div>
+<div><div class="cap">Handy · mit fünf Zielen</div><div class="ph">
+<div class="hd"><div><b>Neue Routine</b><small>AP U7 Pro XG Schlafzimmer</small></div><div class="x">✕</div></div>
+<div class="stp"><span>Schritt 2 von 6</span><span>Was schalten</span></div><div class="bars"><i class="on"></i><i class="on"></i><i></i><i></i><i></i><i></i></div>
+<h3>Was soll geschaltet werden?</h3>
+<div class="tabs"><span>1 LED</span><span class="on">2 Steckdose …</span><span>3 Rol…</span><span>4 …</span></div>
+<div class="opt"><div class="ic">🔌</div><div class="t"><b>Steckdose Bad</b><small>switch.bad</small></div><div class="rad on"></div></div>
+<div class="lbl">Aktion</div><div class="seg"><span class="on">Einschalten</span><span>Aus</span><span>Umschalten</span></div>
+<div class="hint" style="color:#b26a00">Reiter 3 bis 5 sind aus dem Bild gescrollt.</div>
+<div class="ft"><span>← Zurück</span><span class="go">Weiter →</span></div></div></div>
+</div>
+<p class="note">Platzsparend und vertraut. Nachteil: Bei fünf oder mehr Zielen scrollt die Leiste, man sieht nicht alle Ziele auf einmal und nicht, was in den anderen steht. Ein Ziel entfernen geht nur am Reiter (kleines ✕), auf dem Handy leicht zu treffen verfehlt.</p>
