@@ -7,6 +7,14 @@ All notable changes to this integration are documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/).
 
+## [2.180.1] - 2026-10-30
+
+The README shows the number of active installations.
+
+### Changed
+
+- **README, badge "active installs":** the badge row shows how many installations of the integration report to the Home Assistant analytics (only installations with the analytics options for basic data and usage switched on are counted). HACS reads the README of the latest release, so the badge shows in HACS from this version on.
+
 ## [2.180.0] - 2026-10-29
 
 The outage pulse tile has a maximum width on large screens.
@@ -5334,6 +5342,7 @@ First pre-release.
   GitHub Actions for HACS/hassfest validation and tests.
 
 [2.6.0]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v2.6.0
+[2.180.1]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v2.180.1
 [2.180.0]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v2.180.0
 [2.179.0]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v2.179.0
 [2.178.0]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v2.178.0

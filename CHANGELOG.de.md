@@ -7,6 +7,14 @@ Alle nennenswerten Änderungen an dieser Integration stehen in dieser Datei.
 Das Format folgt [Keep a Changelog](https://keepachangelog.com/de/1.1.0/),
 die Versionsnummern folgen [Semantic Versioning](https://semver.org/lang/de/).
 
+## [2.180.1] - 2026-10-30
+
+Das README zeigt die Zahl der aktiven Installationen.
+
+### Geändert
+
+- **README, Badge "active installs":** Die Badge-Zeile zeigt, wie viele Installationen der Integration an die Home-Assistant-Statistik melden (gezählt werden nur Installationen, bei denen die Analyse-Optionen für Basisdaten und Nutzung eingeschaltet sind). HACS liest das README des neuesten Releases, darum erscheint das Badge in HACS ab dieser Version.
+
 ## [2.180.0] - 2026-10-29
 
 Die Kachel "Ausfall-Puls" hat auf grossen Bildschirmen eine Höchstbreite.
@@ -5435,6 +5443,7 @@ Erste Vorabversion.
   GitHub Actions für die Prüfungen von HACS und hassfest sowie die Tests.
 
 [2.6.0]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v2.6.0
+[2.180.1]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v2.180.1
 [2.180.0]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v2.180.0
 [2.179.0]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v2.179.0
 [2.178.0]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v2.178.0
