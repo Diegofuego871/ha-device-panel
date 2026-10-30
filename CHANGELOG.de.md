@@ -7,6 +7,15 @@ Alle nennenswerten Änderungen an dieser Integration stehen in dieser Datei.
 Das Format folgt [Keep a Changelog](https://keepachangelog.com/de/1.1.0/),
 die Versionsnummern folgen [Semantic Versioning](https://semver.org/lang/de/).
 
+## [2.181.1] - 2026-10-30
+
+Die Geräte einer Routine sind Karten zum Auf- und Zuklappen.
+
+### Geändert
+
+- **Routine mit mehreren Geräten, Assistent:** Alle Geräte stehen als Karten in fester Reihenfolge ("1 · Lampe", "2 · Steckdose"). Die Karte, die du bearbeitest, ist offen und enthält die Seiten Gerät, Was und Optionen; die anderen sind zu und zeigen eine Zeile (Gerät und Aktion). Ein Tipp auf eine zugeklappte Karte öffnet sie und klappt die andere zu; die Reihenfolge ändert sich nie. Die Zeile "Ziel 1 von 2" und der Stift entfallen, das Kreuz an einer Karte entfernt das Gerät. "+ Gerät hinzufügen" legt unten eine neue Karte an, gleich offen mit der Wahl des Geräts; "Ziel verwerfen" auf ihrer ersten Seite nimmt sie wieder weg. Eine unfertige neue Karte entfällt, wenn du eine andere öffnest.
+- **Routinen-Übersicht und Reiter des Geräts:** Bei einer Routine mit mehreren Geräten stehen die Aktionen (Bearbeiten, Ausführen, Protokoll, Löschen) jetzt direkt unter dem Satz, über "Schaltet N Geräte", weil sie für die ganze Routine gelten und nicht für das letzte Gerät.
+
 ## [2.181.0] - 2026-10-30
 
 Eine Routine kann mehrere Geräte schalten.
@@ -5455,6 +5464,7 @@ Erste Vorabversion.
   GitHub Actions für die Prüfungen von HACS und hassfest sowie die Tests.
 
 [2.6.0]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v2.6.0
+[2.181.1]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v2.181.1
 [2.181.0]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v2.181.0
 [2.180.1]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v2.180.1
 [2.180.0]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v2.180.0

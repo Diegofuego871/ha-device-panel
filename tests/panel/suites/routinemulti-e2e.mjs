@@ -50,10 +50,10 @@ for (const lang of ["de", "en"]) {
     // Ziel 2: wieder erste Seite (Gerät wählen), "Zurück" verwirft das Ziel
     await tap(`${W} [data-rt="tg-add"]`);
     await wait(`return !!r.querySelector('${W} [data-rt="dev"]')`);
-    check(`[${tag}] Nach dem Knopf: Seite zur Geräte-Wahl, das erste Ziel steht oben als Zeile`, await ev(`return r.querySelectorAll('${W} .rt-tgt').length === 1 && /Lampe Küche/.test(r.querySelector('${W} .rt-tgt').textContent) && /2/.test(r.querySelector('${W} .rt-tgt-tag').textContent)`));
+    check(`[${tag}] Nach dem Knopf: Seite zur Geräte-Wahl, das erste Ziel steht oben als Zeile`, await ev(`const c = r.querySelectorAll('${W} .rt-card'); return c.length === 2 && !c[0].classList.contains("open") && /1 · Lampe Küche/.test(c[0].textContent) && c[1].classList.contains("open") && /2 ·/.test(c[1].querySelector(".rt-card-head").textContent)`));
     check(`[${tag}] "Zurück" heisst jetzt "Ziel verwerfen"`, await ev(`const x = r.querySelector('${W} .mgw-foot [data-rt="target-drop"]'); return !!x && x.textContent.trim() === ${JSON.stringify(lang === "de" ? "Ziel verwerfen" : "Discard target")}`));
     await tap(`${W} [data-rt="target-drop"]`);
-    check(`[${tag}] Ziel verworfen: zurück bei Ziel 1, keine Zeilen mehr`, (await wait(`return !!r.querySelector('${W} [data-rt="pick"]') && r.querySelectorAll('${W} .rt-tgt').length === 0`)) && (await ev(`return r.querySelector('${W} [data-rt="pick"][aria-checked="true"]')?.dataset.id === "switch.lampe"`)));
+    check(`[${tag}] Ziel verworfen: zurück bei Ziel 1, keine Zeilen mehr`, (await wait(`return !!r.querySelector('${W} [data-rt="pick"]') && r.querySelectorAll('${W} .rt-card').length === 0`)) && (await ev(`return r.querySelector('${W} [data-rt="pick"][aria-checked="true"]')?.dataset.id === "switch.lampe"`)));
     await tap(`${W} [data-rt="tg-add"]`);
     await wait(`return !!r.querySelector('${W} [data-rt="dev"]')`);
     // Dasselbe Gerät nochmals: die Lampe ist schon vergeben, die Steckdose Flur wird Ziel 2
@@ -68,7 +68,7 @@ for (const lang of ["de", "en"]) {
     await wait(`return !!r.querySelector('${W} [data-rt="dev"][data-id="e"]')`);
     await tap(`${W} [data-rt="dev"][data-id="e"]`);
     await tap(`${W} [data-rt="nav-next"]`);
-    check(`[${tag}] Gerät mit einer Entität: gleich gewählt, zwei Zeilen oben, Kopf "Ziel 3 von 3"`, await wait(`return r.querySelector('${W} [data-rt="pick"][data-id="switch.bad"]')?.getAttribute("aria-checked") === "true" && r.querySelectorAll('${W} .rt-tgt').length === 2 && /3/.test(r.querySelector('${W} .rt-tgt-tag').textContent)`));
+    check(`[${tag}] Gerät mit einer Entität: gleich gewählt, zwei Zeilen oben, Kopf "Ziel 3 von 3"`, await wait(`return r.querySelector('${W} [data-rt="pick"][data-id="switch.bad"]')?.getAttribute("aria-checked") === "true" && r.querySelectorAll('${W} .rt-card:not(.open)').length === 2 && /3 ·/.test(r.querySelector('${W} .rt-card.open .rt-card-head').textContent)`));
 
     // Weiter bis "Zurückschalten": nach Dauer, "Danach" je Gerät
     const stepTo = async (sel) => { for (let i = 0; i < 8 && !(await ev(`return !!r.querySelector('${sel}')`)); i++) { await tap(`${W} [data-rt="nav-next"]`); await wait(`return true`); } };
@@ -92,6 +92,7 @@ for (const lang of ["de", "en"]) {
     await ev(`[...r.querySelectorAll(".rt-root .rt-rowcard")].find((x) => /Lampe Küche \\+2/.test(x.textContent)).querySelector(".mg-dhead").click()`);
     await wait(`return !!r.querySelector(".rt-root .rt-clock")`);
     check(`[${tag}] Aufgeklappt: "${lang === "de" ? "Schaltet 3 Geräte" : "Switches 3 devices"}" mit drei Zeilen, das eigene Gerät markiert`, await ev(`const t = r.querySelector(".rt-root .rt-tgts"); return !!t && t.querySelectorAll(".rt-tgt-row").length === 3 && t.querySelectorAll(".rt-tgt-row.here").length === 1 && /${lang === "de" ? "Schaltet 3 Geräte" : "Switches 3 devices"}/.test(t.textContent)`));
+    check(`[${tag}] Die Aktionen (Bearbeiten, Ausführen …) stehen über der Liste der Geräte, nicht darunter`, await ev(`const c = r.querySelector(".rt-root .rt-clock"); const acts = c.querySelector(".acts"); const list = c.querySelector(".rt-tgts"); return !!acts && !!list && !!(acts.compareDocumentPosition(list) & Node.DOCUMENT_POSITION_FOLLOWING)`));
     await ev(`r.host._openDevice("d", "routine")`);
     check(`[${tag}] Auch das Gerät "d" zeigt sie (ein Eintrag, nicht doppelt)`, await wait(`return r.querySelectorAll(".rt-root .rt-rowcard, .rt-root .rt-clock").length === 1`));
 
@@ -101,9 +102,15 @@ for (const lang of ["de", "en"]) {
     await tap(`.rt-root .rt-clock [data-rt='edit']`);
     await wait(`return !!r.querySelector('${W} [data-rt="goto"]')`);
     await tap(`${W} [data-rt="goto"][data-step="1"]`);
-    await wait(`return r.querySelectorAll('${W} .rt-tgt').length === 2`);
-    await tap(`${W} .rt-tgt [data-rt="tg-del"]`);
-    check(`[${tag}] Ziel entfernt: eine Zeile weniger`, await wait(`return r.querySelectorAll('${W} .rt-tgt').length === 1`));
+    await wait(`return r.querySelectorAll('${W} .rt-card').length === 3`);
+    // Reihenfolge fest: ein Tipp auf eine zugeklappte Karte öffnet sie, die Titel bleiben in derselben Reihenfolge
+    const titles = () => ev(`return [...r.querySelectorAll('${W} .rt-card .rt-card-main b')].map((x) => x.textContent.trim()).join("|")`);
+    const before = await titles();
+    await tap(`${W} .rt-card:not(.open) .rt-card-main`);
+    await wait(`return r.querySelector('${W} .rt-card.open .rt-card-main b').textContent.startsWith("2")`);
+    check(`[${tag}] Karte angetippt: sie ist offen, die Reihenfolge der Karten bleibt`, (await titles()) === before && (await ev(`return r.querySelectorAll('${W} .rt-card.open').length === 1 && r.querySelector('${W} .rt-card.open .rt-card-main b').textContent.startsWith("2")`)), `${before} / ${await titles()}`);
+    await tap(`${W} .rt-card:not(.open) [data-rt="tg-del"]`);
+    check(`[${tag}] Ziel entfernt: eine Karte weniger`, await wait(`return r.querySelectorAll('${W} .rt-card').length === 2`));
     await tap(`${W} [data-rt="nav-quick"]`);
     await wait(`return !r.querySelector('${W} [data-rt="goto"]')`);
     const again = (await calls("device_panel/routine_save")).at(-1)?.routine;

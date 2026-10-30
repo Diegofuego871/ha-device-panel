@@ -2027,13 +2027,16 @@ dialog.magic-dlg[open] > .mgw-body.two { display: flex; gap: 22px; overflow: hid
 .rt-sumlist { margin: 6px 0 0; padding-left: 18px; }
 .rt-sumlist li + li { margin-top: 2px; }
 /* Mehrere Ziele in einer Routine (seit 2.181.0): Zeilen der schon gewählten Ziele, Kopf des aktiven Ziels, Liste in aufgeklappten Karten */
-.rt-tgt { display: flex; align-items: center; gap: 10px; margin-top: 8px; padding: 8px 10px 8px 12px; border-radius: 14px; background: color-mix(in srgb, var(--dp-text) 6%, transparent); }
-.rt-tgt .mg-t { flex: 1; min-width: 0; }
-.rt-tgt .mg-t small { display: block; color: var(--dp-text2); font-size: 12px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 .rt-tgt-btn { display: grid; place-items: center; width: 32px; height: 32px; flex: none; border: 0; border-radius: 50%; background: none; color: var(--dp-text2); cursor: pointer; }
 .rt-tgt-btn:hover, .rt-tgt-btn:focus-visible { background: color-mix(in srgb, var(--dp-text) 10%, transparent); outline: none; }
-.rt-tgt-tag { margin: 14px 0 6px; color: var(--dp-primary); font-size: 12px; font-weight: 600; letter-spacing: .03em; text-transform: uppercase; }
-.mg-pick:disabled { opacity: .5; cursor: default; }
+.rt-card { margin-top: 10px; border: 1px solid var(--dp-divider); border-radius: 16px; overflow: hidden; background: color-mix(in srgb, var(--dp-text) 3%, transparent); }
+.rt-card.open { border-color: var(--dp-primary); background: none; box-shadow: 0 0 0 1px var(--dp-primary) inset; }
+.rt-card-head { display: flex; align-items: center; gap: 6px; padding: 8px 10px 8px 12px; }
+.rt-card-main { display: flex; flex: 1; align-items: center; gap: 10px; min-width: 0; padding: 0; border: 0; background: none; color: inherit; font: inherit; text-align: left; cursor: pointer; }
+.rt-card-main:disabled { cursor: default; opacity: 1; color: inherit; }
+.rt-card-main .mg-t { min-width: 0; }
+.rt-card-main .mg-t small { display: block; color: var(--dp-text2); font-size: 12px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.rt-card-body { padding: 4px 12px 12px; border-top: 1px solid var(--dp-divider); }
 .rt-tgts { margin-top: 10px; }
 .rt-tgt-row { display: flex; align-items: center; gap: 10px; margin-top: 6px; padding: 7px 10px; border-radius: 12px; background: color-mix(in srgb, var(--dp-text) 6%, transparent); }
 .rt-tgt-row.here { background: var(--dp-primary-soft); }

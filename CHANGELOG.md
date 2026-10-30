@@ -7,6 +7,15 @@ All notable changes to this integration are documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/).
 
+## [2.181.1] - 2026-10-30
+
+The devices of a routine are cards that open and close.
+
+### Changed
+
+- **Routine with several devices, assistant:** all devices stand as cards in a fixed order ("1 · Lamp", "2 · Socket"). The card you are editing is open and holds the pages Device, What and Options; the others are closed and show one line (device and action). A tap on a closed card opens it and closes the other; the order never changes. The line "Target 1 of 2" and the pencil are gone, the cross on a card removes the device. "+ Add device" adds a new card below, already open with the choice of the device; "Discard target" on its first page removes it again. A new card that is left unfinished is dropped when you open another one.
+- **Routines overview and device tab:** for a routine with several devices the actions (Edit, Run, Log, Delete) now stand directly under the sentence, above "Switches N devices", because they apply to the whole routine and not to the last device.
+
 ## [2.181.0] - 2026-10-30
 
 A routine can switch several devices.
@@ -5354,6 +5363,7 @@ First pre-release.
   GitHub Actions for HACS/hassfest validation and tests.
 
 [2.6.0]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v2.6.0
+[2.181.1]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v2.181.1
 [2.181.0]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v2.181.0
 [2.180.1]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v2.180.1
 [2.180.0]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v2.180.0

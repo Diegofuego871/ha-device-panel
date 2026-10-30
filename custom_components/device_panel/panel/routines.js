@@ -671,9 +671,9 @@ export class RoutineUi {
       : "";
     const fold = foldable ? `<button type="button" class="rt-fold" data-rt="list-fold" data-id="${esc(rt.id)}" aria-expanded="true" title="${esc(t("rtFoldOne"))}" aria-label="${esc(t("rtFoldOne"))}">${this.chevHtml(true)}</button>` : "";
     return `<div class="rt-clock${rt.enabled ? "" : " off"}"><div class="top">${left}<span class="grow"></span>${sw}${fold}</div>
-      <div class="name">${routineEmoji(domain)} ${esc(rt.name)}</div><div class="what">${what}</div>${this.targetsListHtml(rt, this.deviceId)}${days}
+      <div class="name">${routineEmoji(domain)} ${esc(rt.name)}</div><div class="what">${what}</div>${days}
       ${status.length ? `<div class="what">${status.join(" · ")}</div>` : ""}
-      <div class="next">${next}${acts}</div>${confirm}</div>`;
+      <div class="next">${next}${acts}</div>${this.targetsListHtml(rt, this.deviceId)}${confirm}</div>`;
   }
 
   // Eine Auslöser-Routine in der Liste: wartet auf den Auslöser, oder ist eingeschaltet und wartet auf das Zurückschalten
@@ -925,7 +925,7 @@ export class RoutineUi {
     if (backWord) status.unshift(`<span class="mg-on">${esc(rt.back_mode === "restore" || rt.action === "set" ? t("rtBackAtRowRestore", this.localText(rt.revert_local)) : t("rtBackAtRow", backWord, this.localText(rt.revert_local)))}</span>`);
     const next = rt.running ? `<span class="mg-on">${esc(t("rtRunningShort"))}</span>` : rt.kind === "trigger" && rt.enabled ? `<span class="mg-on">${esc(this.waitsText(rt))}</span>` : rt.enabled && rt.due_local ? `${esc(t("rtNextRun"))} <span class="mg-on">${esc(this.localText(rt.due_local))}</span>` : rt.done ? esc(t("rtDone")) : esc(t("rtDisabled"));
     return `<div class="mg-card${rt.enabled ? "" : " off"}"><div class="mg-row"><span class="mg-ic" aria-hidden="true">${routineEmoji(rt.domain)}</span>
-      <div class="mg-t"><b>${esc(rt.name)}</b><small>${esc(this.sentence(rt))}</small><small class="mg-status">${[next, ...status].join(" · ")}</small></div>${sw}</div>${this.targetsListHtml(rt, here)}${acts}${ran}${confirm}</div>`;
+      <div class="mg-t"><b>${esc(rt.name)}</b><small>${esc(this.sentence(rt))}</small><small class="mg-status">${[next, ...status].join(" · ")}</small></div>${sw}</div>${acts}${this.targetsListHtml(rt, here)}${ran}${confirm}</div>`;
   }
 
   chevHtml(open) {
@@ -1191,24 +1191,30 @@ export class RoutineUi {
     this.requestPreview();
   }
 
-  // Zeilen der schon gewählten Ziele über dem aktiven (Seiten "Was schalten" und "Optionen")
-  targetsHtml() {
+  // Mehrere Ziele (seit 2.181.1): alle Ziele als Karten in fester Reihenfolge; die Karte des aktiven Ziels ist offen und enthält die Seite
+  // (Gerät, Was, Optionen), die anderen sind zugeklappt (ein Tipp öffnet sie). Bei einem Ziel steht die Seite wie bisher ohne Karte.
+  // "last": letzte Seite eines Ziels, darunter steht "+ Gerät hinzufügen".
+  targetPage(inner, last) {
     const d = this.wiz.draft;
-    if (!d.tg.length) return "";
+    const add = last ? this.addTargetHtml() : "";
+    if (!d.tg.length) return `${inner}${add}`;
     const esc = (v) => this.esc(v);
     const t = (k, ...a) => this.t(k, ...a);
     const cur = this.wiz.cur || 0;
-    const rows = this.targets()
+    const cards = this.targets()
       .map((x, i) => {
-        if (i === cur) return "";
-        const dev = this.targetDevice(x);
-        return `<div class="rt-tgt"><span class="mg-ic" aria-hidden="true">${routineEmoji(this.domainOf(x.entity_id))}</span>
-          <span class="mg-t"><b>${esc(this.targetName(x))}</b><small>${esc([dev, this.targetSummary(x)].filter(Boolean).join(" · "))}</small></span>
-          <button type="button" class="rt-tgt-btn" data-rt="tg-edit" data-i="${i}" title="${esc(t("rtTgEdit"))}" aria-label="${esc(t("rtTgEdit"))}">${this.h.mdi("pencil", 16)}</button>
-          <button type="button" class="rt-tgt-btn" data-rt="tg-del" data-i="${i}" title="${esc(t("rtTgRemove"))}" aria-label="${esc(t("rtTgRemove"))}">${this.h.mdi("close", 16)}</button></div>`;
+        const open = i === cur;
+        const named = Boolean(x.entity_id);
+        const title = `${i + 1} · ${named ? this.targetName(x) : t("rtTgNew")}`;
+        const sub = named ? [this.targetDevice(x), this.targetSummary(x)].filter(Boolean).join(" · ") : t("rtTgPickDevice");
+        const main = `<button type="button" class="rt-card-main"${open ? " disabled" : ` data-rt="tg-edit" data-i="${i}"`} aria-expanded="${open}">
+            <span class="mg-ic" aria-hidden="true">${named ? routineEmoji(this.domainOf(x.entity_id)) : "➕"}</span>
+            <span class="mg-t"><b>${esc(title)}</b><small>${esc(sub)}</small></span></button>`;
+        const del = `<button type="button" class="rt-tgt-btn" data-rt="tg-del" data-i="${i}" title="${esc(t("rtTgRemove"))}" aria-label="${esc(t("rtTgRemove"))}">${this.h.mdi("close", 16)}</button>`;
+        return `<div class="rt-card${open ? " open" : ""}"><div class="rt-card-head">${main}${del}${this.chevHtml(open)}</div>${open ? `<div class="rt-card-body">${inner}</div>` : ""}</div>`;
       })
       .join("");
-    return `${rows}<div class="rt-tgt-tag">${esc(t("rtTgOf", cur + 1, d.tg.length))}</div>`;
+    return `${cards}${add}`;
   }
 
   // "+ Gerät hinzufügen" unter der letzten Seite eines Ziels
@@ -1441,10 +1447,10 @@ export class RoutineUi {
           .map(([k, label]) => `<button type="button" role="tab" class="sub-tab two${k === kind ? " on" : ""}" data-rt="dev-kind" data-v="${k}" aria-selected="${k === kind}"><span class="tab-l">${esc(t(label))}</span> <span class="tab-s">${count(k)}</span></button>`)
           .join("")}</div>`
       : "";
-    return `${this.targetsHtml()}<p class="mg-note">${esc(t("rtPickDeviceNote"))}</p>
+    return this.targetPage(`<p class="mg-note">${esc(t("rtPickDeviceNote"))}</p>
       ${bar}
       <label class="list-search" data-for="rt-devs">${this.h.mdi("search", 18)}<input type="search" data-rt="dev-search" value="${esc(w.devQuery)}" placeholder="${esc(t("listSearch"))}" aria-label="${esc(t("listSearch"))}" enterkeyhint="search" autocomplete="off" autocapitalize="off" spellcheck="false">${this.host._fieldClearHtml("data-fc", "", w.devQuery)}</label>
-      <div data-rt-zone="devs">${this.devsHtml()}</div>`;
+      <div data-rt-zone="devs">${this.devsHtml()}</div>`, false);
   }
 
   devsHtml() {
@@ -1737,10 +1743,9 @@ export class RoutineUi {
     const t = (k, ...a) => this.t(k, ...a);
     const d = this.wiz.draft;
     const ents = this.curEnts();
-    if (!ents.length) return `${this.targetsHtml()}<p class="mg-note">${esc(t(this.wiz.loadingDev ? "rtLoading" : "rtNoEntities"))}</p>`;
+    if (!ents.length) return this.targetPage(`<p class="mg-note">${esc(t(this.wiz.loadingDev ? "rtLoading" : "rtNoEntities"))}</p>`, false);
     const e = this.entity(d.entity_id);
-    // Mehrere Ziele (seit 2.181.0): oben die schon gewählten Ziele als Zeilen, darunter das aktive
-    let html = this.targetsHtml();
+    let html = "";
     // Eine einzelne Szene oder Gruppe ist auf der ersten Seite schon gewählt (seit 2.67.0): keine zweite Auswahl, nur noch die Aktion.
     // Beim Bearbeiten einer Routine bleibt die Liste.
     if (!this.chosenWhat()) {
@@ -1751,7 +1756,7 @@ export class RoutineUi {
       }
       html += `<div data-rt-zone="ents">${this.entsHtml()}</div>`;
     }
-    if (!e) return html;
+    if (!e) return this.targetPage(html, false);
     // Die einzige Entität des Geräts ist schon gewählt, aber eine Zahl oder Auswahl: ihre Aktion ist "setzen", nicht "ein"
     if (!e.actions.includes(d.action)) {
       d.action = e.actions[0];
@@ -1761,7 +1766,7 @@ export class RoutineUi {
     if (d.action === "set") html += this.setValueHtml(e);
     else if (!opposite(d.action)) html += `<p class="mg-hint">${esc(t(e.domain === "scene" ? "rtSceneNoBack" : "rtToggleNoBack"))}</p>`;
     // Ohne Seite "Optionen" ist dies die letzte Seite des Ziels: hier steht "+ Gerät hinzufügen"
-    return `${html}<div data-rt-zone="result">${this.resultHtml()}</div>${this.hasOptions() ? "" : this.addTargetHtml()}`;
+    return this.targetPage(`${html}<div data-rt-zone="result">${this.resultHtml()}</div>`, !this.hasOptions());
   }
 
   // Der Wert zum Setzen (Zahl: Regler und Zahlenfeld; Auswahl: Knöpfe oder Liste), auf der Seite "Was" unter der Aktion
@@ -1897,11 +1902,11 @@ export class RoutineUi {
     const t = (k, ...a) => this.t(k, ...a);
     const e = this.entity(this.wiz.draft.entity_id);
     if (!e) return "";
-    return `${this.targetsHtml()}<p class="mg-note">${esc(t("rtOptNote"))}</p>
+    return this.targetPage(`<p class="mg-note">${esc(t("rtOptNote"))}</p>
       <div data-rt-zone="prev">${this.prevHtml()}</div>
       ${e.options.map((spec) => this.optHtml(spec)).join("")}
       <p class="mg-hint">${esc(t("rtOptPreviewNote"))}</p>
-      <div data-rt-zone="result">${this.resultHtml()}</div>${this.addTargetHtml()}`;
+      <div data-rt-zone="result">${this.resultHtml()}</div>`, true);
   }
 
   // Eine Einstellung: Überschrift mit Wert, Regler (oder Farben), Schnellwahl als Reiterleiste
@@ -2253,7 +2258,12 @@ export class RoutineUi {
         this.addTarget();
         break;
       case "tg-edit": {
-        const i = Number(el.dataset.i);
+        let i = Number(el.dataset.i);
+        // Ein neues Ziel ohne Entität ist unfertig: es entfällt, wenn man zu einem anderen wechselt
+        if (!w.draft.entity_id && w.draft.tg.length > 1) {
+          this.removeTarget(w.cur);
+          if (i > w.cur) i -= 1;
+        }
         w.draft.tg = this.targets();
         this.loadTarget(i);
         this.ensureDevice(w.draft.device_id).catch(() => {}).then(() => {
@@ -2264,7 +2274,7 @@ export class RoutineUi {
       }
       case "tg-del":
         this.removeTarget(Number(el.dataset.i));
-        this.paint();
+        this.setStep(w.step);
         break;
       case "target-drop":
         this.removeTarget(w.cur);
