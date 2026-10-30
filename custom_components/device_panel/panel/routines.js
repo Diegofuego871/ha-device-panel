@@ -1118,6 +1118,7 @@ export class RoutineUi {
     const x = d.tg[i];
     Object.assign(d, { device_id: x.device_id, entity_id: x.entity_id, action: x.action, options: { ...(x.options || {}) }, back_mode: x.back_mode || "opposite" });
     w.cur = i;
+    w.tgFold = false;
     w.tried = null;
     w.entQuery = "";
   }
@@ -1203,15 +1204,18 @@ export class RoutineUi {
     const cur = this.wiz.cur || 0;
     const cards = this.targets()
       .map((x, i) => {
-        const open = i === cur;
+        // Die Karte des aktiven Ziels lässt sich zuklappen (w.tgFold): dann sind alle Karten zu
+        const open = i === cur && !this.wiz.tgFold;
+        const toggle = i === cur ? `data-rt="tg-fold"` : `data-rt="tg-edit" data-i="${i}"`;
         const named = Boolean(x.entity_id);
         const title = `${i + 1} · ${named ? this.targetName(x) : t("rtTgNew")}`;
         const sub = named ? [this.targetDevice(x), this.targetSummary(x)].filter(Boolean).join(" · ") : t("rtTgPickDevice");
-        const main = `<button type="button" class="rt-card-main"${open ? " disabled" : ` data-rt="tg-edit" data-i="${i}"`} aria-expanded="${open}">
+        const main = `<button type="button" class="rt-card-main" ${toggle} aria-expanded="${open}">
             <span class="mg-ic" aria-hidden="true">${named ? routineEmoji(this.domainOf(x.entity_id)) : "➕"}</span>
             <span class="mg-t"><b>${esc(title)}</b><small>${esc(sub)}</small></span></button>`;
         const del = `<button type="button" class="rt-tgt-btn" data-rt="tg-del" data-i="${i}" title="${esc(t("rtTgRemove"))}" aria-label="${esc(t("rtTgRemove"))}">${this.h.mdi("close", 16)}</button>`;
-        return `<div class="rt-card${open ? " open" : ""}"><div class="rt-card-head">${main}${del}${this.chevHtml(open)}</div>${open ? `<div class="rt-card-body">${inner}</div>` : ""}</div>`;
+        const chev = `<button type="button" class="rt-card-chev" ${toggle} aria-expanded="${open}" aria-label="${esc(t(open ? "rtTgFold" : "rtTgUnfold"))}">${this.chevHtml(open)}</button>`;
+        return `<div class="rt-card${open ? " open" : ""}"><div class="rt-card-head">${main}${del}${chev}</div>${open ? `<div class="rt-card-body">${inner}</div>` : ""}</div>`;
       })
       .join("");
     return `${cards}${add}`;
@@ -2186,6 +2190,7 @@ export class RoutineUi {
   // Zu einer Seite wechseln (Nummer); gibt es sie nicht (Optionen ohne Optionen), die nächste vorhandene
   setStep(step) {
     const order = this.steps();
+    this.wiz.tgFold = false;
     this.wiz.step = order.includes(step) ? step : step === OPTS_STEP ? 2 : step === BACK_STEP ? 3 : order.find((n) => n > step) ?? order[order.length - 1];
     this.paint();
     this.scrollTop();
@@ -2257,7 +2262,12 @@ export class RoutineUi {
       case "tg-add":
         this.addTarget();
         break;
+      case "tg-fold":
+        w.tgFold = !w.tgFold;
+        this.paint();
+        break;
       case "tg-edit": {
+        w.tgFold = false;
         let i = Number(el.dataset.i);
         // Ein neues Ziel ohne Entität ist unfertig: es entfällt, wenn man zu einem anderen wechselt
         if (!w.draft.entity_id && w.draft.tg.length > 1) {

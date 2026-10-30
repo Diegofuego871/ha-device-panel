@@ -7,6 +7,14 @@ All notable changes to this integration are documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/).
 
+## [2.181.2] - 2026-10-30
+
+The arrow buttons on the cards of a routine work.
+
+### Fixed
+
+- **Routine with several devices, assistant:** the round arrow on a card did nothing (only the title line was a button). The arrow now opens a closed card and closes the open one, so all cards can be closed. A tap on the title line does the same; the page is shown again as soon as you open a card or go to another page.
+
 ## [2.181.1] - 2026-10-30
 
 The devices of a routine are cards that open and close.
@@ -5363,6 +5371,7 @@ First pre-release.
   GitHub Actions for HACS/hassfest validation and tests.
 
 [2.6.0]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v2.6.0
+[2.181.2]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v2.181.2
 [2.181.1]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v2.181.1
 [2.181.0]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v2.181.0
 [2.180.1]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v2.180.1

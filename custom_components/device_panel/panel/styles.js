@@ -2033,7 +2033,7 @@ dialog.magic-dlg[open] > .mgw-body.two { display: flex; gap: 22px; overflow: hid
 .rt-card.open { border-color: var(--dp-primary); background: none; box-shadow: 0 0 0 1px var(--dp-primary) inset; }
 .rt-card-head { display: flex; align-items: center; gap: 6px; padding: 8px 10px 8px 12px; }
 .rt-card-main { display: flex; flex: 1; align-items: center; gap: 10px; min-width: 0; padding: 0; border: 0; background: none; color: inherit; font: inherit; text-align: left; cursor: pointer; }
-.rt-card-main:disabled { cursor: default; opacity: 1; color: inherit; }
+.rt-card-chev { display: grid; place-items: center; flex: none; padding: 0; border: 0; background: none; cursor: pointer; }
 .rt-card-main .mg-t { min-width: 0; }
 .rt-card-main .mg-t small { display: block; color: var(--dp-text2); font-size: 12px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 .rt-card-body { padding: 4px 12px 12px; border-top: 1px solid var(--dp-divider); }

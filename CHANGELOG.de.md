@@ -7,6 +7,14 @@ Alle nennenswerten Änderungen an dieser Integration stehen in dieser Datei.
 Das Format folgt [Keep a Changelog](https://keepachangelog.com/de/1.1.0/),
 die Versionsnummern folgen [Semantic Versioning](https://semver.org/lang/de/).
 
+## [2.181.2] - 2026-10-30
+
+Die Pfeilknöpfe an den Karten einer Routine funktionieren.
+
+### Behoben
+
+- **Routine mit mehreren Geräten, Assistent:** Der runde Pfeil an einer Karte tat nichts (nur die Titelzeile war ein Knopf). Der Pfeil öffnet jetzt eine zugeklappte Karte und klappt die offene zu, so lassen sich alle Karten schliessen. Ein Tipp auf die Titelzeile macht dasselbe; die Seite erscheint wieder, sobald du eine Karte öffnest oder zu einer anderen Seite gehst.
+
 ## [2.181.1] - 2026-10-30
 
 Die Geräte einer Routine sind Karten zum Auf- und Zuklappen.
@@ -5464,6 +5472,7 @@ Erste Vorabversion.
   GitHub Actions für die Prüfungen von HACS und hassfest sowie die Tests.
 
 [2.6.0]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v2.6.0
+[2.181.2]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v2.181.2
 [2.181.1]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v2.181.1
 [2.181.0]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v2.181.0
 [2.180.1]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v2.180.1

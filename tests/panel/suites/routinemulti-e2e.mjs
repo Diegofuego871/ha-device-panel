@@ -109,6 +109,11 @@ for (const lang of ["de", "en"]) {
     await tap(`${W} .rt-card:not(.open) .rt-card-main`);
     await wait(`return r.querySelector('${W} .rt-card.open .rt-card-main b').textContent.startsWith("2")`);
     check(`[${tag}] Karte angetippt: sie ist offen, die Reihenfolge der Karten bleibt`, (await titles()) === before && (await ev(`return r.querySelectorAll('${W} .rt-card.open').length === 1 && r.querySelector('${W} .rt-card.open .rt-card-main b').textContent.startsWith("2")`)), `${before} / ${await titles()}`);
+    // Der Pfeil an der offenen Karte klappt sie zu (dann sind alle zu), der Pfeil einer zugeklappten öffnet sie
+    await tap(`${W} .rt-card.open .rt-card-chev`);
+    check(`[${tag}] Pfeil der offenen Karte: sie klappt zu, alle Karten sind zu`, await wait(`return r.querySelectorAll('${W} .rt-card.open').length === 0 && r.querySelectorAll('${W} .rt-card').length === 3`));
+    await ev(`r.querySelectorAll('${W} .rt-card')[2].querySelector(".rt-card-chev").click()`);
+    check(`[${tag}] Pfeil einer zugeklappten Karte: genau diese ist offen`, await wait(`const o = r.querySelectorAll('${W} .rt-card.open'); return o.length === 1 && o[0].querySelector(".rt-card-main b").textContent.startsWith("3")`));
     await tap(`${W} .rt-card:not(.open) [data-rt="tg-del"]`);
     check(`[${tag}] Ziel entfernt: eine Karte weniger`, await wait(`return r.querySelectorAll('${W} .rt-card').length === 2`));
     await tap(`${W} [data-rt="nav-quick"]`);
