@@ -62,6 +62,10 @@ aktiviert und beim Zurückschalten übersprungen.
 - Keine getrennte Karte in der Übersicht "Alle Routinen": Die Routine steht in der Karte jedes Geräts, das in ihr vorkommt, und im
   Reiter "Routinen" jedes dieser Geräte. Es ist dieselbe Routine (ein Schalter, eine Zeit); ein Chip nennt die anderen Geräte
   ("+1 Gerät: Steckdose Bad"). Zahlen in der Übersicht zählen sie einmal.
+- Zu- und Aufklappen bleibt wie heute: Karten sind ab zwei sichtbaren Geräten standardmässig zugeklappt (auch bei einer Suche), mit
+  nur einer Karte offen; jede Karte lässt sich auf- und zuklappen, "Alle aufklappen/zuklappen" bleibt.
+- Zugeklappt ändert sich nichts gegenüber heute: bei einer Routine der Schalter im Kopf, bei mehreren je Routine eine schlanke Zeile
+  (Name, nächster Lauf, Schalter). Kein Chip, keine zusätzliche Angabe; eine Mehrziel-Routine sieht dort aus wie jede andere.
 - Aufgeklappt zeigt die Routine alle Ziele (das aktuelle Gerät markiert, die anderen mit Pfeil zu ihrem Gerät).
 - Löschen löscht die ganze Routine, die Rückfrage nennt die Geräte.
 - Protokoll: Titel der Routine, in der Spur ein Schritt je Ziel.

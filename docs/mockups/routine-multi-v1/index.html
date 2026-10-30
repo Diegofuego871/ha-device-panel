@@ -138,21 +138,36 @@ h3{margin:2px 0 0;font-size:20px}
 </div>
 
 <h2>4 · Anzeige: die Routine steht bei jedem beteiligten Gerät</h2>
-<p class="sub">Entscheid: in der Übersicht "Alle Routinen" nicht getrennt, sondern in der Karte jedes Geräts, das vorkommt; ebenso im Reiter "Routinen" jedes Geräts. Es ist dieselbe Routine: derselbe Schalter, dieselbe Zeit. Ein Chip nennt die anderen Geräte.</p>
+<p class="sub">Entscheid: in der Übersicht "Alle Routinen" nicht getrennt, sondern in der Karte jedes Geräts, das vorkommt; ebenso im Reiter "Routinen" jedes Geräts. Es ist dieselbe Routine: derselbe Schalter, dieselbe Zeit. Zugeklappt (Standard ab 2 Geräten) sieht die Übersicht aus wie heute; erst aufgeklappt stehen die Ziele der Routine.</p>
 <div class="row">
-<div><div class="cap">Übersicht "Alle Routinen"</div><div class="ph">
+<div><div class="cap">Übersicht "Alle Routinen", zugeklappt (Standard ab 2 Geräten, wie heute)</div><div class="ph">
 <div class="hd"><div><b>Routinen</b><small>Alle Geräte</small></div><div class="x">✕</div></div>
 <div class="srch">🔍 Suchen …</div>
 <div class="seg"><span class="on">Alle<br><small>4</small></span><span>Aktiv<br><small>3</small></span><span>Aus<br><small>1</small></span><span>Läuft<br><small>0</small></span></div>
-<div class="hint">4 Routinen auf 3 Geräten</div>
-<div class="card"><div class="top"><div class="t"><b>Lampe Küche</b><small>2 Routinen</small></div><div class="cv">⌄</div></div>
-<div class="rt"><div class="t"><b>Abendlicht</b><small>18:30 täglich · <span class="pill">+1 Gerät: Steckdose Bad</span></small></div><div class="sw on"></div></div>
-<div class="rt"><div class="t"><b>Nachtlicht</b><small>wenn die Tür öffnet</small></div><div class="sw on"></div></div></div>
-<div class="card"><div class="top"><div class="t"><b>Steckdose Bad</b><small>1 Routine</small></div><div class="cv">⌄</div></div>
-<div class="rt"><div class="t"><b>Abendlicht</b><small>18:30 täglich · <span class="pill">+1 Gerät: Lampe Küche</span></small></div><div class="sw on"></div></div></div>
-<div class="card"><div class="top"><div class="t"><b>Rollladen Terrasse</b><small>1 Routine</small></div><div class="cv">⌄</div></div></div>
+<div style="display:flex;justify-content:space-between" class="hint"><span>4 Routinen auf 3 Geräten</span><span style="color:var(--p)">Alle aufklappen</span></div>
+<div class="card"><div class="top"><div class="t"><b>Lampe Küche</b><small>2 Routinen · heute 18:30</small></div><div class="cv">⌄</div></div>
+<div class="rt"><div class="t"><b>Abendlicht</b><small>nächster Lauf heute 18:30</small></div><div class="sw on"></div></div>
+<div class="rt"><div class="t"><b>Nachtlicht</b><small>wartet auf den Auslöser</small></div><div class="sw on"></div></div></div>
+<div class="card"><div class="top"><div class="t"><b>Steckdose Bad</b><small>1 Routine · heute 18:30</small></div><div class="sw on"></div><div class="cv">⌄</div></div></div>
+<div class="card"><div class="top"><div class="t"><b>Rollladen Terrasse</b><small>1 Routine · aus</small></div><div class="sw"></div><div class="cv">⌄</div></div></div>
 <div class="add">+ Neue Routine</div></div>
-<p class="note">"Abendlicht" steht zweimal, bei Küche und Bad. Es ist dieselbe Routine, der Schalter in beiden Karten schaltet sie zugleich. Die Zahl "4 Routinen" zählt sie einmal. Der Chip nennt das andere Gerät (bei mehr: "+2 Geräte").</p></div>
+<p class="note">Zugeklappt unverändert wie heute: kein Chip, keine zusätzliche Zeile. "Abendlicht" steht bei Lampe Küche in einer schlanken Zeile, bei Steckdose Bad hängt sein Schalter im Kopf der Karte. Beide Schalter sind derselbe.</p></div>
+
+<div><div class="cap">Dieselbe Übersicht, Karte "Steckdose Bad" aufgeklappt</div><div class="ph">
+<div class="hd"><div><b>Routinen</b><small>Alle Geräte</small></div><div class="x">✕</div></div>
+<div class="srch">🔍 Suchen …</div>
+<div class="seg"><span class="on">Alle<br><small>4</small></span><span>Aktiv<br><small>3</small></span><span>Aus<br><small>1</small></span><span>Läuft<br><small>0</small></span></div>
+<div style="display:flex;justify-content:space-between" class="hint"><span>4 Routinen auf 3 Geräten</span><span style="color:var(--p)">Alle aufklappen</span></div>
+<div class="card"><div class="top"><div class="t"><b>Lampe Küche</b><small>2 Routinen · heute 18:30</small></div><div class="cv">⌄</div></div></div>
+<div class="card"><div class="top"><div class="t"><b>Steckdose Bad</b><small>Bad · Beispiel AG · Gerät öffnen ›</small></div><div class="cv" style="transform:rotate(180deg)">⌄</div></div>
+<div class="rt" style="flex-direction:column;align-items:stretch;gap:6px;border-top:1px solid var(--ln)"><div style="display:flex;align-items:center;gap:10px"><div class="t"><b>Abendlicht</b><small>18:30 täglich · nach 3 Std. zurück</small></div><div class="sw on"></div></div>
+<div class="lbl" style="margin:0">Schaltet 2 Geräte</div>
+<div class="mini" style="background:#1f3a24"><div class="ic">🔌</div><div class="t"><b>Steckdose Bad</b><small>Einschalten, danach aus</small></div></div>
+<div class="mini"><div class="ic">💡</div><div class="t"><b>Lampe Küche</b><small>Einschalten · 80 %, danach wie vorher</small></div><span class="a">›</span></div>
+<div class="hint" style="color:var(--p)">Bearbeiten · Ausführen · Protokoll · Löschen</div></div></div>
+<div class="card"><div class="top"><div class="t"><b>Rollladen Terrasse</b><small>1 Routine · aus</small></div><div class="sw"></div><div class="cv">⌄</div></div></div>
+<div class="add">+ Neue Routine</div></div>
+<p class="note">Erst aufgeklappt erscheint, welche Geräte die Routine schaltet (aktuelles Gerät grün, das andere mit Pfeil zu seinem Gerät). Der Zustand "zu/auf" je Karte bleibt wie heute, auch während einer Suche.</p></div>
 
 <div><div class="cap">Reiter "Routinen" im Gerät "Steckdose Bad"</div><div class="ph">
 <div class="hd"><div><b>Steckdose Bad</b><small>Beispiel AG · Bad</small></div><div class="x">✕</div></div>
@@ -167,6 +182,7 @@ h3{margin:2px 0 0;font-size:20px}
 <div class="add">+ Neue Routine</div></div>
 <p class="note">Aufgeklappt: alle Ziele der Routine, das aktuelle Gerät markiert, die anderen mit Pfeil zum jeweiligen Gerät. "Bearbeiten" öffnet den Assistenten mit allen Zielen. Löschen löscht die ganze Routine (mit Rückfrage, die die Geräte nennt).</p></div>
 
+</div><div class="row" style="margin-top:20px">
 <div><div class="cap">Letzte Seite "Name und Prüfung"</div><div class="ph">
 <div class="hd"><div><b>Neue Routine</b><small>Abendlicht</small></div><div class="x">✕</div></div>
 <div class="stp"><span>Schritt 5 von 5</span><span>Name und Prüfung</span></div><div class="bars"><i class="on"></i><i class="on"></i><i class="on"></i><i class="on"></i><i class="on"></i></div>
@@ -181,15 +197,3 @@ h3{margin:2px 0 0;font-size:20px}
 <p class="note">Eine Zusammenfassung in einem Satz je Gerät. Schalter, Knopf und Entity-ID gibt es einmal je Routine.</p></div>
 </div>
 
-<h2>5 · Wenn etwas schiefgeht</h2>
-<p class="sub">Alle Geräte werden zugleich geschaltet, ein Fehler stoppt die anderen nicht.</p>
-<div class="row">
-<div style="grid-column:span 3"><div class="dsk" style="width:1400px;flex-direction:row;gap:30px">
-<div style="flex:1"><div class="cap">Protokoll der Routine</div>
-<div class="card" style="gap:4px"><b>Heute 18:30 · Abendlicht · <span style="color:#f5a524">teilweise (1 von 2)</span></b><small class="hint">Lampe Küche: eingeschaltet (80 %)<br>Steckdose Bad: <span class="bad">keine Antwort nach 10 Sekunden</span></small></div>
-<div class="card" style="gap:4px;margin-top:8px"><b>Gestern 21:30 · Zurückschalten · <span class="good">ok</span></b><small class="hint">Lampe Küche: wie vorher (30 %)<br>Steckdose Bad: ausgeschaltet</small></div></div>
-<div style="flex:1"><div class="cap">Push-Meldung (eine je Lauf)</div>
-<div class="card" style="gap:4px"><b>Abendlicht: 1 von 2 geschaltet</b><small class="hint">Lampe Küche eingeschaltet. Steckdose Bad hat nicht geantwortet.</small></div>
-<p class="note" style="margin-top:12px">Beim Zurückschalten werden nur Geräte zurückgeschaltet, die vorher erfolgreich geschaltet wurden. Der Fehlerzähler zählt einen Fehler je Lauf. Wie heute ist der Zähler im Panel mit "Fehler quittieren" zurückzusetzen.</p></div>
-</div></div>
-</div>
