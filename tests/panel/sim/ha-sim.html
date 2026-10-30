@@ -1495,13 +1495,26 @@
         };
         // Mit "wieder zurückschalten" auch der Zeitpunkt des Zurückschaltens (wie der Server, seit 2.26.0)
         const runsOf = (r, now) => runsOf0(r, now).map((x) => (r.back_s ? { ...x, back: local(x.ts + r.back_s) } : x));
+        // Mehrere Ziele (2.181.0): das erste in den Feldern der Routine, weitere in "more"
+        const tgOf = (r) => [{ device_id: r.device_id, entity_id: r.entity_id, action: r.action, options: r.options || {}, back_mode: r.back_mode || "opposite" }, ...(r.more || [])];
+        const involved = (r) => tgOf(r).map((x) => x.device_id);
         const check = (r, draft = false) => {
           if (!entsOf(r.device_id)) fail("Gerät nicht gefunden");
+          const more = r.more || [];
+          if (more.length > 9) fail("Ungültige Angabe: höchstens 10 Ziele");
+          const ids = tgOf(r).map((x) => x.entity_id);
+          if (new Set(ids).size !== ids.length) fail("Dieselbe Entität steht mehrfach in der Routine");
+          for (const x of more) {
+            if (!entsOf(x.device_id)) fail("Gerät nicht gefunden");
+            const ex = entOf(x);
+            if (!ex) fail("Die Entität gehört nicht zu diesem Gerät");
+            if (!ex.actions.includes(x.action)) fail("Diese Aktion gibt es für diese Entität nicht");
+          }
           const e = entOf(r);
           if (!e) fail("Die Entität gehört nicht zu diesem Gerät");
           if (!e.actions.includes(r.action)) fail("Diese Aktion gibt es für diese Entität nicht");
           if (String(r.name || "").length > 60) fail("Name: höchstens 60 Zeichen");
-          if ((r.back_s || (r.back_kind && r.back_kind !== "none")) && (r.action === "toggle" || r.action === "activate")) fail("Umschalten lässt sich nicht zurückschalten");
+          if ((r.back_s || (r.back_kind && r.back_kind !== "none")) && tgOf(r).every((x) => x.action === "toggle" || x.action === "activate")) fail("Umschalten lässt sich nicht zurückschalten");
           // Setzen (2.80.0): Zahl im Bereich oder Wert aus der Auswahl ist Pflicht; zurück nur mit "wie vorher"
           if (r.action === "set") {
             const spec = (e.options || [])[0];
@@ -1545,6 +1558,7 @@
             running: r.kind === "countdown" && r.enabled && Boolean(r.__due), entity_name: e ? e.name : r.entity_id, set_text: r.action === "set" ? (r.options.option ?? `${r.options.value}${(e?.options?.[0]?.unit) ? ` ${e.options[0].unit}` : ""}`) : "", entity_state: e ? e.state : null, entity_missing: !e, domain: String(r.entity_id).split(".")[0], actions: e ? e.actions : [],
             next_runs: r.enabled && r.kind !== "countdown" ? runsOf(r, now) : [], device_name: (window.__devices.find((d) => d.id === r.device_id) || {}).name || "",
             condition_entities: condEnts(r), waiting_end: Boolean(r.__waiting), reverting: Boolean(r.__revert || r.__waiting),
+            targets: tgOf(r).map((x) => { const ex = entOf(x); return { ...x, entity_name: ex ? ex.name : x.entity_id, entity_state: ex ? ex.state : null, entity_missing: !ex, domain: String(x.entity_id).split(".")[0], actions: ex ? ex.actions : [], set_text: x.action === "set" ? ((x.options || {}).option ?? `${(x.options || {}).value}${(ex?.options?.[0]?.unit) ? ` ${ex.options[0].unit}` : ""}`) : "", device_name: (window.__devices.find((d) => d.id === x.device_id) || {}).name || "" }; }),
             ha_entity: r.ha_switch ? `switch.device_panel_${String(r.name).toLowerCase().replace(/[^a-z0-9]+/g, "_")}` : null,
             ha_button: r.ha_switch ? `button.device_panel_run_routine_${String(r.name).toLowerCase().replace(/[^a-z0-9]+/g, "_")}` : null };
         };
@@ -1558,7 +1572,7 @@
         if (msg.type.endsWith("routine_get")) {
           if (!isHolder(msg.device_id) && !window.__devices.find((d) => d.id === msg.device_id)) throw { code: "not_found", message: "device not found" };
           if (window.__routineLoadFails) throw new Error(window.__routineLoadFails);
-          const mine = T.list.filter((r) => r.device_id === msg.device_id).sort((a, b) => a.name.localeCompare(b.name));
+          const mine = T.list.filter((r) => involved(r).includes(msg.device_id)).sort((a, b) => a.name.localeCompare(b.name));
           return {
             routines: mine.map((r) => payload(strip(r) && r)).map((p) => strip(p)),
             entities: entsOf(msg.device_id),
@@ -1579,7 +1593,7 @@
           const old = raw.id ? T.list.find((x) => x.id === raw.id) : null;
           if (raw.id && !old) fail("Routine nicht gefunden");
           const e = entOf(raw);
-          const r = { id: old ? old.id : `t${T.seq++}`.padEnd(12, "0"), device_id: raw.device_id, entity_id: raw.entity_id, name: String(raw.name || "").trim() || e.name, action: raw.action, options: raw.options || {},
+          const r = { id: old ? old.id : `t${T.seq++}`.padEnd(12, "0"), device_id: raw.device_id, entity_id: raw.entity_id, name: String(raw.name || "").trim() || `${e.name}${(raw.more || []).length ? ` +${raw.more.length}` : ""}`, action: raw.action, options: raw.options || {}, more: (raw.more || []).map((x) => ({ device_id: x.device_id, entity_id: x.entity_id, action: x.action, options: x.options || {}, back_mode: x.back_mode || "opposite" })),
             back_kind: raw.back_kind || (raw.back_s ? "duration" : "none"), back_time: raw.back_time || null, back_conditions: raw.back_conditions || null, back_hold_s: raw.back_hold_s || 0, back_max_s: raw.back_max_s || null,
             conditions: raw.kind === "trigger" ? raw.conditions : null, hold_s: raw.hold_s || 0, window: raw.kind === "trigger" ? raw.window || null : null, pause_s: raw.pause_s || 60, once_trigger: Boolean(raw.once_trigger),
             back_mode: (raw.back_s || (raw.back_kind && raw.back_kind !== "none")) && raw.back_mode === "restore" ? "restore" : "opposite", back_s: raw.back_kind === "duration" || (!raw.back_kind && raw.back_s) ? raw.back_s || null : null, kind: raw.kind,

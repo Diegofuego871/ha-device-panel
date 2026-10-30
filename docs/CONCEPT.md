@@ -521,6 +521,14 @@ Szenen und Gruppen (seit 2.61.0): Beim Anlegen über "Alle Routinen" wählt der 
 statt Geräte-ID, für Entitäten ohne Gerät). Szene: Aktion "Aktivieren" (`scene.turn_on`), kein Zurückschalten, keine Optionen. Gruppe (Entität mit Mitgliedern in
 `entity_id`): wie eine einzelne Lampe. Skripte gibt es nicht. Einzelheiten: `routines.py` (`HOLDERS`), `docs/HANDOVER.md`.
 
+Mehrere Geräte (seit 2.181.0, Wunsch des Nutzers): Eine Routine hat eine Liste von Zielen; das erste steht in den bisherigen Feldern (`device_id`, `entity_id`, `action`,
+`options`, `back_mode`), weitere in `more` (höchstens 9, je `device_id`, `entity_id`, `action`, `options`, `back_mode`). Je Ziel: Gerät, Entität, Aktion, Optionen, "Danach";
+gemeinsam: Zeit oder Auslöser, Zurückschalten (wann), Push, an/aus, Name, Schalter und Knopf in HA. `routine_targets()` und `target_view()` geben jedem Einzelschritt die Sicht
+auf ein Ziel. Alle Ziele laufen zugleich (`asyncio.gather`), je Ziel eigener Aufruf; Ergebnis "ok", "teilweise" (`partial`) oder Fehler. Wiederholung nur der gescheiterten Ziele
+(`retry_ids`), Zurückschalten je Ziel (Laufzeitstand `tgt` je Entität, das erste Ziel im Stand der Routine). Zurückschalten braucht mindestens ein Ziel, das sich zurückschalten
+lässt; Szenen und "Umschalten" werden übersprungen. Die Routine steht bei jedem beteiligten Gerät (`involved_devices`); wird ein Gerät entfernt, entfällt nur sein Ziel.
+Einzelheiten: `docs/mockups/routine-multi-v1/README.md`, `tests/test_routine_multi.py`, `tests/panel/suites/routinemulti-e2e.mjs`.
+
 ## Status: Wächter für die Teile der Integration (seit 2.62.0, Wunsch des Nutzers)
 
 App "Status" im Launcher (nur Administratoren). `status.py` prüft jede Minute, ob die Teile leben (Takt der Ausfall-Überwachung, Batterie, Laden, Empfangsverlauf; überfällige Routinen; Magic Push, Neue Geräte und Updates nur "geladen"),

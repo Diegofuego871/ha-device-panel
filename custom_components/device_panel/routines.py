@@ -84,6 +84,9 @@ STORE_KEY = f"{DOMAIN}.routines"
 LEGACY_STORE_KEY = f"{DOMAIN}.timers"
 MAX_PER_DEVICE = 20
 MAX_TOTAL = 200
+# Ziele je Routine (seit 2.181.0): das erste in den Feldern der Routine, weitere in "more"
+MAX_TARGETS = 10
+TARGET_KEYS = ("device_id", "entity_id", "action", "options", "back_mode")
 NAME_MAX = 60
 BACK_MIN = 10
 BACK_MAX = 7 * 86400
@@ -161,6 +164,23 @@ def actions_for(domain: str) -> list[str]:
 def is_holder(device_id: str) -> bool:
     """Sammelstelle für Szenen oder Gruppen statt eines Geräts."""
     return device_id in HOLDERS
+
+
+def routine_targets(routine: dict[str, Any]) -> list[dict[str, Any]]:
+    """Alle Ziele einer Routine (seit 2.181.0): das erste steht in den Feldern der Routine, weitere in "more" (je Gerät, Entität, Aktion, Optionen, "Danach")."""
+    return [{k: routine[k] for k in TARGET_KEYS}, *(routine.get("more") or [])]
+
+
+def target_view(routine: dict[str, Any], index: int) -> dict[str, Any]:
+    """Die Routine aus Sicht eines Ziels: die Felder des Ziels liegen auf denen der Routine, so rechnen die Einzelschritte wie bisher."""
+    view = {k: v for k, v in routine.items() if k != "more"}
+    view.update(routine_targets(routine)[index])
+    return view
+
+
+def involved_devices(routine: dict[str, Any]) -> set[str]:
+    """Geräte (und Sammelstellen), die in der Routine vorkommen; sie zeigen die Routine in ihrem Reiter."""
+    return {t["device_id"] for t in routine_targets(routine)}
 
 
 def log_device(routine: dict[str, Any]) -> str | None:
@@ -671,6 +691,17 @@ def _name(value: Any) -> str:
     return text
 
 
+TARGET_SCHEMA = vol.Schema(
+    {
+        vol.Required("device_id"): vol.All(str, vol.Match(_DEVICE_RE)),
+        vol.Required("entity_id"): vol.All(str, vol.Match(_ENTITY_RE)),
+        vol.Required("action"): vol.In(ACTIONS),
+        vol.Optional("options", default=dict): vol.Any(None, dict),
+        vol.Optional("back_mode", default="opposite"): vol.In(BACK_MODES),
+    },
+    extra=vol.REMOVE_EXTRA,
+)
+
 ROUTINE_SCHEMA = vol.Schema(
     {
         vol.Optional("id"): vol.All(str, vol.Match(_ID_RE)),
@@ -680,6 +711,8 @@ ROUTINE_SCHEMA = vol.Schema(
         vol.Required("action"): vol.In(ACTIONS),
         vol.Optional("options", default=dict): vol.Any(None, dict),
         vol.Optional("back_mode", default="opposite"): vol.In(BACK_MODES),
+        # Weitere Ziele (seit 2.181.0): je Gerät, Entität, Aktion, Optionen und "Danach"; Zeit, Zurückschalten, Meldung gelten für alle
+        vol.Optional("more", default=list): vol.All(list, vol.Length(max=MAX_TARGETS - 1), [TARGET_SCHEMA]),
         vol.Optional("back_s", default=None): vol.Any(None, _int_in(BACK_MIN, BACK_MAX, "Zurückschalten"), msg=f"Zurückschalten: ganze Zahl von {BACK_MIN} bis {BACK_MAX} erwartet"),
         # Zurückschalten (seit 2.54.0): none, duration (back_s), time (back_time) oder trigger (back_conditions); None = aus back_s abgeleitet
         vol.Optional("back_kind", default=None): vol.Any(None, vol.In(BACK_KINDS)),
@@ -963,6 +996,8 @@ class RoutineManager:
         clean_when(routine, dt_util.get_default_time_zone(), check_future=False)
         routine["target"] = routine.get("target") or None
         routine["options"] = clean_options(routine["entity_id"].split(".", 1)[0], routine["action"], routine["options"])
+        for target in routine["more"]:
+            target["options"] = clean_options(target["entity_id"].split(".", 1)[0], target["action"], target["options"])
         if routine["conditions"]:
             routine["conditions"] = tree_shape(routine["conditions"])
         normalize_back(routine)
@@ -980,12 +1015,30 @@ class RoutineManager:
         snapshot = raw.get("snapshot")
         if not (isinstance(snapshot, dict) and isinstance(snapshot.get("state"), str) and isinstance(snapshot.get("attrs"), dict)):
             snapshot = None
+        def target_state(item: Any) -> dict[str, Any]:
+            item = item if isinstance(item, dict) else {}
+            scene = item.get("snapshot")
+            if not (isinstance(scene, dict) and isinstance(scene.get("state"), str) and isinstance(scene.get("attrs"), dict)):
+                scene = None
+            return {
+                "revert_action": item.get("revert_action") if item.get("revert_action") in ("on", "off") else None,
+                "snapshot": scene,
+                "rretry": int(item["rretry"]) if isinstance(item.get("rretry"), int) else 0,
+            }
+
+        more = raw.get("tgt")
+        retry_ids = raw.get("retry_ids")
         return {
             "due": num("due"),
             "revert_due": num("revert_due"),
             "revert_action": raw.get("revert_action") if raw.get("revert_action") in ("on", "off") else None,
             # Die Szene vor dem Schalten, wenn nach dem Zurückschalten "wie vorher" gilt
             "snapshot": snapshot,
+            # Weitere Ziele (seit 2.181.0, je Entität): was zurückzuschalten ist und die gemerkte Szene; das erste Ziel steht oben
+            "tgt": {str(k): target_state(v) for k, v in more.items()} if isinstance(more, dict) else {},
+            # Nach einem Fehlschlag nur diese Ziele wiederholen, und wie viele Ziele in diesem Lauf schon geschaltet sind
+            "retry_ids": [str(i) for i in retry_ids if isinstance(i, str)] if isinstance(retry_ids, list) else [],
+            "ran": int(raw["ran"]) if isinstance(raw.get("ran"), int) else 0,
             # Wann der Auslöser zuletzt geschaltet hat (für die Mindestpause, übersteht einen Neustart)
             "last_trigger": num("last_trigger"),
             "done": num("done"),
@@ -1017,8 +1070,16 @@ class RoutineManager:
         if event.data.get("action") != "remove":
             return
         gone = event.data.get("device_id")
-        for routine in [t for t in self._routines.values() if t["device_id"] == gone]:
-            self._forget(routine["id"])
+        for routine in [t for t in self._routines.values() if gone in involved_devices(t)]:
+            keep = [t for t in routine_targets(routine) if t["device_id"] != gone]
+            if not keep:
+                self._forget(routine["id"])
+                continue
+            # Nur das Ziel dieses Geräts entfällt (seit 2.181.0); rückt das erste nach, wird das nächste das erste
+            routine.update(keep[0])
+            routine["more"] = keep[1:]
+            self._prune_targets(routine)
+            self.changed(routine["id"])
         self._retrack()
         self._save()
 
@@ -1026,7 +1087,7 @@ class RoutineManager:
 
     def routines(self, device_id: str | None = None) -> list[dict[str, Any]]:
         self._cleanup()
-        out = [t for t in self._routines.values() if device_id is None or t["device_id"] == device_id]
+        out = [t for t in self._routines.values() if device_id is None or device_id in involved_devices(t)]
         return sorted(out, key=lambda t: (t["name"].casefold(), t["id"]))
 
     def overdue_s(self, now: float) -> float:
@@ -1191,8 +1252,8 @@ class RoutineManager:
             at = rt.get("fail_at")
             if at is None or now - at > FAIL_HOURS * 3600 or at <= (rt.get("fail_ack") or 0):
                 continue
-            key = routine["device_id"] or ""
-            devices[key] = max(devices.get(key, 0.0), at)
+            for key in involved_devices(routine) or {""}:
+                devices[key] = max(devices.get(key, 0.0), at)
         return {"at": max(devices.values(), default=None), "devices": devices}
 
     def ack_failures(self, device_id: str | None = None, now: float | None = None) -> None:
@@ -1200,7 +1261,7 @@ class RoutineManager:
         now = now if now is not None else time.time()
         changed = False
         for routine in self._routines.values():
-            if device_id is not None and routine["device_id"] != device_id:
+            if device_id is not None and device_id not in involved_devices(routine):
                 continue
             rt = self.runtime(routine["id"])
             if rt.get("fail_at") is not None and (rt.get("fail_ack") or 0) < rt["fail_at"]:
@@ -1219,40 +1280,51 @@ class RoutineManager:
     def tz(self) -> Any:
         return dt_util.get_default_time_zone()
 
+    def _clean_target(self, routine: dict[str, Any], target: dict[str, Any]) -> dict[str, Any]:
+        """Ein Ziel prüfen (Gerät, Entität, Aktion, Optionen, "Danach"); Zeit und Zurückschalten gelten für die ganze Routine."""
+        registry = er.async_get(self.hass)
+        if is_holder(target["device_id"]):
+            if not in_holder(self.hass, target["device_id"], target["entity_id"]):
+                raise vol.Invalid("Diese Entität gehört nicht zu den Szenen oder Gruppen")
+        else:
+            if dr.async_get(self.hass).async_get(target["device_id"]) is None:
+                raise vol.Invalid("Gerät nicht gefunden")
+            entry = registry.async_get(target["entity_id"])
+            if entry is None or entry.device_id != target["device_id"]:
+                raise vol.Invalid("Die Entität gehört nicht zu diesem Gerät")
+        domain = target["entity_id"].split(".", 1)[0]
+        own = registry.async_get(target["entity_id"])
+        if domain not in SERVICES or (own is not None and own.platform == DOMAIN):
+            raise vol.Invalid("Diese Entität lässt sich nicht schalten")
+        if target["action"] not in SERVICES[domain]:
+            raise vol.Invalid("Diese Aktion gibt es für diese Entität nicht")
+        target["options"] = validate_options(self.hass, target["entity_id"], target["action"], target["options"])
+        # "Wie vorher" gilt nur, wenn überhaupt zurückgeschaltet wird; nach "setzen" gibt es kein Gegenstück, nur "wie vorher"
+        if routine["back_kind"] == "none":
+            target["back_mode"] = "opposite"
+        elif target["action"] == "set":
+            target["back_mode"] = "restore"
+        return target
+
     def clean(self, raw: dict[str, Any], *, existing: dict[str, Any] | None = None) -> dict[str, Any]:
         """Entwurf prüfen (gegen Gerät, Entität, Aktion und Zeitangaben); gibt die bereinigte Routine zurück."""
         routine = ROUTINE_SCHEMA(raw)
-        registry = er.async_get(self.hass)
-        if is_holder(routine["device_id"]):
-            if not in_holder(self.hass, routine["device_id"], routine["entity_id"]):
-                raise vol.Invalid("Diese Entität gehört nicht zu den Szenen oder Gruppen")
-        else:
-            if dr.async_get(self.hass).async_get(routine["device_id"]) is None:
-                raise vol.Invalid("Gerät nicht gefunden")
-            entry = registry.async_get(routine["entity_id"])
-            if entry is None or entry.device_id != routine["device_id"]:
-                raise vol.Invalid("Die Entität gehört nicht zu diesem Gerät")
-        domain = routine["entity_id"].split(".", 1)[0]
-        own = registry.async_get(routine["entity_id"])
-        if domain not in SERVICES or (own is not None and own.platform == DOMAIN):
-            raise vol.Invalid("Diese Entität lässt sich nicht schalten")
-        if routine["action"] not in SERVICES[domain]:
-            raise vol.Invalid("Diese Aktion gibt es für diese Entität nicht")
         normalize_back(routine)
-        if routine["back_kind"] != "none" and not can_back(routine["action"]):
+        # Ziele (seit 2.181.0): das erste in den Feldern der Routine, weitere in "more"; jedes wird einzeln geprüft
+        routine.update(self._clean_target(routine, {k: routine[k] for k in TARGET_KEYS}))
+        routine["more"] = [self._clean_target(routine, dict(t)) for t in routine["more"]]
+        entities = [t["entity_id"] for t in routine_targets(routine)]
+        # Zurückschalten braucht mindestens ein Ziel, das sich zurückschalten lässt; Szenen und "Umschalten" unter mehreren Zielen werden übersprungen
+        if routine["back_kind"] != "none" and not any(can_back(t["action"]) for t in routine_targets(routine)):
             raise vol.Invalid("Umschalten lässt sich nicht zurückschalten")
-        routine["options"] = validate_options(self.hass, routine["entity_id"], routine["action"], routine["options"])
-        # "Wie vorher" gilt nur, wenn überhaupt zurückgeschaltet wird; nach "setzen" gibt es kein Gegenstück, nur "wie vorher"
-        if routine["back_kind"] == "none":
-            routine["back_mode"] = "opposite"
-        elif routine["action"] == "set":
-            routine["back_mode"] = "restore"
-        # Bedingungen des Auslösers und des Zurückschaltens prüfen; die geschaltete Entität darf nicht ihr eigener Auslöser sein
+        if len(set(entities)) != len(entities):
+            raise vol.Invalid("Dieselbe Entität steht mehrfach in der Routine")
+        # Bedingungen des Auslösers und des Zurückschaltens prüfen; eine geschaltete Entität darf nicht ihr eigener Auslöser sein
         if routine["kind"] == "trigger" and routine["conditions"]:
             routine["conditions"] = clean_tree(self.hass, routine["conditions"])
         if routine["back_kind"] == "trigger":
             routine["back_conditions"] = clean_tree(self.hass, routine["back_conditions"])
-        if routine["entity_id"] in tree_entities(routine["conditions"]) + tree_entities(routine["back_conditions"]):
+        if set(entities) & set(tree_entities(routine["conditions"]) + tree_entities(routine["back_conditions"])):
             raise vol.Invalid("Die geschaltete Entität darf nicht ihr eigener Auslöser sein")
         clean_when(routine, self.tz, check_future=existing is None or not self._same_when(existing, routine))
         routine["target"] = routine.get("target") or None
@@ -1265,11 +1337,17 @@ class RoutineManager:
         keys = ("kind", "delay_s", "date", "time", "repeat", "weekdays", "mday", "conditions", "hold_s", "window", "pause_s", "once_trigger")
         return all(old.get(k) == new.get(k) for k in keys)
 
+    def target_name(self, view: dict[str, Any]) -> str:
+        """Name der Entität eines Ziels (eigener Name, sonst der des Geräts)."""
+        state = self.hass.states.get(view["entity_id"])
+        entry = er.async_get(self.hass).async_get(view["entity_id"])
+        device = None if is_holder(view["device_id"]) else dr.async_get(self.hass).async_get(view["device_id"])
+        return entity_label(view["entity_id"], entry, device, state)
+
     def default_name(self, routine: dict[str, Any]) -> str:
-        state = self.hass.states.get(routine["entity_id"])
-        entry = er.async_get(self.hass).async_get(routine["entity_id"])
-        device = None if is_holder(routine["device_id"]) else dr.async_get(self.hass).async_get(routine["device_id"])
-        return entity_label(routine["entity_id"], entry, device, state)[:NAME_MAX]
+        """Name ohne Eingabe: die erste Entität, mit mehreren Zielen "+N" dahinter (seit 2.181.0)."""
+        extra = f" +{len(routine['more'])}" if routine.get("more") else ""
+        return (self.target_name(routine)[: NAME_MAX - len(extra)]) + extra
 
     async def async_save_routine(self, raw: dict[str, Any], *, adopt_id: bool = False) -> dict[str, Any]:
         """Routine anlegen oder ändern (mit id). adopt_id: eine unbekannte id bei einer neuen Routine übernehmen (Wiederherstellung einer Sicherung)."""
@@ -1277,17 +1355,21 @@ class RoutineManager:
         if raw.get("id") and existing is None and not (adopt_id and _ID_RE.match(str(raw["id"]))):
             raise vol.Invalid("Routine nicht gefunden")
         routine = self.clean(raw, existing=existing)
-        if existing is not None and existing["device_id"] != routine["device_id"]:
+        # Eine bestehende Routine bleibt bei ihren Geräten: mindestens ein Gerät muss gleich bleiben (das erste darf entfallen, wenn weitere bleiben)
+        if existing is not None and not involved_devices(existing) & involved_devices(routine):
             raise vol.Invalid("Die Routine gehört zu einem anderen Gerät")
-        if existing is None:
-            if len(self._routines) >= MAX_TOTAL:
-                raise vol.Invalid(f"Höchstens {MAX_TOTAL} Routinen insgesamt")
-            if not is_holder(routine["device_id"]) and len(self.routines(routine["device_id"])) >= MAX_PER_DEVICE:
+        if existing is None and len(self._routines) >= MAX_TOTAL:
+            raise vol.Invalid(f"Höchstens {MAX_TOTAL} Routinen insgesamt")
+        # Grenze je Gerät: nur für Geräte, die neu zur Routine kommen
+        for device_id in involved_devices(routine) - (involved_devices(existing) if existing is not None else set()):
+            if not is_holder(device_id) and len(self.routines(device_id)) >= MAX_PER_DEVICE:
                 raise vol.Invalid(f"Höchstens {MAX_PER_DEVICE} Routinen pro Gerät")
+        if existing is None:
             routine["id"] = str(raw["id"]) if adopt_id and raw.get("id") else uuid.uuid4().hex[:12]
         routine["created"] = existing["created"] if existing and "created" in existing else time.time()
         self._routines[routine["id"]] = routine
         rt = self.runtime(routine["id"])
+        self._prune_targets(routine)
         # Neu oder anderer Zeitpunkt: neu planen; sonst bleibt der laufende Stand (zum Beispiel der Countdown)
         if existing is None or not self._same_when(existing, routine) or (routine["enabled"] and not existing["enabled"]):
             self._rearm_runtime(routine, rt)
@@ -1299,6 +1381,26 @@ class RoutineManager:
         await self._store.async_save(self._data())
         self.changed(routine["id"])
         return routine
+
+    def _prune_targets(self, routine: dict[str, Any]) -> None:
+        """Laufzeitdaten der Ziele aufräumen: was zu keinem Ziel mehr gehört, entfällt (Ziel entfernt oder ersetzt)."""
+        rt = self.runtime(routine["id"])
+        keep = {t["entity_id"] for t in routine["more"]}
+        rt["tgt"] = {k: v for k, v in rt["tgt"].items() if k in keep}
+        rt["retry_ids"] = [i for i in rt["retry_ids"] if i in {t["entity_id"] for t in routine_targets(routine)}]
+
+    @staticmethod
+    def _tr(rt: dict[str, Any], routine: dict[str, Any], index: int) -> dict[str, Any]:
+        """Laufzeitstand eines Ziels (was zurückzuschalten ist, gemerkte Szene, Wiederholungen): das erste liegt im Stand der Routine, die weiteren je Entität."""
+        if index == 0:
+            return rt
+        entity_id = routine["more"][index - 1]["entity_id"]
+        return rt["tgt"].setdefault(entity_id, {"revert_action": None, "snapshot": None, "rretry": 0})
+
+    @staticmethod
+    def _pending(rt: dict[str, Any]) -> bool:
+        """Wartet irgendein Ziel auf das Zurückschalten?"""
+        return rt["revert_action"] is not None or any(t["revert_action"] is not None for t in rt["tgt"].values())
 
     def _rearm_runtime(self, routine: dict[str, Any], rt: dict[str, Any]) -> None:
         rt.update(retry=0, done=None)
@@ -1459,7 +1561,8 @@ class RoutineManager:
         proto.add(routine["id"], {"k": k, "src": src, "ok": ok, "act": act, "ent": routine["entity_id"], "err": err, "late": round(late, 1) if late else None, "trace": trace})
 
     def _entity_name(self, routine: dict[str, Any]) -> str:
-        return self.default_name(routine)
+        """Name der Entität (einer Sicht auf ein Ziel, bei einem Ziel die Routine selbst)."""
+        return self.target_name(routine)[:NAME_MAX]
 
     def _action_text(self, routine: dict[str, Any], action: str) -> str:
         """Aktion als Wort für das Protokoll (ein, aus, offen, geschlossen, abgeschlossen, umgeschaltet …)."""
@@ -1510,60 +1613,107 @@ class RoutineManager:
             return
         if routine["window"]:
             _trace_step(trace, "window", window=routine["window"])
-        scene = self._take_snapshot(routine, rt)
-        if scene is not None:
-            _trace_step(trace, "snapshot", state=scene.get("state"))
-        ok, reason = await self._async_call(routine, routine["action"], options=routine["options"], trace=trace)
-        if ok:
-            rt["retry"] = 0
+        oks, fails = await self._async_switch(routine, rt, now, trace, only=set(rt["retry_ids"]) or None)
+        rt["ran"] += len(oks)
+        for i in oks:
+            view = target_view(routine, i)
+            activity.record(hass, "info", "routine", "routine_run_scene" if view["action"] == "activate" else "routine_run", name, device, entity=self._entity_name(view), action=self._action_text(view, view["action"]))
+        if not fails:
+            rt.update(retry=0, retry_ids=[], ran=0)
             rt["last"] = {"at": now, "ok": True, "what": "run", "reason": None}
-            activity.record(hass, "info", "routine", "routine_run_scene" if routine["action"] == "activate" else "routine_run", name, device, entity=self._entity_name(routine), action=self._action_text(routine, routine["action"]))
-            self._plan_revert(routine, rt, now, scene)
-            _trace_step(trace, "revert_plan", kind=routine["back_kind"] if rt["revert_action"] else "none", due=rt["revert_due"], back=rt["revert_action"])
             await self._async_notify(routine, ok=True, action=routine["action"], trace=trace)
             _trace_step(trace, "result", what="run")
             self._log(routine, "run", src, ok=True, act=routine["action"], late=late, trace=trace)
             self._finish(routine, rt, now)
             return
+        reason = fails[0][1]
         if rt["retry"] < MAX_RETRY:
             rt["retry"] += 1
             rt["due"] = now + RETRY_S
+            # Beim nächsten Versuch nur die Ziele, die noch nicht geschaltet sind
+            rt["retry_ids"] = [routine_targets(routine)[i]["entity_id"] for i, _ in fails]
             rt["last"] = {"at": now, "ok": False, "what": "retry", "reason": reason}
             _trace_step(trace, "result", what="retry", count=rt["retry"], next=rt["due"])
             self._log(routine, "retry", src, ok=False, act=routine["action"], err=reason, late=late, trace=trace)
-            activity.record(hass, "warning", "routine", "routine_retry", name, device, entity=self._entity_name(routine), minutes=RETRY_S // 60, count=rt["retry"], max=MAX_RETRY)
+            for i, _ in fails[:1]:
+                activity.record(hass, "warning", "routine", "routine_retry", name, device, entity=self._failed_names(routine, fails), minutes=RETRY_S // 60, count=rt["retry"], max=MAX_RETRY)
             return
-        rt["last"] = {"at": now, "ok": False, "what": "failed", "reason": reason}
-        activity.record(hass, "error", "routine", "routine_failed", name, device, entity=self._entity_name(routine))
+        # Endgültig: war schon ein Ziel geschaltet, ist es nur "teilweise" geschaltet
+        partial = rt["ran"] > 0
+        what = "partial" if partial else "failed"
+        rt["last"] = {"at": now, "ok": False, "what": what, "reason": reason}
+        for i, _ in fails:
+            activity.record(hass, "error", "routine", "routine_failed", name, device, entity=self._entity_name(target_view(routine, i)))
         rt["fail_at"] = now
-        await self._async_notify(routine, ok=False, action=routine["action"], reason=reason or "error", trace=trace)
-        _trace_step(trace, "result", what="failed")
-        self._log(routine, "failed", src, ok=False, act=routine["action"], err=reason, late=late, trace=trace)
+        done = rt["ran"]
+        rt.update(retry=0, retry_ids=[], ran=0)
+        await self._async_notify(routine, ok=False, action=routine["action"], reason=reason or "error", trace=trace, failed=[i for i, _ in fails], done=done)
+        _trace_step(trace, "result", what=what)
+        self._log(routine, what, src, ok=False, act=routine["action"], err=reason, late=late, trace=trace)
         self._finish(routine, rt, now)
 
+    def _failed_names(self, routine: dict[str, Any], fails: list[tuple[int, str | None]]) -> str:
+        """Namen der Ziele, die nicht geschaltet werden konnten (für das Protokoll und die Meldung)."""
+        names = [self._entity_name(target_view(routine, i)) for i, _ in fails]
+        return ", ".join(names[:3]) + (f" +{len(names) - 3}" if len(names) > 3 else "")
+
+    async def _async_switch(
+        self, routine: dict[str, Any], rt: dict[str, Any], now: float, trace: list[dict[str, Any]], *, only: set[str] | None = None
+    ) -> tuple[list[int], list[tuple[int, str | None]]]:
+        """
+        Die Ziele der Routine schalten, alle zugleich (je Ziel ein eigener Aufruf mit eigenem Zeitlimit; ein Fehler stoppt die anderen nicht).
+        "only": nur diese Entitäten (Wiederholung nach einem Fehlschlag). Gibt die Nummern der geschalteten Ziele zurück und die der
+        gescheiterten mit dem Grund. Für die geschalteten wird das Zurückschalten geplant.
+        """
+        total = len(routine_targets(routine))
+        idx = [i for i in range(total) if only is None or routine_targets(routine)[i]["entity_id"] in only] or list(range(total))
+        views = {i: target_view(routine, i) for i in idx}
+        scenes = {i: self._take_snapshot(views[i], self._tr(rt, routine, i)) for i in idx}
+        for i in idx:
+            if scenes[i] is not None:
+                _trace_step(trace, "snapshot", ent=views[i]["entity_id"] if total > 1 else None, state=scenes[i].get("state"))
+        results = await asyncio.gather(*(self._async_call(views[i], views[i]["action"], options=views[i]["options"], trace=trace) for i in idx))
+        oks = [i for i, (ok, _reason) in zip(idx, results, strict=True) if ok]
+        fails = [(i, reason) for i, (ok, reason) in zip(idx, results, strict=True) if not ok]
+        self._plan_reverts(routine, rt, now, {i: scenes[i] for i in oks}, keep_due=only is not None)
+        _trace_step(trace, "revert_plan", kind=routine["back_kind"] if self._pending(rt) else "none", due=rt["revert_due"], back=rt["revert_action"] if total == 1 else None)
+        return oks, fails
+
     def _take_snapshot(self, routine: dict[str, Any], rt: dict[str, Any]) -> dict[str, Any] | None:
-        """Die Szene vor dem Schalten, wenn danach "wie vorher" gilt. Wartet noch ein Zurückschalten, gilt dessen Szene weiter."""
+        """
+        Die Szene eines Ziels vor dem Schalten, wenn danach "wie vorher" gilt ("routine": die Sicht auf das Ziel, "rt": sein Laufzeitstand).
+        Wartet noch ein Zurückschalten, gilt dessen Szene weiter.
+        """
         if routine["back_mode"] != "restore" or routine["back_kind"] == "none" or not can_back(routine["action"]):
             return None
         if rt["revert_action"] is not None:
             return rt["snapshot"]
         return snapshot_of(self.hass.states.get(routine["entity_id"]))
 
-    def _plan_revert(self, routine: dict[str, Any], rt: dict[str, Any], now: float, scene: dict[str, Any] | None = None) -> None:
+    def _plan_reverts(self, routine: dict[str, Any], rt: dict[str, Any], now: float, scenes: dict[int, dict[str, Any] | None], *, keep_due: bool = False) -> None:
         """
-        Das Zurückschalten planen: nach einer Dauer, zur nächsten Uhrzeit oder (durch einen Auslöser) sobald die Bedingung neu
-        eintritt, dann mit "spätestens nach" als Sicherung. Das Gegenstück gilt, solange revert_action gesetzt ist.
+        Das Zurückschalten planen, für die eben geschalteten Ziele ("scenes": Nummer des Ziels → gemerkte Szene): nach einer Dauer, zur
+        nächsten Uhrzeit oder (durch einen Auslöser) sobald die Bedingung neu eintritt, dann mit "spätestens nach" als Sicherung. Das
+        Gegenstück gilt je Ziel, solange sein revert_action gesetzt ist. Der Zeitpunkt gilt für alle; "keep_due": ein späteres Ziel (Wiederholung
+        nach einem Fehlschlag) behält den schon geplanten Zeitpunkt.
         """
-        back = "set" if routine["action"] == "set" else opposite(routine["action"])
         kind = routine["back_kind"]
-        if kind == "none" or not back:
+        planned = False
+        for index, scene in scenes.items():
+            view = target_view(routine, index)
+            back = "set" if view["action"] == "set" else opposite(view["action"])
+            if kind == "none" or not back:
+                continue
+            # Nach "setzen" gibt es nur "wie vorher": war der Wert vorher nicht bekannt, ist nichts zurückzusetzen
+            if view["action"] == "set" and scene is None:
+                continue
+            tr = self._tr(rt, routine, index)
+            tr["revert_action"] = back
+            tr["rretry"] = 0
+            tr["snapshot"] = scene
+            planned = True
+        if not planned or (keep_due and rt["revert_due"] is not None):
             return
-        # Nach "setzen" gibt es nur "wie vorher": war der Wert vorher nicht bekannt, ist nichts zurückzusetzen
-        if routine["action"] == "set" and scene is None:
-            return
-        rt["revert_action"] = back
-        rt["rretry"] = 0
-        rt["snapshot"] = scene
         if kind == "duration":
             rt["revert_due"] = now + float(routine["back_s"])
         elif kind == "time":
@@ -1599,40 +1749,59 @@ class RoutineManager:
     async def _async_revert(self, routine: dict[str, Any], rt: dict[str, Any], now: float) -> None:
         hass = self.hass
         name, device = routine["name"], log_device(routine)
-        action = rt["revert_action"]
-        if action is None:
+        total = len(routine_targets(routine))
+        pending = [i for i in range(total) if self._tr(rt, routine, i)["revert_action"] is not None]
+        if not pending:
             rt["revert_due"] = None
             return
-        scene = rt["snapshot"] if routine["back_mode"] == "restore" else None
+        views = {i: target_view(routine, i) for i in pending}
+        trs = {i: self._tr(rt, routine, i) for i in pending}
+        scenes = {i: trs[i]["snapshot"] if views[i]["back_mode"] == "restore" else None for i in pending}
         trace: list[dict[str, Any]] = []
         _trace_step(trace, "trigger", src="revert", due=rt["revert_due"], kind=routine["back_kind"])
-        if scene is not None:
-            _trace_step(trace, "snapshot", state=scene.get("state"))
-        ok, reason = await self._async_call(routine, action, snapshot=scene, trace=trace)
-        if ok:
-            rt.update(revert_due=None, revert_action=None, rretry=0, snapshot=None)
+        for i in pending:
+            if scenes[i] is not None:
+                _trace_step(trace, "snapshot", ent=views[i]["entity_id"] if total > 1 else None, state=scenes[i].get("state"))
+        results = await asyncio.gather(*(self._async_call(views[i], trs[i]["revert_action"], snapshot=scenes[i], trace=trace) for i in pending))
+        shown: dict[int, str] = {}
+        fails: list[tuple[int, str | None]] = []
+        for i, (ok, reason) in zip(pending, results, strict=True):
+            action = trs[i]["revert_action"]
+            if ok:
+                # Wurde die Szene wiederhergestellt, steht im Protokoll und in der Meldung "wie vorher" statt des Gegenstücks
+                shown[i] = "restore" if scenes[i] is not None and restore_calls(views[i]["entity_id"].split(".", 1)[0], views[i]["entity_id"], scenes[i]) is not None else action
+                trs[i].update(revert_action=None, rretry=0, snapshot=None)
+                activity.record(hass, "info", "routine", "routine_revert", name, device, entity=self._entity_name(views[i]), action=self._action_text(views[i], shown[i]))
+            else:
+                fails.append((i, reason))
+        retry = [(i, r) for i, r in fails if trs[i]["rretry"] < MAX_RETRY]
+        gave_up = [(i, r) for i, r in fails if trs[i]["rretry"] >= MAX_RETRY]
+        for i, _ in retry:
+            trs[i]["rretry"] += 1
+        for i, _ in gave_up:
+            trs[i].update(revert_action=None, rretry=0, snapshot=None)
+        if not self._pending(rt):
+            rt["revert_due"] = None
             self._end_done(routine)
-            # Wurde die Szene wiederhergestellt, steht im Protokoll und in der Meldung "wie vorher" statt des Gegenstücks
-            shown = "restore" if scene is not None and restore_calls(routine["entity_id"].split(".", 1)[0], routine["entity_id"], scene) is not None else action
-            activity.record(hass, "info", "routine", "routine_revert", name, device, entity=self._entity_name(routine), action=self._action_text(routine, shown))
-            await self._async_notify(routine, ok=True, action=shown, trace=trace)
-            _trace_step(trace, "result", what="revert")
-            self._log(routine, "revert", "revert", ok=True, act=shown, trace=trace)
-            return
-        if rt["rretry"] < MAX_RETRY:
-            rt["rretry"] += 1
+        if retry:
             rt["revert_due"] = now + RETRY_S
-            _trace_step(trace, "result", what="retry", count=rt["rretry"], next=rt["revert_due"])
-            self._log(routine, "retry", "revert", ok=False, act=action, err=reason, trace=trace)
-            activity.record(hass, "warning", "routine", "routine_retry", name, device, entity=self._entity_name(routine), minutes=RETRY_S // 60, count=rt["rretry"], max=MAX_RETRY)
+            _trace_step(trace, "result", what="retry", count=max(trs[i]["rretry"] for i, _ in retry), next=rt["revert_due"])
+            self._log(routine, "retry", "revert", ok=False, act=trs[retry[0][0]]["revert_action"], err=retry[0][1], trace=trace)
+            activity.record(hass, "warning", "routine", "routine_retry", name, device, entity=self._failed_names(routine, retry), minutes=RETRY_S // 60, count=max(trs[i]["rretry"] for i, _ in retry), max=MAX_RETRY)
             return
-        rt.update(revert_due=None, revert_action=None, rretry=0, snapshot=None)
-        self._end_done(routine)
-        activity.record(hass, "error", "routine", "routine_failed", name, device, entity=self._entity_name(routine))
-        rt["fail_at"] = now
-        await self._async_notify(routine, ok=False, action=action, reason=reason or "error", trace=trace)
-        _trace_step(trace, "result", what="failed")
-        self._log(routine, "failed", "revert", ok=False, act=action, err=reason, trace=trace)
+        if gave_up:
+            for i, _ in gave_up:
+                activity.record(hass, "error", "routine", "routine_failed", name, device, entity=self._entity_name(views[i]))
+            rt["fail_at"] = now
+            await self._async_notify(routine, ok=False, action=trs[gave_up[0][0]]["revert_action"] or views[gave_up[0][0]]["action"], reason=gave_up[0][1] or "error", trace=trace, failed=[i for i, _ in gave_up], done=len(shown))
+            what = "partial" if shown else "failed"
+            _trace_step(trace, "result", what=what)
+            self._log(routine, what, "revert", ok=False, act=next(iter(shown.values()), None), err=gave_up[0][1], trace=trace)
+            return
+        first = next(iter(shown.values()))
+        await self._async_notify(routine, ok=True, action=first, trace=trace, results=shown)
+        _trace_step(trace, "result", what="revert")
+        self._log(routine, "revert", "revert", ok=True, act=first, trace=trace)
 
     async def async_run_now(self, routine_id: str) -> tuple[bool, str | None] | None:
         """Jetzt ausführen (Knopf): schaltet sofort, der Zeitplan bleibt wie er ist; ein Zurückschalten wird geplant."""
@@ -1644,25 +1813,26 @@ class RoutineManager:
             now = time.time()
             trace: list[dict[str, Any]] = []
             _trace_step(trace, "trigger", src="manual")
-            scene = self._take_snapshot(routine, rt)
-            if scene is not None:
-                _trace_step(trace, "snapshot", state=scene.get("state"))
-            ok, reason = await self._async_call(routine, routine["action"], options=routine["options"], trace=trace)
+            oks, fails = await self._async_switch(routine, rt, now, trace)
+            for i in oks:
+                view = target_view(routine, i)
+                activity.record(self.hass, "info", "routine", "routine_run_scene_manual" if view["action"] == "activate" else "routine_run_manual", routine["name"], log_device(routine), entity=self._entity_name(view), action=self._action_text(view, view["action"]))
+            ok, reason = not fails, fails[0][1] if fails else None
             if ok:
-                activity.record(self.hass, "info", "routine", "routine_run_scene_manual" if routine["action"] == "activate" else "routine_run_manual", routine["name"], log_device(routine), entity=self._entity_name(routine), action=self._action_text(routine, routine["action"]))
                 rt["last"] = {"at": now, "ok": True, "what": "run", "reason": None}
-                self._plan_revert(routine, rt, now, scene)
-                _trace_step(trace, "revert_plan", kind=routine["back_kind"] if rt["revert_action"] else "none", due=rt["revert_due"], back=rt["revert_action"])
                 await self._async_notify(routine, ok=True, action=routine["action"], trace=trace)
                 _trace_step(trace, "result", what="run")
                 self._log(routine, "run", "manual", ok=True, act=routine["action"], trace=trace)
             else:
-                activity.record(self.hass, "error", "routine", "routine_failed", routine["name"], log_device(routine), entity=self._entity_name(routine))
+                # Von Hand wird nicht wiederholt: ein Ziel geschaltet, ein anderes nicht ist "teilweise"
+                what = "partial" if oks else "failed"
+                for i, _ in fails:
+                    activity.record(self.hass, "error", "routine", "routine_failed", routine["name"], log_device(routine), entity=self._entity_name(target_view(routine, i)))
                 rt["fail_at"] = now
-                rt["last"] = {"at": now, "ok": False, "what": "failed", "reason": reason}
-                await self._async_notify(routine, ok=False, action=routine["action"], reason=reason or "error", trace=trace)
-                _trace_step(trace, "result", what="failed")
-                self._log(routine, "failed", "manual", ok=False, act=routine["action"], err=reason, trace=trace)
+                rt["last"] = {"at": now, "ok": False, "what": what, "reason": reason}
+                await self._async_notify(routine, ok=False, action=routine["action"], reason=reason or "error", trace=trace, failed=[i for i, _ in fails], done=len(oks))
+                _trace_step(trace, "result", what=what)
+                self._log(routine, what, "manual", ok=False, act=routine["action"], err=reason, trace=trace)
             self._arm(routine_id)
             self._save_now()
             return ok, reason
@@ -1683,7 +1853,7 @@ class RoutineManager:
     def _waits_for_end(self, routine_id: str) -> bool:
         """Wartet die Routine darauf, dass ein Auslöser sie zurückschaltet?"""
         routine = self._routines.get(routine_id)
-        return bool(routine and routine["back_kind"] == "trigger" and self.runtime(routine_id)["revert_action"] is not None)
+        return bool(routine and routine["back_kind"] == "trigger" and self._pending(self.runtime(routine_id)))
 
     def _init_met(self, routine_id: str) -> None:
         """Ausgangslage eines Auslösers: der Stand jetzt. Was schon gilt, löst nicht aus; erst ein neues Eintreten."""
@@ -1778,7 +1948,7 @@ class RoutineManager:
             return
         rt = self.runtime(routine["id"])
         now = time.time()
-        if rt["revert_action"] is not None:
+        if self._pending(rt):
             self._skip(routine, "routine_skip_busy")
             return
         if not in_window(routine["window"], dt_util.now(self.tz)):
@@ -1794,7 +1964,7 @@ class RoutineManager:
     def _end_fire(self, routine: dict[str, Any]) -> None:
         """Die Bedingung des Zurückschaltens ist eingetreten: jetzt zurückschalten."""
         rt = self.runtime(routine["id"])
-        if rt["revert_action"] is None:
+        if not self._pending(rt):
             return
         rt["revert_due"] = time.time()
         self.hass.async_create_task(self._async_process(routine["id"]))
@@ -1811,10 +1981,49 @@ class RoutineManager:
         """Ziel dieser Routine: das eigene, sonst das Standard-Ziel aus den Einstellungen."""
         return routine.get("target") or notify_target(effective(self.hass), "routines")
 
-    def texts(self, routine: dict[str, Any], *, action: str, ok: bool = True, reason: str = "error", now: float | None = None) -> tuple[str, str]:
+    def _names(self, routine: dict[str, Any], indexes: list[int]) -> str:
+        """Namen der Ziele für die Meldung: die ersten drei, dann "+N"."""
+        names = [self._entity_name(target_view(routine, i)) for i in indexes]
+        return ", ".join(names[:3]) + (f" +{len(names) - 3}" if len(names) > 3 else "")
+
+    def _texts_multi(self, routine: dict[str, Any], *, ok: bool, reason: str, clock: str, failed: list[int] | None, done: int, results: dict[int, str] | None) -> tuple[str, str]:
+        """Titel und Zeile der Meldung bei mehreren Zielen (seit 2.181.0): eine Meldung je Lauf mit allen Zielen."""
+        hass = self.hass
+        total = len(routine_targets(routine))
+        if not ok:
+            return push.text(hass, "routine_fail_title", name=routine["name"]), push.text(
+                hass,
+                "routine_fail_text_multi",
+                done=done,
+                total=total,
+                entities=self._names(routine, failed or list(range(total))),
+                reason=push.text(hass, f"routine_reason_{reason}"),
+                time=clock,
+            )
+        results = results or {i: routine_targets(routine)[i]["action"] for i in range(total)}
+        shown = list(results)[:3]
+        summary = ", ".join(f"{self._entity_name(target_view(routine, i))} {self._action_text(target_view(routine, i), results[i])}" for i in shown)
+        if len(results) > 3:
+            summary += f" +{len(results) - 3}"
+        return push.text(hass, "routine_title", name=routine["name"]), push.text(hass, "routine_text_multi", summary=summary, time=clock)
+
+    def texts(
+        self,
+        routine: dict[str, Any],
+        *,
+        action: str,
+        ok: bool = True,
+        reason: str = "error",
+        now: float | None = None,
+        failed: list[int] | None = None,
+        done: int = 0,
+        results: dict[int, str] | None = None,
+    ) -> tuple[str, str]:
         """Titel und Zeile der Meldung; fest vorgegeben (push.py), mit echten Namen und Uhrzeit."""
         hass = self.hass
         clock = dt_util.as_local(dt_util.utc_from_timestamp(now if now is not None else time.time())).strftime("%H:%M")
+        if routine.get("more"):
+            return self._texts_multi(routine, ok=ok, reason=reason, clock=clock, failed=failed, done=done, results=results)
         domain = routine["entity_id"].split(".", 1)[0]
         entity = self._entity_name(routine)
         if not ok:
@@ -1829,13 +2038,24 @@ class RoutineManager:
         key = {"toggled": "routine_text_toggled", "activated": "routine_text_activated"}.get(word, "routine_text")
         return push.text(hass, "routine_title", name=routine["name"]), push.text(hass, key, entity=entity, result=push.text(hass, f"routine_res_{word}") if word != "toggled" else "", time=clock)
 
-    async def _async_notify(self, routine: dict[str, Any], *, ok: bool, action: str, reason: str = "error", trace: list[dict[str, Any]] | None = None) -> None:
+    async def _async_notify(
+        self,
+        routine: dict[str, Any],
+        *,
+        ok: bool,
+        action: str,
+        reason: str = "error",
+        trace: list[dict[str, Any]] | None = None,
+        failed: list[int] | None = None,
+        done: int = 0,
+        results: dict[int, str] | None = None,
+    ) -> None:
         """Push nach dem Schalten (nur mit "Per Push melden") oder bei einem Fehler (auch ohne, wenn in den Einstellungen an)."""
         opts = effective(self.hass)
         if (ok and not routine["push"]) or (not ok and not routine["push"] and not opts[CONF_ROUTINES_NOTIFY_ERROR]):
             _trace_step(trace, "notify", res="off")
             return
-        title, message = self.texts(routine, action=action, ok=ok, reason=reason)
+        title, message = self.texts(routine, action=action, ok=ok, reason=reason, failed=failed, done=done, results=results)
         outcome: dict[str, Any] = {}
         sent = await self._async_send(routine, title, message, outcome)
         _trace_step(trace, "notify", res="held" if outcome.get("held") else "sent" if sent else "failed", target=self.target(routine), title=title, err=outcome.get("err"))
@@ -1965,6 +2185,23 @@ def switchable_devices(hass: HomeAssistant) -> list[dict[str, Any]]:
     return out
 
 
+def _target_payload(hass: HomeAssistant, manager: RoutineManager, routine: dict[str, Any], index: int) -> dict[str, Any]:
+    """Ein Ziel der Routine mit Name und Stand der Entität für das Panel."""
+    view = target_view(routine, index)
+    entity = entity_payload(hass, view["entity_id"])
+    exists = er.async_get(hass).async_get(view["entity_id"]) is not None or hass.states.get(view["entity_id"]) is not None
+    return {
+        **routine_targets(routine)[index],
+        "entity_name": entity["name"],
+        "entity_state": entity["state"],
+        "entity_missing": not exists,
+        "domain": entity["domain"],
+        "actions": entity["actions"],
+        "set_text": manager.set_value_text(view) if view["action"] == "set" else "",
+        "device_name": manager._device_name(view),
+    }
+
+
 def routine_payload(hass: HomeAssistant, manager: RoutineManager, routine: dict[str, Any]) -> dict[str, Any]:
     """Routine mit Stand für das Panel: nächster Lauf, Zurückschalten, zuletzt, erledigt, Entität."""
     rt = manager.runtime(routine["id"])
@@ -1981,15 +2218,17 @@ def routine_payload(hass: HomeAssistant, manager: RoutineManager, routine: dict[
         "done": rt["done"],
         "running": routine["kind"] == "countdown" and routine["enabled"] and rt["due"] is not None,
         # Wartet auf das Zurückschalten (seit 2.26.0): die Routine ist geschaltet, die Rückstellung steht noch aus; zählt für den Reiter "Läuft"
-        "reverting": rt["revert_action"] is not None,
+        "reverting": manager._pending(rt),
         # Auslöser (seit 2.54.0): wartet auf das Zurückschalten durch einen Auslöser; Sätze der Bedingungen und die Entitäten dazu
-        "waiting_end": rt["revert_action"] is not None and routine["back_kind"] == "trigger",
+        "waiting_end": manager._pending(rt) and routine["back_kind"] == "trigger",
         "last_trigger": rt["last_trigger"],
         "condition_text": magic.condition_text(hass, {"conditions": routine["conditions"]}) if routine["conditions"] else "",
         "back_condition_text": magic.condition_text(hass, {"conditions": routine["back_conditions"]}) if routine["back_conditions"] else "",
         "condition_entities": {
             eid: magic.entity_descriptor(hass, eid) for eid in dict.fromkeys(tree_entities(routine["conditions"]) + tree_entities(routine["back_conditions"]))
         },
+        # Alle Ziele (seit 2.181.0), das erste zuerst: Gerät, Entität, Aktion, Optionen, "Danach" mit Name und Stand
+        "targets": [_target_payload(hass, manager, routine, i) for i in range(len(routine_targets(routine)))],
         "entity_name": entity["name"],
         "entity_state": entity["state"],
         "entity_missing": not exists,

@@ -445,7 +445,9 @@ def _item_what(kind: str, item: dict[str, Any]) -> str:
     """Was ein Eintrag tut, aus der geprüften Fassung: Routine = Entität und Aktion, Magic Push = Entität, Bedingung, Push-Ziel."""
     entity = str(item.get("entity_id") or "?")
     if kind == "routines":
-        return f"{entity} · {item.get('action') or '?'}"
+        # Mit weiteren Zielen (seit 2.181.0) "+N" dahinter
+        more = f" +{len(item['more'])}" if item.get("more") else ""
+        return f"{entity}{more} · {item.get('action') or '?'}"
     value = item.get("value")
     cond = f"{item.get('kind') or '?'}" + (f" {value}" if value not in (None, "") else "")
     return f"{entity} · {cond}" + (f" → {item['target']}" if item.get("target") else "")

@@ -716,7 +716,10 @@ export const triggerMethods = {
       }
     }
     const e = this.entity(d.entity_id);
-    if (e && d.action === "set") {
+    if (d.tg.length) {
+      // Mehrere Ziele (seit 2.181.0): je Ziel "Danach"
+      if (!(d.backKind === "trigger" && !leavesOf(d.backConds).length)) html += this.backModesHtml();
+    } else if (e && d.action === "set") {
       // Nach "setzen" gibt es kein Gegenstück: Zurück geht nur auf den Wert von vorher
       if (d.backKind !== "none" && !(d.backKind === "trigger" && !leavesOf(d.backConds).length)) html += `<p class="mg-hint">${esc(t("rtBackSetNote"))}</p>`;
     } else if (e && !(d.backKind === "trigger" && !leavesOf(d.backConds).length)) {
@@ -724,6 +727,28 @@ export const triggerMethods = {
       if (d.back_mode === "restore") html += `<p class="mg-hint">${esc(t("rtBackModeNote"))}</p>`;
     }
     return `${html}<div data-rt-zone="backsum">${this.backSumHtml()}</div><div data-rt-zone="runs">${this.runsHtml()}</div>`;
+  },
+
+  // Seite "Zurückschalten" bei mehreren Zielen: je Ziel eine Zeile mit "Danach" (Gegenstück oder wie vorher); Szenen und "Umschalten" haben keines
+  backModesHtml() {
+    const esc = (v) => this.esc(v);
+    const t = (k, ...a) => this.t(k, ...a);
+    let skipped = false;
+    const rows = this.targets()
+      .map((x, i) => {
+        const back = this.opposite(x.action);
+        if (!back && x.action !== "set") {
+          skipped = true;
+          return "";
+        }
+        const e = this.entity(x.entity_id);
+        const head = `<div class="rt-bm-name"><span class="mg-ic" aria-hidden="true">${this.routineIcon(this.domainOf(x.entity_id))}</span><b>${esc(this.targetName(x))}</b></div>`;
+        if (x.action === "set") return `<div class="rt-bm">${head}<p class="mg-hint">${esc(t("rtBackSetNote"))}</p></div>`;
+        const items = [["opposite", t(`rtAct_${this.actionKey(e?.domain || this.domainOf(x.entity_id), back)}`)], ["restore", t("rtBackModeRestore")]];
+        return `<div class="rt-bm">${head}${this.tabsHtml(items.map(([k, label]) => ({ on: (x.back_mode || "opposite") === k, attrs: `data-rt="bmode-t" data-i="${i}" data-v="${k}" data-group="bmode-${i}"`, label })))}</div>`;
+      })
+      .join("");
+    return `<div class="mg-k">${esc(t("rtBackPerDevice"))}</div>${rows}${skipped ? `<p class="mg-hint">${esc(t("rtBackSkipNote"))}</p>` : ""}`;
   },
 
   // Der Satz zum Zurückschalten unter den Einstellungen ("Nach 20 Min. wieder aus."); eigene Zone, damit er beim Tippen mitläuft

@@ -27,6 +27,8 @@ const { triggerMethods, triggerDefaults, triggerFromRoutine, triggerPayload } = 
 
 // Letzter Schritt (Name und Prüfung); die Seite "Optionen" (5) steht in steps() zwischen 1 und 2, nur wenn die Entität etwas kann
 const STEPS = 4;
+// Ziele je Routine (wie im Server)
+const MAX_TARGETS = 10;
 const ENT_SEARCH_MIN = 7;
 const OPTS_STEP = 5;
 const BACK_STEP = 6;
@@ -134,6 +136,8 @@ export class RoutineUi {
     this._tick = null;
     this.deviceId = null;
     this.data = null;
+    // Schaltbare Entitäten je Gerät (seit 2.181.0): der Assistent kennt Ziele auf mehreren Geräten
+    this.devEnts = {};
     this.loading = false;
     this.error = null;
     this.view = "list";
@@ -165,6 +169,10 @@ export class RoutineUi {
 
   backPresets() {
     return BACK_PRESETS;
+  }
+
+  routineIcon(domain) {
+    return routineEmoji(domain);
   }
 
   wizardOpen() {
@@ -231,6 +239,7 @@ export class RoutineUi {
       const result = await this.host._hass.callWS({ type: "device_panel/routine_get", device_id: deviceId });
       if (this.deviceId !== deviceId) return;
       this.data = result;
+      this.devEnts[deviceId] = result.entities;
       this._offset = Number.isFinite(result.now) ? result.now * 1000 - Date.now() : 0;
       this.applyPending();
     } catch (err) {
@@ -270,7 +279,7 @@ export class RoutineUi {
   }
 
   entity(id) {
-    const e = this.data?.entities.find((x) => x.entity_id === id) || null;
+    const e = this.data?.entities.find((x) => x.entity_id === id) || Object.values(this.devEnts).flat().find((x) => x.entity_id === id) || null;
     // Die Regler-Beschreibungen einmal bereinigen (siehe cleanSpec); neu geladene Entitäten kommen wieder durch hierher
     if (e && Array.isArray(e.options) && !e._specsClean) {
       e.options = e.options.map(cleanSpec);
@@ -439,7 +448,8 @@ export class RoutineUi {
   // Der Entwurf als Routinen-Angaben für Sätze (wie vom Server, plus Zeit und Wiederholung)
   draftRt() {
     const d = this.wiz.draft;
-    return { ...this.payload(), entity_id: d.entity_id, weekdays: d.weekdays, mday: d.mday, time: d.time, date: d.date, delay_s: d.delay_s };
+    const own = { entity_id: d.entity_id, action: d.action, options: d.action === "on" || d.action === "set" ? d.options : {}, back_mode: this.tgBackMode(d) };
+    return { ...this.payload(), ...own, weekdays: d.weekdays, mday: d.mday, time: d.time, date: d.date, delay_s: d.delay_s };
   }
 
   // Wann: "Täglich um 20:00", "Mo, Mi, Fr um 06:30", "Monatlich am 1. um 09:00", "Einmalig, 24.12. um 17:00", "Einmalig, in 30 Min."
@@ -458,7 +468,23 @@ export class RoutineUi {
   }
 
   sentence(rt) {
-    return `${this.whenText(rt)} · ${this.sentenceOf(rt, rt.entity_name || rt.entity_id)}`;
+    return `${this.whenText(rt)} · ${this.sentencesOf(rt)}`;
+  }
+
+  // Der Satz der Routine; mit mehreren Zielen (seit 2.181.0) je Ziel einer, mit Semikolon getrennt
+  sentencesOf(rt) {
+    if ((rt.targets || []).length < 2) return this.sentenceOf(rt, rt.entity_name || rt.entity_id);
+    return rt.targets.map((x) => this.sentenceOf({ ...rt, entity_id: x.entity_id, action: x.action, options: x.options, back_mode: x.back_mode, set_text: x.set_text }, x.entity_name || x.entity_id)).join("; ");
+  }
+
+  // Aufgeklappt (Karte, Wecker): "Schaltet N Geräte" mit einer Zeile je Ziel; das Gerät, in dessen Reiter man ist, ist markiert
+  targetsListHtml(rt, here) {
+    if ((rt.targets || []).length < 2) return "";
+    const esc = (v) => this.esc(v);
+    const rows = rt.targets
+      .map((x) => `<div class="rt-tgt-row${x.device_id === here ? " here" : ""}"><span class="mg-ic" aria-hidden="true">${routineEmoji(x.domain)}</span><span class="mg-t"><b>${esc(x.entity_name || x.entity_id)}</b><small>${esc([x.device_name, this.targetSub(x)].filter(Boolean).join(" · "))}</small></span></div>`)
+      .join("");
+    return `<div class="rt-tgts"><div class="mg-k">${esc(this.t("rtTgSwitches", rt.targets.length))}</div>${rows}</div>`;
   }
 
   // --- Reiter im Popup --------------------------------------------------------
@@ -585,7 +611,7 @@ export class RoutineUi {
     const esc = (v) => this.esc(v);
     const t = (k, ...a) => this.t(k, ...a);
     const out = [];
-    if (rt.entity_missing) out.push(`<span class="mg-warn">${esc(t("rtEntityMissing"))}</span>`);
+    if (rt.entity_missing || (rt.targets || []).some((x) => x.entity_missing)) out.push(`<span class="mg-warn">${esc(t("rtEntityMissing"))}</span>`);
     const last = rt.last;
     if (last) {
       const ago = this.serverNow() - last.at;
@@ -621,7 +647,7 @@ export class RoutineUi {
     }
     const sw = `<label class="switch"><input type="checkbox" data-rt="toggle" data-id="${esc(rt.id)}"${rt.enabled ? " checked" : ""} aria-label="${esc(rt.name)}"><span></span></label>`;
     // sentenceOf liefert Text (mit dem Namen der Entität), nicht HTML: hier escapen (seit 2.99.2, vorher als HTML eingesetzt)
-    const what = `${esc(this.sentenceOf(rt, name))}${rt.kind === "countdown" ? ` · ${esc(t("rtOnceShort"))}` : ""}${rt.push ? ` · 🔔 ${esc(rt.target ? this.niceTarget(rt.target) : t("rtTargetDefaultShort"))}` : ""}`;
+    const what = `${esc(this.sentencesOf(rt))}${rt.kind === "countdown" ? ` · ${esc(t("rtOnceShort"))}` : ""}${rt.push ? ` · 🔔 ${esc(rt.target ? this.niceTarget(rt.target) : t("rtTargetDefaultShort"))}` : ""}`;
     const days = rt.kind === "repeat" && (rt.repeat === "daily" || rt.repeat === "weekly")
       ? `<div class="rt-days">${WEEKDAYS.map((i) => `<i class="${rt.repeat === "daily" || (rt.weekdays || []).includes(i) ? "on" : ""}">${esc(this.wd(i))}</i>`).join("")}</div>`
       : "";
@@ -645,7 +671,7 @@ export class RoutineUi {
       : "";
     const fold = foldable ? `<button type="button" class="rt-fold" data-rt="list-fold" data-id="${esc(rt.id)}" aria-expanded="true" title="${esc(t("rtFoldOne"))}" aria-label="${esc(t("rtFoldOne"))}">${this.chevHtml(true)}</button>` : "";
     return `<div class="rt-clock${rt.enabled ? "" : " off"}"><div class="top">${left}<span class="grow"></span>${sw}${fold}</div>
-      <div class="name">${routineEmoji(domain)} ${esc(rt.name)}</div><div class="what">${what}</div>${days}
+      <div class="name">${routineEmoji(domain)} ${esc(rt.name)}</div><div class="what">${what}</div>${this.targetsListHtml(rt, this.deviceId)}${days}
       ${status.length ? `<div class="what">${status.join(" · ")}</div>` : ""}
       <div class="next">${next}${acts}</div>${confirm}</div>`;
   }
@@ -853,7 +879,7 @@ export class RoutineUi {
       html += `<div class="mg-dcard${open ? "" : " closed"}"><div class="mg-dwrap"><button type="button" class="mg-dhead" ${this.a(all, "routine-fold-dev")} data-device="${esc(g.id)}" aria-expanded="${open}">
         <span class="mg-devic" aria-hidden="true">${g.holder ? g.holder.emoji : this.h.typeIcon(g.dev?.type || "other", 18)}</span>
         <span class="mg-t"><b>${esc(g.name)}</b>${sum}</span>${lead}${this.chevHtml(open)}</button>${one ? `<span class="mg-dsw">${this.switchHtml(one, all)}</span>` : ""}</div>`;
-      if (open) html += g.shown.map((x) => this.overviewCardHtml(x, all)).join("");
+      if (open) html += g.shown.map((x) => this.overviewCardHtml(x, all, g.id)).join("");
       else if (g.shown.length > 1) html += g.shown.map((x) => this.lineHtml(x, all)).join("");
       html += `</div>`;
     }
@@ -875,7 +901,7 @@ export class RoutineUi {
     return `<div class="mg-rline${rt.enabled ? "" : " off"}"><span class="mg-t"><b>${esc(rt.name)}</b><small>${next}</small></span>${this.switchHtml(rt, all)}</div>`;
   }
 
-  overviewCardHtml(rt, all) {
+  overviewCardHtml(rt, all, here) {
     const esc = (v) => this.esc(v);
     const t = (k, ...a) => this.t(k, ...a);
     const confirming = all.confirmId === rt.id;
@@ -899,7 +925,7 @@ export class RoutineUi {
     if (backWord) status.unshift(`<span class="mg-on">${esc(rt.back_mode === "restore" || rt.action === "set" ? t("rtBackAtRowRestore", this.localText(rt.revert_local)) : t("rtBackAtRow", backWord, this.localText(rt.revert_local)))}</span>`);
     const next = rt.running ? `<span class="mg-on">${esc(t("rtRunningShort"))}</span>` : rt.kind === "trigger" && rt.enabled ? `<span class="mg-on">${esc(this.waitsText(rt))}</span>` : rt.enabled && rt.due_local ? `${esc(t("rtNextRun"))} <span class="mg-on">${esc(this.localText(rt.due_local))}</span>` : rt.done ? esc(t("rtDone")) : esc(t("rtDisabled"));
     return `<div class="mg-card${rt.enabled ? "" : " off"}"><div class="mg-row"><span class="mg-ic" aria-hidden="true">${routineEmoji(rt.domain)}</span>
-      <div class="mg-t"><b>${esc(rt.name)}</b><small>${esc(this.sentence(rt))}</small><small class="mg-status">${[next, ...status].join(" · ")}</small></div>${sw}</div>${acts}${ran}${confirm}</div>`;
+      <div class="mg-t"><b>${esc(rt.name)}</b><small>${esc(this.sentence(rt))}</small><small class="mg-status">${[next, ...status].join(" · ")}</small></div>${sw}</div>${this.targetsListHtml(rt, here)}${acts}${ran}${confirm}</div>`;
   }
 
   chevHtml(open) {
@@ -982,6 +1008,8 @@ export class RoutineUi {
       action: "on",
       options: {},
       back_mode: "opposite",
+      // Weitere Ziele (seit 2.181.0): leer bei einem Ziel, sonst alle Ziele; das aktive liegt zugleich in den Feldern oben (siehe targets())
+      tg: [],
       back_s: 0,
       ...triggerDefaults(),
       backOwn: { text: "", unit: 60 },
@@ -1018,6 +1046,10 @@ export class RoutineUi {
       action: rt.action,
       options: { ...(rt.options || {}) },
       back_mode: rt.back_mode || "opposite",
+      // Mehrere Ziele: alle aus der Routine (das erste ist zugleich aktiv), mit Namen für die Zeilen, bis die Geräte geladen sind
+      tg: (rt.targets || []).length > 1
+        ? rt.targets.map((x) => ({ device_id: x.device_id, entity_id: x.entity_id, action: x.action, options: { ...(x.options || {}) }, back_mode: x.back_mode || "opposite", label: x.entity_name, device_name: x.device_name, fromServer: true }))
+        : [],
       ...triggerFromRoutine(rt),
       back_s: rt.back_s || 0,
       backOwn: backPreset ? { text: "", unit: 60 } : back,
@@ -1043,15 +1075,163 @@ export class RoutineUi {
     };
   }
 
+  // --- Mehrere Ziele (seit 2.181.0) -------------------------------------------
+
+  // Alle Ziele des Entwurfs in ihrer Reihenfolge; das aktive Ziel liegt in den Feldern des Entwurfs und wird hier eingetragen
+  targets() {
+    const d = this.wiz.draft;
+    const own = { device_id: d.device_id, entity_id: d.entity_id, action: d.action, options: { ...(d.options || {}) }, back_mode: d.back_mode };
+    if (!d.tg.length) return [own];
+    return d.tg.map((x, i) => (i === (this.wiz.cur || 0) ? { ...x, ...own } : x));
+  }
+
+  curEnts() {
+    return this.devEnts[this.wiz?.draft?.device_id] || this.data?.entities || [];
+  }
+
+  // Kann nach diesem Ziel (oder irgendeinem) zurückgeschaltet werden? Szenen und "Umschalten" nicht; "Zurückschalten" braucht ein anderes Ziel
+  noBack() {
+    return !this.targets().some((x) => canBack(x.action));
+  }
+
+  targetName(x) {
+    return this.entity(x.entity_id)?.name || x.label || x.entity_id || this.t("rtTgNew");
+  }
+
+  targetDevice(x) {
+    if (isHolder(x.device_id)) return this.t(HOLDERS[x.device_id].key);
+    return this.host._devices?.find((v) => v.id === x.device_id)?.name || x.device_name || "";
+  }
+
+  // "Einschalten · 80 %", "Ausschalten", "auf 21 °C setzen"
+  targetSub(x) {
+    const domain = this.domainOf(x.entity_id);
+    if (x.action === "set") return this.t("rtVerbSet", this.setText({ options: x.options, entity_id: x.entity_id }));
+    const parts = x.action === "on" ? this.optionParts(x.options) : [];
+    return [this.t(`rtAct_${actKey(domain, x.action)}`), ...parts].join(" · ");
+  }
+
+  // Das Ziel steht in den Feldern des Entwurfs (Seiten Gerät, Was, Optionen arbeiten daran)
+  loadTarget(i) {
+    const w = this.wiz;
+    const d = w.draft;
+    const x = d.tg[i];
+    Object.assign(d, { device_id: x.device_id, entity_id: x.entity_id, action: x.action, options: { ...(x.options || {}) }, back_mode: x.back_mode || "opposite" });
+    w.cur = i;
+    w.tried = null;
+    w.entQuery = "";
+  }
+
+  // Die Entitäten eines Geräts holen, ohne den Stand des Reiters (this.data) zu ändern
+  async ensureDevice(id) {
+    if (!id || this.devEnts[id]) return;
+    const r = await this.call({ type: "device_panel/routine_get", device_id: id });
+    if (Array.isArray(r?.entities)) this.devEnts[id] = r.entities;
+  }
+
+  // Sind alle Ziele gültig? Das aktive prüft canNext(1); die anderen (aus dem Server noch ohne Entitäten) gelten dann als gültig
+  targetsOk() {
+    const w = this.wiz;
+    return this.targets().every((x, i) => {
+      if (!w.draft.tg.length || i === (w.cur || 0)) return true;
+      const e = this.entity(x.entity_id);
+      if (!e) return Boolean(x.entity_id && x.fromServer);
+      return e.actions.includes(x.action) && (x.action !== "set" || this.setValid(x, e));
+    });
+  }
+
+  // Dieselbe Entität steht in einem anderen Ziel
+  usedElsewhere(entityId) {
+    const cur = this.wiz.cur || 0;
+    return this.targets().some((x, i) => i !== cur && x.entity_id === entityId);
+  }
+
+  async addTarget() {
+    const w = this.wiz;
+    if (!w || !this.canNext(1) || this.targets().length >= MAX_TARGETS) return;
+    const d = w.draft;
+    d.tg = [...this.targets(), { device_id: "", entity_id: "", action: "on", options: {}, back_mode: "opposite" }];
+    this.loadTarget(d.tg.length - 1);
+    // Die Seiten wiederholen sich: zuerst das Gerät wählen
+    w.pick = true;
+    w.pickId = "";
+    w.pickEnt = "";
+    w.devQuery = "";
+    w.devKind = "all";
+    w.error = "";
+    this.setStep(0);
+    if (w.devices) return;
+    try {
+      const r = await this.call({ type: "device_panel/routine_devices" });
+      if (this.wiz !== w) return;
+      w.devices = r.devices;
+    } catch (err) {
+      if (this.wiz !== w) return;
+      w.devices = [];
+      w.error = this.t("rtLoadError", this.h.errText(err));
+    }
+    this.paint();
+  }
+
+  // Ein Ziel entfernen (das aktive: "Ziel verwerfen" auf der ersten Seite); das letzte bleibt
+  removeTarget(i) {
+    const w = this.wiz;
+    const d = w.draft;
+    if (d.tg.length < 2) return;
+    d.tg = this.targets();
+    const wasActive = i === w.cur;
+    d.tg.splice(i, 1);
+    if (wasActive) w.cur = Math.max(0, i - 1);
+    else if (i < w.cur) w.cur -= 1;
+    this.loadTarget(w.cur);
+    if (d.tg.length === 1) {
+      d.tg = [];
+      w.cur = 0;
+    }
+    this.requestPreview();
+  }
+
+  // Zeilen der schon gewählten Ziele über dem aktiven (Seiten "Was schalten" und "Optionen")
+  targetsHtml() {
+    const d = this.wiz.draft;
+    if (!d.tg.length) return "";
+    const esc = (v) => this.esc(v);
+    const t = (k, ...a) => this.t(k, ...a);
+    const cur = this.wiz.cur || 0;
+    const rows = this.targets()
+      .map((x, i) => {
+        if (i === cur) return "";
+        const dev = this.targetDevice(x);
+        return `<div class="rt-tgt"><span class="mg-ic" aria-hidden="true">${routineEmoji(this.domainOf(x.entity_id))}</span>
+          <span class="mg-t"><b>${esc(this.targetName(x))}</b><small>${esc([dev, this.targetSub(x)].filter(Boolean).join(" · "))}</small></span>
+          <button type="button" class="rt-tgt-btn" data-rt="tg-edit" data-i="${i}" title="${esc(t("rtTgEdit"))}" aria-label="${esc(t("rtTgEdit"))}">${this.h.mdi("pencil", 16)}</button>
+          <button type="button" class="rt-tgt-btn" data-rt="tg-del" data-i="${i}" title="${esc(t("rtTgRemove"))}" aria-label="${esc(t("rtTgRemove"))}">${this.h.mdi("close", 16)}</button></div>`;
+      })
+      .join("");
+    return `${rows}<div class="rt-tgt-tag">${esc(t("rtTgOf", cur + 1, d.tg.length))}</div>`;
+  }
+
+  // "+ Gerät hinzufügen" unter der letzten Seite eines Ziels
+  addTargetHtml() {
+    const n = this.targets().length;
+    if (n >= MAX_TARGETS) return "";
+    return `<button type="button" class="mg-add" data-rt="tg-add"${this.canNext(1) ? "" : " disabled"}>${this.h.mdi("plus", 18)}${this.esc(this.t("rtTgAdd"))}</button><p class="mg-hint">${this.esc(this.t("rtTgHint", n, MAX_TARGETS))}</p>`;
+  }
+
+  // Der Entwurf als Angaben für den Server; jedes Ziel mit eigener Aktion, Optionen und "Danach"
+  tgBackMode(x) {
+    const d = this.wiz.draft;
+    return d.backKind !== "none" ? (x.action === "set" ? "restore" : x.back_mode || "opposite") : "opposite";
+  }
+
   payload() {
     const d = this.wiz.draft;
+    const [first, ...more] = this.targets();
+    const one = (x) => ({ device_id: x.device_id, entity_id: x.entity_id, action: x.action, options: x.action === "on" || x.action === "set" ? x.options : {}, back_mode: this.tgBackMode(x) });
     const raw = {
-      device_id: d.device_id,
-      entity_id: d.entity_id,
+      ...one(first),
+      more: more.map(one),
       name: d.name.trim(),
-      action: d.action,
-      options: d.action === "on" || d.action === "set" ? d.options : {},
-      back_mode: d.backKind !== "none" ? (d.action === "set" ? "restore" : d.back_mode) : "opposite",
       back_s: d.backKind === "duration" ? d.back_s || null : null,
       ...triggerPayload(d),
       kind: d.kind,
@@ -1076,6 +1256,7 @@ export class RoutineUi {
     this.ui.error = "";
     this.wiz = {
       step: routine ? 2 : 1,
+      cur: 0,
       editing: Boolean(routine),
       draft: routine ? this.draftFrom(routine) : this.newDraft(),
       pv: null,
@@ -1091,6 +1272,13 @@ export class RoutineUi {
     this.paint();
     this.scrollTop();
     this.requestPreview();
+    // Mehrere Ziele: die Entitäten aller beteiligten Geräte nachladen (Optionen, Namen), dann neu zeichnen
+    if (routine && this.wiz.draft.tg.length) {
+      const w = this.wiz;
+      Promise.all(w.draft.tg.map((x) => this.ensureDevice(x.device_id).catch(() => {}))).then(() => {
+        if (this.wiz === w) this.paint();
+      });
+    }
   }
 
   // Neue Routine aus dem Fenster aller Routinen (seit 2.27.0): derselbe Assistent mit einem Schritt mehr davor, der das Gerät wählt
@@ -1098,8 +1286,8 @@ export class RoutineUi {
     this.reset();
     this.standalone = true;
     this.view = "wizard";
-    const draft = { id: null, device_id: null, entity_id: "", action: "on", options: {}, back_mode: "opposite", back_s: 0, ...triggerDefaults(), backOwn: { text: "", unit: 60 }, kind: "repeat", delay_s: 1800, delayOwn: { text: "", unit: 60 }, date: "", time: "06:30", repeat: "daily", weekdays: [0, 1, 2, 3, 4], mday: 1, mdayOwn: false, enabled: true, push: false, ha_switch: false, ha_entity: "", ha_button: "", target: "", name: "" };
-    const w = (this.wiz = { pick: true, step: 0, editing: false, draft, pv: null, pvError: "", test: null, targetOpen: false, error: "", saving: false, devices: null, devQuery: "", pickId: "", pickEnt: "", loadingDev: false });
+    const draft = { id: null, device_id: null, entity_id: "", action: "on", options: {}, back_mode: "opposite", tg: [], back_s: 0, ...triggerDefaults(), backOwn: { text: "", unit: 60 }, kind: "repeat", delay_s: 1800, delayOwn: { text: "", unit: 60 }, date: "", time: "06:30", repeat: "daily", weekdays: [0, 1, 2, 3, 4], mday: 1, mdayOwn: false, enabled: true, push: false, ha_switch: false, ha_entity: "", ha_button: "", target: "", name: "" };
+    const w = (this.wiz = { pick: true, step: 0, cur: 0, editing: false, draft, pv: null, pvError: "", test: null, targetOpen: false, error: "", saving: false, devices: null, devQuery: "", pickId: "", pickEnt: "", loadingDev: false });
     w.snap = JSON.stringify(draft);
     this.paint();
     try {
@@ -1118,6 +1306,11 @@ export class RoutineUi {
   async chooseDevice() {
     const w = this.wiz;
     if (!w || !w.pickId || w.loadingDev) return;
+    // Ein weiteres Ziel (oder ein anderes Gerät im Reiter eines Geräts): der Stand des Reiters bleibt, nur die Entitäten kommen dazu
+    if (!(this.standalone && !(w.cur > 0))) {
+      await this.chooseTargetDevice();
+      return;
+    }
     w.loadingDev = true;
     w.error = "";
     this.paint();
@@ -1128,6 +1321,7 @@ export class RoutineUi {
         if (this.wiz !== w) return;
         this.deviceId = id;
         this.data = result;
+        this.devEnts[id] = result.entities;
         this._offset = Number.isFinite(result.now) ? result.now * 1000 - Date.now() : 0;
         w.draft = this.newDraft();
         this.preselect(w.pickEnt);
@@ -1145,6 +1339,34 @@ export class RoutineUi {
       return;
     }
     w.loadingDev = false;
+    this.setStep(1);
+  }
+
+  // Gerät eines weiteren Ziels gewählt (seit 2.181.0): Entitäten laden, das Ziel beginnt neu, weiter zu "Was schalten"
+  async chooseTargetDevice() {
+    const w = this.wiz;
+    const id = w.pickId;
+    w.loadingDev = true;
+    w.error = "";
+    this.paint();
+    try {
+      await this.ensureDevice(id);
+    } catch (err) {
+      if (this.wiz !== w) return;
+      w.loadingDev = false;
+      w.error = this.t("rtLoadError", this.h.errText(err));
+      this.paint();
+      return;
+    }
+    if (this.wiz !== w) return;
+    const d = w.draft;
+    Object.assign(d, { device_id: id, entity_id: "", action: "on", options: {}, back_mode: "opposite" });
+    const ents = this.devEnts[id] || [];
+    if (w.pickEnt) this.preselect(w.pickEnt);
+    else if (ents.length === 1) this.preselect(ents[0].entity_id);
+    w.loadingDev = false;
+    w.tried = null;
+    w.entQuery = "";
     this.setStep(1);
   }
 
@@ -1181,7 +1403,7 @@ export class RoutineUi {
     d.options = {};
     if (!e.actions.includes(d.action)) d.action = e.actions[0];
     this.initSet(d, e);
-    if (!canBack(d.action)) {
+    if (this.noBack()) {
       d.back_s = 0;
       d.backKind = "none";
     }
@@ -1219,7 +1441,7 @@ export class RoutineUi {
           .map(([k, label]) => `<button type="button" role="tab" class="sub-tab two${k === kind ? " on" : ""}" data-rt="dev-kind" data-v="${k}" aria-selected="${k === kind}"><span class="tab-l">${esc(t(label))}</span> <span class="tab-s">${count(k)}</span></button>`)
           .join("")}</div>`
       : "";
-    return `<p class="mg-note">${esc(t("rtPickDeviceNote"))}</p>
+    return `${this.targetsHtml()}<p class="mg-note">${esc(t("rtPickDeviceNote"))}</p>
       ${bar}
       <label class="list-search" data-for="rt-devs">${this.h.mdi("search", 18)}<input type="search" data-rt="dev-search" value="${esc(w.devQuery)}" placeholder="${esc(t("listSearch"))}" aria-label="${esc(t("listSearch"))}" enterkeyhint="search" autocomplete="off" autocapitalize="off" spellcheck="false">${this.host._fieldClearHtml("data-fc", "", w.devQuery)}</label>
       <div data-rt-zone="devs">${this.devsHtml()}</div>`;
@@ -1295,7 +1517,7 @@ export class RoutineUi {
     if (step === 0) return Boolean(this.wiz.pickId) && !this.wiz.loadingDev;
     const d = this.wiz.draft;
     const e = this.entity(d.entity_id);
-    if (step === 1) return Boolean(e) && e.actions.includes(d.action) && (d.action !== "set" || this.setValid(d, e));
+    if (step === 1) return Boolean(e) && e.actions.includes(d.action) && (d.action !== "set" || this.setValid(d, e)) && !this.usedElsewhere(d.entity_id);
     if (step === BACK_STEP) return this.backValid();
     if (step === 2) {
       if (d.kind === "trigger") return this.triggerValid();
@@ -1424,7 +1646,7 @@ export class RoutineUi {
 
   // Alle Schritte gültig: dann darf auf jeder Seite gespeichert werden (seit 2.24.0)
   canSaveAll() {
-    return this.steps().filter((n) => n > 0).every((n) => this.canNext(n));
+    return this.steps().filter((n) => n > 0).every((n) => this.canNext(n)) && this.targetsOk();
   }
 
   // Kann die Entität beim Einschalten etwas einstellen? Dann gibt es die Seite "Optionen" (nur beim Einschalten, nie beim Umschalten)
@@ -1436,7 +1658,7 @@ export class RoutineUi {
   // Die auf der ersten Seite gewählte einzelne Szene oder Gruppe (nur beim Anlegen aus dem Fenster aller Routinen), sonst null
   chosenWhat() {
     const w = this.wiz;
-    if (!w?.pick || !w.pickEnt || !isHolder(this.deviceId) || !this.data || w.draft?.entity_id !== w.pickEnt) return null;
+    if (!w?.pick || !w.pickEnt || !isHolder(w.draft?.device_id) || !this.curEnts().length || w.draft?.entity_id !== w.pickEnt) return null;
     return this.entity(w.pickEnt) || null;
   }
 
@@ -1444,8 +1666,9 @@ export class RoutineUi {
   steps() {
     const d = this.wiz?.draft;
     // Eine gewählte Szene hat nichts mehr zu bestimmen (nur "Aktivieren"): die Seite "Was" entfällt (seit 2.67.0)
-    const sceneChosen = this.chosenWhat()?.domain === "scene";
-    return [...(this.wiz?.pick ? [0] : []), ...(sceneChosen ? [] : [1]), ...(this.hasOptions() ? [OPTS_STEP] : []), 2, ...(d && canBack(d.action) ? [BACK_STEP] : []), 3, 4];
+    // (seit 2.181.0 nur bei einem Ziel: bei mehreren steht auf dieser Seite die Liste der Ziele)
+    const sceneChosen = !d?.tg.length && this.chosenWhat()?.domain === "scene";
+    return [...(this.wiz?.pick ? [0] : []), ...(sceneChosen ? [] : [1]), ...(this.hasOptions() ? [OPTS_STEP] : []), 2, ...(d && !this.noBack() ? [BACK_STEP] : []), 3, 4];
   }
 
   syncNav() {
@@ -1492,7 +1715,9 @@ export class RoutineUi {
     const body = [this.step0Html, this.step1Html, this.step2Html, this.step3Html, this.step4Html, this.stepOptsHtml, this.backStepHtml][step].call(this);
     const last = step === STEPS;
     const quick = last || step === 0 ? "" : `<button type="button" class="dlg-btn quick" data-rt="nav-quick"${this.canSaveAll() && !w.saving ? "" : " disabled"}>${this.h.mdi("save", 18)}${esc(w.saving ? t("rtSaving") : t("rtSave"))}</button>`;
-    const nav = `<div class="mg-btns"><button type="button" class="dlg-btn" data-rt="${step === first ? "nav-cancel" : "nav-back"}">${this.h.mdi(step === first ? "close" : "arrowLeft", 18)}${esc(step === first ? t("rtCancel") : t("rtBack"))}</button>
+    // Auf der ersten Seite eines weiteren Ziels verwirft "Zurück" das Ziel (statt die Routine abzubrechen)
+    const drop = step === first && (w.cur || 0) > 0;
+    const nav = `<div class="mg-btns"><button type="button" class="dlg-btn" data-rt="${drop ? "target-drop" : step === first ? "nav-cancel" : "nav-back"}">${this.h.mdi(step === first && !drop ? "close" : "arrowLeft", 18)}${esc(drop ? t("rtTgDrop") : step === first ? t("rtCancel") : t("rtBack"))}</button>
       ${quick}
       ${last ? `<button type="button" class="dlg-btn primary" data-rt="nav-save"${this.canNext() && !w.saving ? "" : " disabled"}>${this.h.mdi("save", 18)}${esc(w.saving ? t("rtSaving") : t("rtSave"))}</button>` : `<button type="button" class="dlg-btn primary" data-rt="nav-next"${this.canNext() ? "" : " disabled"}>${esc(t("rtNext"))}${this.h.mdi("arrowRight", 18)}</button>`}</div>`;
     const device = (step > 0 || !w.pick) && this.deviceId ? (isHolder(this.deviceId) ? t(HOLDERS[this.deviceId].key) : this.host._devices?.find((x) => x.id === this.deviceId)?.name || w.devices?.find((x) => x.id === this.deviceId)?.name || "") : "";
@@ -1511,14 +1736,15 @@ export class RoutineUi {
     const esc = (v) => this.esc(v);
     const t = (k, ...a) => this.t(k, ...a);
     const d = this.wiz.draft;
-    const ents = this.data.entities;
-    if (!ents.length) return `<p class="mg-note">${esc(t("rtNoEntities"))}</p>`;
+    const ents = this.curEnts();
+    if (!ents.length) return `${this.targetsHtml()}<p class="mg-note">${esc(t(this.wiz.loadingDev ? "rtLoading" : "rtNoEntities"))}</p>`;
     const e = this.entity(d.entity_id);
-    let html = "";
+    // Mehrere Ziele (seit 2.181.0): oben die schon gewählten Ziele als Zeilen, darunter das aktive
+    let html = this.targetsHtml();
     // Eine einzelne Szene oder Gruppe ist auf der ersten Seite schon gewählt (seit 2.67.0): keine zweite Auswahl, nur noch die Aktion.
     // Beim Bearbeiten einer Routine bleibt die Liste.
     if (!this.chosenWhat()) {
-      html += `<p class="mg-note">${esc(t(isHolder(this.deviceId) ? "rtHolderNote" : "rtOnlySwitchable"))}</p>`;
+      html += `<p class="mg-note">${esc(t(isHolder(d.device_id) ? "rtHolderNote" : "rtOnlySwitchable"))}</p>`;
       // Bei vielen Entitäten (78 Szenen) eine Suche (seit 2.63.0)
       if (ents.length > ENT_SEARCH_MIN) {
         html += `<label class="list-search" data-for="rt-ents">${this.h.mdi("search", 18)}<input type="search" data-rt="ent-search" value="${esc(this.wiz.entQuery || "")}" placeholder="${esc(t("listSearch"))}" aria-label="${esc(t("listSearch"))}" enterkeyhint="search" autocomplete="off" autocapitalize="off" spellcheck="false">${this.host._fieldClearHtml("data-fc", "", this.wiz.entQuery || "")}</label>`;
@@ -1534,7 +1760,8 @@ export class RoutineUi {
     html += `<div class="mg-k">${esc(t("rtAction"))}</div>${this.tabsHtml(e.actions.map((a) => ({ on: d.action === a, attrs: `data-rt="action" data-v="${a}"`, label: t(`rtAct_${actKey(e.domain, a)}`) })))}`;
     if (d.action === "set") html += this.setValueHtml(e);
     else if (!opposite(d.action)) html += `<p class="mg-hint">${esc(t(e.domain === "scene" ? "rtSceneNoBack" : "rtToggleNoBack"))}</p>`;
-    return `${html}<div data-rt-zone="result">${this.resultHtml()}</div>`;
+    // Ohne Seite "Optionen" ist dies die letzte Seite des Ziels: hier steht "+ Gerät hinzufügen"
+    return `${html}<div data-rt-zone="result">${this.resultHtml()}</div>${this.hasOptions() ? "" : this.addTargetHtml()}`;
   }
 
   // Der Wert zum Setzen (Zahl: Regler und Zahlenfeld; Auswahl: Knöpfe oder Liste), auf der Seite "Was" unter der Aktion
@@ -1566,10 +1793,10 @@ export class RoutineUi {
     const esc = (v) => this.esc(v);
     const d = this.wiz.draft;
     const q = String(this.wiz.entQuery || "").trim().toLowerCase();
-    const rows = this.data.entities.filter((e) => !q || e.entity_id === d.entity_id || `${e.name} ${e.entity_id}`.toLowerCase().includes(q));
+    const rows = this.curEnts().filter((e) => !q || e.entity_id === d.entity_id || `${e.name} ${e.entity_id}`.toLowerCase().includes(q));
     if (!rows.length) return `<p class="mg-note mg-none">${esc(this.t("listSearchNone"))}</p>`;
-    return rows.map((e) => `<button type="button" class="mg-card mg-pick" data-rt="pick" data-id="${esc(e.entity_id)}" role="radio" aria-checked="${d.entity_id === e.entity_id}">
-      <span class="mg-row"><span class="mg-ic" aria-hidden="true">${routineEmoji(e.domain)}</span><span class="mg-t"><b>${esc(e.name)}</b><small>${esc(e.entity_id)}</small></span>
+    return rows.map((e) => `<button type="button" class="mg-card mg-pick" data-rt="pick" data-id="${esc(e.entity_id)}" role="radio" aria-checked="${d.entity_id === e.entity_id}"${this.usedElsewhere(e.entity_id) ? " disabled" : ""}>
+      <span class="mg-row"><span class="mg-ic" aria-hidden="true">${routineEmoji(e.domain)}</span><span class="mg-t"><b>${esc(e.name)}</b><small>${esc(e.entity_id)}${this.usedElsewhere(e.entity_id) ? ` · ${esc(this.t("rtTgUsed"))}` : ""}</small></span>
       <span class="mg-val${e.available ? "" : " off"}">${esc(this.stateWord(e))}</span><span class="mg-radio${d.entity_id === e.entity_id ? " on" : ""}"></span></span></button>`).join("");
   }
 
@@ -1606,11 +1833,13 @@ export class RoutineUi {
   // Die Zustände der Entitäten kommen beim Öffnen des Assistenten; nach dem Testschalten neu holen, sonst zeigt die Karte
   // weiter den alten Stand ("ein", obwohl gerade ausgeschaltet wurde). Der Entwurf bleibt unberührt.
   async refreshStates(w) {
-    if (!this.deviceId) return;
+    const id = w?.draft?.device_id || this.deviceId;
+    if (!id) return;
     try {
-      const r = await this.call({ type: "device_panel/routine_get", device_id: this.deviceId });
+      const r = await this.call({ type: "device_panel/routine_get", device_id: id });
       if (this.wiz !== w || !Array.isArray(r?.entities)) return;
-      this.data.entities = r.entities;
+      this.devEnts[id] = r.entities;
+      if (id === this.deviceId && this.data) this.data.entities = r.entities;
       this.paint();
     } catch {
       // Der Stand bleibt wie er war; das Ergebnis des Schaltens steht schon da
@@ -1668,11 +1897,11 @@ export class RoutineUi {
     const t = (k, ...a) => this.t(k, ...a);
     const e = this.entity(this.wiz.draft.entity_id);
     if (!e) return "";
-    return `<p class="mg-note">${esc(t("rtOptNote"))}</p>
+    return `${this.targetsHtml()}<p class="mg-note">${esc(t("rtOptNote"))}</p>
       <div data-rt-zone="prev">${this.prevHtml()}</div>
       ${e.options.map((spec) => this.optHtml(spec)).join("")}
       <p class="mg-hint">${esc(t("rtOptPreviewNote"))}</p>
-      <div data-rt-zone="result">${this.resultHtml()}</div>`;
+      <div data-rt-zone="result">${this.resultHtml()}</div>${this.addTargetHtml()}`;
   }
 
   // Eine Einstellung: Überschrift mit Wert, Regler (oder Farben), Schnellwahl als Reiterleiste
@@ -1887,8 +2116,10 @@ export class RoutineUi {
     const esc = (v) => this.esc(v);
     const t = (k, ...a) => this.t(k, ...a);
     const d = this.wiz.draft;
-    const e = this.entity(d.entity_id);
-    const placeholder = e ? e.name : "";
+    // Mehrere Ziele: das erste mit "+N" (wie der Name ohne Eingabe im Server)
+    const tg = this.targets();
+    const first = this.entity(tg[0].entity_id);
+    const placeholder = first ? `${first.name}${tg.length > 1 ? ` +${tg.length - 1}` : ""}` : "";
     return `<label class="mg-k" for="rt-name">${esc(t("rtName"))}</label>
       <input id="rt-name" class="mg-input" type="text" maxlength="${this.limit("name", 60)}" data-rt="name" value="${esc(d.name)}" placeholder="${esc(placeholder)}" autocomplete="off">
       <p class="mg-hint">${esc(t("rtNameHint"))}</p>
@@ -1916,7 +2147,12 @@ export class RoutineUi {
     const d = w.draft;
     const e = this.entity(d.entity_id);
     const rt = this.draftRt();
-    let html = `<div class="rt-sum"><b>${esc(this.whenText(rt))}</b>: ${esc(this.sentenceOf(rt, e?.name || ""))}.`;
+    // Mehrere Ziele: ein Satz je Ziel
+    const tg = this.targets();
+    const what = tg.length > 1
+      ? `<ul class="rt-sumlist">${tg.map((x) => `<li>${esc(this.sentenceOf({ ...rt, entity_id: x.entity_id, action: x.action, options: x.action === "on" || x.action === "set" ? x.options : {}, back_mode: this.tgBackMode(x) }, this.targetName(x)))}.</li>`).join("")}</ul>`
+      : `${esc(this.sentenceOf(rt, e?.name || ""))}.`;
+    let html = `<div class="rt-sum"><b>${esc(this.whenText(rt))}</b>: ${what}`;
     if (d.push) html += `<br>🔔 ${esc(t("rtSumPush", d.target ? this.niceTarget(d.target) : t("rtTargetDefaultShort")))}`;
     html += `</div>`;
     const first = w.pv?.next_runs?.[0];
@@ -2013,6 +2249,36 @@ export class RoutineUi {
       case "nav-back":
         this.stepBy(-1);
         break;
+      case "tg-add":
+        this.addTarget();
+        break;
+      case "tg-edit": {
+        const i = Number(el.dataset.i);
+        w.draft.tg = this.targets();
+        this.loadTarget(i);
+        this.ensureDevice(w.draft.device_id).catch(() => {}).then(() => {
+          if (this.wiz === w) this.paint();
+        });
+        this.setStep(1);
+        break;
+      }
+      case "tg-del":
+        this.removeTarget(Number(el.dataset.i));
+        this.paint();
+        break;
+      case "target-drop":
+        this.removeTarget(w.cur);
+        this.setStep(this.hasOptions() ? OPTS_STEP : 1);
+        break;
+      case "bmode-t": {
+        const i = Number(el.dataset.i);
+        w.draft.tg = this.targets();
+        w.draft.tg[i] = { ...w.draft.tg[i], back_mode: el.dataset.v };
+        if (i === w.cur) w.draft.back_mode = el.dataset.v;
+        this.paint();
+        this.requestPreview();
+        break;
+      }
       case "dev-kind":
         w.devKind = el.dataset.v;
         this.paint();
@@ -2039,13 +2305,13 @@ export class RoutineUi {
         break;
       case "pick": {
         const e = this.entity(id);
-        if (!e) break;
+        if (!e || this.usedElsewhere(id)) break;
         w.draft.entity_id = id;
         w.draft.options = {};
         w.tried = null;
         if (!e.actions.includes(w.draft.action)) w.draft.action = e.actions[0];
         this.initSet(w.draft, e);
-        if (!canBack(w.draft.action)) {
+        if (this.noBack()) {
           w.draft.back_s = 0;
           w.draft.backKind = "none";
         }
@@ -2057,7 +2323,7 @@ export class RoutineUi {
         w.tried = null;
         if (w.draft.action !== "on") w.draft.options = {};
         this.initSet(w.draft, this.entity(w.draft.entity_id));
-        if (!canBack(w.draft.action)) {
+        if (this.noBack()) {
           w.draft.back_s = 0;
           w.draft.backKind = "none";
           w.draft.backOwn = { text: "", unit: 60 };

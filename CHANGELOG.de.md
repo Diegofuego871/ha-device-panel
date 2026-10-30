@@ -7,6 +7,18 @@ Alle nennenswerten Änderungen an dieser Integration stehen in dieser Datei.
 Das Format folgt [Keep a Changelog](https://keepachangelog.com/de/1.1.0/),
 die Versionsnummern folgen [Semantic Versioning](https://semver.org/lang/de/).
 
+## [2.181.0] - 2026-10-30
+
+Eine Routine kann mehrere Geräte schalten.
+
+### Hinzugefügt
+
+- **Mehrere Geräte in einer Routine:** Am Ende der Seiten "Was schalten" (und "Optionen") hängt der neue Knopf "+ Gerät hinzufügen" ein weiteres Gerät an. Die Seiten Gerät, Was und Optionen wiederholen sich für dieses Gerät; jedes Gerät hat seine eigene Aktion (ein, aus, umschalten, setzen, aktivieren), seine eigenen Optionen und sein eigenes "Danach" beim Zurückschalten. Zeit oder Auslöser, Zurückschalten (wann), Push, an/aus, Name sowie Schalter und Knopf in Home Assistant gelten für die ganze Routine. Die schon gewählten Geräte stehen als Zeilen über dem aktuellen (bearbeiten, entfernen); "Zurück" auf der ersten Seite eines hinzugefügten Geräts verwirft es. Bis zu 10 Geräte; dieselbe Entität lässt sich nicht zweimal wählen. Der Name ohne Eingabe ist die erste Entität plus "+N".
+- **"Danach" je Gerät:** Auf der Seite "Zurückschalten" hat jedes Gerät, das sich zurückschalten lässt (keine Szenen, kein "Umschalten"), seine eigene Wahl: "aus" (das Gegenstück) oder "wie vorher". Der Zeitpunkt des Zurückschaltens gilt für alle.
+- **Bei jedem Gerät sichtbar:** Die Routine steht im Reiter und in der Karte jedes Geräts, das in ihr vorkommt (dieselbe Routine, ein Schalter). Zugeklappt sieht die Übersicht aus wie bisher; aufgeklappt kommt "Schaltet N Geräte" mit einer Zeile je Gerät dazu, das aktuelle Gerät markiert.
+- **Ausführen:** Alle Geräte werden zugleich geschaltet, ein Fehler stoppt die anderen nicht. Gelingt nur ein Teil, steht im Protokoll "teilweise geschaltet" mit einem Schritt je Gerät, und der Push sagt "1 von 2 geschaltet" und nennt die übrigen. Ein neuer Versuch wiederholt nur die gescheiterten Geräte. Auch das Zurückschalten läuft je Gerät. Wird ein Gerät aus Home Assistant entfernt, entfällt nur sein Ziel in der Routine.
+- **Sicherung:** Die Geräte einer Routine gehören zur Sicherung und kommen mit ihr zurück.
+
 ## [2.180.1] - 2026-10-30
 
 Das README zeigt die Zahl der aktiven Installationen.
@@ -5443,6 +5455,7 @@ Erste Vorabversion.
   GitHub Actions für die Prüfungen von HACS und hassfest sowie die Tests.
 
 [2.6.0]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v2.6.0
+[2.181.0]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v2.181.0
 [2.180.1]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v2.180.1
 [2.180.0]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v2.180.0
 [2.179.0]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v2.179.0

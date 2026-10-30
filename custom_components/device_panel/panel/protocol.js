@@ -43,7 +43,7 @@ const FILTERS = {
 const SYSTEM_CATS = ["system", "push", "launcher", "updates", "new", "charge", "outage", "battery", "signal", "magic", "routine"];
 const POLL_MS = 4000;
 // Schritte eines Trace, die einen Fehler oder ein Warnzeichen zeigen
-const BAD_RESULT = new Set(["failed", "retry", "missed"]);
+const BAD_RESULT = new Set(["failed", "retry", "missed", "partial"]);
 
 // Datum als "JJJJ-MM-TT" in Ortszeit (für die Datumsfelder)
 const isoDay = (sec) => {
@@ -569,7 +569,7 @@ export class ProtocolUi {
   }
 
   routineResult(e) {
-    const tone = { run: e.src === "manual" ? "in" : "ok", revert: "ok", missed: "wn", paused: "nu", retry: "wn", failed: "er" }[e.k] || "nu";
+    const tone = { run: e.src === "manual" ? "in" : "ok", revert: "ok", missed: "wn", paused: "nu", retry: "wn", partial: "wn", failed: "er" }[e.k] || "nu";
     return [this.t(`prRR_${e.k}`) || e.k || "", tone];
   }
 

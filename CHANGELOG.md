@@ -7,6 +7,18 @@ All notable changes to this integration are documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/).
 
+## [2.181.0] - 2026-10-30
+
+A routine can switch several devices.
+
+### Added
+
+- **Several devices in one routine:** at the end of the pages "What to switch" (and "Options") the new button "+ Add device" appends another device. The pages Device, What and Options repeat for it; each device has its own action (on, off, toggle, set, activate), its own options and its own "Then" after switching back. Time or trigger, switching back (when), push, on/off, name and the switch and button in Home Assistant are shared by the whole routine. The chosen devices stand as rows above the current one (edit, remove); "Back" on the first page of an added device discards it. Up to 10 devices; the same entity cannot be added twice. The name without input is the first entity plus "+N".
+- **"Then" per device:** on the page "Switch back" every device that can be switched back (not scenes, not "toggle") has its own choice, "off" (the opposite) or "as before". The time of switching back applies to all.
+- **Shown at every device:** the routine appears in the tab and in the card of each device that occurs in it (the same routine, one switch). Collapsed the overview looks as before; expanded it adds "Switches N devices" with a row per device, the current device marked.
+- **Run:** all devices are switched at once; a failure does not stop the others. If only some succeed, the log shows "partly switched" with one step per device, and the push says "1 of 2 switched" and names the rest. A retry only repeats the devices that failed. Switching back also works per device. A device removed from Home Assistant only drops its own device from the routine.
+- **Backup:** the devices of a routine are part of the backup and are restored with it.
+
 ## [2.180.1] - 2026-10-30
 
 The README shows the number of active installations.
@@ -5342,6 +5354,7 @@ First pre-release.
   GitHub Actions for HACS/hassfest validation and tests.
 
 [2.6.0]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v2.6.0
+[2.181.0]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v2.181.0
 [2.180.1]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v2.180.1
 [2.180.0]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v2.180.0
 [2.179.0]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v2.179.0
