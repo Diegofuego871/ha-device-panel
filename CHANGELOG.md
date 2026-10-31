@@ -7,6 +7,14 @@ All notable changes to this integration are documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/).
 
+## [2.182.1] - 2026-10-31
+
+The name you chose for a routine is always the name on its card.
+
+### Changed
+
+- **Routines overview:** a card with exactly one routine now always shows the name of the routine in its head, collapsed and expanded, so the name you chose is what you read. Expanded, the line below names the device and its area, and the card no longer repeats the name. Cards with several routines still carry the name of the device.
+
 ## [2.182.0] - 2026-10-31
 
 "Unstable from" can be set on every level, like "Report only after".
@@ -5401,6 +5409,7 @@ First pre-release.
   GitHub Actions for HACS/hassfest validation and tests.
 
 [2.6.0]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v2.6.0
+[2.182.1]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v2.182.1
 [2.182.0]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v2.182.0
 [2.181.4]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v2.181.4
 [2.181.3]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v2.181.3

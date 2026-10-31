@@ -7,6 +7,14 @@ Alle nennenswerten Änderungen an dieser Integration stehen in dieser Datei.
 Das Format folgt [Keep a Changelog](https://keepachangelog.com/de/1.1.0/),
 die Versionsnummern folgen [Semantic Versioning](https://semver.org/lang/de/).
 
+## [2.182.1] - 2026-10-31
+
+Der Name, den du einer Routine gegeben hast, steht immer auf ihrer Karte.
+
+### Geändert
+
+- **Routinen-Übersicht:** Eine Karte mit genau einer Routine zeigt in ihrem Kopf immer den Namen der Routine, zugeklappt wie aufgeklappt, damit der Name steht, den du gewählt hast. Aufgeklappt nennt die Zeile darunter das Gerät und seinen Bereich, und die Karte wiederholt den Namen nicht. Karten mit mehreren Routinen tragen weiter den Namen des Geräts.
+
 ## [2.182.0] - 2026-10-31
 
 "Instabil ab" lässt sich auf jeder Ebene einstellen, wie "Erst melden nach".
@@ -5502,6 +5510,7 @@ Erste Vorabversion.
   GitHub Actions für die Prüfungen von HACS und hassfest sowie die Tests.
 
 [2.6.0]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v2.6.0
+[2.182.1]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v2.182.1
 [2.182.0]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v2.182.0
 [2.181.4]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v2.181.4
 [2.181.3]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v2.181.3

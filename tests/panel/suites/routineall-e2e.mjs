@@ -127,7 +127,7 @@ for (const lang of ["de", "en"]) {
     await tap('dialog.rtall-dlg [data-rta-clear]');
     check(`[${tag}] X leert die Suche`, await wait(`return r.querySelectorAll("dialog.rtall-dlg .mg-dcard").length === 2`));
     await tap('dialog.rtall-dlg [data-rta="routine-filter"][data-v="off"]');
-    check(`[${tag}] Filter "Aus": nur der ausgeschaltete`, await wait(`return r.querySelectorAll("dialog.rtall-dlg .mg-card").length === 1 && r.querySelector("dialog.rtall-dlg .mg-card b").textContent === "Nachtlicht"`));
+    check(`[${tag}] Filter "Aus": nur der ausgeschaltete`, await wait(`return r.querySelectorAll("dialog.rtall-dlg .mg-card").length === 1 && r.querySelector("dialog.rtall-dlg .mg-dhead b").textContent === "Nachtlicht"`));
     await tap('dialog.rtall-dlg [data-rta="routine-filter"][data-v="all"]');
     await wait(`return r.querySelectorAll("dialog.rtall-dlg .mg-card").length === 2`);
 

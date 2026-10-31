@@ -868,12 +868,15 @@ export class RoutineUi {
       const open = this.isOpen(all, g.id, nGroups);
       const offN = g.shown.filter((x) => !x.enabled).length;
       const nextRt = g.shown.filter((x) => x.enabled && x.due_local).sort((a, b) => a.due - b.due)[0];
-      // Aufgeklappt: Bereich und "Gerät öffnen" in der Zeile unter dem Namen (seit 2.171.0, vorher eine eigene Fusszeile); zugeklappt die Zusammenfassung
+      // Genau eine Routine (seit 2.182.1): im Kopf steht immer ihr Name, den der Nutzer gewählt hat, zugeklappt wie aufgeklappt
+      const single = g.shown.length === 1 ? g.shown[0] : null;
+      // Aufgeklappt: Gerät, Bereich und "Gerät öffnen" in der Zeile unter dem Namen (seit 2.171.0, vorher eine eigene Fusszeile); zugeklappt die Zusammenfassung.
+      // Steht im Kopf der Name der Routine, nennt diese Zeile zuerst das Gerät
       const sub = open
-        ? [g.holder ? "" : [g.dev?.area, g.dev?.integration?.name].filter(Boolean).map(esc).join(" · "), g.holder ? "" : `<span class="mg-dopen" data-rta-open data-device="${esc(g.id)}" role="link">${esc(t("rtAllOpenDevice"))} ›</span>`].filter(Boolean).join(" · ")
+        ? [single ? esc(g.name) : "", g.holder ? "" : [g.dev?.area, g.dev?.integration?.name].filter(Boolean).map(esc).join(" · "), g.holder ? "" : `<span class="mg-dopen" data-rta-open data-device="${esc(g.id)}" role="link">${esc(t("rtAllOpenDevice"))} ›</span>`].filter(Boolean).join(" · ")
         : `${esc(t("rtSumRoutines", g.shown.length))}${offN ? ` · ${esc(t("rtSumOff", offN))}` : ""}${nextRt ? ` · <span class="mg-on">${esc(t("rtSumNext", this.localText(nextRt.due_local)))}</span>` : ""}`;
-      // Zugeklappt mit genau einer Routine für mehrere Geräte (seit 2.181.4): der Name der Routine steht im Kopf, nicht der des (ersten) Geräts
-      const multi = !open && g.shown.length === 1 && (g.shown[0].targets || []).length > 1 ? g.shown[0] : null;
+      // Zugeklappt mit genau einer Routine für mehrere Geräte: statt der Zahl "Schaltet N Geräte" in der Zusammenfassung
+      const multi = !open && single && (single.targets || []).length > 1 ? single : null;
       const sumText = multi
         ? `${esc(t("rtTgSwitches", multi.targets.length))}${offN ? ` · ${esc(t("rtSumOff", offN))}` : ""}${nextRt ? ` · <span class="mg-on">${esc(t("rtSumNext", this.localText(nextRt.due_local)))}</span>` : ""}`
         : sub;
@@ -883,8 +886,8 @@ export class RoutineUi {
       const lead = one ? `<span class="mg-dslot" aria-hidden="true"></span>` : open ? `<span class="mg-badge">${g.shown.length}</span>` : "";
       html += `<div class="mg-dcard${open ? "" : " closed"}"><div class="mg-dwrap"><button type="button" class="mg-dhead" ${this.a(all, "routine-fold-dev")} data-device="${esc(g.id)}" aria-expanded="${open}">
         <span class="mg-devic" aria-hidden="true">${g.holder ? g.holder.emoji : this.h.typeIcon(g.dev?.type || "other", 18)}</span>
-        <span class="mg-t"><b>${esc(multi ? multi.name : g.name)}</b>${sum}</span>${lead}${this.chevHtml(open)}</button>${one ? `<span class="mg-dsw">${this.switchHtml(one, all)}</span>` : ""}</div>`;
-      if (open) html += g.shown.map((x) => this.overviewCardHtml(x, all, g.id)).join("");
+        <span class="mg-t"><b>${esc(single ? single.name : g.name)}</b>${sum}</span>${lead}${this.chevHtml(open)}</button>${one ? `<span class="mg-dsw">${this.switchHtml(one, all)}</span>` : ""}</div>`;
+      if (open) html += g.shown.map((x) => this.overviewCardHtml(x, all, g.id, Boolean(single))).join("");
       else if (g.shown.length > 1) html += g.shown.map((x) => this.lineHtml(x, all)).join("");
       html += `</div>`;
     }
@@ -906,7 +909,7 @@ export class RoutineUi {
     return `<div class="mg-rline${rt.enabled ? "" : " off"}"><span class="mg-t"><b>${esc(rt.name)}</b><small>${next}</small></span>${this.switchHtml(rt, all)}</div>`;
   }
 
-  overviewCardHtml(rt, all, here) {
+  overviewCardHtml(rt, all, here, nameInHead = false) {
     const esc = (v) => this.esc(v);
     const t = (k, ...a) => this.t(k, ...a);
     const confirming = all.confirmId === rt.id;
@@ -930,7 +933,7 @@ export class RoutineUi {
     if (backWord) status.unshift(`<span class="mg-on">${esc(rt.back_mode === "restore" || rt.action === "set" ? t("rtBackAtRowRestore", this.localText(rt.revert_local)) : t("rtBackAtRow", backWord, this.localText(rt.revert_local)))}</span>`);
     const next = rt.running ? `<span class="mg-on">${esc(t("rtRunningShort"))}</span>` : rt.kind === "trigger" && rt.enabled ? `<span class="mg-on">${esc(this.waitsText(rt))}</span>` : rt.enabled && rt.due_local ? `${esc(t("rtNextRun"))} <span class="mg-on">${esc(this.localText(rt.due_local))}</span>` : rt.done ? esc(t("rtDone")) : esc(t("rtDisabled"));
     return `<div class="mg-card${rt.enabled ? "" : " off"}"><div class="mg-row"><span class="mg-ic" aria-hidden="true">${routineEmoji(rt.domain)}</span>
-      <div class="mg-t"><b>${esc(rt.name)}</b><small>${esc(this.sentence(rt))}</small><small class="mg-status">${[next, ...status].join(" · ")}</small></div>${sw}</div>${acts}${this.targetsListHtml(rt, here)}${ran}${confirm}</div>`;
+      <div class="mg-t">${nameInHead ? "" : `<b>${esc(rt.name)}</b>`}<small>${esc(this.sentence(rt))}</small><small class="mg-status">${[next, ...status].join(" · ")}</small></div>${sw}</div>${acts}${this.targetsListHtml(rt, here)}${ran}${confirm}</div>`;
   }
 
   chevHtml(open) {

@@ -100,6 +100,9 @@ for (const lang of ["de", "en"]) {
     await ev(`r.host._closeRtAll?.(); r.host._openRtAll()`);
     await wait(`return r.querySelectorAll(".mg-dcard").length >= 2`);
     check(`[${tag}] Übersicht zugeklappt: Kopf zeigt den Namen der Routine und "${lang === "de" ? "Schaltet 3 Geräte" : "Switches 3 devices"}", nicht den Gerätenamen`, await ev(`const heads = [...r.querySelectorAll(".mg-dcard.closed .mg-dhead")]; const h = heads.find((x) => /Lampe Küche \\+2/.test(x.querySelector("b").textContent)); return !!h && /${lang === "de" ? "Schaltet 3 Geräte" : "Switches 3 devices"}/.test(h.textContent)`));
+    // Aufgeklappt (seit 2.182.1): der Kopf trägt weiter den Namen der Routine, die Zeile darunter nennt das Gerät, die Karte wiederholt den Namen nicht
+    await ev(`const h = [...r.querySelectorAll(".mg-dcard.closed .mg-dhead")].find((x) => /Lampe Küche \\+2/.test(x.querySelector("b").textContent)); h.click()`);
+    check(`[${tag}] Übersicht aufgeklappt: Kopf = Name der Routine, Zeile nennt das Gerät, Karte ohne zweiten Namen`, await wait(`const h = [...r.querySelectorAll(".mg-dcard:not(.closed) .mg-dhead")].find((x) => /Lampe Küche \\+2/.test(x.querySelector("b").textContent)); if (!h) return false; const c = h.closest(".mg-dcard"); return h.querySelector("small").textContent.includes("Steckdose Terrasse") && !c.querySelector(".mg-card .mg-row > .mg-t > b") && c.querySelectorAll(".rt-tgt-row").length === 3`));
     await ev(`r.host._closeRtAll?.()`);
     // Bearbeiten: ein Ziel entfernen, nur noch zwei
     await ev(`const c = r.querySelector(".rt-root .rt-rowcard"); if (c) c.querySelector(".mg-dhead").click()`);
