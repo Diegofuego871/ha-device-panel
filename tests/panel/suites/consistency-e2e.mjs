@@ -32,7 +32,7 @@ await ev(`r.querySelector(".gear-btn")?.click()`);
 await f.waitForFunction(new Function(`return ${R}.querySelector("dialog.settings")?.open && ${R}.host._settings?.data?.overrides`), null, { timeout: 8000 });
 
 const kinds = await ev(`return Object.keys(r.host._settings.data.overrides)`);
-check("Das Backend (Simulator) liefert die sieben Arten", kinds.length === 7, kinds.join());
+check("Das Backend (Simulator) liefert die acht Arten", kinds.length === 8, kinds.join());
 for (const kind of kinds) {
   check(`Art "${kind}": st.resets hat eine Menge`, await ev(`return r.host._settings.resets?.[${JSON.stringify(kind)}] instanceof Set`));
   check(`Art "${kind}": Zurücksetzen erscheint als Änderung "reset_${kind}"`, await ev(`const st = r.host._settings; st.resets[${JSON.stringify(kind)}].add("x"); const c = r.host._settingsResetChanges(); st.resets[${JSON.stringify(kind)}].delete("x"); return c.includes("reset_${kind}")`));

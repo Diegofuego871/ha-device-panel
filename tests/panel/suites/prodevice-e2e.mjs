@@ -47,7 +47,7 @@ for (const lang of ["de", "en"]) {
     await tap('[data-set="section"][data-id="devices"]');
     check(`[${tag}] Geräte im Panel: Reiter ${T.tabs}`, (await ev(`return [...r.querySelectorAll('[data-id="devices"] ~ .set-sec-body .sub-tab')].map(t => t.firstChild.textContent.trim()).join("|")`)) === T.tabs, await ev(`return [...r.querySelectorAll('.sub-tab')].map(t => t.firstChild.textContent.trim()).join("|")`));
     await tap('[data-set="subtab"][data-key="devset"]');
-    check(`[${tag}] Reiter "Pro Gerät": Titel und sieben Listen`, (await ev(`return [...r.querySelectorAll(".set-title")].some(x => x.textContent.trim() === ${JSON.stringify(T.title)})`)) && (await ev(`return r.querySelectorAll(".ovr-opt").length`)) === 7 && (await ev(`return [...r.querySelectorAll(".ovr-opt .opt-label")].some(e => e.textContent.trim() === ${JSON.stringify(T.conn)})`)));
+    check(`[${tag}] Reiter "Pro Gerät": Titel und acht Listen`, (await ev(`return [...r.querySelectorAll(".set-title")].some(x => x.textContent.trim() === ${JSON.stringify(T.title)})`)) && (await ev(`return r.querySelectorAll(".ovr-opt").length`)) === 8 && (await ev(`return [...r.querySelectorAll(".ovr-opt .opt-label")].some(e => e.textContent.trim() === ${JSON.stringify(T.conn)})`)));
     const count = () => ev(`return r.querySelector('[data-key="devset"] .sub-n').textContent`);
     check(`[${tag}] Zähler am Reiter = Geräte mit eigener Einstellung (mindestens das Gerät "p")`, Number(await count()) >= 1, await count());
     const n0 = Number(await count());

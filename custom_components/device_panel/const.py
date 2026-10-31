@@ -13,7 +13,7 @@ PANEL_HTML_FILE = "panel.html"
 STATIC_URL_PATH = f"/{DOMAIN}"
 PANEL_STATIC_URL_PATH = f"{STATIC_URL_PATH}/panel"
 # Cache-Buster: bei jeder Änderung unter panel/ von Hand erhöhen.
-PANEL_VERSION = "412"
+PANEL_VERSION = "413"
 PANEL_PAGE_URL = f"{PANEL_STATIC_URL_PATH}/{PANEL_HTML_FILE}?v={PANEL_VERSION}"
 
 # Mitgeliefertes Bild für Push-Meldungen (Companion-App, "icon_url"), wie in
@@ -96,6 +96,9 @@ OFFLINE_INTEGRATION_RANGE = (1, 1440)
 # "Erst melden nach" pro Integration (seit 2.91.0): {Domain: Minuten}, gleicher Bereich wie "Ausgefallen nach" der Integration; ohne Eintrag
 # gilt der globale Wert. Ein Gerät kann es zusätzlich selbst setzen (Geräteeinstellung "notify_delay").
 CONF_NOTIFY_DELAY_INTEGRATIONS = "notify_delay_integrations"
+# "Instabil ab" (CONF_FLAKY_OUTAGES) pro Integration und pro Label (seit 2.182.0): {Domain oder "label:<ID>": Zahl der Unterbrüche in 24 Std.}; ohne Eintrag
+# gilt der globale Wert. Ein Gerät kann es zusätzlich selbst setzen (Geräteeinstellung "flaky"). Wirksam: Gerät > Label > Integration > global.
+CONF_FLAKY_INTEGRATIONS = "flaky_outages_integrations"
 MONITOR_OFF = "off"
 # "Ohne Online-Status" (seit 2.156.0): das Gerät bleibt überwacht (Batterie, Laden, Empfang), aber ohne Ausfälle, Ausfall-Statistik und Ausfall-Meldungen;
 # steht in denselben Zuordnungen und Einstellungen wie "off" und ist strenger als jede Zeit, aber weniger streng als "off"

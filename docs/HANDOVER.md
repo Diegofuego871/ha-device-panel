@@ -3,6 +3,11 @@
 Einstieg für jede neue Claude-Code-Session. Zuerst diese Datei lesen, dann
 `CLAUDE.md`, `docs/CONCEPT.md`, `docs/LEARNINGS.md`, `docs/DESIGN.md`.
 
+## Stand (2.182.0, "Instabil ab" auf vier Ebenen)
+
+- 2.182.0: Auslöser war die Frage des Nutzers, ob "Instabil ab" (`flaky_outages`) auf Geräteebene existiert (nein, nur global). Jetzt alle vier Ebenen: Option `flaky_outages_integrations` (`options_api.flaky_map`, 2 bis 50, Schlüssel Domain oder `label:<ID>`), Wirksam Gerät > Label > Integration > global (`options_api.flaky_for`, Kombination `scope.highest`: bei mehreren Labels der höchste Wert), Geräteeinstellung `flaky` (`devices.py`: `valid_flaky_setting`, `_flaky_default`, `async_set_device_settings`/`async_reset_device_settings`/`async_device_overrides`, `list_devices`: `flaky_outages`, `flaky_setting`, `flaky_default`, `flaky`), WS `set_device_settings`/`reset_device_settings` mit `flaky`, Sicherung (`backup.py`: `_DEVICE_SETTING_KEYS`, Option im Bereich "monitor"). Panel: Popup-Zeile `dev-flaky`/`dev-flaky-count`, Integrations-/Label-Detail `data-flaky-mode` (`FLAKY_PRESETS`), Liste `diffFlaky`, Übersicht `ovrFlaky*`, Assistent Label-Seite (`wizard.js`: `flaky`, `LABEL_MAPS`). Tests: Suite `flaky`, `test_labels` (vier Ebenen, Prüfung), `test_backup` (Rundlauf), `test_consistency` KINDS, `test_overrides`.
+- Regel (CLAUDE.md "Ebenen einer Einstellung"): Eine Einstellung mit mehr als globaler Ebene bekommt immer alle vier Ebenen zugleich, samt Herkunft, Zurücksetzen, Übersicht, Sicherung, Assistent (Label-Seite), Simulator und Tests. Vorbild: `notify_delay`.
+
 ## Stand (2.136.0, Zwischenstand des Assistenten)
 
 - 2.136.0: Option `wizard_draft` (`{step, d}`, `options_api.wizard_draft`, höchstens 200 000 Zeichen, nicht in der Sicherung): `wizard.js` speichert in `go()` und `close()` (`persist`), liest in `load()` (`restore`, prüft gegen heutige Geräte, Integrationen, Ziele) und macht beim Schritt weiter; "Fertigstellen" und "Nicht mehr zeigen" löschen ihn; `resetDraft` ("Entwurf verwerfen" auf der Willkommensseite). Keine Rückfrage beim Schliessen mehr (`wzDiscard*` entfernt). 2.135.1 ohne Tag, mit "Nicht veröffentlicht" im CHANGELOG. Test: `test_wizard.py::test_draft_...`, Suite `wizard`.

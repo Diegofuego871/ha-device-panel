@@ -106,6 +106,11 @@ def lowest(found: Found) -> tuple[str, Any]:
     return min(found, key=lambda kv: kv[1])
 
 
+def highest(found: Found) -> tuple[str, Any]:
+    """Bei Zahlen die höhere (weniger Meldungen: "Instabil ab" N Unterbrüche, je höher, desto seltener instabil)."""
+    return max(found, key=lambda kv: kv[1])
+
+
 def off_wins(found: Found) -> tuple[str, Any]:
     """Ein Aus (False) vor einem Ein."""
     for item in found:

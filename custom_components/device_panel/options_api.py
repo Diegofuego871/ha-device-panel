@@ -20,7 +20,7 @@ from homeassistant.config_entries import ConfigEntry
 from homeassistant.core import HomeAssistant
 
 from . import activity, quiet
-from .scope import label_keys, lowest, pick, strictest_time
+from .scope import highest, label_keys, lowest, pick, strictest_time
 from .ai_prompt import ai_prompt
 from .const import (
     BATTERY_FIELDS,
@@ -132,6 +132,7 @@ from .const import (
     NOTIFY_TOPICS,
     CONF_OFFLINE_AFTER,
     CONF_NOTIFY_DELAY_INTEGRATIONS,
+    CONF_FLAKY_INTEGRATIONS,
     CONF_OFFLINE_INTEGRATIONS,
     CONF_SHOW_DISABLED,
     CONF_SHOW_SERVICE,
@@ -647,6 +648,22 @@ def offline_map(value: Any) -> dict[str, int | str]:
     return dict(sorted(out.items()))
 
 
+def flaky_map(value: Any) -> dict[str, int]:
+    """Eigenes "Instabil ab" {Domain oder Label: Unterbrüche in 24 Std.} (seit 2.182.0), Bereich wie die globale Option."""
+    low, high = INT_RANGES[CONF_FLAKY_OUTAGES]
+    if value is None:
+        return {}
+    if not isinstance(value, dict):
+        raise vol.Invalid("Zuordnung Integration → Anzahl erwartet")
+    out: dict[str, int] = {}
+    for domain, count in value.items():
+        number = _whole(count)
+        if not isinstance(domain, str) or not _DOMAIN_RE.match(domain) or number is None or not low <= number <= high:
+            raise vol.Invalid(f"Integration → ganze Zahl von {low} bis {high} erwartet")
+        out[domain] = number
+    return dict(sorted(out.items()))
+
+
 def notify_delay_map(value: Any) -> dict[str, int]:
     """Eigenes "Erst melden nach" {Domain: Minuten} (seit 2.91.0), Bereich wie "Ausgefallen nach" der Integration; "off" gibt es nicht."""
     low, high = OFFLINE_INTEGRATION_RANGE
@@ -731,6 +748,7 @@ PANEL_SCHEMA = vol.Schema(
         vol.Optional(CONF_SIGNAL_LOW_INTEGRATIONS): signal_integrations_map,
         vol.Optional(CONF_OFFLINE_INTEGRATIONS): offline_map,
         vol.Optional(CONF_NOTIFY_DELAY_INTEGRATIONS): notify_delay_map,
+        vol.Optional(CONF_FLAKY_INTEGRATIONS): flaky_map,
         vol.Optional(CONF_NOTIFY_SERVICE): _notify_target,
         **{vol.Optional(key): _notify_override for key in NOTIFY_TOPICS.values()},
         vol.Optional(CONF_AI_TASK): _ai_task,
@@ -846,6 +864,10 @@ def values_from(options: Mapping[str, Any]) -> dict[str, Any]:
         values[CONF_NOTIFY_DELAY_INTEGRATIONS] = notify_delay_map(options.get(CONF_NOTIFY_DELAY_INTEGRATIONS))
     except vol.Invalid:
         values[CONF_NOTIFY_DELAY_INTEGRATIONS] = {}
+    try:
+        values[CONF_FLAKY_INTEGRATIONS] = flaky_map(options.get(CONF_FLAKY_INTEGRATIONS))
+    except vol.Invalid:
+        values[CONF_FLAKY_INTEGRATIONS] = {}
     target = str(options.get(CONF_NOTIFY_SERVICE) or "").strip()
     values[CONF_NOTIFY_SERVICE] = target if _NOTIFY_RE.match(target) else NOTIFY_NONE
     # Eigenes Ziel je Reiter (seit 2.18.0): ungültig oder leer = das globale Ziel
@@ -1007,6 +1029,13 @@ def offline_after_for(opts: Mapping[str, Any], domain: str | None) -> float | No
 def status_off_for(opts: Mapping[str, Any], domain: str | None) -> bool:
     """Gilt für ein Gerät der Integration (Label vor Integration vor global) "Ohne Online-Status" (seit 2.156.0)."""
     return offline_setting_for(opts, domain) == MONITOR_NOSTATUS
+
+
+def flaky_for(opts: Mapping[str, Any], domain: str | None, own: int | None = None) -> int:
+    """Wirksames "Instabil ab" (seit 2.182.0): eigenes des Geräts (own), sonst Label, sonst Integration, sonst das globale."""
+    if own is None:
+        _key, own = pick(opts.get(CONF_FLAKY_INTEGRATIONS), domain, highest)
+    return own if own is not None else opts[CONF_FLAKY_OUTAGES]
 
 
 def notify_delay_for(opts: Mapping[str, Any], domain: str | None, own: int | None = None, offline_after: float | None = None) -> int:

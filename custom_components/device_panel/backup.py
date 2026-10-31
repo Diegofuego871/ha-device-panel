@@ -55,6 +55,7 @@ from .devices import (
     connection_overrides,
     device_settings,
     type_overrides,
+    valid_flaky_setting,
     valid_notify_delay_setting,
     valid_offline_setting,
     valid_signal_setting,
@@ -98,6 +99,7 @@ _DEVICE_SETTING_KEYS = (
     "signal",
     "offline",
     "notify_delay",
+    "flaky",
     "charge",
     "charge_full",
     "charge_rise",
@@ -346,6 +348,8 @@ def _valid_device_setting(key: str, value: Any) -> bool:
         return valid_offline_setting(value)
     if key == "notify_delay":
         return valid_notify_delay_setting(value)
+    if key == "flaky":
+        return valid_flaky_setting(value)
     if key == "charge_full":
         return _in_range(value, CONF_CHARGE_FULL)
     if key == "charge_rise":

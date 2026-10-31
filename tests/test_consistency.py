@@ -53,6 +53,7 @@ KINDS: dict[str, tuple[dict[str, Any], str]] = {
     "signal": ({"type": f"{DOMAIN}/set_device_settings", "signal": -90}, "signal_setting"),
     "offline": ({"type": f"{DOMAIN}/set_device_settings", "offline": 45}, "offline_setting"),
     "notify_delay": ({"type": f"{DOMAIN}/set_device_settings", "notify_delay": 50}, "notify_delay_setting"),
+    "flaky": ({"type": f"{DOMAIN}/set_device_settings", "flaky": 5}, "flaky_setting"),
     "charge": ({"type": f"{DOMAIN}/set_device_settings", "charge": True}, "charge_setting"),
 }
 

@@ -7,6 +7,19 @@ Alle nennenswerten Änderungen an dieser Integration stehen in dieser Datei.
 Das Format folgt [Keep a Changelog](https://keepachangelog.com/de/1.1.0/),
 die Versionsnummern folgen [Semantic Versioning](https://semver.org/lang/de/).
 
+## [2.182.0] - 2026-10-31
+
+"Instabil ab" lässt sich auf jeder Ebene einstellen, wie "Erst melden nach".
+
+### Hinzugefügt
+
+- **"Instabil ab" pro Integration, Label und Gerät:** Die Zahl der Unterbrüche in 24 Stunden, ab der ein Gerät, das online ist, als instabil gilt, gab es bisher nur global (Einstellungen › Überwachung). Jetzt gibt es sie auf allen vier Ebenen: global, pro Integration, pro Label und pro Gerät. Das Gerät geht vor dem Label, das Label vor der Integration, die Integration vor dem globalen Wert; bei mehreren Labels gilt der höchste Wert (weniger Warnungen). Das Geräte-Popup zeigt, woher der Wert kommt ("Wie Integration (6 Unterbrüche)", "Globaler Wert (3 Unterbrüche)" oder "Eigener Wert"), das Detail von Integration und Label hat die Auswahl unter "Ausfall", die Übersicht "Eigene Werte auf Geräten" listet die Geräte mit eigenem Wert und setzt sie einzeln oder alle zurück, und der Einrichtungsassistent hat die Auswahl auf der Label-Seite. Gültig sind ganze Zahlen von 2 bis 50.
+- **Sichern und Wiederherstellen** enthalten die neuen Werte: die Zuordnung pro Integration und Label mit dem Bereich Überwachung, der Wert pro Gerät mit den Geräten.
+
+### Geändert
+
+- **Regel festgehalten:** Eine Einstellung, die sich mehr als global ändern lässt, bekommt immer alle vier Ebenen zugleich (Anzeige mit Herkunft, Zurücksetzen, Übersicht der eigenen Werte, Sicherung, Einrichtungsassistent, Simulator, Tests). `CLAUDE.md` enthält die Regel "Ebenen einer Einstellung".
+
 ## [2.181.4] - 2026-10-31
 
 Die drei Kacheln oben sind auf dem Desktop gleichmässig verteilt; eine zugeklappte Routinen-Karte zeigt den Namen der Routine.
@@ -5489,6 +5502,7 @@ Erste Vorabversion.
   GitHub Actions für die Prüfungen von HACS und hassfest sowie die Tests.
 
 [2.6.0]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v2.6.0
+[2.182.0]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v2.182.0
 [2.181.4]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v2.181.4
 [2.181.3]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v2.181.3
 [2.181.2]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v2.181.2

@@ -7,6 +7,19 @@ All notable changes to this integration are documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/).
 
+## [2.182.0] - 2026-10-31
+
+"Unstable from" can be set on every level, like "Report only after".
+
+### Added
+
+- **"Unstable from" per integration, label and device:** until now the number of outages in 24 hours after which an online device counts as unstable existed only globally (Settings › Monitoring). It now exists on all four levels: global, per integration, per label and per device. The device wins over the label, the label over the integration, the integration over the global value; with several labels the highest value applies (fewer warnings). The device pop-up shows where the value comes from ("Same as integration (6 outages)", "Global value (3 outages)", or "Own value"), the integration and label detail has the choice under "Outage", the overview "Own values on devices" lists the devices with their own value and resets them one by one or all at once, and the setup assistant has the choice on the label page. Valid are whole numbers from 2 to 50.
+- **Backup and restore** include the new values: the map per integration and label with the monitoring section, the value per device with the devices.
+
+### Changed
+
+- **Rule recorded:** a setting that can be changed beyond global always gets all four levels at once (display with origin, reset, overview of own values, backup, setup assistant, simulator, tests). `CLAUDE.md` has the rule "Levels of a setting".
+
 ## [2.181.4] - 2026-10-31
 
 The three tiles at the top are laid out evenly on the desktop; a collapsed routine card shows the routine's name.
@@ -5388,6 +5401,7 @@ First pre-release.
   GitHub Actions for HACS/hassfest validation and tests.
 
 [2.6.0]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v2.6.0
+[2.182.0]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v2.182.0
 [2.181.4]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v2.181.4
 [2.181.3]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v2.181.3
 [2.181.2]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v2.181.2

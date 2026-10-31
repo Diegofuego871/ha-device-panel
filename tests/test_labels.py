@@ -225,3 +225,52 @@ async def test_label_push_exclusion_and_charge_lists(hass: HomeAssistant, hass_w
     assert devices["Laptop"]["battery_default"]["push_integration"] == f"label:{often}"
     assert devices["Laptop"]["charge_default"]["on"] is True and devices["Laptop"]["charge_default"]["integration"] == f"label:{often}"
     assert devices["Lampe"]["charge_default"]["on"] is False and devices["Lampe"]["notify_default"]["integration"] is None
+
+
+async def test_flaky_outages_four_levels(hass: HomeAssistant, hass_ws_client) -> None:
+    """"Instabil ab" (2.182.0) gilt auf allen vier Ebenen: Gerät > Label > Integration > global; bei mehreren Labels gilt der höchste Wert."""
+    often, garage = _label(hass, "Oft offline"), _label(hass, "Garage")
+    await _setup(
+        hass,
+        labels=[often, garage],
+        flaky_outages=3,
+        flaky_outages_integrations={"test": 6, f"label:{often}": 4, f"label:{garage}": 8},
+    )
+    _device(hass, "Lampe")  # Integration "test"
+    _device(hass, "Laptop", labels=(often,))
+    both = _device(hass, "Doppel", labels=(often, garage))
+    _device(hass, "Sensor", domain="zha")  # ohne Eintrag: global
+    client = await hass_ws_client(hass)
+
+    devices = await _devices(client, 1)
+    assert devices["Sensor"]["flaky_outages"] == 3 and devices["Sensor"]["flaky_default"] == {"count": 3, "integration": None, "global": 3}
+    assert devices["Lampe"]["flaky_outages"] == 6 and devices["Lampe"]["flaky_default"]["integration"] == "test"
+    # Ein Label geht vor der Integration
+    assert devices["Laptop"]["flaky_outages"] == 4 and devices["Laptop"]["flaky_default"]["integration"] == f"label:{often}"
+    # Mehrere Labels: der höchste Wert (weniger Warnungen)
+    assert devices["Doppel"]["flaky_outages"] == 8 and devices["Doppel"]["flaky_default"]["integration"] == f"label:{garage}"
+    assert devices["Doppel"]["flaky_setting"] is None
+
+    # Das Gerät geht vor Label, Integration und global; Zurücksetzen gibt die Herkunft wieder frei
+    await async_set_device_settings(hass, both.id, flaky=2)
+    doppel = (await _devices(client, 2))["Doppel"]
+    assert doppel["flaky_setting"] == 2 and doppel["flaky_outages"] == 2
+    await client.send_json({"id": 3, "type": f"{DOMAIN}/get_options"})
+    assert (await client.receive_json())["result"]["overrides"]["flaky"][0]["value"] == 2
+    await client.send_json({"id": 4, "type": f"{DOMAIN}/reset_device_settings", "flaky": [both.id]})
+    assert (await client.receive_json())["result"]["flaky"] == 1
+    assert (await _devices(client, 5))["Doppel"]["flaky_outages"] == 8
+
+
+async def test_flaky_outages_validation(hass: HomeAssistant, hass_ws_client) -> None:
+    await _setup(hass)
+    lamp = _device(hass, "Lampe")
+    client = await hass_ws_client(hass)
+    for i, bad in enumerate(({"test": 1}, {"test": 51}, {"test": "viele"}, {"BAD KEY": 3}, [3]), start=1):
+        await client.send_json({"id": i, "type": f"{DOMAIN}/set_options", "values": {"flaky_outages_integrations": bad}})
+        assert (await client.receive_json())["error"]["code"] == "invalid_format", bad
+    await client.send_json({"id": 10, "type": f"{DOMAIN}/set_options", "values": {"flaky_outages_integrations": {"test": 5, "label:abc": 7}}})
+    assert (await client.receive_json())["success"]
+    for i, bad in enumerate((1, 51, "5", True), start=11):
+        await client.send_json({"id": i, "type": f"{DOMAIN}/set_device_settings", "device_id": lamp.id, "flaky": bad})
+        assert (await client.receive_json())["error"]["code"] == "invalid_format", bad

@@ -64,6 +64,7 @@ from .const import (
     CONF_FLAKY_OUTAGES,
     CONF_NOTIFY_DELAY,
     CONF_NOTIFY_DELAY_INTEGRATIONS,
+    CONF_FLAKY_INTEGRATIONS,
     CONF_OFFLINE_AFTER,
     CONF_OFFLINE_INTEGRATIONS,
     CONF_NOTIFY_EXCLUDE,
@@ -99,8 +100,8 @@ from .const import (
     CONF_TYPE_INTEGRATIONS,
 )
 from .labels import strip_address
-from .scope import configured_labels, first, is_label_key, label_list, listed, lowest, off_wins, pick, scope_of, strictest_time
-from .options_api import battery_threshold, effective, notify_delay_for, notify_target, offline_after_for, signal_default, status_off_for
+from .scope import configured_labels, first, highest, is_label_key, label_list, listed, lowest, off_wins, pick, scope_of, strictest_time
+from .options_api import battery_threshold, effective, flaky_for, notify_delay_for, notify_target, offline_after_for, signal_default, status_off_for
 
 _LOGGER = logging.getLogger(__name__)
 
@@ -553,6 +554,16 @@ def _notify_delay_default(opts: dict[str, Any], domain: str | None) -> dict[str,
     }
 
 
+def _flaky_default(opts: dict[str, Any], domain: str | None) -> dict[str, Any]:
+    """"Instabil ab" ohne Einstellung des Geräts (seit 2.182.0): Unterbrüche, dazu das Label oder die Integration mit eigenem Wert."""
+    source, own = pick(opts[CONF_FLAKY_INTEGRATIONS], domain, highest)
+    return {
+        "count": own if own is not None else opts[CONF_FLAKY_OUTAGES],
+        "integration": source if own is not None else None,
+        "global": opts[CONF_FLAKY_OUTAGES],
+    }
+
+
 def _notify_default(opts: dict[str, Any], domain: str | None) -> dict[str, Any]:
     """
     Push und anhaltende Benachrichtigung bei Ausfall für Geräte der Integration
@@ -991,6 +1002,8 @@ async def async_load_type_overrides(hass: HomeAssistant) -> None:
             "offline": {str(k): v for k, v in (stored.get("offline") or {}).items() if valid_offline_setting(v)},
             # "Erst melden nach" des Geräts: ganze Minuten (seit 2.91.0).
             "notify_delay": {str(k): v for k, v in (stored.get("notify_delay") or {}).items() if valid_notify_delay_setting(v)},
+            # "Instabil ab" des Geräts: ganze Zahl Unterbrüche in 24 Std. (seit 2.182.0).
+            "flaky": {str(k): v for k, v in (stored.get("flaky") or {}).items() if valid_flaky_setting(v)},
             # Lademeldung des Geräts: True/False, ohne Eintrag gilt die Integration (seit 1.30.0).
             "charge": {str(k): v for k, v in (stored.get("charge") or {}).items() if isinstance(v, bool)},
             # Eigenes "Voll ab" und eigener Anstieg des Geräts für die Lademeldung (seit 1.35.0).
@@ -1025,6 +1038,8 @@ async def _async_save_devices(hass: HomeAssistant) -> None:
         data["offline"] = dict(settings["offline"])
     if settings.get("notify_delay"):
         data["notify_delay"] = dict(settings["notify_delay"])
+    if settings.get("flaky"):
+        data["flaky"] = dict(settings["flaky"])
     if settings.get("charge"):
         data["charge"] = dict(settings["charge"])
     for key in ("charge_full", "charge_rise", "charge_stall", "charge_stop", "charge_live", "liveness_exclude"):
@@ -1045,7 +1060,7 @@ def device_settings(hass: HomeAssistant) -> dict[str, Any]:
     "notify_mute": {Gerät: bis}, "signal": {Gerät: Schwelle | "off"},
     "offline": {Gerät: Minuten | "off"}, "charge": {Gerät: bool}}.
     """
-    return hass.data.get(DATA_DEVICE_SETTINGS) or {"battery": {}, "notify_off": set(), "notify_mute": {}, "signal": {}, "offline": {}, "notify_delay": {}, "charge": {}, "charge_full": {}, "charge_rise": {}, "charge_stall": {}, "charge_stop": {}, "charge_live": {}, "liveness_exclude": {}}
+    return hass.data.get(DATA_DEVICE_SETTINGS) or {"battery": {}, "notify_off": set(), "notify_mute": {}, "signal": {}, "offline": {}, "notify_delay": {}, "flaky": {}, "charge": {}, "charge_full": {}, "charge_rise": {}, "charge_stall": {}, "charge_stop": {}, "charge_live": {}, "liveness_exclude": {}}
 
 
 def signal_limit(d: dict[str, Any]) -> Any:
@@ -1088,6 +1103,11 @@ def valid_notify_delay_setting(value: Any) -> bool:
     """"Erst melden nach" des Geräts (seit 2.91.0): ganze Minuten im Bereich der Integrationen."""
     low, high = OFFLINE_INTEGRATION_RANGE
     return isinstance(value, int) and not isinstance(value, bool) and low <= value <= high
+
+
+def valid_flaky_setting(value: Any) -> bool:
+    """"Instabil ab" des Geräts (seit 2.182.0): ganze Zahl im Bereich der Option."""
+    return _in_range(value, CONF_FLAKY_OUTAGES)
 
 
 def device_notify_delay(hass: HomeAssistant, opts: dict[str, Any], device: dr.DeviceEntry) -> int:
@@ -1188,6 +1208,7 @@ async def async_set_device_settings(hass: HomeAssistant, device_id: str, **chang
     signal=None (Standard), "off" oder Schwelle "schwach unter";
     offline=None (Integration bzw. global), "off" oder Minuten;
     notify_delay=None (Integration bzw. global) oder Minuten "Erst melden nach" (seit 2.91.0);
+    flaky=None (Label, Integration bzw. global) oder Zahl "Instabil ab" (Unterbrüche in 24 Std., seit 2.182.0);
     charge=None (Integration), True/False (Lademeldung, seit 1.30.0);
     charge_full / charge_rise / charge_stall=None (Integration bzw. global) oder eigener Wert (seit 1.35.0, charge_stall seit 1.41.0);
     charge_stop=None (Integration bzw. global), True/False (Push bei beendeter Ladung, seit 1.41.0);
@@ -1206,6 +1227,11 @@ async def async_set_device_settings(hass: HomeAssistant, device_id: str, **chang
             settings.setdefault("notify_delay", {}).pop(device_id, None)
         else:
             settings.setdefault("notify_delay", {})[device_id] = changes["notify_delay"]
+    if "flaky" in changes:
+        if changes["flaky"] is None:
+            settings.setdefault("flaky", {}).pop(device_id, None)
+        else:
+            settings.setdefault("flaky", {})[device_id] = int(changes["flaky"])
     if "liveness_exclude" in changes:
         ids = sorted({str(e) for e in (changes["liveness_exclude"] or [])})
         if ids:
@@ -1266,6 +1292,7 @@ async def async_reset_device_settings(
     offline: list[str] | None = None,
     charge: list[str] | None = None,
     notify_delay: list[str] | None = None,
+    flaky: list[str] | None = None,
 ) -> dict[str, int]:
     """
     Einstellungen mehrerer Geräte auf den globalen Wert zurück (Einstellungen,
@@ -1290,12 +1317,14 @@ async def async_reset_device_settings(
     done_offline = sum(1 for dev in set(offline or []) if off.pop(dev, None) is not None)
     delays = settings.setdefault("notify_delay", {})
     done_delay = sum(1 for dev in set(notify_delay or []) if delays.pop(dev, None) is not None)
+    flakies = settings.setdefault("flaky", {})
+    done_flaky = sum(1 for dev in set(flaky or []) if flakies.pop(dev, None) is not None)
     done_charge = 0
     for dev in set(charge or []):
         # Ein Gerät zählt einmal, auch wenn mehrere seiner Lade-Werte wegfallen
         if sum(settings.setdefault(key, {}).pop(dev, None) is not None for key in CHARGE_SETTING_KEYS):
             done_charge += 1
-    if done_battery or done_notify or done_conn or done_signal or done_offline or done_delay or done_charge:
+    if done_battery or done_notify or done_conn or done_signal or done_offline or done_delay or done_flaky or done_charge:
         await _async_save_devices(hass)
     return {
         "battery": done_battery,
@@ -1304,6 +1333,7 @@ async def async_reset_device_settings(
         "signal": done_signal,
         "offline": done_offline,
         "notify_delay": done_delay,
+        "flaky": done_flaky,
         "charge": done_charge,
     }
 
@@ -1325,8 +1355,9 @@ async def async_device_overrides(hass: HomeAssistant) -> dict[str, list[dict[str
     signal = settings.get("signal", {})
     offline = settings.get("offline", {})
     notify_delay = settings.get("notify_delay", {})
+    flaky_own = settings.get("flaky", {})
     charge_devs = {dev for key in CHARGE_SETTING_KEYS for dev in settings.get(key, {})}
-    for dev in {*settings["battery"], *settings["notify_off"], *conns, *signal, *offline, *notify_delay, *charge_devs}:
+    for dev in {*settings["battery"], *settings["notify_off"], *conns, *signal, *offline, *notify_delay, *flaky_own, *charge_devs}:
         device = dev_reg.async_get(dev)
         if device is None:
             continue
@@ -1360,6 +1391,8 @@ async def async_device_overrides(hass: HomeAssistant) -> dict[str, list[dict[str
         "offline": sorted(({**items[dev], "value": value} for dev, value in offline.items() if dev in items), key=by_name),
         # "Erst melden nach" des Geräts (seit 2.91.0): Minuten.
         "notify_delay": sorted(({**items[dev], "value": value} for dev, value in notify_delay.items() if dev in items), key=by_name),
+        # "Instabil ab" des Geräts (seit 2.182.0): Zahl der Unterbrüche in 24 Std.
+        "flaky": sorted(({**items[dev], "value": value} for dev, value in flaky_own.items() if dev in items), key=by_name),
         # Lademeldung des Geräts (seit 2.78.0): alle eigenen Werte (an/aus, voll ab, Anstieg, Ende, Push bei Ende, Live)
         "charge": sorted(
             (
@@ -1566,6 +1599,7 @@ async def async_list_devices(hass: HomeAssistant, log: Any = None) -> dict[str, 
     opts = effective(hass)
     offline_default = opts[CONF_OFFLINE_AFTER] * 60
     flaky_outages = opts[CONF_FLAKY_OUTAGES]
+    flaky_own = device_settings(hass).get("flaky", {})
 
     raw: list[tuple[dr.DeviceEntry, list[er.RegistryEntry], list[str]]] = []
     all_domains: set[str] = set()
@@ -1657,6 +1691,10 @@ async def async_list_devices(hass: HomeAssistant, log: Any = None) -> dict[str, 
                 "notify_delay_setting": device_settings(hass).get("notify_delay", {}).get(device.id),
                 "liveness_exclude_setting": device_settings(hass).get("liveness_exclude", {}).get(device.id),
                 "notify_delay_default": _notify_delay_default(opts, scope),
+                # "Instabil ab" (seit 2.182.0): wirksam, Einstellung des Geräts, ohne sie (Label, Integration oder global).
+                "flaky_outages": flaky_for(opts, scope, flaky_own.get(device.id)),
+                "flaky_setting": flaky_own.get(device.id),
+                "flaky_default": _flaky_default(opts, scope),
                 # Ausfall-Meldungen ohne Einstellung des Geräts (Herkunft im Popup).
                 "notify_default": _notify_default(opts, scope),
                 # Beginn des Ausfalls, auch über Neustarts von HA (outage_start).
@@ -1708,7 +1746,7 @@ async def async_list_devices(hass: HomeAssistant, log: Any = None) -> dict[str, 
                 "update_install": _update_install(hass, entries),
                 "avail24": avail,
                 # Instabil: online, aber oft unterbrochen.
-                "flaky": bool(online and avail and avail.get("outages", 0) >= flaky_outages),
+                "flaky": bool(online and avail and avail.get("outages", 0) >= flaky_for(opts, scope, flaky_own.get(device.id))),
             }
         )
     result: dict[str, Any] = {

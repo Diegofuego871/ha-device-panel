@@ -241,3 +241,28 @@ async def test_every_device_setting_is_in_the_backup(hass: HomeAssistant, setup)
 
     stored = set(device_settings(hass)) - {"notify_off", "notify_mute"}  # "notify_mute" ist vorübergehend (24 Std. stumm)
     assert stored == set(backup._DEVICE_SETTING_KEYS) - {"notify"}
+
+
+async def test_flaky_roundtrip_all_levels(hass: HomeAssistant, setup) -> None:  # noqa: F811
+    """"Instabil ab" (2.182.0): Option pro Integration/Label gehört in "monitor", der Wert pro Gerät in "devices"; Sichern, zurücksetzen, wiederherstellen."""
+    from custom_components.device_panel.devices import async_set_device_settings
+
+    device = _device(hass, "Rauchmelder")
+    await async_set_device_settings(hass, device.id, flaky=7)
+    entry = _entry(hass)
+    hass.config_entries.async_update_entry(entry, options={**entry.options, "flaky_outages": 4, "flaky_outages_integrations": {"zha": 6, "label:garage": 9}})
+    file = await backup.async_export(hass, ["monitor", "devices"])
+    assert file["sections"]["monitor"]["options"]["flaky_outages_integrations"] == {"zha": 6, "label:garage": 9}
+    assert file["sections"]["devices"]["settings"][device.id] == {"flaky": 7}
+    # Zurücksetzen, dann wiederherstellen
+    hass.config_entries.async_update_entry(entry, options={k: v for k, v in entry.options.items() if k not in ("flaky_outages", "flaky_outages_integrations")})
+    await async_set_device_settings(hass, device.id, flaky=None)
+    assert hass.data[DATA_DEVICE_SETTINGS]["flaky"] == {}
+    await backup.async_import(hass, file, ["monitor", "devices"], dry_run=False)
+    assert hass.data[DATA_DEVICE_SETTINGS]["flaky"] == {device.id: 7}
+    values = options_api.current_values(entry)
+    assert values["flaky_outages"] == 4 and values["flaky_outages_integrations"] == {"zha": 6, "label:garage": 9}
+    # Ungültiger Wert in der Datei wird übersprungen
+    file["sections"]["devices"]["settings"][device.id] = {"flaky": 99}
+    rep = await backup.async_import(hass, file, ["devices"], dry_run=True)
+    assert any(s["what"] == "flaky" and s["reason"] == "invalid" for s in rep["sections"]["devices"]["skipped"])

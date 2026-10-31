@@ -449,7 +449,9 @@ const LOGO = `<svg width="30" height="30" viewBox="22 22 212 212" aria-hidden="t
 // Easter Egg (seit 2.89.0): Zahl der Klicks aufs Logo und Dauer des Herzschlags
 // Arten "eigene Einstellung pro Gerät" (wie die Schlüssel von get_options.overrides): an einer Stelle, damit keine vergessen wird
 // (tests/panel/suites/consistency-e2e.mjs und tests/test_consistency.py prüfen das gegen das Backend)
-const RESET_KINDS = ["battery", "notify", "connection", "signal", "offline", "notify_delay", "charge"];
+// Wählbare Werte für "Instabil ab" pro Integration/Label (Unterbrüche in 24 Std.)
+const FLAKY_PRESETS = [2, 3, 4, 5, 7, 10, 15, 20];
+const RESET_KINDS = ["battery", "notify", "connection", "signal", "offline", "notify_delay", "flaky", "charge"];
 const newResets = () => Object.fromEntries(RESET_KINDS.map((k) => [k, new Set()]));
 const EE_TAPS = 5;
 const EE_MS = 7400;
@@ -479,7 +481,7 @@ const MON_TAB_KEYS = {
   new: ["notify_service_new", "notify_new", "new_window", "new_persistent", "new_fields", "emoji_new"],
   updates: ["notify_service_updates", "notify_updates", "updates_mode", "updates_time", "updates_window", "updates_repeat", "updates_kinds", "updates_exclude", "updates_include", "updates_integrations_on", "updates_integrations_off", "emoji_updates"],
   sig: ["signal_low", "reset_signal"],
-  integ: ["offline_after_integrations", "notify_delay_integrations", "charge_full_integrations", "charge_rise_integrations", "charge_stall_integrations", "charge_stop_integrations", "charge_live_integrations", "notify_exclude_integrations", "persistent_exclude_integrations", "battery_low_integrations", "battery_push_exclude_integrations", "new_exclude_integrations", "signal_low_integrations"],
+  integ: ["offline_after_integrations", "notify_delay_integrations", "flaky_outages_integrations", "charge_full_integrations", "charge_rise_integrations", "charge_stall_integrations", "charge_stop_integrations", "charge_live_integrations", "notify_exclude_integrations", "persistent_exclude_integrations", "battery_low_integrations", "battery_push_exclude_integrations", "new_exclude_integrations", "signal_low_integrations"],
 };
 
 // Register "Labels" (seit 2.155.1): die Zuordnungen pro Integration tragen auch die Labels ("label:<ID>"), dazu die Liste der eingerichteten
@@ -606,7 +608,7 @@ const promptHtml = (text) => escape(text).replace(/\{(language|facts(?:_[a-z]+)?
 const CHARGE_FULL_PRESETS = [100, 95, 90, 80];
 const CHARGE_FULL_OWN_START = 85;
 const CHARGE_FULL_RANGE = [50, 100];
-const INTEG_OWN_MAPS = ["offline_after_integrations", "notify_delay_integrations", "battery_low_integrations", "signal_low_integrations", "charge_full_integrations", "charge_rise_integrations", "charge_stall_integrations", "charge_stop_integrations", "charge_live_integrations"];
+const INTEG_OWN_MAPS = ["offline_after_integrations", "notify_delay_integrations", "flaky_outages_integrations", "battery_low_integrations", "signal_low_integrations", "charge_full_integrations", "charge_rise_integrations", "charge_stall_integrations", "charge_stop_integrations", "charge_live_integrations"];
 // Liste der Integrationen mit Lademeldung (seit 1.32.0 auch hier einstellbar): zurücksetzen = aus, der Standard.
 const INTEG_OWN_LISTS = ["notify_exclude_integrations", "persistent_exclude_integrations", "battery_push_exclude_integrations", "new_exclude_integrations", "charge_integrations"];
 
@@ -763,6 +765,7 @@ const devOwnCount = (d) =>
     d.connection_manual,
     d.offline_setting != null,
     d.notify_delay_setting != null,
+    d.flaky_setting != null,
     d.battery_setting != null,
     d.signal_setting != null,
     d.charge_setting != null,
@@ -773,7 +776,7 @@ const devOwnCount = (d) =>
     d.charge_live_setting != null,
     d.notify_off || (d.notify_mute_until && Date.parse(d.notify_mute_until) > Date.now()),
   ].filter(Boolean).length;
-const hasOverride = (d) => d.offline_setting != null || d.notify_delay_setting != null || d.battery_setting != null || Boolean(d.notify_off) || Boolean(d.connection_manual) || d.signal_setting != null;
+const hasOverride = (d) => d.offline_setting != null || d.notify_delay_setting != null || d.flaky_setting != null || d.battery_setting != null || Boolean(d.notify_off) || Boolean(d.connection_manual) || d.signal_setting != null;
 
 const defaultView = () => ({
   sort: "default",
@@ -1961,6 +1964,23 @@ class DevicePanel extends HTMLElement {
         } else {
           this._delayRangeError = null;
           this._setDeviceSettings(this._detailId, { notify_delay: v });
+        }
+      } else if (el.matches?.('select[data-dlg="dev-flaky"]')) {
+        // Eigener Wert: mit dem bisher geltenden Wert beginnen
+        const d = this._devices.find((x) => x.id === this._detailId);
+        const start = [d?.flaky_outages, d?.flaky_default?.count].find((v) => Number.isInteger(v)) ?? 3;
+        this._flakyRangeError = null;
+        this._setDeviceSettings(this._detailId, { flaky: el.value === "own" ? start : null });
+      } else if (el.matches?.('input[data-dlg="dev-flaky-count"]')) {
+        const v = Number(el.value);
+        const [min, max] = [2, 50];
+        if (el.value === "" || !Number.isInteger(v) || v < min || v > max) {
+          this._flakyRangeError = { value: el.value, message: this._t("settingsRange", min, max) };
+          this._devForce = true;
+          this._renderDevice();
+        } else {
+          this._flakyRangeError = null;
+          this._setDeviceSettings(this._detailId, { flaky: v });
         }
       } else if (el.matches?.('select[data-dlg="dev-sig"]')) {
         // Eigene Schwelle: etwas unter dem heutigen Wert vorschlagen (5 dBm
@@ -3803,6 +3823,7 @@ class DevicePanel extends HTMLElement {
     else if (d.offline_setting === "nostatus") out.push(tag("time-nostatus", "circleOutline", "", this._t("ovrTimeNoStatusTip")));
     else if (Number.isInteger(d.offline_setting)) out.push(tag("time", "timer", this._t("offlineMin", d.offline_setting), this._t("ovrTimeOwnTip", this._t("offlineMin", d.offline_setting))));
     if (Number.isInteger(d.notify_delay_setting)) out.push(tag("time", "bell", this._t("offlineMin", d.notify_delay_setting), this._t("ovrDelayOwnTip", this._t("offlineMin", d.notify_delay_setting))));
+    if (Number.isInteger(d.flaky_setting)) out.push(tag("time", "alert", this._t("flakyCount", d.flaky_setting), this._t("ovrFlakyOwnTip", d.flaky_setting)));
     const setting = d.battery_setting;
     if (setting === "off") out.push(tag("bat-off", "batteryOff", "", this._t("ovrBatOffTip")));
     else if (Number.isInteger(setting)) out.push(tag("bat", "battery", `${setting} %`, this._t("ovrBatOwnTip", setting, d.battery_default?.pct ?? 15)));
@@ -4419,6 +4440,7 @@ class DevicePanel extends HTMLElement {
     this._sigRangeError = null;
     this._offRangeError = null;
     this._delayRangeError = null;
+    this._flakyRangeError = null;
     this._chargeRangeError = null;
     this._chargeFullRangeError = null;
     this._chargeStallRangeError = null;
@@ -4656,6 +4678,26 @@ class DevicePanel extends HTMLElement {
           : ""
       }${origin(dMode !== "default", nd.integration, dMode !== "default" || nd.integration ? t("originDefaultWould", t("offlineMin", nd.global)) : "", t("devDelayShort"))}</div>`;
     }
+    // "Instabil ab" pro Gerät (seit 2.182.0): Standard von Label, Integration bzw. global oder eigener Wert
+    {
+      const fd = d.flaky_default || { count: 3, integration: null, global: 3 };
+      const own = d.flaky_setting;
+      const fMode = Number.isInteger(own) ? "own" : "default";
+      const fRange = fMode === "own" ? this._flakyRangeError : null;
+      const fLabel = fd.integration ? this._via(fd.integration, t("devFlakyInteg", fd.count)) : t("devFlakyGlobal", fd.count);
+      parts.out += `<div class="opt${fMode !== "default" ? " changed" : ""}"><div class="opt-line"><span class="opt-label">${escape(t("devFlaky"))}</span>${sel(
+        "dev-flaky",
+        [["default", fLabel], ["own", t("devFlakyOwn")]],
+        fMode,
+        t("devFlaky")
+      )}</div>${
+        fMode === "own"
+          ? `<div class="opt-line opt-sub"><span class="opt-label">${escape(t("devFlaky"))}</span><span class="opt-input${fRange ? " bad" : ""}"><input type="number" inputmode="numeric" step="1" min="2" max="50" data-dlg="dev-flaky-count" value="${escape(fRange ? fRange.value : own)}" aria-label="${escape(t("devFlaky"))}"><span class="unit">${escape(t("unitOutages"))}</span></span></div>${
+              fRange ? `<div class="opt-error" data-dev-range>${escape(fRange.message)}</div>` : ""
+            }`
+          : ""
+      }${origin(fMode !== "default", fd.integration, fMode !== "default" || fd.integration ? t("originFlakyWould", fd.global) : "", t("devFlakyShort"))}</div>`;
+    }
     if (d.has_battery) {
       const integ = def.integration ? this._integrations[def.integration] || def.integration : null;
       parts.bat += `<div class="opt${mode !== "default" ? " changed" : ""}"><div class="opt-line"><span class="opt-label">${escape(t("devBattery"))}</span>${sel(
@@ -4855,7 +4897,7 @@ class DevicePanel extends HTMLElement {
       sig: hasSignal ? parts.sig : note("devNoSignal"),
     };
     const ownTab = {
-      out: d.offline_setting != null || d.notify_delay_setting != null || silenced,
+      out: d.offline_setting != null || d.notify_delay_setting != null || d.flaky_setting != null || silenced,
       bat: d.battery_setting != null,
       chg: [d.charge_setting, d.charge_full_setting, d.charge_rise_setting, d.charge_stall_setting, d.charge_stop_setting, d.charge_live_setting].some((v) => v != null),
       sig: d.signal_setting != null,
@@ -5188,6 +5230,7 @@ class DevicePanel extends HTMLElement {
     if (!this._devForce && d && typing?.dataset?.dlg === "dev-charge-full-val" && typing.value !== String(d.charge_full_setting)) return;
     if (!this._devForce && d && typing?.dataset?.dlg === "dev-off-min" && typing.value !== String(d.offline_setting)) return;
     if (!this._devForce && d && typing?.dataset?.dlg === "dev-delay-min" && typing.value !== String(d.notify_delay_setting)) return;
+    if (!this._devForce && d && typing?.dataset?.dlg === "dev-flaky-count" && typing.value !== String(d.flaky_setting)) return;
     this._devForce = false;
     let html;
     if (!d) {
@@ -7602,7 +7645,7 @@ class DevicePanel extends HTMLElement {
     if (id === "devset") {
       // Geräte mit eigener Einstellung, die nicht zum Zurücksetzen markiert sind
       const st = this._settings;
-      return ["offline", "notify_delay", "notify", "battery", "connection", "signal", "charge"].reduce((n, k) => n + (st?.data?.overrides?.[k] || []).filter((x) => !st.resets[k].has(x.id)).length, 0);
+      return ["offline", "notify_delay", "flaky", "notify", "battery", "connection", "signal", "charge"].reduce((n, k) => n + (st?.data?.overrides?.[k] || []).filter((x) => !st.resets[k].has(x.id)).length, 0);
     }
     if (id === "integrations") return (d.exclude_integrations || []).length;
     if (id === "types") return (d.exclude_types || []).length;
@@ -7686,7 +7729,7 @@ class DevicePanel extends HTMLElement {
     const active = this.shadowRoot.activeElement;
     const focusSel = active && dialog.contains(active) && active.dataset
       ? active.dataset.set ? `[data-set="${active.dataset.set}"]${active.dataset.id ? `[data-id="${active.dataset.id}"]` : ""}${active.dataset.key ? `[data-key="${active.dataset.key}"]` : ""}`
-        : active.dataset.lsearch ? `[data-lsearch="${active.dataset.lsearch}"]` : active.dataset.opt ? `[data-opt="${active.dataset.opt}"]` : active.dataset.bat ? `[data-bat="${active.dataset.bat}"]` : active.dataset.batMode ? `[data-bat-mode="${active.dataset.batMode}"]` : active.dataset.sig ? `[data-sig="${active.dataset.sig}"]` : active.dataset.sigMode ? `[data-sig-mode="${active.dataset.sigMode}"]` : active.dataset.connInteg ? `[data-conn-integ="${active.dataset.connInteg}"]` : active.dataset.typeInteg ? `[data-type-integ="${active.dataset.typeInteg}"]` : active.dataset.offMode ? `[data-off-mode="${active.dataset.offMode}"]` : active.dataset.delayMode ? `[data-delay-mode="${active.dataset.delayMode}"]` : active.dataset.imon ? `[data-imon="${active.dataset.imon}"]` : active.dataset.istatus ? `[data-istatus="${active.dataset.istatus}"]` : active.dataset.list && active.dataset.value ? `[data-list="${active.dataset.list}"][data-value="${active.dataset.value}"]` : active.dataset.emoji ? `[data-emoji="${active.dataset.emoji}"]` : active.dataset.nfield ? `[data-nfield="${active.dataset.nfield}"]` : active.dataset.bfield ? `[data-bfield="${active.dataset.bfield}"]` : active.dataset.newfield ? `[data-newfield="${active.dataset.newfield}"]` : active.dataset.qday !== undefined ? `[data-qday="${active.dataset.qday}"][data-qfield="${active.dataset.qfield}"]` : active.dataset.qdayOn !== undefined ? `[data-qday-on="${active.dataset.qdayOn}"]` : active.dataset.qtopic ? `[data-qtopic="${active.dataset.qtopic}"]` : active.dataset.ukind ? `[data-ukind="${active.dataset.ukind}"]` : active.dataset.uitem ? `[data-uitem="${active.dataset.uitem}"]` : active.dataset.cinteg ? `[data-cinteg="${active.dataset.cinteg}"]` : active.dataset.cfullInteg ? `[data-cfull-integ="${active.dataset.cfullInteg}"]` : active.dataset.criseInteg ? `[data-crise-integ="${active.dataset.criseInteg}"]` : active.dataset.cfull !== undefined ? "[data-cfull]" : active.dataset.ver ? `[data-ver="${active.dataset.ver}"]` : null
+        : active.dataset.lsearch ? `[data-lsearch="${active.dataset.lsearch}"]` : active.dataset.opt ? `[data-opt="${active.dataset.opt}"]` : active.dataset.bat ? `[data-bat="${active.dataset.bat}"]` : active.dataset.batMode ? `[data-bat-mode="${active.dataset.batMode}"]` : active.dataset.sig ? `[data-sig="${active.dataset.sig}"]` : active.dataset.sigMode ? `[data-sig-mode="${active.dataset.sigMode}"]` : active.dataset.connInteg ? `[data-conn-integ="${active.dataset.connInteg}"]` : active.dataset.typeInteg ? `[data-type-integ="${active.dataset.typeInteg}"]` : active.dataset.offMode ? `[data-off-mode="${active.dataset.offMode}"]` : active.dataset.delayMode ? `[data-delay-mode="${active.dataset.delayMode}"]` : active.dataset.flakyMode ? `[data-flaky-mode="${active.dataset.flakyMode}"]` : active.dataset.imon ? `[data-imon="${active.dataset.imon}"]` : active.dataset.istatus ? `[data-istatus="${active.dataset.istatus}"]` : active.dataset.list && active.dataset.value ? `[data-list="${active.dataset.list}"][data-value="${active.dataset.value}"]` : active.dataset.emoji ? `[data-emoji="${active.dataset.emoji}"]` : active.dataset.nfield ? `[data-nfield="${active.dataset.nfield}"]` : active.dataset.bfield ? `[data-bfield="${active.dataset.bfield}"]` : active.dataset.newfield ? `[data-newfield="${active.dataset.newfield}"]` : active.dataset.qday !== undefined ? `[data-qday="${active.dataset.qday}"][data-qfield="${active.dataset.qfield}"]` : active.dataset.qdayOn !== undefined ? `[data-qday-on="${active.dataset.qdayOn}"]` : active.dataset.qtopic ? `[data-qtopic="${active.dataset.qtopic}"]` : active.dataset.ukind ? `[data-ukind="${active.dataset.ukind}"]` : active.dataset.uitem ? `[data-uitem="${active.dataset.uitem}"]` : active.dataset.cinteg ? `[data-cinteg="${active.dataset.cinteg}"]` : active.dataset.cfullInteg ? `[data-cfull-integ="${active.dataset.cfullInteg}"]` : active.dataset.criseInteg ? `[data-crise-integ="${active.dataset.criseInteg}"]` : active.dataset.cfull !== undefined ? "[data-cfull]" : active.dataset.ver ? `[data-ver="${active.dataset.ver}"]` : null
       : null;
     if (!setHtml(dialog, html)) return;
     // Die Versionszeile wurde eben mit aufgebaut: als aktuell vermerken, sonst
@@ -7801,7 +7844,7 @@ class DevicePanel extends HTMLElement {
     const list = st.data.overrides?.[kind] || [];
     const marked = st.resets[kind];
     const all = list.length > 0 && list.every((x) => marked.has(x.id));
-    const pre = { battery: "ovrBat", notify: "ovrNotify", connection: "ovrConn", signal: "ovrSig", offline: "ovrTime", notify_delay: "ovrDelay", charge: "ovrCharge" }[kind];
+    const pre = { battery: "ovrBat", notify: "ovrNotify", connection: "ovrConn", signal: "ovrSig", offline: "ovrTime", notify_delay: "ovrDelay", flaky: "ovrFlaky", charge: "ovrCharge" }[kind];
     const btn = list.length
       ? `<button type="button" class="ovr-all" data-set="ovr-all" data-key="${kind}" ${all ? "disabled" : ""}>${mdi("reset", 15)}${escape(t("ovrResetAll"))}</button>`
       : "";
@@ -7814,12 +7857,14 @@ class DevicePanel extends HTMLElement {
           ? x.value === "off" ? t("offlineNone") : x.value === "nostatus" ? t("offlineNoStatus") : t("offlineMin", x.value)
         : kind === "notify_delay"
           ? t("offlineMin", x.value)
+        : kind === "flaky"
+          ? t("flakyCount", x.value)
         : kind === "notify" || x.value === "off"
           ? t("ovrOff")
           : kind === "signal"
             ? t("ovrSigValue", sigLimitText(x.value))
             : `${x.value} %`;
-    const back = kind === "connection" ? t("ovrToAuto") : kind === "offline" || kind === "notify_delay" || kind === "charge" ? t("ovrToInteg") : t("ovrToGlobal");
+    const back = kind === "connection" ? t("ovrToAuto") : kind === "offline" || kind === "notify_delay" || kind === "flaky" || kind === "charge" ? t("ovrToInteg") : t("ovrToGlobal");
     const rows = list
       .map((x) => {
         const on = marked.has(x.id);
@@ -8556,6 +8601,7 @@ class DevicePanel extends HTMLElement {
     const bat = new Map((cat.battery || []).map((b) => [b.domain, b.devices]));
     const offMap = d.offline_after_integrations || {};
     const delayMap = d.notify_delay_integrations || {};
+    const flakyMap = d.flaky_outages_integrations || {};
     const batMap = d.battery_low_integrations || {};
     const noPush = new Set(d.notify_exclude_integrations || []);
     const noPers = new Set(d.persistent_exclude_integrations || []);
@@ -8568,7 +8614,7 @@ class DevicePanel extends HTMLElement {
       ? (d.labels || []).map((id) => ({ domain: `${LABEL_PREFIX}${id}`, name: this._scopeName(`${LABEL_PREFIX}${id}`), devices: this._labelInfo(id)?.devices || 0, label: true }))
       : (cat.integrations || []).filter((i) => !hidden.has(i.domain)).map((i) => ({ domain: i.domain, name: i.name, devices: i.devices }));
     const known = new Set(list.map((x) => x.domain));
-    for (const dom of [...Object.keys(offMap), ...Object.keys(delayMap), ...Object.keys(batMap), ...Object.keys(sigMap), ...noPush, ...noPers, ...noBatPush, ...noNew, ...chargeOn, ...Object.keys(d.charge_full_integrations || {}), ...Object.keys(d.charge_rise_integrations || {}), ...Object.keys(d.charge_stall_integrations || {}), ...Object.keys(d.charge_stop_integrations || {}), ...Object.keys(d.charge_live_integrations || {})]) {
+    for (const dom of [...Object.keys(offMap), ...Object.keys(delayMap), ...Object.keys(flakyMap), ...Object.keys(batMap), ...Object.keys(sigMap), ...noPush, ...noPers, ...noBatPush, ...noNew, ...chargeOn, ...Object.keys(d.charge_full_integrations || {}), ...Object.keys(d.charge_rise_integrations || {}), ...Object.keys(d.charge_stall_integrations || {}), ...Object.keys(d.charge_stop_integrations || {}), ...Object.keys(d.charge_live_integrations || {})]) {
       if (known.has(dom) || hidden.has(dom) || isLabelKey(dom) !== labels) continue;
       known.add(dom);
       list.push({ domain: dom, name: this._integrations[dom] || dom, devices: 0 });
@@ -8581,7 +8627,7 @@ class DevicePanel extends HTMLElement {
       const dl = delayMap[x.domain];
       // Ohne Online-Status (seit 2.156.0): kein Ausfall, also auch keine Zeiten und Ausfall-Meldungen zu nennen
       const nostat = off === "nostatus";
-      const out = nostat ? t("integNoStatus") : [Number.isInteger(off) || flags.length ? t("diffOutage", Number.isInteger(off) ? t("offlineMin", off) : null, flags) : "", Number.isInteger(dl) ? t("diffDelay", t("offlineMin", dl)) : ""].filter(Boolean).join(", ") || null;
+      const out = nostat ? t("integNoStatus") : [Number.isInteger(off) || flags.length ? t("diffOutage", Number.isInteger(off) ? t("offlineMin", off) : null, flags) : "", Number.isInteger(dl) ? t("diffDelay", t("offlineMin", dl)) : "", Number.isInteger(flakyMap[x.domain]) ? t("diffFlaky", flakyMap[x.domain]) : ""].filter(Boolean).join(", ") || null;
       const batText = b !== undefined || noBatPush.has(x.domain) ? t("diffBattery", Number.isInteger(b) ? b : null, b === "off", noBatPush.has(x.domain)) : null;
       const sigCount = Object.keys(sigMap[x.domain] || {}).length;
       const sigDiff = sigCount ? t("diffSignal", sigCount) : null;
@@ -8675,7 +8721,7 @@ class DevicePanel extends HTMLElement {
       ${ui.row("outage_persistent", t("optPersistent"), ui.sw("outage_persistent", t("optPersistent")), t("optOutagePersistentShort"), null)}
       ${this._notifyFieldsHtml(d, changes)}
       <div class="mon-grp">${escape(t("grpDiff"))}</div>
-      ${this._integDiffBox(d, "out")}${this._overridesHtml("offline")}${this._overridesHtml("notify_delay")}${this._overridesHtml("notify")}`;
+      ${this._integDiffBox(d, "out")}${this._overridesHtml("offline")}${this._overridesHtml("notify_delay")}${this._overridesHtml("flaky")}${this._overridesHtml("notify")}`;
   }
 
   _monBatteryHtml(d, changes, errors, ui) {
@@ -9146,6 +9192,16 @@ class DevicePanel extends HTMLElement {
       .map(([v, l]) => `<option value="${v}"${v === (Number.isInteger(delayOwn) ? String(delayOwn) : "default") ? " selected" : ""}>${escape(l)}</option>`)
       .join("");
     const delaySel = `<span class="opt-select"><select data-delay-mode="${escape(dom)}" ${outOff ? "disabled" : ""} aria-label="${escape(`${t("optDelay")}: ${item.name}`)}">${delayOpts}</select>${mdi("chevronDown", 18)}</span>`;
+    // Instabil ab (seit 2.182.0): Standard (global) oder fester Wert; ein Label geht vor der Integration
+    const flakyOwn = (d.flaky_outages_integrations || {})[dom];
+    const gFlaky = val("flaky_outages");
+    const fVals = [...FLAKY_PRESETS];
+    if (Number.isInteger(flakyOwn) && !fVals.includes(flakyOwn)) fVals.push(flakyOwn);
+    fVals.sort((a, b) => a - b);
+    const flakyOpts = [["default", t("integOffDefault", t("flakyCount", gFlaky))], ...fVals.map((m) => [String(m), t("flakyCount", m)])]
+      .map(([v, l]) => `<option value="${v}"${v === (Number.isInteger(flakyOwn) ? String(flakyOwn) : "default") ? " selected" : ""}>${escape(l)}</option>`)
+      .join("");
+    const flakySel = `<span class="opt-select"><select data-flaky-mode="${escape(dom)}" ${outOff ? "disabled" : ""} aria-label="${escape(`${t("optFlaky")}: ${item.name}`)}">${flakyOpts}</select>${mdi("chevronDown", 18)}</span>`;
     const delayErr = !nostat && Number.isInteger(delayOwn) && Number.isInteger(eff) && delayOwn < eff ? t("integDelayError", fmt(eff)) : "";
     const offSel = `<span class="opt-select"><select data-off-mode="${escape(dom)}" ${outOff ? "disabled" : ""} aria-label="${escape(`${t("optOfflineAfter")}: ${item.name}`)}">${offOpts}</select>${mdi("chevronDown", 18)}</span>`;
     // Gleiche Reiter wie in den Einstellungen und im Geräte-Popup (seit 1.42.0): Ausfall | Batterie | Laden | Neu | Empfang | Geräte,
@@ -9174,6 +9230,13 @@ class DevicePanel extends HTMLElement {
             origin(Number.isInteger(delayOwn), fmt(gDelay)),
             delayErr ? `<div class="opt-error">${escape(delayErr)}</div>` : `<div class="opt-short">${escape(t("integDelayShort"))}</div>`,
             delayErr ? " invalid" : ""
+          ) +
+          opt(
+            !same(Number.isInteger(flakyOwn) ? flakyOwn : null, Number.isInteger((saved.flaky_outages_integrations || {})[dom]) ? saved.flaky_outages_integrations[dom] : null),
+            t("optFlaky"),
+            flakySel,
+            origin(Number.isInteger(flakyOwn), t("flakyCount", gFlaky)),
+            `<div class="opt-short">${escape(t("integFlakyShort"))}</div>`
           ) +
           listSw("notify_exclude_integrations", t("optPushOutage"), outOff) +
           (tgt("outage") && d.notify_outage ? "" : `<div class="opt-short mon-hint">${escape(t(tgt("outage") ? "integPushGlobalOff" : "noTargetWarn"))}</div>`) +
@@ -9336,12 +9399,12 @@ class DevicePanel extends HTMLElement {
     const sigHtml = sigRows ? `<div class="opt-short sig-intro">${escape(t("sigIntegShort"))}</div>${sigRows}` : empty("integNoSignal");
     // Geräte der Integration mit eigener Einstellung, zum Zurücksetzen wie im Reiter.
     const ov = st.data.overrides || {};
-    const devs = ["offline", "notify_delay", "notify", "battery", "charge"].flatMap((kind) => (ov[kind] || []).filter((x) => x.domain === dom).map((x) => ({ kind, x })));
+    const devs = ["offline", "notify_delay", "flaky", "notify", "battery", "charge"].flatMap((kind) => (ov[kind] || []).filter((x) => x.domain === dom).map((x) => ({ kind, x })));
     const devsHtml = devs.length
       ? `<div class="ovr-list">${devs
           .map(({ kind, x }) => {
             const on = st.resets[kind].has(x.id);
-            const value = kind === "offline" ? (x.value === "off" ? t("ovrKindUnmon") : x.value === "nostatus" ? t("ovrKindNoStatus") : t("ovrKindOffline", fmt(x.value))) : kind === "notify_delay" ? t("ovrKindDelay", fmt(x.value)) : kind === "notify" ? t("ovrKindNotify") : kind === "charge" ? this._chargeOwnText(x.value) : t("ovrKindBattery", x.value);
+            const value = kind === "offline" ? (x.value === "off" ? t("ovrKindUnmon") : x.value === "nostatus" ? t("ovrKindNoStatus") : t("ovrKindOffline", fmt(x.value))) : kind === "notify_delay" ? t("ovrKindDelay", fmt(x.value)) : kind === "flaky" ? t("ovrKindFlaky", x.value) : kind === "notify" ? t("ovrKindNotify") : kind === "charge" ? this._chargeOwnText(x.value) : t("ovrKindBattery", x.value);
             const label = t(on ? "ovrUndo" : "ovrReset", x.name);
             return `<div class="ovr-row${on ? " reset" : ""}${kind === "charge" ? " long" : ""}"><span class="ovr-name">${escape(x.name)}${x.area ? `<small>${escape(x.area)}</small>` : ""}</span>
             <span class="ovr-val">${on ? `<s>${escape(value)}</s> ${escape(t("ovrToInteg"))}` : escape(value)}</span>
@@ -9361,10 +9424,10 @@ class DevicePanel extends HTMLElement {
         typeSel("data-type-integ", typeOwn, (saved.type_integrations || {})[dom], [["", t("connIntegAuto")], ...TYPE_ORDER.map((k) => [k, t(typeKey(k))])], t("typeLabel")) +
         typeSel("data-conn-integ", connOwn, (saved.connection_integrations || {})[dom], [["", t("connIntegAuto")], ...CONN_MANUAL.map((k) => [k, t(CONN[k].key)])], t("connType"))
       : "";
-    const anyOwn = (isLabel && Boolean(typeOwn || connOwn)) || off !== undefined || delayOwn !== undefined || dom in batMap || chargeMaps.some((k) => dom in (d[k] || {})) || dom in (d.signal_low_integrations || {}) || ["notify_exclude_integrations", "persistent_exclude_integrations", "battery_push_exclude_integrations", "new_exclude_integrations", "charge_integrations"].some(has);
+    const anyOwn = (isLabel && Boolean(typeOwn || connOwn)) || off !== undefined || delayOwn !== undefined || flakyOwn !== undefined || dom in batMap || chargeMaps.some((k) => dom in (d[k] || {})) || dom in (d.signal_low_integrations || {}) || ["notify_exclude_integrations", "persistent_exclude_integrations", "battery_push_exclude_integrations", "new_exclude_integrations", "charge_integrations"].some(has);
     // Reiter: Punkt, wenn es dort eine eigene Einstellung der Integration gibt (Geräte: eigene der Geräte).
     const own = {
-      out: off !== undefined || delayOwn !== undefined || has("notify_exclude_integrations") || has("persistent_exclude_integrations"),
+      out: off !== undefined || delayOwn !== undefined || flakyOwn !== undefined || has("notify_exclude_integrations") || has("persistent_exclude_integrations"),
       bat: dom in batMap || has("battery_push_exclude_integrations"),
       chg: has("charge_integrations") || chargeMaps.some((k) => dom in (d[k] || {})),
       new: has("new_exclude_integrations"),
@@ -9811,7 +9874,7 @@ class DevicePanel extends HTMLElement {
           : devTab === "devset"
             ? // Alle Geräte mit eigener Einstellung an einem Ort (seit 2.0.7); jede Liste steht auch beim jeweiligen Thema.
               `<div class="opt-short ex-intro">${escape(t("devSetIntro"))}</div>` +
-              ["offline", "notify_delay", "notify", "battery", "connection", "signal", "charge"].map((k) => this._overridesHtml(k)).join("")
+              ["offline", "notify_delay", "flaky", "notify", "battery", "connection", "signal", "charge"].map((k) => this._overridesHtml(k)).join("")
           : devTab === "devs"
             ? hiddenDevs.length
               ? exTable("exclude_devices", hiddenDevs, t("hiddenIntro"), false, null, t("hiddenShowAll"))
@@ -10282,6 +10345,14 @@ class DevicePanel extends HTMLElement {
         if (el.value === "default") delete own[el.dataset.offMode];
         else own[el.dataset.offMode] = el.value === "off" ? "off" : Number(el.value);
         st.draft.offline_after_integrations = own;
+        this._renderSettings();
+        return;
+      }
+      if (st?.draft && el.tagName === "SELECT" && el.dataset.flakyMode) {
+        const own = { ...(st.draft.flaky_outages_integrations || {}) };
+        if (el.value === "default") delete own[el.dataset.flakyMode];
+        else own[el.dataset.flakyMode] = Number(el.value);
+        st.draft.flaky_outages_integrations = own;
         this._renderSettings();
         return;
       }
