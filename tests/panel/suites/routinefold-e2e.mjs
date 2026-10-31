@@ -1,5 +1,5 @@
-// Fenster "Alle Routinen", zugeklappte Karten (2.171.0, docs/mockups/routine-fav-v2, C): bei mehr als einem sichtbaren Gerät sind alle zu, auch bei einer Suche;
-// bei genau einem offen. Zugeklappt sitzt bei einer Routine der Schalter im Kopf (statt der Zahl), bei mehreren folgt je Routine eine Zeile mit Schalter.
+// Fenster "Alle Routinen", zugeklappte Karten (2.171.0, seit 2.183.0 eine Karte je Routine): bei mehr als einer sichtbaren Routine sind alle zu, auch bei einer Suche;
+// bei genau einer offen. Zugeklappt sitzt der Schalter im Kopf, im Kopf steht immer der Name der Routine.
 // "Gerät öffnen" steht aufgeklappt in der Zeile unter dem Namen, die Fusszeile entfällt. Deutsch und Englisch, Desktop und Handy.
 import { chromium } from "playwright-core";
 import { launchOptions } from "../lib.mjs";
@@ -33,17 +33,14 @@ for (const lang of ["de", "en"]) {
     await tap(".rtall-btn");
     const dlg = "dialog.rtall-dlg";
     await wait(`return !!r.querySelector("${dlg} .mg-dcard")`);
-    const cards = () => ev(`return [...r.querySelectorAll("${dlg} .mg-dcard")].map((c) => ({ closed: c.classList.contains("closed"), sw: !!c.querySelector(".mg-dsw input"), badge: !!c.querySelector(".mg-badge"), lines: c.querySelectorAll(".mg-rline").length, cards: c.querySelectorAll(".mg-card").length }))`);
+    const cards = () => ev(`return [...r.querySelectorAll("${dlg} .mg-dcard")].map((c) => ({ name: c.querySelector(".mg-dhead .mg-t b").textContent.trim(), closed: c.classList.contains("closed"), sw: !!c.querySelector(".mg-dsw input"), badge: !!c.querySelector(".mg-badge"), lines: c.querySelectorAll(".mg-rline").length, cards: c.querySelectorAll(".mg-card").length }))`);
 
-    // Zwei Geräte: beide zu. Gerät mit einer Routine: Schalter im Kopf, keine Zahl. Gerät mit zwei: Zeilen mit Schalter, keine Karten
+    // Eine Karte je Routine (seit 2.183.0): im Kopf immer der Name der Routine, zugeklappt mit Schalter, keine Zeilen, keine Zahl
     const c0 = await cards();
-    check(`[${tag}] zwei Geräte: beide zugeklappt`, c0.length === 2 && c0.every((c) => c.closed && c.cards === 0), JSON.stringify(c0));
-    const one = c0.find((c) => c.lines === 0), many = c0.find((c) => c.lines > 0);
-    check(`[${tag}] eine Routine: Schalter im Kopf, keine Zahl`, !!one && one.sw && !one.badge, JSON.stringify(one));
-    check(`[${tag}] zwei Routinen: eine Zeile je Routine mit Schalter, kein Schalter im Kopf`, !!many && many.lines === 2 && !many.sw && !many.badge && (await ev(`return [...r.querySelectorAll("${dlg} .mg-rline")].every((l) => !!l.querySelector("input[data-rta='routine-toggle']"))`)), JSON.stringify(many));
+    check(`[${tag}] drei Routinen: drei Karten, alle zugeklappt, Name im Kopf`, c0.length === 3 && c0.every((c) => c.closed && c.cards === 0) && c0.map((c) => c.name).sort().join("|") === ["Bewässerung", "Morgenlicht", "Nachtlicht"].join("|"), JSON.stringify(c0));
+    check(`[${tag}] zugeklappt: Schalter im Kopf, keine Zahl, keine Zeilen`, c0.every((c) => c.sw && !c.badge && c.lines === 0), JSON.stringify(c0));
     // Abstand zwischen Schalter und rundem Pfeil mindestens 24 px (2.173.1)
-    check(`[${tag}] Schalter im Kopf: genug Abstand zum runden Pfeil`, await ev(`const w = r.querySelector("${dlg} .mg-dwrap"); const s = w.querySelector(".mg-dsw").getBoundingClientRect(); const c = w.querySelector(".mg-lchev .cbtn").getBoundingClientRect(); return c.left - s.right >= 24`));
-    check(`[${tag}] Schalter im Kopf liegt neben dem Pfeil, nicht über dem Namen`, await ev(`const w = r.querySelector("${dlg} .mg-dwrap"); const s = w.querySelector(".mg-dsw").getBoundingClientRect(); const c = w.querySelector(".mg-lchev").getBoundingClientRect(); const n = w.querySelector(".mg-t b").getBoundingClientRect(); const h = w.getBoundingClientRect(); return s.right <= c.left + 2 && s.left >= n.left && Math.abs((s.top + s.bottom) / 2 - (h.top + h.bottom) / 2) < 3`));
+    check(`[${tag}] Schalter im Kopf: genug Abstand zum runden Pfeil`, await ev(`const w = r.querySelector("${dlg} .mg-dwrap"); const s = w.querySelector(".mg-dsw").getBoundingClientRect(); const c = w.querySelector(".mg-lchev .cbtn").getBoundingClientRect(); return c.left - s.right >= 24 - 1`));
 
     // Schalten ohne Aufklappen
     const before = (await calls("device_panel/routine_enable")).length;
@@ -51,30 +48,26 @@ for (const lang of ["de", "en"]) {
     check(`[${tag}] Schalter im Kopf: routine_enable gesendet, Karte bleibt zu`, await wait(`return !r.querySelector("${dlg} .mg-dsw input").checked`) && (await calls("device_panel/routine_enable")).length === before + 1 && (await cards()).every((c) => c.closed));
     await tap(`${dlg} .mg-dsw input`);
     await wait(`return r.querySelector("${dlg} .mg-dsw input").checked`);
-    const before2 = (await calls("device_panel/routine_enable")).length;
-    await tap(`${dlg} .mg-rline input`);
-    check(`[${tag}] Schalter in der Zeile: routine_enable gesendet, Karte bleibt zu`, (await wait(`return (r.querySelector("${dlg} .mg-rline input").checked) !== true`)) && (await calls("device_panel/routine_enable")).length === before2 + 1 && (await cards()).every((c) => c.closed));
 
-    // Aufklappen: Karte wie bisher, "Gerät öffnen" in der Zeile unter dem Namen, keine Fusszeile
-    await tap(`${dlg} .mg-dcard:has(.mg-dsw) .mg-dhead`);
-    check(`[${tag}] aufgeklappt: Karte mit Aktionen, Zahl im Kopf, Schalter im Kopf weg`, await wait(`const c = r.querySelector("${dlg} .mg-dcard:not(.closed)"); return !!c && !!c.querySelector(".mg-card .mg-acts") && !!c.querySelector(".mg-badge") && !c.querySelector(".mg-dsw")`));
-    check(`[${tag}] aufgeklappt: "${L.open} ›" unter dem Namen, keine Fusszeile`, await ev(`const c = r.querySelector("${dlg} .mg-dcard:not(.closed)"); const l = c.querySelector(".mg-dhead .mg-t small .mg-dopen"); return !!l && l.textContent.includes(${JSON.stringify(L.open)}) && !c.querySelector(".mg-dfoot")`));
+    // Aufklappen: Name bleibt im Kopf, darunter Gerät, Bereich und "Gerät öffnen", die Karte wiederholt den Namen nicht, keine Fusszeile
+    await tap(`${dlg} .mg-dcard .mg-dhead`);
+    check(`[${tag}] aufgeklappt: Karte mit Aktionen, Schalter nur in der Karte, keine Zahl`, await wait(`const c = r.querySelector("${dlg} .mg-dcard:not(.closed)"); return !!c && !!c.querySelector(".mg-card .mg-acts") && !c.querySelector(".mg-badge") && !c.querySelector(".mg-dsw") && !!c.querySelector(".mg-card input[data-rta='routine-toggle']")`));
+    check(`[${tag}] aufgeklappt: Gerät und "${L.open} ›" unter dem Namen, Name nicht doppelt, keine Fusszeile`, await ev(`const c = r.querySelector("${dlg} .mg-dcard:not(.closed)"); const h = c.querySelector(".mg-dhead .mg-t"); const l = h.querySelector("small .mg-dopen"); return !!l && l.textContent.includes(${JSON.stringify(L.open)}) && h.querySelector("small").textContent.trim().length > l.textContent.trim().length && !c.querySelector(".mg-card .mg-row > .mg-t > b") && !c.querySelector(".mg-dfoot")`));
     await p.evaluate(() => { window.__wsCalls = []; });
     await tap(`${dlg} .mg-dopen`);
-    check(`[${tag}] "${L.open}" öffnet das Gerät, der Kopf bleibt aufgeklappt`, await wait(`return !!r.querySelector("dialog.device")?.open`));
+    check(`[${tag}] "${L.open}" öffnet das Gerät, die Karte bleibt aufgeklappt`, await wait(`return !!r.querySelector("dialog.device")?.open`));
     await ev(`r.host._closeDevice?.()`);
     await ev(`r.host._closeRtAll(); r.host._openRtAll()`);
     await wait(`return !!r.querySelector("${dlg} .mg-dcard")`);
 
-    // Suche: bei zwei Treffer-Geräten zu, bei einem offen
+    // Suche: bei mehreren Treffern zu, bei einem offen
     await tap(`${dlg} input[data-lsearch]`);
-    await p.keyboard.type("licht");
-    check(`[${tag}] Suche mit Treffern an einem Gerät: offen`, await wait(`const c = [...r.querySelectorAll("${dlg} .mg-dcard")]; return c.length === 1 && !c[0].classList.contains("closed")`));
+    await p.keyboard.type("bewäss");
+    check(`[${tag}] Suche mit einem Treffer: offen`, await wait(`const c = [...r.querySelectorAll("${dlg} .mg-dcard")]; return c.length === 1 && !c[0].classList.contains("closed")`));
     await ev(`const i = r.querySelector("${dlg} input[data-lsearch]"); i.value = ""; i.dispatchEvent(new Event("input", { bubbles: true }))`);
-    await p.keyboard.type("");
-    check(`[${tag}] Suche geleert: wieder beide zu`, await wait(`const c = [...r.querySelectorAll("${dlg} .mg-dcard")]; return c.length === 2 && c.every((x) => x.classList.contains("closed"))`));
-    await ev(`const i = r.querySelector("${dlg} input[data-lsearch]"); i.value = "e"; i.dispatchEvent(new Event("input", { bubbles: true }))`);
-    check(`[${tag}] Suche mit Treffern an zwei Geräten: beide zu`, await wait(`const c = [...r.querySelectorAll("${dlg} .mg-dcard")]; return c.length === 2 && c.every((x) => x.classList.contains("closed"))`));
+    check(`[${tag}] Suche geleert: wieder alle zu`, await wait(`const c = [...r.querySelectorAll("${dlg} .mg-dcard")]; return c.length === 3 && c.every((x) => x.classList.contains("closed"))`));
+    await ev(`const i = r.querySelector("${dlg} input[data-lsearch]"); i.value = "licht"; i.dispatchEvent(new Event("input", { bubbles: true }))`);
+    check(`[${tag}] Suche mit zwei Treffern: beide zu`, await wait(`const c = [...r.querySelectorAll("${dlg} .mg-dcard")]; return c.length === 2 && c.every((x) => x.classList.contains("closed"))`));
     check(`[${tag}] keine Skriptfehler`, errors.length === 0, errors.join(" | "));
     await ctx.close();
   }

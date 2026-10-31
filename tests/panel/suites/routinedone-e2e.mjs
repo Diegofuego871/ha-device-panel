@@ -46,6 +46,9 @@ for (const lang of ["de", "en"]) {
     const toggleOf = (id) => ev(`return r.querySelector('${all} [data-rta="routine-toggle"][data-id="${id}"]')?.checked`);
     check(`[${tag}] erledigte Routine ist aus, wartende an`, (await toggleOf("aaaaaaaaaaa1")) === false && (await toggleOf("aaaaaaaaaaa2")) === true);
     check(`[${tag}] kein Knopf "Erneut starten" im Fenster mit allen Routinen`, await ev(`return !r.querySelector('${all} [data-rta="routine-restart"]') && ![...r.querySelectorAll("${all} .linkbtn")].some((x) => /Erneut starten|Start again/.test(x.textContent))`));
+    // Mit zwei Routinen sind die Karten zu: die der erledigten Routine aufklappen
+    await ev(`const c = r.querySelector('${all} .mg-dsw input[data-id="aaaaaaaaaaa1"]')?.closest(".mg-dcard"); c?.querySelector(".mg-dhead")?.click()`);
+    await wait(`return !!r.querySelector('${all} .mg-card [data-id="aaaaaaaaaaa1"]')`);
     check(`[${tag}] erledigte Routine trägt "${T.done}"`, await ev(`const c = [...r.querySelectorAll("${all} .mg-card")].find((x) => x.querySelector('[data-id="aaaaaaaaaaa1"]')); return !!c && c.textContent.includes(${JSON.stringify(T.done)})`));
 
     // Bearbeiten des erledigten Routines: Schalter bleibt aus, Speichern sendet enabled=false
@@ -76,6 +79,8 @@ for (const lang of ["de", "en"]) {
     check(`[${tag}] Schalter im Assistenten von Hand an: enabled=true, Routine wieder scharf`, again?.enabled === true && (await wait(`return !!r.querySelector('${all} [data-rta="routine-toggle"][data-id="aaaaaaaaaaa1"]:checked')`)), JSON.stringify(again));
 
     // Der noch nicht gelaufene Routine bleibt beim Bearbeiten an
+    await ev(`const c = r.querySelector('${all} .mg-dsw input[data-id="aaaaaaaaaaa2"]')?.closest(".mg-dcard"); c?.querySelector(".mg-dhead")?.click()`);
+    await wait(`return !!r.querySelector('${all} [data-rta="routine-edit"][data-id="aaaaaaaaaaa2"]')`);
     await tap(`${all} [data-rta="routine-edit"][data-id="aaaaaaaaaaa2"]`);
     await wait(`return r.querySelector("${win}")?.open`);
     for (let i = 0; i < 6; i++) {

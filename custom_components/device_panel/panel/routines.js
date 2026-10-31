@@ -773,12 +773,12 @@ export class RoutineUi {
     return Boolean(this.allQuery(all)) || (all.filter || "all") !== "all";
   }
 
-  // Aufgeklappt (seit 2.171.0): in jeder Ansicht und auch bei einer Suche zu, sobald mehr als ein Gerät sichtbar ist; bei genau einem Gerät offen.
-  // Eine eigene Wahl (Tipp auf den Kopf) gilt, bis Filter oder Suche wechseln. nGroups = Zahl der sichtbaren Geräte.
-  isOpen(all, id, nGroups) {
+  // Aufgeklappt (seit 2.171.0, seit 2.183.0 je Routine): in jeder Ansicht und auch bei einer Suche zu, sobald mehr als eine Routine sichtbar ist; bei genau einer offen.
+  // Eine eigene Wahl (Tipp auf den Kopf) gilt, bis Filter oder Suche wechseln. nItems = Zahl der sichtbaren Routinen.
+  isOpen(all, id, nItems) {
     const own = this.isFiltering(all) ? all.sopen : all.open;
     if (own && id in own) return own[id] !== false;
-    return nGroups === 1;
+    return nItems === 1;
   }
 
   visibleGroups(all, devices) {
@@ -789,20 +789,23 @@ export class RoutineUi {
       .filter((g) => g.shown.length);
   }
 
+  // Die sichtbaren Routinen, eine Karte je Routine (seit 2.183.0), geordnet nach Gerät; g = das Gerät (oder die Sammelstelle), an dem sie hängt
+  visibleItems(all, devices) {
+    return this.visibleGroups(all, devices).flatMap((g) => g.shown.map((rt) => ({ rt, g })));
+  }
+
   toggleFold(all, devices, id) {
-    const n = this.visibleGroups(all, devices).length;
-    const open = this.isOpen(all, id, n);
+    const open = this.isOpen(all, id, this.visibleItems(all, devices).length);
     if (this.isFiltering(all)) (all.sopen ||= {})[id] = !open;
     else (all.open ||= {})[id] = !open;
   }
 
   foldAll(all, devices) {
-    const groups = this.visibleGroups(all, devices);
-    const n = groups.length;
-    const anyOpen = groups.some((g) => this.isOpen(all, g.id, n));
-    for (const g of groups) {
-      if (this.isFiltering(all)) (all.sopen ||= {})[g.id] = !anyOpen;
-      else (all.open ||= {})[g.id] = !anyOpen;
+    const items = this.visibleItems(all, devices);
+    const anyOpen = items.some(({ rt }) => this.isOpen(all, rt.id, items.length));
+    for (const { rt } of items) {
+      if (this.isFiltering(all)) (all.sopen ||= {})[rt.id] = !anyOpen;
+      else (all.open ||= {})[rt.id] = !anyOpen;
     }
   }
 
@@ -854,44 +857,37 @@ export class RoutineUi {
     return `${html}<div data-rt-all-zone data-q="${esc(q)}">${this.overviewListHtml(all, devices)}</div>`;
   }
 
+  // Eine Karte je Routine (seit 2.183.0): im Kopf immer ihr Name, zugeklappt mit Schalter und nächster Ausführung, aufgeklappt mit Gerät, Bereich und "Gerät öffnen"
   overviewListHtml(all, devices) {
     const esc = (v) => this.esc(v);
     const t = (k, ...a) => this.t(k, ...a);
-    const groups = this.visibleGroups(all, devices);
-    const nGroups = groups.length;
-    const shown = groups.reduce((n, g) => n + g.shown.length, 0);
-    all.shown = { n: shown, total: all.routines.length, filtering: this.isFiltering(all) };
-    if (!groups.length) return `<p class="mg-note mg-none">${esc(t("listSearchNone"))}</p>`;
-    const anyOpen = groups.some((g) => this.isOpen(all, g.id, nGroups));
-    let html = `<div class="mg-allcount"><span class="mg-count">${esc(t("rtAllCount", shown, groups.length))}</span><button type="button" class="linkbtn" ${this.a(all, "routine-fold-all")}>${esc(t(anyOpen ? "rtFoldAll" : "rtUnfoldAll"))}</button></div>`;
-    for (const g of groups) {
-      const open = this.isOpen(all, g.id, nGroups);
-      const offN = g.shown.filter((x) => !x.enabled).length;
-      const nextRt = g.shown.filter((x) => x.enabled && x.due_local).sort((a, b) => a.due - b.due)[0];
-      // Genau eine Routine (seit 2.182.1): im Kopf steht immer ihr Name, den der Nutzer gewählt hat, zugeklappt wie aufgeklappt
-      const single = g.shown.length === 1 ? g.shown[0] : null;
-      // Aufgeklappt: Gerät, Bereich und "Gerät öffnen" in der Zeile unter dem Namen (seit 2.171.0, vorher eine eigene Fusszeile); zugeklappt die Zusammenfassung.
-      // Steht im Kopf der Name der Routine, nennt diese Zeile zuerst das Gerät
+    const items = this.visibleItems(all, devices);
+    const n = items.length;
+    all.shown = { n, total: all.routines.length, filtering: this.isFiltering(all) };
+    if (!n) return `<p class="mg-note mg-none">${esc(t("listSearchNone"))}</p>`;
+    const anyOpen = items.some(({ rt }) => this.isOpen(all, rt.id, n));
+    let html = `<div class="mg-allcount"><span class="mg-count">${esc(t("rtAllCount", n))}</span><button type="button" class="linkbtn" ${this.a(all, "routine-fold-all")}>${esc(t(anyOpen ? "rtFoldAll" : "rtUnfoldAll"))}</button></div>`;
+    for (const { rt, g } of items) {
+      const open = this.isOpen(all, rt.id, n);
+      const multi = (rt.targets || []).length > 1;
+      // Aufgeklappt: Gerät, Bereich und "Gerät öffnen" in der Zeile unter dem Namen; zugeklappt "Schaltet N Geräte" (nur bei mehreren) und wann als Nächstes
       const sub = open
-        ? [single ? esc(g.name) : "", g.holder ? "" : [g.dev?.area, g.dev?.integration?.name].filter(Boolean).map(esc).join(" · "), g.holder ? "" : `<span class="mg-dopen" data-rta-open data-device="${esc(g.id)}" role="link">${esc(t("rtAllOpenDevice"))} ›</span>`].filter(Boolean).join(" · ")
-        : `${esc(t("rtSumRoutines", g.shown.length))}${offN ? ` · ${esc(t("rtSumOff", offN))}` : ""}${nextRt ? ` · <span class="mg-on">${esc(t("rtSumNext", this.localText(nextRt.due_local)))}</span>` : ""}`;
-      // Zugeklappt mit genau einer Routine für mehrere Geräte: statt der Zahl "Schaltet N Geräte" in der Zusammenfassung
-      const multi = !open && single && (single.targets || []).length > 1 ? single : null;
-      const sumText = multi
-        ? `${esc(t("rtTgSwitches", multi.targets.length))}${offN ? ` · ${esc(t("rtSumOff", offN))}` : ""}${nextRt ? ` · <span class="mg-on">${esc(t("rtSumNext", this.localText(nextRt.due_local)))}</span>` : ""}`
-        : sub;
-      const sum = sumText ? `<small class="${open ? "" : "mg-dsum"}">${sumText}</small>` : "";
-      // Zugeklappt (seit 2.171.0): bei genau einer Routine sitzt ihr Schalter im Kopf statt der Zahl, bei mehreren folgt je Routine eine schlanke Zeile mit Schalter
-      const one = !open && g.shown.length === 1 ? g.shown[0] : null;
-      const lead = one ? `<span class="mg-dslot" aria-hidden="true"></span>` : open ? `<span class="mg-badge">${g.shown.length}</span>` : "";
-      html += `<div class="mg-dcard${open ? "" : " closed"}"><div class="mg-dwrap"><button type="button" class="mg-dhead" ${this.a(all, "routine-fold-dev")} data-device="${esc(g.id)}" aria-expanded="${open}">
-        <span class="mg-devic" aria-hidden="true">${g.holder ? g.holder.emoji : this.h.typeIcon(g.dev?.type || "other", 18)}</span>
-        <span class="mg-t"><b>${esc(single ? single.name : g.name)}</b>${sum}</span>${lead}${this.chevHtml(open)}</button>${one ? `<span class="mg-dsw">${this.switchHtml(one, all)}</span>` : ""}</div>`;
-      if (open) html += g.shown.map((x) => this.overviewCardHtml(x, all, g.id, Boolean(single))).join("");
-      else if (g.shown.length > 1) html += g.shown.map((x) => this.lineHtml(x, all)).join("");
+        ? [esc(g.name), g.holder ? "" : [g.dev?.area, g.dev?.integration?.name].filter(Boolean).map(esc).join(" · "), g.holder ? "" : `<span class="mg-dopen" data-rta-open data-device="${esc(g.id)}" role="link">${esc(t("rtAllOpenDevice"))} ›</span>`].filter(Boolean).join(" · ")
+        : [multi ? esc(t("rtTgSwitches", rt.targets.length)) : "", this.nextHtml(rt)].filter(Boolean).join(" · ");
+      html += `<div class="mg-dcard${open ? "" : " closed"}"><div class="mg-dwrap"><button type="button" class="mg-dhead" ${this.a(all, "routine-fold-dev")} data-id="${esc(rt.id)}" aria-expanded="${open}">
+        <span class="mg-devic emo" aria-hidden="true">${routineEmoji(rt.domain)}</span>
+        <span class="mg-t"><b>${esc(rt.name)}</b>${sub ? `<small class="${open ? "" : "mg-dsum"}">${sub}</small>` : ""}</span>${open ? "" : `<span class="mg-dslot" aria-hidden="true"></span>`}${this.chevHtml(open)}</button>${open ? "" : `<span class="mg-dsw">${this.switchHtml(rt, all)}</span>`}</div>`;
+      if (open) html += this.overviewCardHtml(rt, all, g.id, true);
       html += `</div>`;
     }
     return html;
+  }
+
+  // Wann die Routine als Nächstes schaltet (oder warum nicht), als Zeile unter dem Namen
+  nextHtml(rt) {
+    const esc = (v) => this.esc(v);
+    const t = (k, ...a) => this.t(k, ...a);
+    return rt.running ? `<span class="mg-on">${esc(t("rtRunningShort"))}</span>` : rt.kind === "trigger" && rt.enabled ? `<span class="mg-on">${esc(this.waitsText(rt))}</span>` : rt.enabled && rt.due_local ? `${esc(t("rtNextRun"))} <span class="mg-on">${esc(this.localText(rt.due_local))}</span>` : esc(t(rt.enabled ? "rtFilterOn" : "rtFilterOff"));
   }
 
   // Schalter einer Routine (Kopf der zugeklappten Karte, Zeile und aufgeklappte Karte teilen ihn)
@@ -899,14 +895,6 @@ export class RoutineUi {
     // Reiter des Geräts (seit 2.174.0): derselbe Schalter wie in der aufgeklappten Karte (data-rt="toggle")
     if (all?.rt) return `<label class="switch"><input type="checkbox" data-rt="toggle" data-id="${this.esc(rt.id)}"${rt.enabled ? " checked" : ""} aria-label="${this.esc(rt.name)}"><span></span></label>`;
     return `<label class="switch"><input type="checkbox" ${this.a(all, "routine-toggle")} data-id="${this.esc(rt.id)}"${rt.enabled ? " checked" : ""} aria-label="${this.esc(rt.name)}"><span></span></label>`;
-  }
-
-  // Schlanke Zeile unter dem Kopf einer zugeklappten Karte mit mehreren Routinen (seit 2.171.0): Name, wann als Nächstes, Schalter
-  lineHtml(rt, all) {
-    const esc = (v) => this.esc(v);
-    const t = (k, ...a) => this.t(k, ...a);
-    const next = rt.running ? `<span class="mg-on">${esc(t("rtRunningShort"))}</span>` : rt.kind === "trigger" && rt.enabled ? `<span class="mg-on">${esc(this.waitsText(rt))}</span>` : rt.enabled && rt.due_local ? `${esc(t("rtNextRun"))} <span class="mg-on">${esc(this.localText(rt.due_local))}</span>` : esc(t(rt.enabled ? "rtFilterOn" : "rtFilterOff"));
-    return `<div class="mg-rline${rt.enabled ? "" : " off"}"><span class="mg-t"><b>${esc(rt.name)}</b><small>${next}</small></span>${this.switchHtml(rt, all)}</div>`;
   }
 
   overviewCardHtml(rt, all, here, nameInHead = false) {

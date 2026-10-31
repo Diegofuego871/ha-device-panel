@@ -8201,7 +8201,7 @@ class DevicePanel extends HTMLElement {
         all.sopen = {};
         this._renderRtAll();
       } else if (action === "routine-fold-dev" || action === "routine-fold-all") {
-        if (action === "routine-fold-dev") ui.toggleFold(all, this._devices, btn.dataset.device);
+        if (action === "routine-fold-dev") ui.toggleFold(all, this._devices, btn.dataset.id);
         else ui.foldAll(all, this._devices);
         const zone = dlg.querySelector("[data-rt-all-zone]");
         if (zone) zone.innerHTML = ui.overviewListHtml(all, this._devices);

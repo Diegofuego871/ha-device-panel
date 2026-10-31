@@ -1892,6 +1892,7 @@ input.mg-pill { cursor: text; }
 .mg-dfoot { padding: 8px 14px 10px 56px; border-top: 1px solid var(--dp-divider); font-size: 13px; }
 .mg-dfoot { display: flex; flex-wrap: wrap; align-items: center; gap: 2px 24px; }
 .mg-devic { flex: none; display: grid; place-items: center; width: 32px; height: 32px; border-radius: 50%; background: var(--dp-subtle); color: var(--dp-text2); }
+.mg-devic.emo { font-size: 17px; }
 .mg-devic.off { background: var(--dp-error-soft); color: var(--dp-error); }
 .mg-devoff { flex: none; padding: 1px 8px; border-radius: 99px; background: var(--dp-error-soft); color: var(--dp-error); font-size: 11.5px; font-weight: 500; }
 .mg-freetag { color: var(--dp-text3); overflow-wrap: anywhere; }

@@ -7,6 +7,14 @@ Alle nennenswerten Änderungen an dieser Integration stehen in dieser Datei.
 Das Format folgt [Keep a Changelog](https://keepachangelog.com/de/1.1.0/),
 die Versionsnummern folgen [Semantic Versioning](https://semver.org/lang/de/).
 
+## [2.183.0] - 2026-10-31
+
+Eine Karte je Routine: Der Name, den du gewählt hast, ist immer der Titel.
+
+### Geändert
+
+- **Routinen-Übersicht:** Jede Routine hat ihre eigene Karte. Der Kopf zeigt immer den Namen der Routine, zugeklappt wie aufgeklappt; die Gruppierung nach Gerät und die Zahl im Kopf entfallen. Zugeklappt zeigt die Karte den Schalter und unter dem Namen, wann sie als Nächstes schaltet (und "Schaltet N Geräte" bei einer Routine mit mehreren Geräten). Aufgeklappt nennt die Zeile unter dem Namen das Gerät, seinen Bereich und "Gerät öffnen", die Karte wiederholt den Namen nicht, und eine Routine mit mehreren Geräten listet sie wie bisher. Die Zahl über der Liste lautet jetzt "3 Routinen". Eine Routine mit mehreren Geräten erscheint einmal. Suche, Filter, "Alle einklappen" und die Regel "ab zwei Routinen zugeklappt, bei genau einer offen" bleiben.
+
 ## [2.182.1] - 2026-10-31
 
 Der Name, den du einer Routine gegeben hast, steht immer auf ihrer Karte.
@@ -14,6 +22,8 @@ Der Name, den du einer Routine gegeben hast, steht immer auf ihrer Karte.
 ### Geändert
 
 - **Routinen-Übersicht:** Eine Karte mit genau einer Routine zeigt in ihrem Kopf immer den Namen der Routine, zugeklappt wie aufgeklappt, damit der Name steht, den du gewählt hast. Aufgeklappt nennt die Zeile darunter das Gerät und seinen Bereich, und die Karte wiederholt den Namen nicht. Karten mit mehreren Routinen tragen weiter den Namen des Geräts.
+
+Nicht veröffentlicht; enthalten in 2.183.0.
 
 ## [2.182.0] - 2026-10-31
 
@@ -5510,7 +5520,7 @@ Erste Vorabversion.
   GitHub Actions für die Prüfungen von HACS und hassfest sowie die Tests.
 
 [2.6.0]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v2.6.0
-[2.182.1]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v2.182.1
+[2.183.0]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v2.183.0
 [2.182.0]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v2.182.0
 [2.181.4]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v2.181.4
 [2.181.3]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v2.181.3
