@@ -724,6 +724,39 @@
     document.querySelector("#panel-frame").contentDocument.querySelector("device-panel").hass = { ...ha };
   };
   window.__pushHass = pushHass;
+  // Nur für die README-Bilder (?demo=en): englische Namen für die erfundenen Daten, damit auf englischen Bildern kein deutsches Wort steht.
+  // Wirkt auf alle Antworten des Simulators; ohne den Schalter ändert sich nichts (die Suiten prüfen die deutschen Namen).
+  if (params.get("demo") === "en") {
+    const MAP = {
+      "Temperatur Keller": "Cellar temperature", "Bewegungsmelder Flur": "Hallway motion sensor", "Thermostat Bad": "Bathroom thermostat", "Steckdose Terrasse": "Patio socket",
+      "Fensterkontakt Küche": "Kitchen window sensor", "Präsenzsensor Büro": "Office presence sensor", "Deckenlicht Wohnzimmer": "Living room ceiling light", "Stromzähler": "Power meter",
+      "Türschloss Haustür": "Front door lock", "Heizkörper Kinderzimmer": "Kids room radiator", "Steckdose Kaffeemaschine": "Coffee machine socket", "Rollladen Büro": "Office shutter",
+      "Rauchmelder Flur": "Hallway smoke detector", "Steckdose": "Socket", "Bewegungsmelder": "Motion sensor", "Saugroboter": "Vacuum robot", "Altgerät": "Old device", "Wetterdienst": "Weather service", "Geist": "Ghost", "Alte Lampe": "Old lamp",
+      "Zigbee-Lampe Flur": "Hallway Zigbee lamp", "LED-Ring": "LED ring", "Wohnzimmer Leuchten": "Living room lights", "Abendlicht": "Evening light",
+      "Funkstick Erdgeschoss": "Zigbee stick ground floor", "shelly-terrasse": "shelly-patio", "stromzaehler": "power-meter", "nas-keller": "nas-cellar", "Konto Haushalt": "Household account",
+      "Storen Büro": "Office blinds", "Lokales Modell": "Local model", "Zuhause-Thread": "Home-Thread", "Zuhause": "Home", "Beispiel AG": "Example Inc.", "Modell": "Model",
+      "Erdgeschoss": "Ground floor", "Obergeschoss": "Upper floor", "Untergeschoss": "Basement",
+      "Küche": "Kitchen", "Wohnzimmer": "Living room", "Flur": "Hallway", "Eingang": "Entrance", "Bad": "Bathroom", "Büro": "Office", "Kinderzimmer": "Kids room",
+      "Estrich": "Attic", "Keller": "Cellar", "Terrasse": "Patio", "Garage": "Garage", "Batterie": "Battery", "Luftfeuchtigkeit": "Humidity", "Temperatur Garten": "Garden temperature",
+      "Temperatur": "Temperature", "Fenster": "Window", "Regen Garten": "Garden rain", "Absolute Feuchte berechnet": "Absolute humidity (calculated)",
+      "Bewässerung Morgen": "Morning watering", "Nachtlicht": "Night light", "Keller zu kalt": "Cellar too cold", "Luft zu feucht": "Air too humid", "Fenster zu lange offen": "Window open too long", "Keller wieder warm": "Cellar warm again", "Meldung {value}": "Message {value}", "Wetterstation Garten": "Garden weather station", "Mein Server CPU": "My server CPU", "Wohnzimmer Temperatur": "Living room temperature", "Oft offline": "Often offline", "Ohne Geräte": "No devices",
+    };
+    const keys = Object.keys(MAP).sort((a, b) => b.length - a.length);
+    const re = new RegExp(`(?<![A-Za-zÄÖÜäöüß])(${keys.map((k) => k.replace(/[.*+?^${}()|[\]\\]/g, "\\$&")).join("|")})(?![A-Za-zÄÖÜäöüß])`, "g");
+    const tr = (v) => {
+      if (typeof v === "string") return v.replace(re, (m) => MAP[m]);
+      if (Array.isArray(v)) return v.map(tr);
+      if (v && typeof v === "object") return Object.fromEntries(Object.entries(v).map(([k, x]) => [k, tr(x)]));
+      return v;
+    };
+    window.__demoTr = tr;
+    // Erst nach der Zuweisung von hass (gleicher Durchlauf, darum ein Zeitgeber)
+    setTimeout(() => {
+      const ha0 = document.querySelector("home-assistant").hass;
+      const call0 = ha0.callWS;
+      ha0.callWS = async (msg) => tr(await call0(msg));
+    }, 0);
+  }
   document.querySelector("home-assistant").hass = {
     themes: { darkMode: params.get("theme") !== "light" },
     language,

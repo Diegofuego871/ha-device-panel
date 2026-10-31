@@ -3,6 +3,12 @@
 Einstieg für jede neue Claude-Code-Session. Zuerst diese Datei lesen, dann
 `CLAUDE.md`, `docs/CONCEPT.md`, `docs/LEARNINGS.md`, `docs/DESIGN.md`.
 
+## Stand (README neu gegliedert, ohne Versionswechsel)
+
+- README.md/README.de.md: Installation (HACS-Knopf und drei Schritte) ganz oben, danach Bild und kurze Funktionsliste; je Abschnitt ein Bild und wenige Punkte, der Rest in `<details>`-Blöcken (Kopf als reines HTML, damit HACS ihn zeigt). Keine Bildertabellen mehr. Veraltete Bilder gelöscht (nur noch die verwendeten 20 pro Sprache), alle neu aufgenommen. Der Aufbau muss in beiden Sprachen gleich bleiben (`tests/test_translations.py`).
+- Englische Bilder ohne deutsche Wörter: der Simulator übersetzt mit `?demo=en` alle Antworten (Wörterbuch `MAP` in `ha-sim.html`, nur für `readme-shots.mjs`, nicht für die Suiten). Neue erfundene deutsche Namen in `readme-shots.mjs` oder im Simulator müssen dort ins Wörterbuch, sonst stehen sie auf den englischen Bildern.
+- Grafik "Ebenen" hat die Zeile "Instabil ab".
+
 ## Stand (2.182.0, "Instabil ab" auf vier Ebenen)
 
 - 2.182.0: Auslöser war die Frage des Nutzers, ob "Instabil ab" (`flaky_outages`) auf Geräteebene existiert (nein, nur global). Jetzt alle vier Ebenen: Option `flaky_outages_integrations` (`options_api.flaky_map`, 2 bis 50, Schlüssel Domain oder `label:<ID>`), Wirksam Gerät > Label > Integration > global (`options_api.flaky_for`, Kombination `scope.highest`: bei mehreren Labels der höchste Wert), Geräteeinstellung `flaky` (`devices.py`: `valid_flaky_setting`, `_flaky_default`, `async_set_device_settings`/`async_reset_device_settings`/`async_device_overrides`, `list_devices`: `flaky_outages`, `flaky_setting`, `flaky_default`, `flaky`), WS `set_device_settings`/`reset_device_settings` mit `flaky`, Sicherung (`backup.py`: `_DEVICE_SETTING_KEYS`, Option im Bereich "monitor"). Panel: Popup-Zeile `dev-flaky`/`dev-flaky-count`, Integrations-/Label-Detail `data-flaky-mode` (`FLAKY_PRESETS`), Liste `diffFlaky`, Übersicht `ovrFlaky*`, Assistent Label-Seite (`wizard.js`: `flaky`, `LABEL_MAPS`). Tests: Suite `flaky`, `test_labels` (vier Ebenen, Prüfung), `test_backup` (Rundlauf), `test_consistency` KINDS, `test_overrides`.

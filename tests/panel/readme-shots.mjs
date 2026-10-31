@@ -31,7 +31,7 @@ for (const lang of langs) {
       ? { viewport: { width: 390, height: 844 }, isMobile: true, hasTouch: true, deviceScaleFactor: 2, locale }
       : { viewport: { width: 1280, height: 860 }, deviceScaleFactor: 1.5, locale });
     const p = await ctx.newPage();
-    await p.goto(`http://127.0.0.1:8950/ha-sim.html?lang=${lang}&theme=${mobile ? "dark" : "light"}&nobrands=1&updapp=1`);
+    await p.goto(`http://127.0.0.1:8950/ha-sim.html?lang=${lang}&theme=${mobile ? "dark" : "light"}&nobrands=1&updapp=1${lang === "en" ? "&demo=en" : ""}`);
     const frameEl = await p.waitForSelector("#panel-frame");
     const f = await frameEl.contentFrame();
     await f.waitForFunction(new Function(`return ${R}?.querySelectorAll(".dev").length > 1`), null, { timeout: 15000 });
