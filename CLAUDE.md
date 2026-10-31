@@ -43,6 +43,12 @@ Bereich. Vorbild in Aufbau, Arbeitsweise und Design ist die Integration
 - Sicherheitsrelevantes (Tokens, Keys) nie im Panel anzeigen.
 - Andere Integrationen nie ohne ausdrücklichen Knopfdruck des Nutzers ändern.
 
+## Regel: Ebenen einer Einstellung
+
+- Eine Einstellung, die sich mehr als global ändern lässt, bekommt immer alle vier Ebenen zugleich: global, pro Integration, pro Label, pro Gerät (Wirksam: Gerät > Label > Integration > global).
+  Dazu gehören jeweils Anzeige mit Herkunft, Zurücksetzen, Übersicht der eigenen Werte, Sicherung und Wiederherstellung, Einrichtungsassistent (Label-Seite), Simulator und Tests.
+  Vorbild: "Erst melden nach" (`notify_delay`). Nie nur eine oder zwei Ebenen bauen und die anderen später nachreichen.
+
 ## Design-Regel: Auswahlknöpfe
 
 - Jede Auswahl in Reiter- oder Segmentform (Reiter, Bedingung, Dauer, Wiederholung, Zustand, Verbindungsart …) ist eine
