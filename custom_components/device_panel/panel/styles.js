@@ -66,7 +66,7 @@ button { font: inherit; color: inherit; }
    Fehlt der Platz (viele Favoriten), gibt die Gruppe nach: das Suchfeld wird schmaler. */
 .tb-main { display: contents; }
 @media (min-width: 1101px) {
-  .tb-main { display: flex; align-items: center; gap: 12px; flex: 0 1 calc(var(--hero-c1) + 12px + var(--hero-c2)); min-width: 0; }
+  .tb-main { display: flex; align-items: center; gap: 12px; flex: 0 1 calc((min(100%, 2 * var(--hero-c1) + 2 * var(--hero-c2) + 36px) - 36px) / 2 + 12px); min-width: 0; }
   .tb-main + .view-btn { margin-left: auto; }
 }
 .searchbox { flex: 1; display: flex; align-items: center; gap: 10px; height: 42px; padding: 0 14px; border-radius: 14px;
@@ -132,11 +132,15 @@ button { font: inherit; color: inherit; }
 
 /* Kopf */
 /* Breite der ersten zwei Kacheln (Verfügbarkeit, Gerade ausgefallen): auch das Suchfeld endet dort (seit 2.36.0, siehe .tb-main) */
-:host { --hero-c1: 300px; --hero-c2: 380px; --hero-pulse-max: 720px; }
+:host { --hero-c1: 340px; --hero-c2: 340px; }
 /* Kopf, Chips und Fuss bleiben beim seitlichen Verschieben der breiten Tabelle stehen (iPad): nur die Tabelle wandert */
 .hero { display: grid; grid-template-columns: minmax(260px, var(--hero-c1)) minmax(300px, var(--hero-c2)) minmax(280px, 1fr); gap: 12px; position: sticky; left: 0; }
-/* Puls-Kachel höchstens so breit (seit 2.180.0); die Spalte bleibt, der Platz rechts davon bleibt frei */
-@media (min-width: 1101px) { .hero .kt.pul { max-width: var(--hero-pulse-max); } }
+/* Auf dem Desktop (seit 2.181.4): vier gleiche Spalten; Verfügbarkeit und "Gerade ausgefallen" je eine, der Ausfall-Puls zwei (so breit wie beide Kacheln samt Abstand).
+   Höchstbreite wie bisher beim Puls (seit 2.180.0): der Platz rechts davon bleibt frei */
+@media (min-width: 1101px) {
+  .hero { grid-template-columns: repeat(4, minmax(0, 1fr)); max-width: calc(2 * var(--hero-c1) + 2 * var(--hero-c2) + 36px); }
+  .hero .kt.pul { grid-column: 3 / span 2; }
+}
 .kt { background: var(--dp-card); border-radius: 20px; padding: 16px 18px; border: 1px solid var(--dp-divider); position: relative; overflow: hidden; min-width: 0; }
 .kt .k { font-size: 12px; letter-spacing: .04em; text-transform: uppercase; color: var(--dp-text2); font-weight: 500; display: flex; align-items: center; gap: 8px; }
 .kt.ring { display: grid; grid-template-columns: 108px minmax(0, 1fr); gap: 16px; align-items: center; }

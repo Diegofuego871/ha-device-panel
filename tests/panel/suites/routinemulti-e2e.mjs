@@ -96,6 +96,11 @@ for (const lang of ["de", "en"]) {
     await ev(`r.host._openDevice("d", "routine")`);
     check(`[${tag}] Auch das Gerät "d" zeigt sie (ein Eintrag, nicht doppelt)`, await wait(`return r.querySelectorAll(".rt-root .rt-rowcard, .rt-root .rt-clock").length === 1`));
 
+    // Übersicht "Alle Routinen": zugeklappt steht bei genau einer Mehrgeräte-Routine ihr Name im Kopf, nicht der des Geräts
+    await ev(`r.host._closeRtAll?.(); r.host._openRtAll()`);
+    await wait(`return r.querySelectorAll(".mg-dcard").length >= 2`);
+    check(`[${tag}] Übersicht zugeklappt: Kopf zeigt den Namen der Routine und "${lang === "de" ? "Schaltet 3 Geräte" : "Switches 3 devices"}", nicht den Gerätenamen`, await ev(`const heads = [...r.querySelectorAll(".mg-dcard.closed .mg-dhead")]; const h = heads.find((x) => /Lampe Küche \\+2/.test(x.querySelector("b").textContent)); return !!h && /${lang === "de" ? "Schaltet 3 Geräte" : "Switches 3 devices"}/.test(h.textContent)`));
+    await ev(`r.host._closeRtAll?.()`);
     // Bearbeiten: ein Ziel entfernen, nur noch zwei
     await ev(`const c = r.querySelector(".rt-root .rt-rowcard"); if (c) c.querySelector(".mg-dhead").click()`);
     await wait(`return !!r.querySelector(".rt-root .rt-clock [data-rt='edit']")`);

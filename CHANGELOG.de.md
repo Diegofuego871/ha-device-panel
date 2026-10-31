@@ -7,6 +7,15 @@ Alle nennenswerten Änderungen an dieser Integration stehen in dieser Datei.
 Das Format folgt [Keep a Changelog](https://keepachangelog.com/de/1.1.0/),
 die Versionsnummern folgen [Semantic Versioning](https://semver.org/lang/de/).
 
+## [2.181.4] - 2026-10-31
+
+Die drei Kacheln oben sind auf dem Desktop gleichmässig verteilt; eine zugeklappte Routinen-Karte zeigt den Namen der Routine.
+
+### Geändert
+
+- **Kopf auf dem Desktop:** "Verfügbarkeit" und "Gerade ausgefallen" sind jetzt gleich breit, und der Ausfall-Puls ist genau so breit wie beide zusammen samt dem Abstand dazwischen (vier gleiche Spalten, der Puls nimmt zwei). Auf grossen Bildschirmen ist das Raster weiterhin höchstens 1396 px breit, der freie Platz rechts bleibt frei. Das Suchfeld endet weiter mit der zweiten Kachel. Bis 1100 px und auf dem Handy ändert sich nichts.
+- **Routinen-Übersicht, zugeklappt:** Hat ein Gerät genau eine Routine und schaltet sie mehrere Geräte, zeigt die Karte den Namen der Routine ("Schaltet 3 Geräte" darunter) statt den Namen des ersten Geräts. Aufgeklappt trägt die Karte weiter den Gerätenamen.
+
 ## [2.181.3] - 2026-10-30
 
 "+ Gerät hinzufügen" bleibt erreichbar, wenn alle Karten zu sind.
@@ -5480,6 +5489,7 @@ Erste Vorabversion.
   GitHub Actions für die Prüfungen von HACS und hassfest sowie die Tests.
 
 [2.6.0]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v2.6.0
+[2.181.4]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v2.181.4
 [2.181.3]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v2.181.3
 [2.181.2]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v2.181.2
 [2.181.1]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v2.181.1

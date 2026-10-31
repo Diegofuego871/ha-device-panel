@@ -872,13 +872,18 @@ export class RoutineUi {
       const sub = open
         ? [g.holder ? "" : [g.dev?.area, g.dev?.integration?.name].filter(Boolean).map(esc).join(" · "), g.holder ? "" : `<span class="mg-dopen" data-rta-open data-device="${esc(g.id)}" role="link">${esc(t("rtAllOpenDevice"))} ›</span>`].filter(Boolean).join(" · ")
         : `${esc(t("rtSumRoutines", g.shown.length))}${offN ? ` · ${esc(t("rtSumOff", offN))}` : ""}${nextRt ? ` · <span class="mg-on">${esc(t("rtSumNext", this.localText(nextRt.due_local)))}</span>` : ""}`;
-      const sum = sub ? `<small class="${open ? "" : "mg-dsum"}">${sub}</small>` : "";
+      // Zugeklappt mit genau einer Routine für mehrere Geräte (seit 2.181.4): der Name der Routine steht im Kopf, nicht der des (ersten) Geräts
+      const multi = !open && g.shown.length === 1 && (g.shown[0].targets || []).length > 1 ? g.shown[0] : null;
+      const sumText = multi
+        ? `${esc(t("rtTgSwitches", multi.targets.length))}${offN ? ` · ${esc(t("rtSumOff", offN))}` : ""}${nextRt ? ` · <span class="mg-on">${esc(t("rtSumNext", this.localText(nextRt.due_local)))}</span>` : ""}`
+        : sub;
+      const sum = sumText ? `<small class="${open ? "" : "mg-dsum"}">${sumText}</small>` : "";
       // Zugeklappt (seit 2.171.0): bei genau einer Routine sitzt ihr Schalter im Kopf statt der Zahl, bei mehreren folgt je Routine eine schlanke Zeile mit Schalter
       const one = !open && g.shown.length === 1 ? g.shown[0] : null;
       const lead = one ? `<span class="mg-dslot" aria-hidden="true"></span>` : open ? `<span class="mg-badge">${g.shown.length}</span>` : "";
       html += `<div class="mg-dcard${open ? "" : " closed"}"><div class="mg-dwrap"><button type="button" class="mg-dhead" ${this.a(all, "routine-fold-dev")} data-device="${esc(g.id)}" aria-expanded="${open}">
         <span class="mg-devic" aria-hidden="true">${g.holder ? g.holder.emoji : this.h.typeIcon(g.dev?.type || "other", 18)}</span>
-        <span class="mg-t"><b>${esc(g.name)}</b>${sum}</span>${lead}${this.chevHtml(open)}</button>${one ? `<span class="mg-dsw">${this.switchHtml(one, all)}</span>` : ""}</div>`;
+        <span class="mg-t"><b>${esc(multi ? multi.name : g.name)}</b>${sum}</span>${lead}${this.chevHtml(open)}</button>${one ? `<span class="mg-dsw">${this.switchHtml(one, all)}</span>` : ""}</div>`;
       if (open) html += g.shown.map((x) => this.overviewCardHtml(x, all, g.id)).join("");
       else if (g.shown.length > 1) html += g.shown.map((x) => this.lineHtml(x, all)).join("");
       html += `</div>`;

@@ -1,5 +1,6 @@
-// Puls-Kachel (2.180.0): auf grossen Bildschirmen höchstens 720 px breit (der Platz rechts bleibt frei), damit der Messpunkt nicht über
-// 1400 px rast; auf kleineren Bildschirmen und auf dem Handy unverändert. Deutsch und Englisch.
+// Kopf auf dem Desktop (2.181.4): Verfügbarkeit und "Gerade ausgefallen" gleich breit, der Ausfall-Puls so breit wie beide zusammen mit dem
+// Abstand; das Raster ist höchstens 1396 px breit (der Platz rechts bleibt frei, seit 2.180.0), damit der Messpunkt nicht über 1400 px rast;
+// bis 1100 px und am Handy unverändert. Deutsch und Englisch.
 import { chromium } from "playwright-core";
 import { launchOptions } from "../lib.mjs";
 
@@ -18,10 +19,12 @@ for (const lang of ["de", "en"]) {
     await p.goto(`http://127.0.0.1:8950/ha-sim.html?lang=${lang}&theme=dark`);
     const f = await (await p.waitForSelector("#panel-frame")).contentFrame();
     await f.waitForFunction(new Function(`return ${R}?.querySelectorAll(".dev").length > 1`), null, { timeout: 15000 });
-    const m = await f.evaluate(new Function(`const r=${R}; const hero = r.querySelector(".hero"); const pul = r.querySelector(".hero .kt.pul"); const hb = hero.getBoundingClientRect(); const pb = pul.getBoundingClientRect(); return { hero: Math.round(hb.width), pul: Math.round(pb.width), left: Math.round(pb.left - hb.left) }`));
-    if (w >= 1600) check(`[${tag}] Puls-Kachel höchstens 720 px (Raster ${m.hero} px breit)`, m.pul <= 720 && m.pul >= 600 && m.hero > 1400, JSON.stringify(m));
-    else if (!mobile) check(`[${tag}] bis 1100 px unverändert: Kachel füllt die Zeile`, m.pul >= m.hero - 4, JSON.stringify(m));
-    else check(`[${tag}] Handy unverändert: Kachel füllt die Zeile`, m.pul >= m.hero - 4, JSON.stringify(m));
+    const m = await f.evaluate(new Function(`const r=${R}; const q = (s) => Math.round(r.querySelector(s).getBoundingClientRect().width * 10) / 10; return { hero: q(".hero"), c1: q(".hero > :nth-child(1)"), c2: q(".hero > :nth-child(2)"), pul: q(".hero .kt.pul") };`));
+    if (!mobile && w >= 1101) {
+      check(`[${tag}] Verfügbarkeit und "Gerade ausgefallen" gleich breit (${m.c1} und ${m.c2} px)`, Math.abs(m.c1 - m.c2) <= 1, JSON.stringify(m));
+      check(`[${tag}] Ausfall-Puls so breit wie beide Kacheln samt Abstand (${m.pul} px)`, Math.abs(m.pul - (m.c1 + m.c2 + 12)) <= 1.5, JSON.stringify(m));
+      if (w >= 1600) check(`[${tag}] grosser Bildschirm: Raster höchstens ${1396} px, der Platz rechts bleibt frei`, m.hero <= 1397 && m.hero > 1300, JSON.stringify(m));
+    } else check(`[${tag}] bis 1100 px und am Handy unverändert: Puls füllt die Zeile`, m.pul >= m.hero - 4, JSON.stringify(m));
     check(`[${tag}] keine Skriptfehler`, errors.length === 0, errors.join(";"));
     await ctx.close();
   }

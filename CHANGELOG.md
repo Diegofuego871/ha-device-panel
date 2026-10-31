@@ -7,6 +7,15 @@ All notable changes to this integration are documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/).
 
+## [2.181.4] - 2026-10-31
+
+The three tiles at the top are laid out evenly on the desktop; a collapsed routine card shows the routine's name.
+
+### Changed
+
+- **Header on the desktop:** "Availability" and "Currently failed" are now equally wide, and the outage pulse is exactly as wide as both together including the gap between them (four equal columns, the pulse takes two). The grid is still at most 1396 px wide on large screens, the free space on the right stays free. The search field still ends with the second tile. Up to 1100 px and on the phone nothing changes.
+- **Routines overview, collapsed:** if a device has exactly one routine and it switches several devices, the card shows the name of the routine ("Switches 3 devices" below it) instead of the name of the first device. Expanded, the card still carries the device name.
+
 ## [2.181.3] - 2026-10-30
 
 "+ Add device" stays reachable when all cards are closed.
@@ -5379,6 +5388,7 @@ First pre-release.
   GitHub Actions for HACS/hassfest validation and tests.
 
 [2.6.0]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v2.6.0
+[2.181.4]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v2.181.4
 [2.181.3]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v2.181.3
 [2.181.2]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v2.181.2
 [2.181.1]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v2.181.1
