@@ -9,18 +9,21 @@ and this project adheres to [Semantic Versioning](https://semver.org/).
 
 ## [2.186.0] - 2026-11-01
 
-The backup alert now also catches a backup that hangs, and the longest duration can be set.
+The backup alert now also catches a backup that hangs, tells you when it works again, and the longest duration can be set.
 
 Includes the changes from 2.185.0.
 
 ### Added
 
-- **"Longest duration" (Status app, Settings, under "Alert when a backup fails"):** an automatic backup that runs longer than this (default 3 hours, 10 minutes to 24 hours; an upload to a cloud storage can take long) counts as not finished and is reported ("The Home Assistant backup did not finish after 3 h"). Raise it for large installations or a slow upload.
+- **"Longest duration" (Status app, Settings, under "Alert when a backup fails"):** a backup that runs longer than this (default 3 hours, 10 minutes to 24 hours; an upload to a cloud storage can take long) counts as not finished and is reported ("The Home Assistant backup did not finish after 3 h"). Raise it for large installations or a slow upload.
 - **Watch over the public sensors of the Backup integration:** the panel now also watches `sensor.backup_backup_manager_state` and the sensors for the last automatic attempt and the last successful automatic backup (found through the entity registry, so renaming them is harmless). If an automatic backup ends without being recorded as successful, or runs over the longest duration, the same alert is sent. This also works if Home Assistant changes the internal events the alert was based on.
+
+- **Message when the backup works again:** after a failure or a "did not finish" alert, the next successful backup sends a second message ("Backup succeeded", with the time since the failure). It replaces the first one on the phone (same notification tag). It also covers a backup you restart by hand. If the failure alert is still waiting for its time of day when the backup succeeds, the alert is dropped.
+- **Suggestion when the longest duration was too tight:** if the same backup that was reported as "did not finish" is finished after all, the message says so ("Backup finished after all, after 1 h 30 min") and suggests a longer duration (one and a half times the time it took, in half hours, at most 24 hours). Tapping it opens the settings of the status app.
 
 ### Changed
 
-- **Only automatic backups are reported.** A backup you start by hand is no longer reported (neither a failure nor a long run): you see its result yourself. Before, a failed manual backup was reported too.
+- The watch judges "ended without a recorded success" only for automatic backups: the sensor for the last success only follows these, so a backup you start by hand would always look like a failure. The longest duration and the failure event apply to every backup, manual ones too.
 - An event and the watch report one run only once (same notification tag).
 
 ## [2.185.0] - 2026-11-01

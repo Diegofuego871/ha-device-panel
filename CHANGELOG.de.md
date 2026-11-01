@@ -9,18 +9,21 @@ die Versionsnummern folgen [Semantic Versioning](https://semver.org/lang/de/).
 
 ## [2.186.0] - 2026-11-01
 
-Die Backup-Meldung fängt jetzt auch ein hängendes Backup ab, und die längste Dauer lässt sich einstellen.
+Die Backup-Meldung fängt jetzt auch ein hängendes Backup ab, meldet, wenn es wieder klappt, und die längste Dauer lässt sich einstellen.
 
 Enthält die Änderungen von 2.185.0.
 
 ### Hinzugefügt
 
-- **"Längste Dauer" (Status-App, Einstellungen, unter "Meldung bei Backup-Fehler"):** Ein automatisches Backup, das länger läuft (Standard 3 Stunden, 10 Minuten bis 24 Stunden; ein Upload in einen Cloud-Speicher kann lange dauern), gilt als nicht fertig geworden und wird gemeldet ("Das Backup von Home Assistant ist nach 3 Std. nicht fertig geworden"). Bei grossen Installationen oder langsamem Upload erhöhen.
+- **"Längste Dauer" (Status-App, Einstellungen, unter "Meldung bei Backup-Fehler"):** Ein Backup, das länger läuft (Standard 3 Stunden, 10 Minuten bis 24 Stunden; ein Upload in einen Cloud-Speicher kann lange dauern), gilt als nicht fertig geworden und wird gemeldet ("Das Backup von Home Assistant ist nach 3 Std. nicht fertig geworden"). Bei grossen Installationen oder langsamem Upload erhöhen.
 - **Wächter über die öffentlichen Sensoren der Backup-Integration:** Das Panel beobachtet jetzt auch `sensor.backup_backup_manager_state` und die Sensoren für den letzten automatischen Versuch und das letzte erfolgreiche automatische Backup (gefunden über die Entitätsverwaltung, Umbenennen schadet nicht). Endet ein automatisches Backup ohne vermerkten Erfolg oder läuft es über die längste Dauer, geht dieselbe Meldung hinaus. Das funktioniert auch, wenn Home Assistant die internen Ereignisse ändert, auf denen die Meldung bisher beruhte.
+
+- **Meldung, wenn das Backup wieder klappt:** Nach einer Fehlermeldung oder einem "nicht fertig geworden" schickt das nächste gelungene Backup eine zweite Meldung ("Backup gelungen", mit der Zeit seit dem Fehler). Sie ersetzt die erste auf dem Telefon (gleicher Tag der Meldung). Sie gilt auch für ein von Hand neu gestartetes Backup. Wartet die Fehlermeldung noch auf ihre Uhrzeit, wenn das Backup gelingt, entfällt sie.
+- **Vorschlag, wenn die längste Dauer zu knapp war:** Wird dasselbe Backup, das als "nicht fertig geworden" gemeldet wurde, doch noch fertig, sagt die Meldung es ("Backup doch noch fertig, nach 1 Std. 30 Min.") und schlägt eine längere Dauer vor (das Eineinhalbfache der gebrauchten Zeit, in halben Stunden, höchstens 24 Stunden). Ein Tipp darauf öffnet die Einstellungen der Status-App.
 
 ### Geändert
 
-- **Gemeldet werden nur automatische Backups.** Ein von Hand gestartetes Backup wird nicht mehr gemeldet (weder ein Fehler noch ein langer Lauf): Das Ergebnis siehst du selbst. Bisher wurde auch ein fehlgeschlagenes Handbackup gemeldet.
+- Der Wächter urteilt "ohne vermerkten Erfolg beendet" nur bei automatischen Backups: Der Sensor für den letzten Erfolg führt nur diese nach, ein von Hand gestartetes Backup sähe sonst immer wie ein Fehler aus. Die längste Dauer und das Ereignis "fehlgeschlagen" gelten für jedes Backup, auch für ein manuelles.
 - Ereignis und Wächter melden einen Lauf nur einmal (gleicher Tag der Meldung).
 
 ## [2.185.0] - 2026-11-01

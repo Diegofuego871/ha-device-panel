@@ -216,16 +216,19 @@ async def test_watch_is_quiet_after_a_successful_run(hass: HomeAssistant, freeze
     assert handy == []
 
 
-async def test_watch_ignores_a_manual_run(hass: HomeAssistant, freezer: Any) -> None:
+async def test_watch_judges_a_manual_run_only_by_the_limit(hass: HomeAssistant, freezer: Any) -> None:
+    """Ein Handbackup hat nie "letzter Erfolg" (der Sensor führt nur automatische nach): das Urteil nach dem Lauf entfällt, das Zeitlimit gilt."""
     handy = async_mock_service(hass, "notify", "handy")
     await _setup(hass, status_backup_minutes=10)
     ids = _sensors(hass)
     await _start_run(hass, ids, automatic=False)
-    await _fire(hass, freezer, 11 * 60)  # über das Limit hinaus: von Hand gestartet, keine Meldung
     hass.states.async_set(ids["state"], "idle")
     await hass.async_block_till_done()
     await _fire(hass, freezer, 31)
-    assert handy == []
+    assert handy == []  # beendet ohne vermerkten Erfolg: bei einem Handbackup kein Urteil
+    await _start_run(hass, ids, automatic=False)
+    await _fire(hass, freezer, 11 * 60)
+    assert len(handy) == 1 and "nicht fertig" in handy[0].data["message"]
 
 
 async def test_watch_reports_a_run_over_the_limit_once(hass: HomeAssistant, freezer: Any) -> None:
@@ -256,14 +259,105 @@ async def test_event_and_watch_report_one_run_once(hass: HomeAssistant, freezer:
     assert len(handy) == 1
 
 
-async def test_failed_event_of_a_manual_run_is_not_reported(hass: HomeAssistant) -> None:
+async def test_failed_event_of_a_manual_run_is_reported(hass: HomeAssistant) -> None:
     handy = async_mock_service(hass, "notify", "handy")
     alert = await _setup(hass)
     ids = _sensors(hass)
     await _start_run(hass, ids, automatic=False)
     alert._on_event(_Event())
     await hass.async_block_till_done()
+    assert len(handy) == 1
+
+
+@dataclass
+class _Done:
+    manager_state: str = "create_backup"
+    state: str = "completed"
+
+
+async def test_success_after_a_reported_failure_sends_a_second_message(hass: HomeAssistant, freezer: Any) -> None:
+    handy = async_mock_service(hass, "notify", "handy")
+    alert = await _setup(hass)
+    alert._on_event(_Event())
+    await hass.async_block_till_done()
+    assert len(handy) == 1 and alert._open is not None
+    # normaler Erfolg ohne vorherigen Fehler: nichts
+    freezer.move_to(dt_util.utcnow() + timedelta(hours=2))
+    alert._on_event(_Done())
+    await hass.async_block_till_done()
+    assert len(handy) == 2 and handy[1].data["title"] == "✅ Backup gelungen" and "2 Std." in handy[1].data["message"]
+    assert handy[1].data["data"]["tag"] == handy[0].data["data"]["tag"] and alert._open is None
+    alert._on_event(_Done())
+    await hass.async_block_till_done()
+    assert len(handy) == 2
+
+
+async def test_success_without_a_failure_sends_nothing(hass: HomeAssistant) -> None:
+    handy = async_mock_service(hass, "notify", "handy")
+    alert = await _setup(hass)
+    alert._on_event(_Done())
+    await hass.async_block_till_done()
     assert handy == []
+
+
+class _Backup:
+    """Nur die Backup-Meldungen einer Liste von Dienstaufrufen (die Uhr springt, die Status-Wache meldet dann eigene Dinge)."""
+
+    def __init__(self, calls: list[Any]) -> None:
+        self._calls = calls
+
+    def _mine(self) -> list[Any]:
+        return [c for c in self._calls if "Backup" in c.data["title"]]
+
+    def __len__(self) -> int:
+        return len(self._mine())
+
+    def __getitem__(self, index: int) -> Any:
+        return self._mine()[index]
+
+
+async def test_late_finish_after_a_hang_suggests_a_longer_limit(hass: HomeAssistant, freezer: Any) -> None:
+    sent = async_mock_service(hass, "notify", "handy")
+    handy = _Backup(sent)  # die Status-Wache meldet beim Vorstellen der Uhr eigene Dinge: nur Backup-Meldungen zählen
+    alert = await _setup(hass, status_backup_minutes=60)
+    ids = _sensors(hass)
+    await _start_run(hass, ids, automatic=True)
+    await _fire(hass, freezer, 61 * 60)
+    assert len(handy) == 1 and "nicht fertig" in handy[0].data["message"]
+    await _fire(hass, freezer, 29 * 60)  # nach 90 Minuten fertig
+    alert._on_event(_Done())
+    await hass.async_block_till_done()
+    assert len(handy) == 2
+    late = handy[1].data
+    assert late["title"] == "✅ Backup doch noch fertig" and "1 Std. 30 Min." in late["message"] and "(1 Std. 0 Min.)" in late["message"] and "2 Std. 30 Min." in late["message"]
+    assert late["data"]["url"] == "/device-panel?app=status&tab=settings"
+    # der Zustandswechsel danach meldet nichts mehr
+    hass.states.async_set(ids["state"], "idle")
+    await hass.async_block_till_done()
+    await _fire(hass, freezer, 31)
+    assert len(handy) == 2
+
+
+async def test_success_before_the_release_time_drops_the_failure(hass: HomeAssistant, freezer: Any) -> None:
+    handy = async_mock_service(hass, "notify", "handy")
+    freezer.move_to(dt_util.now().replace(hour=3, minute=0, second=0, microsecond=0))
+    alert = await _setup(hass, status_backup_time="09:00")
+    alert._on_event(_Event())
+    await hass.async_block_till_done()
+    assert alert._pending is not None
+    alert._on_event(_Done())
+    await hass.async_block_till_done()
+    assert alert._pending is None
+    freezer.move_to(dt_util.now().replace(hour=9, minute=1))
+    async_fire_time_changed(hass)
+    await hass.async_block_till_done()
+    assert handy == []
+
+
+def test_suggest_minutes() -> None:
+    assert backup_alert.suggest_minutes(90 * 60) == 150  # 135 Min. -> auf 30 aufgerundet
+    assert backup_alert.suggest_minutes(4 * 3600) == 360
+    assert backup_alert.suggest_minutes(20 * 3600) == 1440  # höchstens 24 Stunden
 
 
 async def test_backup_minutes_option_range(hass: HomeAssistant) -> None:

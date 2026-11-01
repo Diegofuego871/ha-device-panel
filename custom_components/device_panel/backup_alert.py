@@ -4,6 +4,10 @@ geht eine Push-Meldung an das Ziel der Status-App. Mit einer Uhrzeit ("einmal t�
 
 Ein zurückgehaltener Fehler liegt in einer eigenen Datei, damit ein Neustart von Home Assistant ihn nicht verliert. Die Meldung läuft als Art "status"
 durch push.async_push, die Ruhezeit gilt für sie also wie für die übrigen Status-Meldungen. Gemeldet wird nur ein Fehler, nicht ein Backup, das nie lief.
+
+Erfolgsmeldung: Gelingt ein Backup, nachdem ein Fehler oder ein "nicht fertig geworden" gemeldet wurde, folgt eine zweite Meldung (gleicher Tag, sie ersetzt die
+erste). War es dasselbe Backup, das über die längste Dauer hinaus lief und doch fertig wurde, schlägt sie vor, die längste Dauer zu erhöhen.
+Wartet der Fehler noch auf seine Uhrzeit und das Backup gelingt vorher, entfällt er (nur ein "doch noch fertig" bleibt, wegen des Vorschlags).
 """
 
 from __future__ import annotations
@@ -44,29 +48,47 @@ def release_at(clock: str, failed: datetime) -> datetime | None:
     return due if failed < due else due + timedelta(days=1)
 
 
+def is_success(event: Any) -> bool:
+    """Ein gelungener Lauf beim Erstellen eines Backups."""
+    return getattr(event, "manager_state", None) == "create_backup" and getattr(event, "state", None) == "completed"
+
+
+def suggest_minutes(seconds: float) -> int:
+    """Vorschlag für die längste Dauer: das Eineinhalbfache der gebrauchten Zeit, auf halbe Stunden aufgerundet (höchstens 24 Stunden)."""
+    return min(1440, max(10, -(-int(seconds * 1.5) // 1800) * 30))
+
+
 def is_failure(event: Any) -> bool:
     """Ein fehlgeschlagener Lauf beim Erstellen eines Backups (Ereignis der Backup-Integration; Aufbau geprüft, keine Importe nötig)."""
     return getattr(event, "manager_state", None) == "create_backup" and getattr(event, "state", None) == "failed"
+
+
 
 
 class BackupAlert:
     def __init__(self, hass: HomeAssistant) -> None:
         self.hass = hass
         self._store: Store = Store(hass, STORAGE_VERSION, STORE_KEY)
-        self._pending: float | None = None  # Zeitpunkt des Fehlers, solange die Meldung noch wartet
-        self._hang = False  # die wartende Meldung ist "nicht fertig geworden" (nicht "fehlgeschlagen")
+        # Wartende Meldung: {"ts": Zeitpunkt, "kind": "failed" | "hang" | "ok" | "late", "secs": Dauer für ok/late}
+        self._pending: dict[str, Any] | None = None
+        self._open: float | None = None  # Zeitpunkt der zuletzt gesendeten Fehlermeldung, solange kein Backup danach gelang
         self._ids: dict[str, str] = {}  # gefundene Sensoren
         self._run: dict[str, Any] | None = None  # laufendes Backup: Start, Zeitlimit, schon gemeldet
-        self._unsub_state: CALLBACK_TYPE | None = None
         self._unsub_events: CALLBACK_TYPE | None = None
         self._unsub_loaded: CALLBACK_TYPE | None = None
         self._unsub_timer: CALLBACK_TYPE | None = None
+        self._unsub_state: CALLBACK_TYPE | None = None
 
     async def async_start(self) -> None:
         data = await self._store.async_load()
-        if isinstance(data, dict) and isinstance(data.get("pending"), (int, float)):
-            self._pending = float(data["pending"])
-            self._hang = bool(data.get("hang"))
+        if isinstance(data, dict):
+            pending = data.get("pending")
+            if isinstance(pending, dict) and pending.get("kind") in ("failed", "hang", "ok", "late") and isinstance(pending.get("ts"), (int, float)):
+                self._pending = {"ts": float(pending["ts"]), "kind": pending["kind"], "secs": float(pending.get("secs") or 0)}
+            elif isinstance(pending, (int, float)):  # 2.185.0: nur der Zeitpunkt (und "hang")
+                self._pending = {"ts": float(pending), "kind": "hang" if data.get("hang") else "failed", "secs": 0.0}
+            if isinstance(data.get("open"), (int, float)):
+                self._open = float(data["open"])
         self._unsub_state = self.hass.bus.async_listen(EVENT_STATE_CHANGED, self._on_state, event_filter=self._state_filter)
         if not self._subscribe():
             # Die Backup-Integration kann nach uns starten: auf ihr Laden warten
@@ -101,17 +123,16 @@ class BackupAlert:
             return False
         return True
 
+    # --- Ereignisse der Backup-Verwaltung -----------------------------------------
+
     @callback
     def _on_event(self, event: Any) -> None:
-        if not is_failure(event):
-            return
-        # Ein von Hand gestartetes Backup meldet das Ereignis nicht (der Nutzer sieht den Fehler selbst); ohne die Sensoren gilt jeder Fehler
-        if self._run is not None and self._automatic(self._run["start"]) is False:
-            self._run["reported"] = True
-            return
-        if self._run is not None:
-            self._run["reported"] = True
-        self.on_failure(dt_util.now())
+        if is_failure(event):
+            if self._run is not None:
+                self._run["reported"] = True
+            self._queue("failed", dt_util.now())
+        elif is_success(event):
+            self._succeeded_run()
 
     # --- Wächter über die Sensoren ------------------------------------------------
 
@@ -165,7 +186,7 @@ class BackupAlert:
     def _run_started(self) -> None:
         self._cancel_run()
         minutes = effective(self.hass)[CONF_STATUS_BACKUP_MINUTES]
-        self._run = {"start": time.time(), "reported": False, "timeout": async_call_later(self.hass, minutes * 60, self._on_timeout), "judge": None}
+        self._run = {"start": time.time(), "reported": False, "hang": False, "done": False, "timeout": async_call_later(self.hass, minutes * 60, self._on_timeout), "judge": None}
 
     @callback
     def _on_timeout(self, _now: Any) -> None:
@@ -173,10 +194,11 @@ class BackupAlert:
         if run is None:
             return
         run["timeout"] = None
-        if run["reported"] or self._automatic(run["start"]) is False:
+        if run["reported"]:
             return
         run["reported"] = True
-        self.on_failure(dt_util.now(), hang=True)
+        run["hang"] = True
+        self._queue("hang", dt_util.now())
 
     def _run_ended(self) -> None:
         run = self._run
@@ -185,33 +207,64 @@ class BackupAlert:
         if run["timeout"] is not None:
             run["timeout"]()
             run["timeout"] = None
-        if run["reported"]:
+        if run["done"]:
             self._run = None
             return
         run["judge"] = async_call_later(self.hass, JUDGE_DELAY_S, self._on_judge)
 
     @callback
     def _on_judge(self, _now: Any) -> None:
-        run, self._run = self._run, None
-        if run is None or run["reported"] or self._automatic(run["start"]) is False or self._succeeded(run["start"]):
+        run = self._run
+        if run is None:
             return
-        self.on_failure(dt_util.now())
+        run["judge"] = None
+        if run["done"]:
+            self._run = None
+            return
+        automatic = self._automatic(run["start"])
+        if automatic is not False and self._succeeded(run["start"]):
+            self._succeeded_run()
+        elif automatic is not False and not run["reported"]:
+            run["reported"] = True
+            self._queue("failed", dt_util.now())
+        self._run = None
+
+    # --- Erfolg nach einem gemeldeten Fehler ---------------------------------------
+
+    def _succeeded_run(self) -> None:
+        """Ein Backup ist gelungen (Ereignis oder Sensor): eine gemeldete Störung ist vorbei."""
+        run = self._run
+        if run is not None:
+            if run["done"]:
+                return
+            run["done"] = True
+        hung = bool(run and run["hang"])
+        now = time.time()
+        if hung:
+            # Dasselbe Backup lief über die längste Dauer hinaus und wurde doch fertig: Vorschlag, sie zu erhöhen
+            self._queue("late", dt_util.now(), secs=now - run["start"])
+        elif self._pending is not None and self._pending["kind"] in ("failed", "hang"):
+            # Die Fehlermeldung wartet noch auf ihre Uhrzeit: sie ist überholt
+            self._pending = None
+            self._save()
+            self._schedule()
+        elif self._open is not None:
+            self._queue("ok", dt_util.now(), secs=now - self._open)
+
+    # --- Melden --------------------------------------------------------------------
 
     @callback
-    def on_failure(self, when: datetime, hang: bool = False) -> None:
+    def _queue(self, kind: str, when: datetime, secs: float = 0.0) -> None:
+        """Eine Meldung vormerken: sofort oder zur nächsten eingestellten Uhrzeit. Eine neuere ersetzt eine wartende."""
         opts = effective(self.hass)
         if not opts[CONF_STATUS_BACKUP_ALERT] or notify_target(opts, "status") == NOTIFY_NONE:
             return
-        if release_at(opts[CONF_STATUS_BACKUP_TIME], when) is None:
-            self.hass.async_create_task(self._async_send(when.timestamp(), hang))
-            return
-        self._pending = when.timestamp()
-        self._hang = hang
+        self._pending = {"ts": when.timestamp(), "kind": kind, "secs": secs}
         self._save()
         self._schedule()
 
     def _save(self) -> None:
-        self._store.async_delay_save(lambda: {"pending": self._pending, "hang": self._hang}, 0)
+        self._store.async_delay_save(lambda: {"pending": self._pending, "open": self._open}, 0)
 
     def _schedule(self) -> None:
         if self._unsub_timer is not None:
@@ -219,42 +272,62 @@ class BackupAlert:
             self._unsub_timer = None
         if self._pending is None:
             return
-        failed = dt_util.as_local(dt_util.utc_from_timestamp(self._pending))
+        failed = dt_util.as_local(dt_util.utc_from_timestamp(self._pending["ts"]))
         due = release_at(effective(self.hass)[CONF_STATUS_BACKUP_TIME], failed)
-        delay = 0.0 if due is None else max(0.0, (due - dt_util.now()).total_seconds())
-        self._unsub_timer = async_call_later(self.hass, delay, self._on_timer)
+        if due is None or due <= dt_util.now():
+            self.hass.async_create_task(self._on_timer(None))
+            return
+        self._unsub_timer = async_call_later(self.hass, (due - dt_util.now()).total_seconds(), self._on_timer)
 
     async def _on_timer(self, _now: Any) -> None:
         self._unsub_timer = None
         if self._pending is None:
             return
-        failed, self._pending = self._pending, None
+        pending, self._pending = self._pending, None
+        await self._async_send(pending)
         self._save()
-        await self._async_send(failed, self._hang)
 
     async def async_options_changed(self) -> None:
-        """Ausgeschaltet: Wartendes verwerfen; eine andere Uhrzeit gilt für das Wartende sofort."""
-        if self._pending is None:
-            return
+        """Ausgeschaltet: Wartendes und Offenes verwerfen; eine andere Uhrzeit gilt für das Wartende sofort."""
         if not effective(self.hass)[CONF_STATUS_BACKUP_ALERT]:
             self._pending = None
+            self._open = None
             self._save()
         self._schedule()
 
-    async def _async_send(self, failed_ts: float, hang: bool = False) -> None:
+    async def _async_send(self, pending: dict[str, Any]) -> None:
         opts = effective(self.hass)
         target = notify_target(opts, "status")
         if not opts[CONF_STATUS_BACKUP_ALERT] or target == NOTIFY_NONE:
             return
         hass = self.hass
-        failed = dt_util.as_local(dt_util.utc_from_timestamp(failed_ts))
+        kind = pending["kind"]
+        failed = dt_util.as_local(dt_util.utc_from_timestamp(pending["ts"]))
         same_day = failed.date() == dt_util.now().date()
         when = failed.strftime("%H:%M") if same_day else failed.strftime("%d.%m. %H:%M")
-        title = push.text(hass, "backup_failed_title")
-        if hang:
-            message = push.text(hass, "backup_hang_text", duration=push.duration(hass, opts[CONF_STATUS_BACKUP_MINUTES] * 60), when=when)
+        limit_s = opts[CONF_STATUS_BACKUP_MINUTES] * 60
+        url = CLICK_URL
+        if kind == "hang":
+            title = push.text(hass, "backup_failed_title")
+            message = push.text(hass, "backup_hang_text", duration=push.duration(hass, limit_s), when=when)
+        elif kind == "ok":
+            title = push.text(hass, "backup_ok_title")
+            message = push.text(hass, "backup_ok_text", since=push.duration(hass, pending["secs"]), when=when)
+        elif kind == "late":
+            title = push.text(hass, "backup_late_title")
+            message = push.text(
+                hass,
+                "backup_late_text",
+                duration=push.duration(hass, pending["secs"]),
+                limit=push.duration(hass, limit_s),
+                suggest=push.duration(hass, suggest_minutes(pending["secs"]) * 60),
+                when=when,
+            )
+            url = push.panel_url(app="status", tab="settings")  # der Vorschlag betrifft eine Einstellung dort
         else:
+            title = push.text(hass, "backup_failed_title")
             message = push.text(hass, "backup_failed_text", when=when)
-        # Ein Tag: ein neuer Fehler ersetzt die Meldung des vorigen
-        data = push.notification_data(hass, "device_panel_backup_failed", CLICK_URL)
+        # Ein Tag: die Erfolgsmeldung ersetzt die Fehlermeldung auf dem Telefon, ein neuer Fehler die vorige
+        data = push.notification_data(hass, "device_panel_backup_failed", url)
         await push.async_push(hass, target, title, message, data, topic="status")
+        self._open = pending["ts"] if kind in ("failed", "hang") else None
