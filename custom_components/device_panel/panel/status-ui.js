@@ -105,6 +105,13 @@ export class StatusUi {
         });
         return;
       }
+      const bk = ev.target.closest("[data-st-bk]");
+      if (bk) {
+        // "Sofort" = leere Uhrzeit; "Ab Uhrzeit" beginnt mit 07:00 (der Nutzer stellt sie dann ein)
+        this.setDraft("status_backup_time", bk.dataset.stBk === "time" ? String(this.val("status_backup_time") || "07:00") : "");
+        this.render(true);
+        return;
+      }
       const tab = ev.target.closest("[data-st-tab]");
       if (tab) {
         if (STATE_TABS.includes(tab.dataset.stTab) && tab.dataset.stTab !== this.ui.tab) {
@@ -190,6 +197,11 @@ export class StatusUi {
     dlg.addEventListener("change", (ev) => {
       const el = ev.target;
       if (el.matches("[data-st-notify]")) this.setDraft("status_notify", el.checked);
+      else if (el.matches("[data-st-bkon]")) this.setDraft("status_backup_alert", el.checked);
+      else if (el.matches("[data-st-bktime]")) {
+        // Leeres Feld (Uhrzeit gelöscht): der Wert bleibt, das Neuzeichnen setzt ihn zurück
+        if (el.value) this.setDraft("status_backup_time", el.value);
+      }
       else if (el.matches("[data-st-target]")) this.setDraft("notify_service_status", el.value);
       else if (el.matches("[data-st-alert]") && LOAD_KINDS.includes(el.dataset.stAlert)) this.setDraft(`status_${el.dataset.stAlert}_alert`, el.checked);
       else if (el.matches("[data-st-limit]") && LOAD_KINDS.includes(el.dataset.stLimit)) this.setDraft(`status_${el.dataset.stLimit}_limit`, el.value);
@@ -388,7 +400,7 @@ export class StatusUi {
     const body = this.dlg?.querySelector("[data-st-body]");
     if (!body) return;
     // Auswahl nicht zerstören, solange sie geöffnet ist (Neuzeichnen alle 10 Sekunden)
-    if (!force && this.host.shadowRoot.activeElement?.matches?.("[data-st-target], [data-st-pickq], [data-st-limit], [data-st-minutes]")) return;
+    if (!force && this.host.shadowRoot.activeElement?.matches?.("[data-st-target], [data-st-pickq], [data-st-limit], [data-st-minutes], [data-st-bktime]")) return;
     const scroll = body.closest(".dlg-body")?.scrollTop || 0;
     body.innerHTML = this.html();
     const sc = body.closest(".dlg-body");
@@ -432,7 +444,7 @@ export class StatusUi {
     const own = this.val("notify_service_status") || "";
     // Kein Ziel (weder eigenes noch globales): der Schalter ist an, aber es geht nichts raus. Das soll nicht still bleiben.
     const target = own || global;
-    const noTarget = (Boolean(this.val("status_notify")) || LOAD_KINDS.some((k) => this.val(`status_${k}_alert`))) && (!target || target === "none");
+    const noTarget = (Boolean(this.val("status_notify")) || Boolean(this.val("status_backup_alert")) || LOAD_KINDS.some((k) => this.val(`status_${k}_alert`))) && (!target || target === "none");
     const select = `<span class="opt-select"><select data-st-target aria-label="${escape(t("optNotifyTargetTab"))}">${options
       .map(([val, text]) => `<option value="${escape(val)}"${val === own ? " selected" : ""}>${escape(text)}</option>`)
       .join("")}</select>${this.h.mdi("chevronDown", 18)}</span>`;
@@ -445,6 +457,27 @@ export class StatusUi {
       <div class="opt"><div class="opt-line"><span class="opt-label">${escape(t("stNotify"))}</span>
         <label class="switch"><input type="checkbox" data-st-notify ${this.val("status_notify") ? "checked" : ""} aria-label="${escape(t("stNotify"))}"><span></span></label></div>
         <div class="opt-short">${escape(t("stNotifyShort"))}</div></div>`;
+  }
+
+  // Meldung bei Backup-Fehler (seit 2.185.0): Schalter, Zeitpunkt "Sofort" oder "Ab Uhrzeit"; derselbe Empfänger wie oben
+  backupHtml() {
+    const { escape } = this.h;
+    const t = (k, ...a) => this.t(k, ...a);
+    if (!this.cfg) return "";
+    const on = Boolean(this.val("status_backup_alert"));
+    const clock = String(this.val("status_backup_time") || "");
+    const when = on
+      ? `<div class="opt"><div class="opt-line"><span class="opt-label">${escape(t("stBkWhen"))}</span>
+          <div class="sub-tabs" role="tablist">${[["now", "stBkNow"], ["time", "stBkFrom"]]
+            .map(([id, k]) => `<button type="button" role="tab" class="sub-tab${(id === "time") === Boolean(clock) ? " on" : ""}" data-st-bk="${id}" aria-selected="${(id === "time") === Boolean(clock)}">${escape(t(k))}</button>`)
+            .join("")}</div></div>
+        ${clock ? `<div class="opt-line st-min"><span class="opt-label">${escape(t("stBkTime"))}</span><span class="opt-input"><input type="time" data-st-bktime value="${escape(clock)}" aria-label="${escape(t("stBkTime"))}"></span></div>
+        <div class="opt-short">${escape(t("stBkTimeShort"))}</div>` : ""}</div>`
+      : "";
+    return `<div class="set-title">${escape(t("stBkTitle"))}</div>
+      <div class="opt"><div class="opt-line"><span class="opt-label">${escape(t("stBkLabel"))}</span>
+        <label class="switch"><input type="checkbox" data-st-bkon ${on ? "checked" : ""} aria-label="${escape(t("stBkLabel"))}"><span></span></label></div>
+        <div class="opt-short">${escape(t("stBkShort"))}</div></div>${when}`;
   }
 
   // Meldung bei hoher Auslastung (seit 2.71.0): je Art Schalter und Grenze in Prozent; derselbe Empfänger wie oben
@@ -699,7 +732,7 @@ export class StatusUi {
     const { escape } = this.h;
     const source = this.sys ? this.sourceHtml() : `<div class="set-title">${escape(this.t("stSysSrcTitle"))}</div><p class="mg-note">${escape(this.sysError ? this.t("stSysError", this.sysError) : this.t("stSysLoading"))}</p>`;
     const err = this.ui.saveError ? `<div class="dlg-error" role="alert">${escape(this.t("settingsSaveError"))} ${escape(this.ui.saveError)}</div>` : "";
-    return `${this.configHtml()}${this.loadHtml()}${source}${err}`;
+    return `${this.configHtml()}${this.backupHtml()}${this.loadHtml()}${source}${err}`;
   }
 
   html() {

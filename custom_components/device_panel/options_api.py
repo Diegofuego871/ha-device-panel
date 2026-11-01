@@ -153,6 +153,8 @@ from .const import (
     CONF_SIGNAL_MB,
     CONF_ROUTINES_CATCH_UP,
     CONF_ROUTINES_NOTIFY_ERROR,
+    CONF_STATUS_BACKUP_ALERT,
+    CONF_STATUS_BACKUP_TIME,
     CONF_STATUS_CPU_ALERT,
     CONF_STATUS_CPU_ENTITY,
     CONF_STATUS_CPU_MINUTES,
@@ -219,6 +221,7 @@ BOOL_OPTIONS: tuple[tuple[str, bool], ...] = (
     (CONF_ROUTINES_PAUSE, False),
     (CONF_ROUTINES_NOTIFY_ERROR, True),
     (CONF_STATUS_NOTIFY, True),
+    (CONF_STATUS_BACKUP_ALERT, True),
     (CONF_STATUS_CPU_ALERT, True),
     (CONF_STATUS_RAM_ALERT, True),
     (CONF_STATUS_DISK_ALERT, True),
@@ -733,6 +736,7 @@ PANEL_SCHEMA = vol.Schema(
         vol.Optional(CONF_UPDATES_INTEGRATIONS_ON): _domains,
         vol.Optional(CONF_UPDATES_MODE): vol.In(UPDATES_MODES),
         vol.Optional(CONF_UPDATES_TIME): push_time,
+        vol.Optional(CONF_STATUS_BACKUP_TIME): vol.Any("", None, push_time),
         vol.Optional(CONF_UPDATE_CHECK_TIME): vol.Any("", None, push_time),
         vol.Optional(CONF_UPDATES_REPEAT): vol.In(tuple(UPDATES_REPEATS)),
         vol.Optional(CONF_HIDE_CHIPS): _chips,
@@ -925,6 +929,10 @@ def values_from(options: Mapping[str, Any]) -> dict[str, Any]:
         values[CONF_UPDATE_CHECK_TIME] = push_time(options.get(CONF_UPDATE_CHECK_TIME)) if options.get(CONF_UPDATE_CHECK_TIME) else ""
     except vol.Invalid:
         values[CONF_UPDATE_CHECK_TIME] = ""
+    try:
+        values[CONF_STATUS_BACKUP_TIME] = push_time(options.get(CONF_STATUS_BACKUP_TIME)) if options.get(CONF_STATUS_BACKUP_TIME) else ""
+    except vol.Invalid:
+        values[CONF_STATUS_BACKUP_TIME] = ""
     repeat = options.get(CONF_UPDATES_REPEAT)
     values[CONF_UPDATES_REPEAT] = repeat if repeat in UPDATES_REPEATS else "never"
     return values

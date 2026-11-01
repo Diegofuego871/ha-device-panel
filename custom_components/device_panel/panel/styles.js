@@ -2545,7 +2545,7 @@ dialog.wizard-dlg[open] { display: flex; flex-direction: column; }
 .accent-grid.changed .accent-sw.on { box-shadow: inset 0 0 0 1px var(--a), 0 0 0 3px color-mix(in srgb, var(--a) 25%, transparent); }
 .accent-sw.on { border-color: var(--a); box-shadow: inset 0 0 0 1px var(--a); font-weight: 600; }
 .accent-sw:focus-visible { outline: 2px solid var(--dp-primary); outline-offset: 2px; }
-.wz-h2b { margin-top: 26px; }
+.wz-h2b, .wz-h2m { margin-top: 26px; }
 .wz-vals { display: flex; flex-direction: column; gap: 4px; margin: 0 0 4px 46px; }
 .wz-msg:not(.on) .wz-vals { opacity: .55; }
 .wz-v { display: flex; align-items: center; gap: 8px; font-size: 14px; padding: 2px 0; }
@@ -2557,6 +2557,8 @@ dialog.wizard-dlg[open] { display: flex; flex-direction: column; }
 .wz-err:empty { display: none; }
 .wz-times { display: flex; gap: 12px; margin: 10px 0 0 2px; }
 .wz-times label { display: flex; flex-direction: column; gap: 4px; font-size: 12.5px; flex: 1; }
+.wz-times { flex-wrap: wrap; align-items: flex-end; }
+.wz-times .sub-tabs { flex: 1 1 200px; }
 .wz-times input { border: 1px solid var(--dp-divider); border-radius: 10px; background: transparent; color: inherit; font: inherit; font-size: 15px; padding: 8px 10px; }
 .wz-check { width: 62px; height: 62px; border-radius: 50%; background: var(--dp-success-soft); color: var(--dp-success); display: grid; place-items: center; margin: 14px 0 4px; }
 .wz-sum { background: var(--dp-subtle); border-radius: 16px; padding: 4px 14px; margin: 8px 0; }

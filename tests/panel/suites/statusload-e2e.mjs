@@ -9,8 +9,8 @@ let ok = true;
 const check = (l, c, i = "") => { ok &&= !!c; console.log(`${c ? "PASS" : "FAIL"} ${l}${i ? " - " + i : ""}`); };
 const R = `document.querySelector("device-panel").shadowRoot`;
 const TEXT = {
-  de: { title: "Meldung bei hoher Auslastung", names: ["Prozessor (CPU)", "Arbeitsspeicher (RAM)", "Festplatte"], range: "zwischen 1 und 100", noPercent: "keinen Prozentwert", minLabel: "Mindestdauer", minRange: "zwischen 1 und 60", own: "je ihre eigene Mindestdauer", recTitle: "Empfänger der Meldungen", stopTitle: "Meldung bei Stillstand" },
-  en: { title: "Alert at high load", names: ["Processor (CPU)", "Memory (RAM)", "Disk"], range: "between 1 and 100", noPercent: "no percentage", minLabel: "Minimum duration", minRange: "between 1 and 60", own: "each have their own minimum duration", recTitle: "Recipient of the alerts", stopTitle: "Alert when something stops" },
+  de: { bk: "Meldung bei Backup-Fehler", title: "Meldung bei hoher Auslastung", names: ["Prozessor (CPU)", "Arbeitsspeicher (RAM)", "Festplatte"], range: "zwischen 1 und 100", noPercent: "keinen Prozentwert", minLabel: "Mindestdauer", minRange: "zwischen 1 und 60", own: "je ihre eigene Mindestdauer", recTitle: "Empfänger der Meldungen", stopTitle: "Meldung bei Stillstand" },
+  en: { bk: "Alert when a backup fails", title: "Alert at high load", names: ["Processor (CPU)", "Memory (RAM)", "Disk"], range: "between 1 and 100", noPercent: "no percentage", minLabel: "Minimum duration", minRange: "between 1 and 60", own: "each have their own minimum duration", recTitle: "Recipient of the alerts", stopTitle: "Alert when something stops" },
 };
 
 for (const lang of ["de", "en"]) {
@@ -89,7 +89,7 @@ for (const lang of ["de", "en"]) {
     await lastOpts();
 
     // Empfänger (2.77.0): eigener Abschnitt ganz oben, der Schalter für Stillstand darunter
-    check(`[${tag}] Empfänger: Abschnitt "${T.recTitle}" vor "${T.stopTitle}" und "${T.title}", mit der Auswahl des Ziels; der Schalter bei Stillstand steht im Abschnitt darunter`, await ev(`const d = r.querySelector("${win}"); const titles = [...d.querySelectorAll(".set-title")].map((e) => e.textContent.trim()); const sel = d.querySelector("[data-st-target]"); const sw = d.querySelector("[data-st-notify]"); const pos = (e) => e.compareDocumentPosition(sel); return titles.slice(0, 3).join("|") === ${JSON.stringify(`${T.recTitle}|${T.stopTitle}|${T.title}`)} && !!sel && !!sw && !!(d.querySelectorAll(".set-title")[0].compareDocumentPosition(sel) & Node.DOCUMENT_POSITION_FOLLOWING) && !!(sel.compareDocumentPosition(d.querySelectorAll(".set-title")[1]) & Node.DOCUMENT_POSITION_FOLLOWING) && !!(d.querySelectorAll(".set-title")[1].compareDocumentPosition(sw) & Node.DOCUMENT_POSITION_FOLLOWING)`));
+    check(`[${tag}] Empfänger: Abschnitt "${T.recTitle}" vor "${T.stopTitle}" und "${T.title}", mit der Auswahl des Ziels; der Schalter bei Stillstand steht im Abschnitt darunter`, await ev(`const d = r.querySelector("${win}"); const titles = [...d.querySelectorAll(".set-title")].map((e) => e.textContent.trim()); const sel = d.querySelector("[data-st-target]"); const sw = d.querySelector("[data-st-notify]"); const pos = (e) => e.compareDocumentPosition(sel); return titles.filter((x) => x !== ${JSON.stringify(T.bk)}).slice(0, 3).join("|") === ${JSON.stringify(`${T.recTitle}|${T.stopTitle}|${T.title}`)} && !!sel && !!sw && !!(d.querySelectorAll(".set-title")[0].compareDocumentPosition(sel) & Node.DOCUMENT_POSITION_FOLLOWING) && !!(sel.compareDocumentPosition(d.querySelectorAll(".set-title")[1]) & Node.DOCUMENT_POSITION_FOLLOWING) && !!(d.querySelectorAll(".set-title")[1].compareDocumentPosition(sw) & Node.DOCUMENT_POSITION_FOLLOWING)`));
 
     // Sensor ohne Prozentwert (Gigabyte): Hinweis, dass es keine Meldung gibt
     await ev(`r.activeElement?.blur()`);

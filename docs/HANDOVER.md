@@ -3,6 +3,13 @@
 Einstieg für jede neue Claude-Code-Session. Zuerst diese Datei lesen, dann
 `CLAUDE.md`, `docs/CONCEPT.md`, `docs/LEARNINGS.md`, `docs/DESIGN.md`.
 
+## Stand (2.185.0, Meldung bei Backup-Fehler)
+
+- Auslöser: Wunsch des Nutzers (Backup in der Nacht schlägt fehl, niemand merkt es). Optionen `status_backup_alert` (bool, Standard an) und `status_backup_time` ("" = sofort, sonst "HH:MM" = nicht vor dieser Uhrzeit), nur global (keine vier Ebenen: eine Einstellung der Installation, kein Gerätewert); in `BOOL_OPTIONS` und `PANEL_SCHEMA`, die Sicherung nimmt sie mit dem Bereich "monitor".
+- Backend: `backup_alert.py` (`BackupAlert`, `DATA_BACKUP_ALERT`) hört über `async_get_manager(hass).async_subscribe_events` auf die Ereignisse der Backup-Integration von HA (Duck-Typing: `manager_state == "create_backup"` und `state == "failed"`, keine Importe der HA-Klassen); startet die Backup-Integration später, wartet es auf `EVENT_COMPONENT_LOADED`. Sofort oder bis zur Uhrzeit (`release_at`); eine wartende Meldung liegt in `.storage/device_panel.backup_alert` und überlebt einen Neustart. Push als Art "status" über `push.async_push`, Ziel `notify_target(opts, "status")` (kein eigenes Ziel), Tag `device_panel_backup_failed`, Klick `/config/backup`. Nicht erkannt: ein Backup, das nie lief.
+- Panel: Abschnitt "Meldung bei Backup-Fehler" in den Einstellungen der Status-App (`backupHtml` in `status-ui.js`, Reiterleiste `data-st-bk`, Zeitfeld `data-st-bktime`); im Assistenten ganz oben im Schritt "Backup, Ruhezeit und System" (`backupHtml` in `wizard.js`, `d.backup`, `data-wz-bkon`/`data-wz-bk`/`data-wz-bktime`; Zusammenfassung, Werte, Zwischenstand).
+- Tests: `tests/test_backup_alert.py`, `test_update_check` (Standardwerte); Suite `backupalert` (Einstellungen und Assistent), angepasst `statustabs`, `statusload`. Der Simulator kennt beide Optionen.
+
 ## Stand (2.184.0, "Verbindungssensor zählt" auf vier Ebenen)
 
 - Auslöser: Issue #3 (Shelly "Cloud", "Android Auto", Roborock-Wasserkasten entscheiden als Verbindungssensor allein über den Ausfall). Mockups `docs/mockups/liveness-conn-v1` (global A, Gerät A, Entitäten-Reiter gesperrt).

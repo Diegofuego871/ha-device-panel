@@ -142,6 +142,7 @@ export class WizardUi {
       on: { outage: Boolean(v.notify_outage), battery: Boolean(v.battery_push), new: Boolean(v.notify_new), charge: Boolean(v.notify_charge), updates: Boolean(v.notify_updates) },
       v: Object.fromEntries(VALUE_KEYS.map((k) => [k, String(v[k])])),
       quiet: { on: Boolean(v.quiet_enabled), from: first.from || "22:00", to: first.to || "07:00", uniform },
+      backup: { on: Boolean(v.status_backup_alert), mode: v.status_backup_time ? "time" : "now", time: v.status_backup_time || "07:00" },
       sys: Object.fromEntries(SYS_KINDS.map((k) => [k, { on: Boolean(v[sysKey(k, "alert")]), limit: String(v[sysKey(k, "limit")]), min: String(v[sysKey(k, "minutes")]) }])),
       // Je Meldungsart die Integrationen (seit 2.137.0): Ausfall, Batterie und Neue Geräte schliessen aus, Voll geladen schliesst ein
       ex: { outage: new Set(v.notify_exclude_integrations || []), battery: new Set(v.battery_push_exclude_integrations || []), new: new Set(v.new_exclude_integrations || []) },
@@ -231,7 +232,7 @@ export class WizardUi {
   // Entwurf für die Option wizard_draft (Mengen als Listen)
   serialize(d) {
     return {
-      exI: [...d.exI].sort(), exT: [...d.exT].sort(), exD: [...d.exD].sort(), target: d.target, on: { ...d.on }, v: { ...d.v }, quiet: { ...d.quiet }, sys: Object.fromEntries(Object.entries(d.sys).map(([k, x]) => [k, { ...x }])),
+      exI: [...d.exI].sort(), exT: [...d.exT].sort(), exD: [...d.exD].sort(), target: d.target, on: { ...d.on }, v: { ...d.v }, quiet: { ...d.quiet }, backup: { ...d.backup }, sys: Object.fromEntries(Object.entries(d.sys).map(([k, x]) => [k, { ...x }])),
       lab: { ids: [...d.lab.ids], cfg: Object.fromEntries(Object.entries(d.lab.cfg).map(([k, x]) => [k, { ...x }])) },
       noStat: { integ: [...d.noStat.integ].sort(), dev: [...d.noStat.dev].sort() },
       ex: Object.fromEntries(Object.entries(d.ex).map(([k, set]) => [k, [...set].sort()])),
@@ -254,6 +255,9 @@ export class WizardUi {
     for (const k of VALUE_KEYS) if (typeof x.v?.[k] === "string" && x.v[k].length <= 6) d.v[k] = x.v[k];
     if (typeof x.quiet?.on === "boolean") d.quiet.on = x.quiet.on;
     for (const k of ["from", "to"]) if (/^([01]\d|2[0-3]):[0-5]\d$/.test(String(x.quiet?.[k]))) d.quiet[k] = x.quiet[k];
+    if (typeof x.backup?.on === "boolean") d.backup.on = x.backup.on;
+    if (["now", "time"].includes(x.backup?.mode)) d.backup.mode = x.backup.mode;
+    if (TIME_RE.test(String(x.backup?.time))) d.backup.time = x.backup.time;
     for (const k of SYS_KINDS) {
       const y = x.sys?.[k];
       if (typeof y?.on === "boolean") d.sys[k].on = y.on;
@@ -316,7 +320,7 @@ export class WizardUi {
   }
 
   snapshot(d) {
-    return { i: [...d.exI].sort(), t: [...d.exT].sort(), d: [...d.exD].sort(), target: d.target, on: d.on, v: d.v, q: d.quiet, y: d.sys, x: Object.fromEntries(Object.entries(d.ex).map(([k, set]) => [k, [...set].sort()])), o: Object.fromEntries(Object.entries(d.devOff).map(([k, set]) => [k, [...set].sort()])), c: [...d.chargeOn].sort(), u: [...d.updOn].sort(), l: d.lab, n: { i: [...d.noStat.integ].sort(), d: [...d.noStat.dev].sort() } };
+    return { i: [...d.exI].sort(), t: [...d.exT].sort(), d: [...d.exD].sort(), target: d.target, on: d.on, v: d.v, q: d.quiet, b: d.backup, y: d.sys, x: Object.fromEntries(Object.entries(d.ex).map(([k, set]) => [k, [...set].sort()])), o: Object.fromEntries(Object.entries(d.devOff).map(([k, set]) => [k, [...set].sort()])), c: [...d.chargeOn].sort(), u: [...d.updOn].sort(), l: d.lab, n: { i: [...d.noStat.integ].sort(), d: [...d.noStat.dev].sort() } };
   }
 
   dirty() {
@@ -457,6 +461,7 @@ export class WizardUi {
   // Fehler der Systemwerte (Grenze, Mindestdauer) der angezeigten Arten: Text oder ""
   sysInvalid() {
     const { d, opts } = this.s;
+    if (d.backup.on && d.backup.mode === "time" && !TIME_RE.test(String(d.backup.time))) return this.t("wzErrTime");
     for (const k of this.sysShown()) {
       for (const [part, def, label] of [["limit", [1, 100], "wzSysLimit"], ["minutes", [1, 60], "wzSysMin"]]) {
         const [lo, hi] = opts.limits?.[sysKey(k, part)] || def;
@@ -847,8 +852,21 @@ export class WizardUi {
     const fields = q.uniform
       ? `<div class="wz-times"><label>${escape(this.t("wzQFrom"))}<input type="time" data-wz-time="from" value="${escape(q.from)}"${q.on ? "" : " disabled"}></label><label>${escape(this.t("wzQTo"))}<input type="time" data-wz-time="to" value="${escape(q.to)}"${q.on ? "" : " disabled"}></label></div>`
       : `<p class="wz-p small">${escape(this.t("wzQCustom"))}</p>`;
-    return `<h2 class="wz-h2">${escape(this.t("wzQTitle"))}</h2><p class="wz-p">${escape(this.t("wzQText"))}</p>
+    return `${this.backupHtml()}<h2 class="wz-h2 wz-h2m">${escape(this.t("wzQTitle"))}</h2><p class="wz-p">${escape(this.t("wzQText"))}</p>
       <div class="wz-li">${this.h.mdi("bellOff", 18).replace("<svg", '<svg class="wz-ic-svg"')}<div class="wz-nm">${escape(this.t("wzQUse"))}<small>${escape(this.t("wzQUseSub"))}</small></div>${this.toggle("data-wz-quiet", "on", q.on, this.t("wzQUse"))}</div>${q.on ? fields : ""}${this.sysHtml()}`;
+  }
+
+  // Ganz oben im Schritt (seit 2.185.0): Meldung bei Backup-Fehler. Schalter (Standard an) und, solange er an ist, der Zeitpunkt
+  // "Sofort" oder "Ab Uhrzeit"; das Ziel ist das gewählte, ein eigenes gibt es nicht (Einstellungen der Status-App)
+  backupHtml() {
+    const { escape } = this.h;
+    const b = this.s.d.backup;
+    const tab = (id, key) => `<button type="button" role="tab" class="sub-tab${b.mode === id ? " on" : ""}" data-wz-bk="${id}" aria-selected="${b.mode === id}">${escape(this.t(key))}</button>`;
+    const when = b.on
+      ? `<div class="wz-times"><div class="sub-tabs" role="tablist">${tab("now", "stBkNow")}${tab("time", "stBkFrom")}</div>${b.mode === "time" ? `<label>${escape(this.t("stBkTime"))}<input type="time" data-wz-bktime value="${escape(b.time)}"></label>` : ""}</div>`
+      : "";
+    return `<h2 class="wz-h2">${escape(this.t("wzBkTitle"))}</h2><p class="wz-p">${escape(this.t("wzBkText"))}</p>
+      <div class="wz-li">${this.h.mdi("alert", 18).replace("<svg", '<svg class="wz-ic-svg"')}<div class="wz-nm">${escape(this.t("wzBkUse"))}<small>${escape(this.t("wzBkUseSub"))}</small></div>${this.toggle("data-wz-bkon", "on", b.on, this.t("wzBkUse"))}</div>${when}`;
   }
 
   // Unter der Ruhezeit: Meldung bei hoher Auslastung von Prozessor, Arbeitsspeicher und Festplatte mit dem aktuellen Wert, der Grenze und der
@@ -884,13 +902,14 @@ export class WizardUi {
     const target = d.target === "none" ? t("wzNone") : d.target;
     const row = (a, b) => `<div class="wz-li"><div class="wz-nm">${escape(a)}</div><b class="wz-val">${escape(b)}</b></div>`;
     const quiet = d.target === "none" ? "" : row(t("wzSumQuiet"), d.quiet.on ? (d.quiet.uniform ? `${d.quiet.from} – ${d.quiet.to}` : t("wzQCustomShort")) : t("wzOff"));
+    const backup = d.target === "none" ? "" : row(t("wzSumBackup"), d.backup.on ? (d.backup.mode === "time" ? t("wzBkSumFrom", d.backup.time) : t("wzBkSumNow")) : t("wzOff"));
     const labelsRow = this.hasLabels() ? row(t("wzSumLabels"), d.lab.ids.length ? d.lab.ids.map((id) => this.labelName(id)).join(", ") : t("wzNone")) : "";
     const nsCount = d.noStat.integ.size + d.noStat.dev.size + (this.hasLabels() ? d.lab.ids.filter((id) => d.lab.cfg[id].mon && !d.lab.cfg[id].status).length : 0);
     const noStatus = nsCount ? row(t("wzSumNoStatus"), String(nsCount)) : "";
     const sysKinds = d.target === "none" ? [] : this.sysShown();
     const system = sysKinds.length ? row(t("wzSumSystem"), sysKinds.some((k) => d.sys[k].on) ? sysKinds.filter((k) => d.sys[k].on).map((k) => `${t(`stSys${k[0].toUpperCase()}${k.slice(1)}`).replace(/ \(.*\)/, "")} ${d.sys[k].limit} %`).join(", ") : t("wzOff")) : "";
     return `<div class="wz-check">${mdi("check", 30)}</div><h2 class="wz-h2">${escape(t("wzDoneTitle"))}</h2><p class="wz-p">${escape(t("wzDoneText"))}</p>
-      <div class="wz-sum">${row(t("wzSumInteg"), t("wzOf", data.integrations.length - d.exI.size, data.integrations.length))}${row(t("wzSumTypes"), t("wzOf", typesOn, types.size))}${row(t("wzSumDevices"), t("wzOf", this.chosen().length, this.afterTypes().length))}${row(t("wzSumTarget"), target)}${row(t("wzSumMsgs"), msgs.length ? msgs.join(", ") : t("wzNone"))}${labelsRow}${noStatus}${quiet}${system}</div>
+      <div class="wz-sum">${row(t("wzSumInteg"), t("wzOf", data.integrations.length - d.exI.size, data.integrations.length))}${row(t("wzSumTypes"), t("wzOf", typesOn, types.size))}${row(t("wzSumDevices"), t("wzOf", this.chosen().length, this.afterTypes().length))}${row(t("wzSumTarget"), target)}${row(t("wzSumMsgs"), msgs.length ? msgs.join(", ") : t("wzNone"))}${labelsRow}${noStatus}${backup}${quiet}${system}</div>
       ${this.s.saveError ? `<div class="dlg-error">${escape(t("wzSaveError"))} ${escape(this.s.saveError)}</div>` : ""}
       <p class="wz-p">${escape(t("wzDoneFoot"))}</p>`;
   }
@@ -935,6 +954,8 @@ export class WizardUi {
     Object.assign(values, this.statusValues());
     if (this.hasLabels()) Object.assign(values, this.labelValues(values));
     if (d.target !== "none") {
+      values.status_backup_alert = d.backup.on;
+      if (d.backup.on) values.status_backup_time = d.backup.mode === "time" ? d.backup.time : "";
       values.quiet_enabled = d.quiet.on;
       if (d.quiet.on && d.quiet.uniform) values.quiet_days = Array.from({ length: 7 }, () => ({ on: true, from: d.quiet.from, to: d.quiet.to }));
       // Systemauslastung: nur die Arten, die der Assistent zeigte; Grenze und Mindestdauer nur bei eingeschalteter Meldung (sonst bleiben die Werte)
@@ -1163,6 +1184,12 @@ export class WizardUi {
     dlg.addEventListener("click", (ev) => {
       const s = this.s;
       if (!s?.d) return;
+      const bk = ev.target.closest?.("[data-wz-bk]");
+      if (bk) {
+        s.d.backup.mode = bk.dataset.wzBk === "time" ? "time" : "now";
+        this.render();
+        return;
+      }
       const open = ev.target.closest?.("[data-wz-lsel]");
       const rm = ev.target.closest?.("[data-wz-lrm]");
       if (open) {
@@ -1248,6 +1275,11 @@ export class WizardUi {
       } else if (el.matches("[data-wz-quiet]")) {
         d.quiet.on = el.checked;
         this.render();
+      } else if (el.matches("[data-wz-bkon]")) {
+        d.backup.on = el.checked;
+        this.render();
+      } else if (el.matches("[data-wz-bktime]")) {
+        if (el.value) d.backup.time = el.value;
       } else if (el.matches("[data-wz-syson]")) {
         d.sys[el.dataset.wzSyson].on = el.checked;
         this.render();

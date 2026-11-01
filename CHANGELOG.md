@@ -7,6 +7,16 @@ All notable changes to this integration are documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/).
 
+## [2.185.0] - 2026-11-01
+
+A notification when a Home Assistant backup fails.
+
+### Added
+
+- **"Alert when a backup fails" (Status app, Settings):** one push when a backup of Home Assistant fails, including a failed upload to its location. It goes to the recipient of the status app, the same one as for the other status alerts; there is no separate target. A switch (default on) and the choice "At once" (default) or "From time": with a time, a failure at night waits until that time ("not before 07:00"), a failure after it is sent at once. A waiting notification survives a restart of Home Assistant and is dropped when the switch is turned off. The notification opens the backup page of Home Assistant. The quiet time applies as for all status notifications. Only a failed run is reported, not a backup that never started; this needs the Backup integration of Home Assistant.
+- **Setup assistant:** at the top of the step "Backup, quiet hours and system" the same switch (default on) and, while it is on, the choice "At once" / "From time" with the time. The target is the one chosen in the step "Notifications". The summary shows the choice.
+- **Backup and restore** include both values (with the monitoring section).
+
 ## [2.184.1] - 2026-11-01
 
 Excluding the only connectivity sensor now lets the other entities count at once.
@@ -5441,6 +5451,7 @@ First pre-release.
   GitHub Actions for HACS/hassfest validation and tests.
 
 [2.6.0]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v2.6.0
+[2.185.0]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v2.185.0
 [2.184.1]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v2.184.1
 [2.184.0]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v2.184.0
 [2.183.0]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v2.183.0

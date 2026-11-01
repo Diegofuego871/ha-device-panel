@@ -7,6 +7,16 @@ Alle nennenswerten Änderungen an dieser Integration stehen in dieser Datei.
 Das Format folgt [Keep a Changelog](https://keepachangelog.com/de/1.1.0/),
 die Versionsnummern folgen [Semantic Versioning](https://semver.org/lang/de/).
 
+## [2.185.0] - 2026-11-01
+
+Eine Meldung, wenn ein Backup von Home Assistant fehlschlägt.
+
+### Hinzugefügt
+
+- **"Meldung bei Backup-Fehler" (Status-App, Einstellungen):** Ein Push, wenn ein Backup von Home Assistant fehlschlägt, auch ein fehlgeschlagener Upload auf das Ziel. Er geht an den Empfänger der Status-App, denselben wie bei den übrigen Status-Meldungen; ein eigenes Ziel gibt es nicht. Ein Schalter (Standard an) und die Wahl "Sofort" (Standard) oder "Ab Uhrzeit": Mit einer Uhrzeit wartet ein Fehler in der Nacht bis dahin ("nicht vor 07:00"), ein Fehler danach geht sofort hinaus. Eine wartende Meldung übersteht einen Neustart von Home Assistant und verfällt, wenn der Schalter ausgeschaltet wird. Die Meldung öffnet die Backup-Seite von Home Assistant. Die Ruhezeit gilt wie bei allen Status-Meldungen. Gemeldet wird nur ein fehlgeschlagener Lauf, nicht ein Backup, das nie gestartet wurde; es braucht die Backup-Integration von Home Assistant.
+- **Einrichtungsassistent:** Ganz oben im Schritt "Backup, Ruhezeit und System" derselbe Schalter (Standard an) und, solange er an ist, die Wahl "Sofort" / "Ab Uhrzeit" mit der Uhrzeit. Das Ziel ist das im Schritt "Meldungen" gewählte. Die Zusammenfassung zeigt die Wahl.
+- **Sicherung und Wiederherstellung** enthalten beide Werte (mit dem Bereich Überwachung).
+
 ## [2.184.1] - 2026-11-01
 
 Wird der einzige Verbindungssensor ausgeschlossen, zählen sofort die übrigen Entitäten.
@@ -5542,6 +5552,7 @@ Erste Vorabversion.
   GitHub Actions für die Prüfungen von HACS und hassfest sowie die Tests.
 
 [2.6.0]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v2.6.0
+[2.185.0]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v2.185.0
 [2.184.1]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v2.184.1
 [2.184.0]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v2.184.0
 [2.183.0]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v2.183.0

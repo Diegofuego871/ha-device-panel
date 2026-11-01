@@ -50,6 +50,7 @@ from .routines_ws import COMMANDS as ROUTINE_COMMANDS
 from .status import COMMANDS as STATUS_COMMANDS
 from .wizard import COMMANDS as WIZARD_COMMANDS
 from .system_stats import COMMANDS as SYSTEM_COMMANDS
+from .backup_alert import BackupAlert
 from .status import StatusWatch
 from .ai_assessment import ASK_ANSWER_MAX, ASK_MAX, ASK_QUESTION_MAX, AiError, async_ask, async_assess, async_clear, async_last, async_preview
 from .ai_prompt import DEFAULT_PROMPT
@@ -90,6 +91,7 @@ from .const import (
     DATA_MAGIC,
     DATA_PROTOCOL,
     DATA_ROUTINES,
+    DATA_BACKUP_ALERT,
     DATA_STATUS,
     DATA_SIGNAL,
     DATA_TYPE_OVERRIDES,
@@ -232,6 +234,10 @@ async def async_setup_entry(hass: HomeAssistant, entry: ConfigEntry) -> bool:
         status_watch = StatusWatch(hass)
         await status_watch.async_start()
         hass.data[DATA_STATUS] = status_watch
+    if DATA_BACKUP_ALERT not in hass.data:
+        backup_alert = BackupAlert(hass)
+        await backup_alert.async_start()
+        hass.data[DATA_BACKUP_ALERT] = backup_alert
     # Eigene Entitäten (seit 2.122.0): ein Fehler hier darf das Panel nicht verhindern, die Entitäten bleiben dann nur nicht verfügbar
     if DATA_SUMMARY not in hass.data:
         summary_coordinator = SummaryCoordinator(hass, entry)
@@ -253,6 +259,9 @@ async def _async_options_updated(hass: HomeAssistant, entry: ConfigEntry) -> Non
     # Batterie: Schwelle oder Meldungsart geändert, sofort neu prüfen.
     if (watch := hass.data.get(DATA_BATTERY)) is not None:
         await watch.async_options_changed()
+    # Backup-Meldung: ausgeschaltet verwirft eine zurückgehaltene, eine neue Uhrzeit gilt sofort.
+    if (backup_alert := hass.data.get(DATA_BACKUP_ALERT)) is not None:
+        await backup_alert.async_options_changed()
     # Neue Geräte: ausgeschaltet verwirft Offenes.
     if (new_devices := hass.data.get(DATA_NEW)) is not None:
         await new_devices.async_options_changed()
@@ -309,6 +318,8 @@ async def async_unload_entry(hass: HomeAssistant, entry: ConfigEntry) -> bool:
         await signal_log.async_stop()
     if (magic_push := hass.data.pop(DATA_MAGIC, None)) is not None:
         await magic_push.async_stop()
+    if (backup_alert := hass.data.pop(DATA_BACKUP_ALERT, None)) is not None:
+        await backup_alert.async_stop()
     if (status_watch := hass.data.pop(DATA_STATUS, None)) is not None:
         await status_watch.async_stop()
     if (push_log := hass.data.pop(DATA_PUSHLOG, None)) is not None:
