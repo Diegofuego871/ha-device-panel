@@ -21,6 +21,11 @@ h1{margin:0 0 4px;font-size:22px}h2{margin:34px 0 4px;font-size:18px}.rec{color:
 .sw.off{background:#b9b9b9}.sw.off:after{right:auto;left:3px}
 .org{margin-top:5px;font-size:12px;color:var(--t2)}.org b{display:inline-block;padding:1px 8px;border-radius:9px;font-weight:500;margin-right:6px;background:#eee;color:#555}.org b.own{background:var(--ps);color:var(--p)}
 .mark{outline:2px solid #e8590c;outline-offset:3px;border-radius:8px}
+.pick{outline:3px solid var(--ok);outline-offset:7px;border-radius:20px}
+.pickt{display:inline-block;background:var(--ok);color:#fff;border-radius:10px;padding:1px 9px;font-size:12px;margin-left:8px}
+.lock{display:inline-flex;align-items:center;gap:5px;border:1px dashed #aaa;color:#777;border-radius:14px;padding:3px 10px;font-size:12px;margin-right:10px}
+.dd{width:420px;background:#2b2b2b;color:#eee;border-radius:20px;padding:18px 20px;box-shadow:0 2px 14px #0004}.dd b{display:block;font-size:17px;margin-bottom:6px}.dd small{display:block;color:#bbb;font-size:13px;line-height:1.4}.dd .bt{display:flex;flex-direction:column;gap:8px;margin-top:14px}.dd .bt span{border-radius:20px;padding:11px;text-align:center;border:1px solid #666}.dd .bt span.pr{background:var(--p);border-color:var(--p);color:#fff}
+.case{margin:0 0 6px;font-weight:600}
 .note{display:flex;gap:10px;background:#f4f4f4;border-radius:12px;padding:10px 12px;margin:8px 0;font-size:13px}.note i{font-style:normal;color:var(--p)}
 .link{color:var(--p);font-weight:500}
 .ent{display:flex;justify-content:space-between;align-items:center;padding:9px 0;border-bottom:1px solid var(--ln)}.ent small{display:block;color:var(--t2)}
@@ -36,12 +41,12 @@ h1{margin:0 0 4px;font-size:22px}h2{margin:34px 0 4px;font-size:18px}.rec{color:
 .rule table{border-collapse:collapse;margin-top:6px}.rule td,.rule th{padding:5px 14px;border-bottom:1px solid #eee;text-align:left}
 </style>
 <h1>Verbindungssensor als Lebenszeichen: vier Ebenen</h1>
-<p class="sub">Alle Bilder mit erfundenen Daten. Orange Rahmen = die neue Zeile. Name im Mockup: "Verbindungssensor zählt" (Standard: an, wie heute). Aus = Verbindungssensoren (zum Beispiel Shelly "Cloud", "Android Auto") zählen nicht, es gelten die übrigen Entitäten des Geräts.</p>
+<p class="sub">Alle Bilder mit erfundenen Daten. Orange Rahmen = die neue Zeile, grüner Kreis = gewählte Variante. Name im Mockup: "Verbindungssensor zählt" (Standard: an, wie heute). Aus = Verbindungssensoren (zum Beispiel Shelly "Cloud", "Android Auto") zählen nicht, es gelten die übrigen Entitäten des Geräts.</p>
 
 <h2><span class="num">1</span>Global <span class="rec">· Variante A (empfohlen)</span></h2>
 <p class="sub">Einstellungen › Überwachung und Meldungen › Reiter "Ausfall", Abschnitt "Erkennung", unter den Zeiten. Ein Schalter, Standard an.</p>
-<div class="row"><div class="win">
- <div class="hd"><div><b>Einstellungen</b><small>Device Panel · gilt für alle Benutzer</small></div><div class="x">✕</div></div>
+<div class="row"><div class="win pick">
+ <div class="hd"><div><b>Einstellungen</b><span class="pickt">Gewählt: A</span><small>Device Panel · gilt für alle Benutzer</small></div><div class="x">✕</div></div>
  <div class="tabs sm"><i>Allgemein</i><i class="on">Ausfall</i><i>Batterie</i><i>Laden</i><i>Neu</i><i>Updates</i><i>Empfang</i><i>Integrationen</i><i>Labels</i></div>
  <div class="ttl">Erkennung</div>
  <div class="opt"><div class="line"><span class="lbl">Ausgefallen nach</span><span>2 Min.</span></div></div>
@@ -74,8 +79,8 @@ h1{margin:0 0 4px;font-size:22px}h2{margin:34px 0 4px;font-size:18px}.rec{color:
 
 <h2><span class="num">3</span>Gerät <span class="rec">· Variante A (empfohlen): Reiter "Einstellungen", Unterreiter "Ausfall"</span></h2>
 <p class="sub">Wie alle anderen Geräteeinstellungen: Entwurf, "Speichern" unten, Herkunft in der Zeile. Neben der Auswahl "Wie Integration" die Möglichkeit, es für dieses Gerät fest an- oder auszuschalten.</p>
-<div class="row"><div class="win">
- <div class="hd"><div><b>Licht Keller</b><small>Online · Licht · Keller</small></div><div class="x">✕</div></div>
+<div class="row"><div class="win pick">
+ <div class="hd"><div><b>Licht Keller</b><span class="pickt">Gewählt: A</span><small>Online · Licht · Keller</small></div><div class="x">✕</div></div>
  <div class="tabs"><i>Übersicht</i><i>Schalter</i><i class="on">Einstellungen</i><i>Entitäten · 8</i><i>Magic Push</i><i>Routinen</i></div>
  <div class="tabs sm"><i class="on">Ausfall</i><i>Batterie</i><i>Laden</i><i>Empfang</i></div>
  <div class="opt"><div class="line"><span class="lbl">Instabil ab</span><span class="sel">Wie Integration (5 Unterbrüche)</span></div></div>
@@ -88,21 +93,28 @@ h1{margin:0 0 4px;font-size:22px}h2{margin:34px 0 4px;font-size:18px}.rec{color:
  <div class="note" style="flex-direction:column;gap:6px;background:#fff;border:1px solid var(--ln)"><span>✓ Wie Integration (aus)</span><span>An (für dieses Gerät)</span><span>Aus (für dieses Gerät)</span></div>
  <p class="sub">Der Hinweis "hat keinen aktiven Verbindungssensor" erscheint nur, wenn das Gerät keinen hat (zum Beispiel deine Shellys ohne eingeschaltete "Cloud"-Entität). Sonst steht dort, welche Entität betroffen ist.</p></div></div>
 
-<h2><span class="num">4</span>Gerät · Reiter "Entitäten" <span class="rec">· Hinweis mit Sprung (empfohlen, zusätzlich zu 3)</span></h2>
-<p class="sub">Der Nutzer sucht oft hier, weil er die Marken "Lebenszeichen" sieht. Hat das Gerät einen Verbindungssensor, sagt ein Hinweis, dass er allein entscheidet, und führt zur Einstellung. Die Marken bleiben unverändert.</p>
-<div class="row"><div class="win">
- <div class="hd"><div><b>Shelly Plus 1PM Terrasse</b><small>Offline seit 6 Min. · Steckdose · Terrasse</small></div><div class="x">✕</div></div>
+<h2><span class="num">4</span>Gerät · Reiter "Entitäten": gesperrt, nicht abwählbar <span class="rec">· Vorschlag, nach deinem Hinweis</span></h2>
+<p class="sub">Ist "Verbindungssensor zählt" auf irgendeiner Ebene aus, zählt der Verbindungssensor nicht. Seine Marke ist dann <b>gesperrt</b>: durchgestrichen mit Schloss, nicht umschaltbar. Ein Tipp darauf öffnet ein Fenster, das die Ebene nennt. So gibt es keinen Widerspruch zwischen Einstellung und Marke.</p>
+<div class="row"><div class="win pick">
+ <div class="hd"><div><b>Shelly Plus 1PM Terrasse</b><span class="pickt">Gewählt</span><small>Online · Steckdose · Terrasse</small></div><div class="x">✕</div></div>
  <div class="tabs"><i>Übersicht</i><i>Schalter</i><i>Einstellungen</i><i class="on">Entitäten · 9</i><i>Magic Push</i><i>Routinen</i></div>
- <div class="note mark"><i>ⓘ</i><span>Der Verbindungssensor <b>Cloud</b> entscheidet allein, ob dieses Gerät online ist. Fällt die Cloud aus, gilt es als ausgefallen, auch wenn es lokal läuft. <span class="link">Einstellung "Verbindungssensor zählt" öffnen ›</span></span></div>
- <div class="ent"><span>Cloud<small>binary_sensor.shelly_terrasse_cloud</small></span><span><span class="pill">Lebenszeichen</span>Aus</span></div>
- <div class="ent"><span>Relais<small>switch.shelly_terrasse</small></span><span>Ein</span></div>
- <div class="ent"><span>Leistung<small>sensor.shelly_terrasse_power</small></span><span>0 W</span></div>
-</div>
-<div class="win narrow"><div class="cap">Wirkung der Einstellung auf die Marken</div>
- <div class="ent"><span>Cloud<small>binary_sensor.shelly_terrasse_cloud</small></span><span><span class="pill x2">kein Lebenszeichen</span>Aus</span></div>
+ <div class="note"><i>ⓘ</i><span>Der Verbindungssensor <b>Cloud</b> zählt nicht als Lebenszeichen (Einstellung der Integration Shelly). <span class="link">Einstellung ansehen ›</span></span></div>
+ <div class="ent mark"><span>Cloud<small>binary_sensor.shelly_terrasse_cloud</small></span><span><span class="lock">🔒 zählt nicht</span>Aus</span></div>
  <div class="ent"><span>Relais<small>switch.shelly_terrasse</small></span><span><span class="pill">Lebenszeichen</span>Ein</span></div>
  <div class="ent"><span>Leistung<small>sensor.shelly_terrasse_power</small></span><span><span class="pill">Lebenszeichen</span>0 W</span></div>
- <p class="sub" style="margin-top:10px">Mit "aus" zeigt die Liste, was jetzt zählt: der Verbindungssensor ist durchgestrichen (wie bei einem von Hand ausgeschlossenen), die übrigen tragen die Marke.</p></div></div>
+ <div class="ent"><span>Temperatur<small>sensor.shelly_terrasse_temperature</small></span><span>31 °C</span></div>
+</div>
+<div><div class="cap">Tipp auf die gesperrte Marke: Fenster</div>
+ <div class="dd"><b>Zählt nicht als Lebenszeichen</b><small>Der Verbindungssensor "Cloud" ist ausgeschaltet. Eingestellt in der <b style="display:inline;font-size:13px;color:#fff">Integration Shelly</b> (Einstellungen › Überwachung › Integrationen › Shelly). Für dieses Gerät kannst du es im Reiter "Einstellungen" überschreiben.</small>
+ <div class="bt"><span class="pr">Einstellung für dieses Gerät öffnen</span><span>Schliessen</span></div></div></div></div>
+
+<div class="row" style="margin-top:18px">
+<div class="win narrow"><div class="case">a) Ebene Label</div><div class="ent"><span>Cloud<small>binary_sensor.shelly_terrasse_cloud</small></span><span><span class="lock">🔒 zählt nicht</span>Aus</span></div><p class="sub">Fenster: "… in einem <b>Label</b> (Cloud egal)". Sprung: Label-Einstellungen oder Gerät überschreiben.</p></div>
+<div class="win narrow"><div class="case">b) Ebene Global</div><div class="ent"><span>Cloud<small>binary_sensor.shelly_terrasse_cloud</small></span><span><span class="lock">🔒 zählt nicht</span>Aus</span></div><p class="sub">Fenster: "… in den <b>allgemeinen Einstellungen</b> (Überwachung › Ausfall)".</p></div>
+<div class="win narrow"><div class="case">c) Ebene Gerät (hier eingestellt)</div><div class="ent"><span>Cloud<small>binary_sensor.shelly_terrasse_cloud</small></span><span><span class="lock">🔒 zählt nicht</span>Aus</span></div><p class="sub">Fenster: "… <b>für dieses Gerät</b> ausgeschaltet", Knopf "Einstellung öffnen" springt zur Zeile, dort wieder auf "Wie Integration" oder "An".</p></div></div>
+<div class="row" style="margin-top:12px">
+<div class="win narrow"><div class="case">d) Einziges Lebenszeichen</div><div class="ent"><span>Cloud<small>binary_sensor.geraet_cloud</small></span><span><span class="pill">Lebenszeichen</span>Aus</span></div><p class="sub">Hat das Gerät nur den Verbindungssensor, bleibt er wirksam und trägt die normale Marke (sonst "keine Daten"). Er ist <b>nicht</b> gesperrt; der Hinweis oben sagt, dass die Einstellung hier nichts ändert.</p></div>
+<div class="win narrow"><div class="case">e) Einstellung an (Standard)</div><div class="ent"><span>Cloud<small>binary_sensor.shelly_terrasse_cloud</small></span><span><span class="pill">Lebenszeichen</span>Aus</span></div><p class="sub">Wie heute: Marke mit Tipp zum Ausschliessen von Hand (gestrichelt), Speichern wie bisher. Die Marke von Hand und die Regel sind zwei Dinge; die Regel sperrt nur, wenn sie ausschaltet.</p></div></div>
 
 <h2><span class="num">5</span>Übersicht der eigenen Werte und <span class="num">6</span>Einrichtungsassistent</h2>
 <p class="sub">Einstellungen › Geräte im Panel › "Eigene Einstellungen pro Gerät": neue Liste, einzeln oder alle zurücksetzen. Im Assistenten, Seite "Labels": eine Zeile mit Auswahl.</p>
