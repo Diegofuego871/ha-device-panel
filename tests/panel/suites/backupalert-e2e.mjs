@@ -10,8 +10,8 @@ const R = `document.querySelector("device-panel").shadowRoot`;
 const win = "dialog.status-dlg";
 const D = "dialog.wizard-dlg";
 const TEXT = {
-  de: { title: "Meldung bei Backup-Fehler", now: "Sofort", from: "Einmal täglich", wz: "Backup", sum: "Backup-Fehler", sumNow: "sofort", link: "Systemmeldungen öffnen", sumFrom: "täglich um 06:30", off: "aus" },
-  en: { title: "Alert when a backup fails", now: "At once", from: "Once a day", wz: "Backup", sum: "Backup failure", sumNow: "at once", link: "Open system alerts", sumFrom: "daily at 06:30", off: "off" },
+  de: { title: "Meldung bei Backup-Fehler", now: "Sofort", from: "Einmal täglich", wz: "Backup", sum: "Backup-Fehler", sumNow: "sofort", link: "Systemmeldungen öffnen", sys: "Systemmeldungen", sumFrom: "täglich um 06:30", off: "aus" },
+  en: { title: "Alert when a backup fails", now: "At once", from: "Once a day", wz: "Backup", sum: "Backup failure", sumNow: "at once", link: "Open system alerts", sys: "System alerts", sumFrom: "daily at 06:30", off: "off" },
 };
 
 for (const lang of ["de", "en"]) {
@@ -90,7 +90,7 @@ for (const lang of ["de", "en"]) {
     await wait(`return !!r.querySelector("dialog.settings .set-sec")`);
     await tap('[data-set="section"][data-id="monitor"]');
     await wait(`return !!r.querySelector('[data-set="status-open"]')`);
-    check(`[${tag}] Einstellungen: Verweis auf die Systemmeldungen unter der Ruhezeit`, await ev(`const b = r.querySelector('[data-set="status-open"]'); return !!b && b.textContent.includes(${JSON.stringify(T.link)})`));
+    check(`[${tag}] Einstellungen: eigener Abschnitt "${T.sys}" (mit Strich) nach der Ruhezeit, Knopf "${T.link}" mit Pfeil`, await ev(`const b = r.querySelector('[data-set="status-open"]'); const g = [...r.querySelectorAll(".mon-body > .mon-grp")]; return !!b && b.textContent.includes(${JSON.stringify(T.link)}) && !!b.querySelector(".cbtn") && g.at(-1).textContent.trim() === ${JSON.stringify(T.sys)} && getComputedStyle(g.at(-1), "::before").width === "4px" && b.getBoundingClientRect().width > 200`));
     await ev(`r.querySelector('[data-set="status-open"]').scrollIntoView({ block: "center" })`);
     await p.screenshot({ path: `${process.env.OUT || "output"}/backupalert-link-${tag.replace("/", "-")}.png` });
     await tap(`[data-set="status-open"]`);

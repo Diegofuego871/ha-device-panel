@@ -61,7 +61,7 @@ for (const lang of ["de", "en"]) for (const mobile of [false, true]) {
   check(`[${tag}] Pille bei Updates schaltet die Update-Meldung`, await wait(`return r.host._settings.draft.notify_updates === true && r.querySelector('input[data-opt="notify_updates"]').checked`));
   // Allgemein: Ziel und Ruhezeit bleiben
   await tap('.mon-tab[data-key="overview"]');
-  check(`[${tag}] Allgemein: "Ziel der Meldungen" und "Ruhezeit"`, await wait(`const g = [...r.querySelectorAll(".mon-body > .mon-grp")].length; return g === 2 && !!r.querySelector('select[data-opt="notify_service"]') && !!r.querySelector('input[data-opt="quiet_enabled"]')`));
+  check(`[${tag}] Allgemein: "Ziel der Meldungen", "Ruhezeit" und "Systemmeldungen"`, await wait(`const g = [...r.querySelectorAll(".mon-body > .mon-grp")].length; return g === 3 && !!r.querySelector('select[data-opt="notify_service"]') && !!r.querySelector('input[data-opt="quiet_enabled"]')`));
   await p.screenshot({ path: `${outDir}/overview-${tag.replace("/", "-")}.png` });
   check(`[${tag}] kein fehlender Text`, !(await ev(`return r.innerHTML.includes("undefined") || r.innerHTML.includes("NaN")`)));
   check(`[${tag}] keine JS-Fehler`, errors.length === 0, errors.join("; "));

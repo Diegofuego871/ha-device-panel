@@ -7,7 +7,7 @@ const b = await chromium.launch(launchOptions);
 let ok = true;
 const check = (l, c, i = "") => { ok &&= !!c; console.log(`${c ? "PASS" : "FAIL"} ${l}${i ? " - " + i : ""}`); };
 const R = `document.querySelector("device-panel").shadowRoot`;
-const TEXT = { de: { tab: "Ruhezeit", mon: "Montag", prev: "Ziel der Meldungen" }, en: { tab: "Quiet time", mon: "Monday", prev: "Where notifications go" } };
+const TEXT = { de: { tab: "Ruhezeit", mon: "Montag", prev: "Ziel der Meldungen", sys: "Systemmeldungen" }, en: { tab: "Quiet time", mon: "Monday", prev: "Where notifications go", sys: "System alerts" } };
 
 for (const lang of ["de", "en"]) {
   for (const mobile of [false, true]) {
@@ -31,7 +31,7 @@ for (const lang of ["de", "en"]) {
     await wait(`return !!r.querySelector("dialog.settings .set-sec")`);
     await tap('[data-set="section"][data-id="monitor"]');
     check(`[${tag}] kein eigener Reiter, neun Reiter`, await wait(`return !r.querySelector('.mon-tab[data-key="quiet"]') && r.querySelectorAll("dialog.settings .mon-tab").length === 9`));
-    check(`[${tag}] Abschnitt "${T.tab}" zuletzt, nach "${T.prev}", mit blauem Strich`, await wait(`const g = [...r.querySelectorAll(".mon-body > .mon-grp")].map(x => x.textContent.trim()); return g.at(-1) === ${JSON.stringify(T.tab)} && g.at(-2) === ${JSON.stringify(T.prev)} && getComputedStyle([...r.querySelectorAll(".mon-body > .mon-grp")].at(-1), "::before").width === "4px"`));
+    check(`[${tag}] Abschnitte "${T.prev}", "${T.tab}", "${T.sys}" in dieser Folge, alle mit blauem Strich`, await wait(`const all = [...r.querySelectorAll(".mon-body > .mon-grp")]; const g = all.map(x => x.textContent.trim()); return g.at(-1) === ${JSON.stringify(T.sys)} && g.at(-2) === ${JSON.stringify(T.tab)} && g.at(-3) === ${JSON.stringify(T.prev)} && all.every((x) => getComputedStyle(x, "::before").width === "4px")`));
     await wait(`return !!r.querySelector('input[data-opt="quiet_enabled"]')`);
     check(`[${tag}] aus: nur der Schalter`, await ev(`return !r.querySelector('[data-qday]') && !r.querySelector('[data-qtopic]')`));
     await tap('input[data-opt="quiet_enabled"]');

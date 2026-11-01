@@ -7,6 +7,14 @@ Alle nennenswerten Änderungen an dieser Integration stehen in dieser Datei.
 Das Format folgt [Keep a Changelog](https://keepachangelog.com/de/1.1.0/),
 die Versionsnummern folgen [Semantic Versioning](https://semver.org/lang/de/).
 
+## [2.186.1] - 2026-11-01
+
+"Systemmeldungen" ist ein eigenes Kapitel in den Einstellungen.
+
+### Geändert
+
+- **Einstellungen › Überwachung und Meldungen:** Der Hinweis und der Verweis auf die Status-App bilden jetzt ein eigenes Kapitel "Systemmeldungen" (mit grünem Strich, wie "Ruhezeit"), und der Verweis ist ein klarer Knopf "Systemmeldungen öffnen" mit Pfeil.
+
 ## [2.186.0] - 2026-11-01
 
 Die Backup-Meldung fängt jetzt auch ein hängendes Backup ab, meldet, wenn es wieder klappt, und die längste Dauer lässt sich einstellen.
@@ -5574,6 +5582,7 @@ Erste Vorabversion.
   GitHub Actions für die Prüfungen von HACS und hassfest sowie die Tests.
 
 [2.6.0]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v2.6.0
+[2.186.1]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v2.186.1
 [2.186.0]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v2.186.0
 [2.184.1]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v2.184.1
 [2.184.0]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v2.184.0

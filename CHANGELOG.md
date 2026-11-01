@@ -7,6 +7,14 @@ All notable changes to this integration are documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/).
 
+## [2.186.1] - 2026-11-01
+
+"System alerts" is its own chapter in the settings.
+
+### Changed
+
+- **Settings › Monitoring and notifications:** the note and the link to the status app now form their own chapter "System alerts" (with the green bar, like "Quiet time"), and the link is a clear button "Open system alerts" with an arrow.
+
 ## [2.186.0] - 2026-11-01
 
 The backup alert now also catches a backup that hangs, tells you when it works again, and the longest duration can be set.
@@ -5473,6 +5481,7 @@ First pre-release.
   GitHub Actions for HACS/hassfest validation and tests.
 
 [2.6.0]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v2.6.0
+[2.186.1]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v2.186.1
 [2.186.0]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v2.186.0
 [2.184.1]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v2.184.1
 [2.184.0]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v2.184.0

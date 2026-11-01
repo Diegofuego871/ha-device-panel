@@ -8806,8 +8806,9 @@ class DevicePanel extends HTMLElement {
       ui.row("notify_click_target", t("optClick"), ui.select("notify_click_target", [["panel", t("clickPanel")], ["device", t("clickDevice")]], t("optClick")), t("optClickShort"), null) +
       `<div class="mon-grp">${escape(t("grpQuiet"))}</div>` +
       this._monQuietHtml(d, changes, errors, ui) +
-      `<div class="opt mon-sysnote"><div class="opt-line"><span class="opt-short">${escape(t("sysNoteText"))}</span></div>
-        <button type="button" class="lnk" data-set="status-open">${escape(t("sysNoteOpen"))}</button></div>`
+      `<div class="mon-grp">${escape(t("grpSystem"))}</div>
+      <div class="opt mon-sysnote"><div class="opt-short">${escape(t("sysNoteText"))}</div>
+        <button type="button" class="dlg-btn" data-set="status-open">${mdi("pulse", 18)}<span>${escape(t("sysNoteOpen"))}</span><span class="cbtn">${mdi("chevronRight", 16)}</span></button></div>`
     );
   }
 
