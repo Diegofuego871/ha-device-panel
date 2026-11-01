@@ -3,6 +3,13 @@
 Einstieg für jede neue Claude-Code-Session. Zuerst diese Datei lesen, dann
 `CLAUDE.md`, `docs/CONCEPT.md`, `docs/LEARNINGS.md`, `docs/DESIGN.md`.
 
+## Stand (2.186.0, Backup-Wächter und längste Dauer)
+
+- `backup_alert.py` hat zwei Wege: das Ereignis der Backup-Verwaltung (sofort, mit Grund) und den Wächter über die öffentlichen Sensoren (Plattform "backup", Kennungen `backup_manager_state`, `last_attempted_automatic_backup`, `last_successful_automatic_backup`, gefunden über die Entitätsverwaltung). Wechselt der Zustand auf `create_backup`, startet `_run` mit Zeitlimit `status_backup_minutes` (Standard 180, 10 bis 1440; der Upload gehört zum Lauf); nach dem Lauf entscheidet `_on_judge` nach 30 s (automatisch = "letzter Versuch" ab Start minus 120 s, Erfolg = "letzter Erfolg" ab Start minus 120 s). Handbackups werden nicht gemeldet (nur ein automatischer Lauf setzt "letzter Versuch"). Ereignis und Wächter melden einen Lauf einmal (`_run["reported"]`); wartende Meldung merkt sich `hang` (Text "nicht fertig geworden").
+- Panel: Feld "Längste Dauer" unter dem Schalter in den Einstellungen der Status-App (`data-st-bkmin`, Bereich aus `limits`); nicht im Assistenten (schlank).
+- Tests: `test_backup_alert` (Wächter mit nachgebauten Sensoren), Suite `backupalert`.
+- Offen: das Verhalten bei einem echten fehlgeschlagenen Backup ist nicht an einem laufenden Home Assistant erprobt.
+
 ## Stand (2.185.0, Meldung bei Backup-Fehler)
 
 - Auslöser: Wunsch des Nutzers (Backup in der Nacht schlägt fehl, niemand merkt es). Optionen `status_backup_alert` (bool, Standard an) und `status_backup_time` ("" = sofort, sonst "HH:MM" = einmal täglich zur nächsten dieser Uhrzeit, Standard im Panel 09:00; mehrere Fehler bis dahin = eine Meldung), nur global (keine vier Ebenen: eine Einstellung der Installation, kein Gerätewert); in `BOOL_OPTIONS` und `PANEL_SCHEMA`, die Sicherung nimmt sie mit dem Bereich "monitor".

@@ -149,6 +149,7 @@ async def test_options_from_panel_and_issue_follows(hass: HomeAssistant, entry, 
         "status_cpu_alert": True,
         "status_backup_alert": True,
         "status_backup_time": "",
+        "status_backup_minutes": 180,
         "status_ram_alert": True,
         "status_disk_alert": True,
         "status_cpu_limit": 99,
@@ -216,7 +217,7 @@ async def test_options_from_panel_and_issue_follows(hass: HomeAssistant, entry, 
     }
     assert result["limits"] == {
         "offline_after": [1, 60], "flaky_outages": [2, 50], "startup_grace": [0, 30], "battery_low": [1, 50], "notify_delay": [1, 60], "notify_group_min": [2, 20], "new_window": [1, 60], "updates_window": [1, 60], "charge_full": [50, 100], "charge_rise": [2, 80], "charge_stall": [5, 120], "routines_catch_up": [0, 60],
-        "status_cpu_limit": [1, 100], "status_ram_limit": [1, 100], "status_disk_limit": [1, 100], "status_cpu_minutes": [1, 60], "status_ram_minutes": [1, 60], "status_disk_minutes": [1, 60],
+        "status_backup_minutes": [10, 1440], "status_cpu_limit": [1, 100], "status_ram_limit": [1, 100], "status_disk_limit": [1, 100], "status_cpu_minutes": [1, 60], "status_ram_minutes": [1, 60], "status_disk_minutes": [1, 60],
         "protocol_max_mb": [1, 200], "protocol_max_entries": [100, 100000], "log_max_mb": [1, 200], "log_max_entries": [100, 20000],
         "availability_keep_days": [7, 365], "availability_max_mb": [1, 200], "signal_keep_days": [7, 365], "signal_max_mb": [1, 200], "push_keep_days": [7, 365], "push_max_mb": [1, 200],
     }

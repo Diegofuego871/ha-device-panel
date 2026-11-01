@@ -7,9 +7,27 @@ All notable changes to this integration are documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/).
 
+## [2.186.0] - 2026-11-01
+
+The backup alert now also catches a backup that hangs, and the longest duration can be set.
+
+Includes the changes from 2.185.0.
+
+### Added
+
+- **"Longest duration" (Status app, Settings, under "Alert when a backup fails"):** an automatic backup that runs longer than this (default 3 hours, 10 minutes to 24 hours; an upload to a cloud storage can take long) counts as not finished and is reported ("The Home Assistant backup did not finish after 3 h"). Raise it for large installations or a slow upload.
+- **Watch over the public sensors of the Backup integration:** the panel now also watches `sensor.backup_backup_manager_state` and the sensors for the last automatic attempt and the last successful automatic backup (found through the entity registry, so renaming them is harmless). If an automatic backup ends without being recorded as successful, or runs over the longest duration, the same alert is sent. This also works if Home Assistant changes the internal events the alert was based on.
+
+### Changed
+
+- **Only automatic backups are reported.** A backup you start by hand is no longer reported (neither a failure nor a long run): you see its result yourself. Before, a failed manual backup was reported too.
+- An event and the watch report one run only once (same notification tag).
+
 ## [2.185.0] - 2026-11-01
 
 A notification when a Home Assistant backup fails.
+
+Not released; included in 2.186.0.
 
 ### Added
 
@@ -5452,7 +5470,7 @@ First pre-release.
   GitHub Actions for HACS/hassfest validation and tests.
 
 [2.6.0]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v2.6.0
-[2.185.0]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v2.185.0
+[2.186.0]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v2.186.0
 [2.184.1]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v2.184.1
 [2.184.0]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v2.184.0
 [2.183.0]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v2.183.0

@@ -58,6 +58,18 @@ for (const lang of ["de", "en"]) {
     await tap(`${win} [data-st-save]`);
     const v2 = await lastOpts();
     check(`[${tag}] "${T.now}": status_backup_time leer gespeichert`, v2 && v2.status_backup_time === "");
+    // Längste Dauer: Standard 180, Bereich 10 bis 1440, ungültig sperrt das Speichern
+    check(`[${tag}] Längste Dauer: Feld mit 180`, await ev(`return r.querySelector("${win} [data-st-bkmin]")?.value === "180"`));
+    await setField(`${win} [data-st-bkmin]`, "5");
+    check(`[${tag}] Längste Dauer 5: Fehler am Feld, Speichern gesperrt`, (await wait(`return !!r.querySelector('${win} [data-st-bkmin]').closest(".opt.invalid")`)) && await ev(`return r.querySelector("${win} [data-st-save]").disabled`));
+    await p.evaluate(() => { window.__wsCalls = []; });
+    await setField(`${win} [data-st-bkmin]`, "360");
+    await tap(`${win} [data-st-save]`);
+    const v4 = await lastOpts();
+    check(`[${tag}] Längste Dauer 360: als Zahl gespeichert`, v4 && v4.status_backup_minutes === 360 && Number.isInteger(v4.status_backup_minutes));
+    await wait(`return r.querySelector("${win} [data-st-bkmin]")?.value === "360" && r.querySelector("${win} [data-st-save]").disabled`);
+    await setField(`${win} [data-st-bkmin]`, "180");
+    await tap(`${win} [data-st-save]`);
     // Ausschalten
     await p.evaluate(() => { window.__wsCalls = []; });
     await tap(`${win} [data-st-bkon]`);

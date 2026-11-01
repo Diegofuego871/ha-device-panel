@@ -187,6 +187,9 @@ export class StatusUi {
       } else if (ev.target.matches?.("[data-st-minutes]") && LOAD_KINDS.includes(ev.target.dataset.stMinutes)) {
         this.setDraft(minutesKey(ev.target.dataset.stMinutes), ev.target.value);
         this.renderFoot();
+      } else if (ev.target.matches?.("[data-st-bkmin]")) {
+        this.setDraft("status_backup_minutes", ev.target.value);
+        this.renderFoot();
       }
     });
     // Esc: wie Schliessen (mit Rückfrage, wenn Änderungen offen sind)
@@ -198,6 +201,7 @@ export class StatusUi {
       const el = ev.target;
       if (el.matches("[data-st-notify]")) this.setDraft("status_notify", el.checked);
       else if (el.matches("[data-st-bkon]")) this.setDraft("status_backup_alert", el.checked);
+      else if (el.matches("[data-st-bkmin]")) this.setDraft("status_backup_minutes", el.value);
       else if (el.matches("[data-st-bktime]")) {
         // Leeres Feld (Uhrzeit gelöscht): der Wert bleibt, das Neuzeichnen setzt ihn zurück
         if (el.value) this.setDraft("status_backup_time", el.value);
@@ -318,8 +322,12 @@ export class StatusUi {
     return this.intBad(minutesKey(kind), [1, 60]);
   }
 
+  backupMinutesBad() {
+    return this.intBad("status_backup_minutes", [10, 1440]);
+  }
+
   anyBad() {
-    return LOAD_KINDS.some((k) => this.limitBad(k) || this.minutesBad(k));
+    return LOAD_KINDS.some((k) => this.limitBad(k) || this.minutesBad(k)) || this.backupMinutesBad();
   }
 
   // Beim Schliessen mit offenen Änderungen fragen (wie im Fenster Einstellungen), sonst gleich ausführen
@@ -400,7 +408,7 @@ export class StatusUi {
     const body = this.dlg?.querySelector("[data-st-body]");
     if (!body) return;
     // Auswahl nicht zerstören, solange sie geöffnet ist (Neuzeichnen alle 10 Sekunden)
-    if (!force && this.host.shadowRoot.activeElement?.matches?.("[data-st-target], [data-st-pickq], [data-st-limit], [data-st-minutes], [data-st-bktime]")) return;
+    if (!force && this.host.shadowRoot.activeElement?.matches?.("[data-st-target], [data-st-pickq], [data-st-limit], [data-st-minutes], [data-st-bktime], [data-st-bkmin]")) return;
     const scroll = body.closest(".dlg-body")?.scrollTop || 0;
     body.innerHTML = this.html();
     const sc = body.closest(".dlg-body");
@@ -474,10 +482,18 @@ export class StatusUi {
         ${clock ? `<div class="opt-line st-min"><span class="opt-label">${escape(t("stBkTime"))}</span><span class="opt-input"><input type="time" data-st-bktime value="${escape(clock)}" aria-label="${escape(t("stBkTime"))}"></span></div>
         <div class="opt-short">${escape(t("stBkTimeShort"))}</div>` : ""}</div>`
       : "";
+    const [mlo, mhi] = this.cfg.limits?.status_backup_minutes || [10, 1440];
+    const mbad = this.backupMinutesBad();
+    const longest = on
+      ? `<div class="opt${mbad ? " invalid" : ""}"><div class="opt-line"><span class="opt-label">${escape(t("stBkMax"))}</span>
+          <span class="opt-input${mbad ? " bad" : ""}"><input type="number" inputmode="numeric" step="1" min="${mlo}" max="${mhi}" data-st-bkmin value="${escape(String(this.val("status_backup_minutes")))}" aria-label="${escape(t("stBkMax"))}"><span class="unit">${escape(t("stLoadMinUnit"))}</span></span></div>
+          ${mbad ? `<div class="opt-warn" role="alert">${this.h.mdi("alert", 14)}<span>${escape(t("stBkMaxRange", mlo, mhi))}</span></div>` : ""}
+          <div class="opt-short">${escape(t("stBkMaxShort"))}</div></div>`
+      : "";
     return `<div class="set-title">${escape(t("stBkTitle"))}</div>
       <div class="opt"><div class="opt-line"><span class="opt-label">${escape(t("stBkLabel"))}</span>
         <label class="switch"><input type="checkbox" data-st-bkon ${on ? "checked" : ""} aria-label="${escape(t("stBkLabel"))}"><span></span></label></div>
-        <div class="opt-short">${escape(t("stBkShort"))}</div></div>${when}`;
+        <div class="opt-short">${escape(t("stBkShort"))}</div></div>${longest}${when}`;
   }
 
   // Meldung bei hoher Auslastung (seit 2.71.0): je Art Schalter und Grenze in Prozent; derselbe Empfänger wie oben

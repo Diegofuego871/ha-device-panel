@@ -160,3 +160,118 @@ async def test_options_validate_the_time(hass: HomeAssistant) -> None:
     assert options_api.PANEL_SCHEMA({"status_backup_time": "07:00"})["status_backup_time"] == "07:00"
     with pytest.raises(vol.Invalid):
         options_api.PANEL_SCHEMA({"status_backup_time": "25:00"})
+
+
+# --- Wächter über die öffentlichen Sensoren (2.186.0) ---------------------------------------------------------------------
+
+
+def _sensors(hass: HomeAssistant) -> dict[str, str]:
+    """Die drei Sensoren der Backup-Integration anlegen (ohne die Integration selbst): Eintrag in der Entitätsverwaltung, Zustand gesetzt."""
+    from homeassistant.helpers import entity_registry as er  # noqa: PLC0415
+
+    reg = er.async_get(hass)
+    ids = {}
+    for name, key in backup_alert.SENSOR_KEYS.items():
+        ids[name] = reg.async_get_or_create("sensor", "backup", key, suggested_object_id=f"backup_{key}").entity_id
+    hass.states.async_set(ids["state"], "idle")
+    hass.states.async_set(ids["attempted"], "unknown")
+    hass.states.async_set(ids["success"], "unknown")
+    return ids
+
+
+async def _start_run(hass: HomeAssistant, ids: dict[str, str], automatic: bool) -> None:
+    if automatic:
+        hass.states.async_set(ids["attempted"], dt_util.now().isoformat())
+    hass.states.async_set(ids["state"], "create_backup")
+    await hass.async_block_till_done()
+
+
+async def _fire(hass: HomeAssistant, freezer: Any, seconds: float) -> None:
+    freezer.move_to(dt_util.utcnow() + timedelta(seconds=seconds))
+    async_fire_time_changed(hass)
+    await hass.async_block_till_done()
+
+
+async def test_watch_reports_an_automatic_run_without_success(hass: HomeAssistant, freezer: Any) -> None:
+    handy = async_mock_service(hass, "notify", "handy")
+    await _setup(hass)
+    ids = _sensors(hass)
+    await _start_run(hass, ids, automatic=True)
+    hass.states.async_set(ids["state"], "idle")
+    await hass.async_block_till_done()
+    assert handy == []
+    await _fire(hass, freezer, 31)
+    assert len(handy) == 1 and "fehlgeschlagen" in handy[0].data["message"]
+
+
+async def test_watch_is_quiet_after_a_successful_run(hass: HomeAssistant, freezer: Any) -> None:
+    handy = async_mock_service(hass, "notify", "handy")
+    await _setup(hass)
+    ids = _sensors(hass)
+    await _start_run(hass, ids, automatic=True)
+    hass.states.async_set(ids["success"], dt_util.now().isoformat())
+    hass.states.async_set(ids["state"], "idle")
+    await hass.async_block_till_done()
+    await _fire(hass, freezer, 31)
+    assert handy == []
+
+
+async def test_watch_ignores_a_manual_run(hass: HomeAssistant, freezer: Any) -> None:
+    handy = async_mock_service(hass, "notify", "handy")
+    await _setup(hass, status_backup_minutes=10)
+    ids = _sensors(hass)
+    await _start_run(hass, ids, automatic=False)
+    await _fire(hass, freezer, 11 * 60)  # über das Limit hinaus: von Hand gestartet, keine Meldung
+    hass.states.async_set(ids["state"], "idle")
+    await hass.async_block_till_done()
+    await _fire(hass, freezer, 31)
+    assert handy == []
+
+
+async def test_watch_reports_a_run_over_the_limit_once(hass: HomeAssistant, freezer: Any) -> None:
+    handy = async_mock_service(hass, "notify", "handy")
+    await _setup(hass, status_backup_minutes=10)
+    ids = _sensors(hass)
+    await _start_run(hass, ids, automatic=True)
+    await _fire(hass, freezer, 9 * 60)
+    assert handy == []
+    await _fire(hass, freezer, 2 * 60)
+    assert len(handy) == 1 and "nicht fertig" in handy[0].data["message"] and "10 Min." in handy[0].data["message"]
+    # später doch noch fertig oder fehlgeschlagen: keine zweite Meldung für denselben Lauf
+    hass.states.async_set(ids["state"], "idle")
+    await hass.async_block_till_done()
+    await _fire(hass, freezer, 31)
+    assert len(handy) == 1
+
+
+async def test_event_and_watch_report_one_run_once(hass: HomeAssistant, freezer: Any) -> None:
+    handy = async_mock_service(hass, "notify", "handy")
+    alert = await _setup(hass)
+    ids = _sensors(hass)
+    await _start_run(hass, ids, automatic=True)
+    alert._on_event(_Event())
+    hass.states.async_set(ids["state"], "idle")
+    await hass.async_block_till_done()
+    await _fire(hass, freezer, 31)
+    assert len(handy) == 1
+
+
+async def test_failed_event_of_a_manual_run_is_not_reported(hass: HomeAssistant) -> None:
+    handy = async_mock_service(hass, "notify", "handy")
+    alert = await _setup(hass)
+    ids = _sensors(hass)
+    await _start_run(hass, ids, automatic=False)
+    alert._on_event(_Event())
+    await hass.async_block_till_done()
+    assert handy == []
+
+
+async def test_backup_minutes_option_range(hass: HomeAssistant) -> None:
+    import voluptuous as vol  # noqa: PLC0415
+
+    from custom_components.device_panel import options_api  # noqa: PLC0415
+
+    assert options_api.PANEL_SCHEMA({"status_backup_minutes": 180})["status_backup_minutes"] == 180
+    for bad in (9, 1441, 0):
+        with pytest.raises(vol.Invalid):
+            options_api.PANEL_SCHEMA({"status_backup_minutes": bad})

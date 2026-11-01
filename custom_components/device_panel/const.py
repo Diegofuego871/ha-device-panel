@@ -13,7 +13,7 @@ PANEL_HTML_FILE = "panel.html"
 STATIC_URL_PATH = f"/{DOMAIN}"
 PANEL_STATIC_URL_PATH = f"{STATIC_URL_PATH}/panel"
 # Cache-Buster: bei jeder Änderung unter panel/ von Hand erhöhen.
-PANEL_VERSION = "420"
+PANEL_VERSION = "421"
 PANEL_PAGE_URL = f"{PANEL_STATIC_URL_PATH}/{PANEL_HTML_FILE}?v={PANEL_VERSION}"
 
 # Mitgeliefertes Bild für Push-Meldungen (Companion-App, "icon_url"), wie in
@@ -268,6 +268,9 @@ CONF_STATUS_NOTIFY = "status_notify"
 # Status-App); die Uhrzeit "HH:MM" sendet sie einmal täglich dann (die nächste), leer = sofort
 CONF_STATUS_BACKUP_ALERT = "status_backup_alert"
 CONF_STATUS_BACKUP_TIME = "status_backup_time"
+# Längste Dauer eines Backups in Minuten (seit 2.186.0): läuft es länger (zum Beispiel ein Upload, der hängt), gilt es als nicht fertig geworden
+CONF_STATUS_BACKUP_MINUTES = "status_backup_minutes"
+DEFAULT_STATUS_BACKUP_MINUTES = 180
 # Status-App, System (seit 2.68.0): Sensor für CPU, Arbeitsspeicher und Festplatte; leer = automatisch gefunden
 CONF_STATUS_CPU_ENTITY = "status_cpu_entity"
 CONF_STATUS_RAM_ENTITY = "status_ram_entity"
@@ -295,6 +298,7 @@ INT_RANGES.update(
         CONF_STATUS_CPU_MINUTES: (1, 60),
         CONF_STATUS_RAM_MINUTES: (1, 60),
         CONF_STATUS_DISK_MINUTES: (1, 60),
+        CONF_STATUS_BACKUP_MINUTES: (10, 1440),
     }
 )
 # Grösse der Protokolle (seit 2.105.0, Panel › Allgemein › "Protokolle"): Meldungen und Routinen (protocol.py) und das Protokoll des Panels
