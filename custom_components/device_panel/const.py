@@ -13,7 +13,7 @@ PANEL_HTML_FILE = "panel.html"
 STATIC_URL_PATH = f"/{DOMAIN}"
 PANEL_STATIC_URL_PATH = f"{STATIC_URL_PATH}/panel"
 # Cache-Buster: bei jeder Änderung unter panel/ von Hand erhöhen.
-PANEL_VERSION = "419"
+PANEL_VERSION = "420"
 PANEL_PAGE_URL = f"{PANEL_STATIC_URL_PATH}/{PANEL_HTML_FILE}?v={PANEL_VERSION}"
 
 # Mitgeliefertes Bild für Push-Meldungen (Companion-App, "icon_url"), wie in
@@ -265,7 +265,7 @@ CONF_NOTIFY_SERVICE_STATUS = "notify_service_status"
 # Status-App (seit 2.62.0): bei Stillstand eines Teils melden (Standard an); das Ziel folgt dem globalen, wenn nichts Eigenes gewählt ist
 CONF_STATUS_NOTIFY = "status_notify"
 # Status-App, Backup (seit 2.185.0): Meldung, wenn ein Backup von Home Assistant fehlschlägt (Standard an, Ziel wie die übrigen Meldungen der
-# Status-App); die Uhrzeit "HH:MM" hält eine Meldung bis dahin zurück, leer = sofort
+# Status-App); die Uhrzeit "HH:MM" sendet sie einmal täglich dann (die nächste), leer = sofort
 CONF_STATUS_BACKUP_ALERT = "status_backup_alert"
 CONF_STATUS_BACKUP_TIME = "status_backup_time"
 # Status-App, System (seit 2.68.0): Sensor für CPU, Arbeitsspeicher und Festplatte; leer = automatisch gefunden

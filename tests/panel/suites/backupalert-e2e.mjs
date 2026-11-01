@@ -1,4 +1,4 @@
-// Meldung bei Backup-Fehler (2.185.0): Einstellungen der Status-App (Schalter, "Sofort" / "Ab Uhrzeit", Uhrzeit) und Assistent
+// Meldung bei Backup-Fehler (2.185.0): Einstellungen der Status-App (Schalter, "Sofort" / "Einmal täglich", Uhrzeit) und Assistent
 // (ganz oben im Schritt "Backup, Ruhezeit und System"). Entwurf, Speichern, Zusammenfassung. Deutsch und Englisch, Desktop und Handy.
 import { chromium } from "playwright-core";
 import { launchOptions } from "../lib.mjs";
@@ -10,8 +10,8 @@ const R = `document.querySelector("device-panel").shadowRoot`;
 const win = "dialog.status-dlg";
 const D = "dialog.wizard-dlg";
 const TEXT = {
-  de: { title: "Meldung bei Backup-Fehler", now: "Sofort", from: "Ab Uhrzeit", wz: "Backup", sum: "Backup-Fehler", sumNow: "sofort", sumFrom: "nicht vor 06:30", off: "aus" },
-  en: { title: "Alert when a backup fails", now: "At once", from: "From time", wz: "Backup", sum: "Backup failure", sumNow: "at once", sumFrom: "not before 06:30", off: "off" },
+  de: { title: "Meldung bei Backup-Fehler", now: "Sofort", from: "Einmal täglich", wz: "Backup", sum: "Backup-Fehler", sumNow: "sofort", link: "Systemmeldungen öffnen", sumFrom: "täglich um 06:30", off: "aus" },
+  en: { title: "Alert when a backup fails", now: "At once", from: "Once a day", wz: "Backup", sum: "Backup failure", sumNow: "at once", link: "Open system alerts", sumFrom: "daily at 06:30", off: "off" },
 };
 
 for (const lang of ["de", "en"]) {
@@ -40,10 +40,10 @@ for (const lang of ["de", "en"]) {
     await wait(`return !!r.querySelector("${win} [data-st-bkon]")`);
     check(`[${tag}] Abschnitt "${T.title}" steht, Schalter an, "${T.now}" gewählt, keine Uhrzeit`, await ev(`const d = r.querySelector("${win}"); return d.textContent.includes(${JSON.stringify(T.title)}) && d.querySelector("[data-st-bkon]").checked && d.querySelector('[data-st-bk="now"]').classList.contains("on") && !d.querySelector("[data-st-bktime]")`));
     check(`[${tag}] Zeitpunkt ist eine Reiterleiste (.sub-tabs) mit Kapsel`, await wait(`return !!r.querySelector('${win} .sub-tabs [data-st-bk="now"]') && !!r.querySelector('${win} [data-st-bk="now"]').closest(".sub-tabs").querySelector(".seg-pill")`));
-    // "Ab Uhrzeit": Feld mit 07:00, Entwurf, noch nichts gespeichert
+    // "Einmal täglich": Feld mit 09:00, Entwurf, noch nichts gespeichert
     await p.evaluate(() => { window.__wsCalls = []; });
     await tap(`${win} [data-st-bk="time"]`);
-    check(`[${tag}] "${T.from}": Uhrzeitfeld mit 07:00, noch nichts gespeichert`, (await wait(`return r.querySelector("${win} [data-st-bktime]")?.value === "07:00"`)) && (await calls("device_panel/set_options")).length === 0);
+    check(`[${tag}] "${T.from}": Uhrzeitfeld mit 09:00, noch nichts gespeichert`, (await wait(`return r.querySelector("${win} [data-st-bktime]")?.value === "09:00"`)) && (await calls("device_panel/set_options")).length === 0);
     await setField(`${win} [data-st-bktime]`, "06:30");
     await tap(`${win} [data-st-save]`);
     const v1 = await lastOpts();
@@ -73,6 +73,19 @@ for (const lang of ["de", "en"]) {
     await wait(`return r.querySelector("${win} [data-st-bkon]")?.checked && r.querySelector("${win} [data-st-save]")?.disabled`);
     await ev(`r.host._status.close()`);
 
+    // --- Verweis in den Einstellungen des Panels
+    await tap(".gear-btn");
+    await wait(`return !!r.querySelector("dialog.settings .set-sec")`);
+    await tap('[data-set="section"][data-id="monitor"]');
+    await wait(`return !!r.querySelector('[data-set="status-open"]')`);
+    check(`[${tag}] Einstellungen: Verweis auf die Systemmeldungen unter der Ruhezeit`, await ev(`const b = r.querySelector('[data-set="status-open"]'); return !!b && b.textContent.includes(${JSON.stringify(T.link)})`));
+    await ev(`r.querySelector('[data-set="status-open"]').scrollIntoView({ block: "center" })`);
+    await p.screenshot({ path: `${process.env.OUT || "output"}/backupalert-link-${tag.replace("/", "-")}.png` });
+    await tap(`[data-set="status-open"]`);
+    check(`[${tag}] Verweis: Status-App öffnet im Reiter "Einstellungen"`, await wait(`return r.querySelector("${win}")?.open && !!r.querySelector("${win} [data-st-bkon]")`));
+    await ev(`r.host._status.close()`);
+    await ev(`r.querySelector("dialog.settings")?.close?.()`);
+
     // --- Assistent
     await ev(`r.host._wizard.open()`);
     await wait(`return r.querySelector("${D}")?.open && !r.host._wizard.s?.loading`);
@@ -81,7 +94,7 @@ for (const lang of ["de", "en"]) {
     check(`[${tag}] Schritt: "${T.wz}" steht ganz oben (vor der Ruhezeit), Schalter an (Standard)`, await ev(`const d = r.querySelector("${D}"); const h = [...d.querySelectorAll("h2.wz-h2")].map((x) => x.textContent); return h[0] === ${JSON.stringify(T.wz)} && d.querySelector("[data-wz-bkon]").checked`));
     check(`[${tag}] "${T.now}" gewählt, kein Uhrzeitfeld, Ziel nicht wählbar (kein Zielfeld im Schritt)`, await ev(`const d = r.querySelector("${D}"); return d.querySelector('[data-wz-bk="now"]').classList.contains("on") && !d.querySelector("[data-wz-bktime]") && !d.querySelector("select[data-wz-target]")`));
     await tap(`${D} [data-wz-bk="time"]`);
-    check(`[${tag}] "${T.from}": Uhrzeitfeld mit 07:00`, await wait(`return r.querySelector("${D} [data-wz-bktime]")?.value === "07:00"`));
+    check(`[${tag}] "${T.from}": Uhrzeitfeld mit 09:00`, await wait(`return r.querySelector("${D} [data-wz-bktime]")?.value === "09:00"`));
     await setField(`${D} [data-wz-bktime]`, "06:30");
     await p.screenshot({ path: `${process.env.OUT || "output"}/backupalert-wizard-${tag.replace("/", "-")}.png` });
     await tap(`${D} [data-wz="next"]`);

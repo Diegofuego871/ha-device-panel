@@ -107,8 +107,8 @@ export class StatusUi {
       }
       const bk = ev.target.closest("[data-st-bk]");
       if (bk) {
-        // "Sofort" = leere Uhrzeit; "Ab Uhrzeit" beginnt mit 07:00 (der Nutzer stellt sie dann ein)
-        this.setDraft("status_backup_time", bk.dataset.stBk === "time" ? String(this.val("status_backup_time") || "07:00") : "");
+        // "Sofort" = leere Uhrzeit; "Einmal täglich" beginnt mit 09:00 (der Nutzer stellt sie dann ein)
+        this.setDraft("status_backup_time", bk.dataset.stBk === "time" ? String(this.val("status_backup_time") || "09:00") : "");
         this.render(true);
         return;
       }

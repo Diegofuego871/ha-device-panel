@@ -8805,7 +8805,9 @@ class DevicePanel extends HTMLElement {
       ui.row("notify_service", t("optNotifyTarget"), ui.select("notify_service", ui.targets, t("optNotifyTarget")), t("optNotifyTargetShort"), t("optNotifyTargetInfo"), warn) +
       ui.row("notify_click_target", t("optClick"), ui.select("notify_click_target", [["panel", t("clickPanel")], ["device", t("clickDevice")]], t("optClick")), t("optClickShort"), null) +
       `<div class="mon-grp">${escape(t("grpQuiet"))}</div>` +
-      this._monQuietHtml(d, changes, errors, ui)
+      this._monQuietHtml(d, changes, errors, ui) +
+      `<div class="opt mon-sysnote"><div class="opt-line"><span class="opt-short">${escape(t("sysNoteText"))}</span></div>
+        <button type="button" class="lnk" data-set="status-open">${escape(t("sysNoteOpen"))}</button></div>`
     );
   }
 
@@ -10263,6 +10265,9 @@ class DevicePanel extends HTMLElement {
         if (!st.draft) return;
         this._resetScope(btn.dataset.key);
         this._renderSettings();
+      } else if (action === "status-open") {
+        // Meldungen der Status-App (Systemteile, Backup, Auslastung): ihre Einstellungen öffnen (der Entwurf hier bleibt stehen)
+        this._status.open("settings");
       } else if (action === "quiet-all") {
         // Ruhezeit: die Zeiten des Montags für alle Wochentage übernehmen (ein/aus bleibt je Tag)
         if (!st.draft || !Array.isArray(st.draft.quiet_days)) return;

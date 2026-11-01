@@ -1,6 +1,6 @@
 """
 Meldung bei Backup-Fehler (seit 2.185.0): Die Backup-Integration von Home Assistant meldet jeden Lauf als Ereignis; kommt "fehlgeschlagen",
-geht eine Push-Meldung an das Ziel der Status-App. Mit einer Uhrzeit ("nicht vor 07:00") wartet die Meldung bis dahin, danach geht sie sofort.
+geht eine Push-Meldung an das Ziel der Status-App. Mit einer Uhrzeit ("einmal täglich um 09:00") wartet die Meldung bis zur nächsten dieser Uhrzeit; Fehler bis dahin ergeben eine Meldung.
 
 Ein zurückgehaltener Fehler liegt in einer eigenen Datei, damit ein Neustart von Home Assistant ihn nicht verliert. Die Meldung läuft als Art "status"
 durch push.async_push, die Ruhezeit gilt für sie also wie für die übrigen Status-Meldungen. Gemeldet wird nur ein Fehler, nicht ein Backup, das nie lief.
@@ -9,7 +9,7 @@ durch push.async_push, die Ruhezeit gilt für sie also wie für die übrigen Sta
 from __future__ import annotations
 
 import logging
-from datetime import datetime
+from datetime import datetime, timedelta
 from typing import Any
 
 from homeassistant.const import EVENT_COMPONENT_LOADED
@@ -29,12 +29,12 @@ CLICK_URL = "/config/backup"
 
 
 def release_at(clock: str, failed: datetime) -> datetime | None:
-    """Wann eine Meldung des Fehlers `failed` hinausgeht: None = sofort, sonst die Uhrzeit des Tages (nur, wenn der Fehler davor lag)."""
+    """Wann eine Meldung des Fehlers `failed` hinausgeht: None = sofort, sonst die nächste dieser Uhrzeit (heute, war sie schon, morgen)."""
     if not clock:
         return None
     hour, minute = int(clock[:2]), int(clock[3:5])
     due = failed.replace(hour=hour, minute=minute, second=0, microsecond=0)
-    return due if failed < due else None
+    return due if failed < due else due + timedelta(days=1)
 
 
 def is_failure(event: Any) -> bool:

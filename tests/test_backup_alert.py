@@ -38,8 +38,8 @@ def test_release_at() -> None:
     at = lambda h, m=0: datetime(2026, 11, 2, h, m)  # noqa: E731
     assert backup_alert.release_at("", at(3)) is None
     assert backup_alert.release_at("07:00", at(3)) == at(7)
-    assert backup_alert.release_at("07:00", at(7)) is None
-    assert backup_alert.release_at("07:00", at(15)) is None
+    assert backup_alert.release_at("07:00", at(7)) == at(7) + timedelta(days=1)
+    assert backup_alert.release_at("07:00", at(15)) == at(7) + timedelta(days=1)
 
 
 def test_only_a_failed_create_event_counts() -> None:
@@ -104,13 +104,30 @@ async def test_night_failure_waits_until_the_time(hass: HomeAssistant, freezer: 
     assert len(handy) == 1 and alert._pending is None
 
 
-async def test_failure_after_the_time_is_sent_at_once(hass: HomeAssistant, freezer: Any) -> None:
+async def test_failure_after_the_time_waits_for_the_next_day(hass: HomeAssistant, freezer: Any) -> None:
     handy = async_mock_service(hass, "notify", "handy")
     freezer.move_to(dt_util.now().replace(hour=15, minute=0, second=0, microsecond=0))
     alert = await _setup(hass, status_backup_time="07:00")
     alert._on_event(_Event())
     await hass.async_block_till_done()
+    assert handy == [] and alert._pending is not None
+    freezer.move_to(dt_util.now().replace(hour=15, minute=0) + timedelta(hours=17))
+    async_fire_time_changed(hass)
+    await hass.async_block_till_done()
     assert len(handy) == 1 and alert._pending is None
+
+
+async def test_two_failures_before_the_time_send_one_message(hass: HomeAssistant, freezer: Any) -> None:
+    handy = async_mock_service(hass, "notify", "handy")
+    freezer.move_to(dt_util.now().replace(hour=3, minute=0, second=0, microsecond=0))
+    alert = await _setup(hass, status_backup_time="07:00")
+    alert._on_event(_Event())
+    alert._on_event(_Event())
+    await hass.async_block_till_done()
+    freezer.move_to(dt_util.now().replace(hour=7, minute=1))
+    async_fire_time_changed(hass)
+    await hass.async_block_till_done()
+    assert len(handy) == 1
 
 
 async def test_waiting_failure_survives_a_restart_and_off_drops_it(hass: HomeAssistant, freezer: Any) -> None:

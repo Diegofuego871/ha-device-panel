@@ -142,7 +142,7 @@ export class WizardUi {
       on: { outage: Boolean(v.notify_outage), battery: Boolean(v.battery_push), new: Boolean(v.notify_new), charge: Boolean(v.notify_charge), updates: Boolean(v.notify_updates) },
       v: Object.fromEntries(VALUE_KEYS.map((k) => [k, String(v[k])])),
       quiet: { on: Boolean(v.quiet_enabled), from: first.from || "22:00", to: first.to || "07:00", uniform },
-      backup: { on: Boolean(v.status_backup_alert), mode: v.status_backup_time ? "time" : "now", time: v.status_backup_time || "07:00" },
+      backup: { on: Boolean(v.status_backup_alert), mode: v.status_backup_time ? "time" : "now", time: v.status_backup_time || "09:00" },
       sys: Object.fromEntries(SYS_KINDS.map((k) => [k, { on: Boolean(v[sysKey(k, "alert")]), limit: String(v[sysKey(k, "limit")]), min: String(v[sysKey(k, "minutes")]) }])),
       // Je Meldungsart die Integrationen (seit 2.137.0): Ausfall, Batterie und Neue Geräte schliessen aus, Voll geladen schliesst ein
       ex: { outage: new Set(v.notify_exclude_integrations || []), battery: new Set(v.battery_push_exclude_integrations || []), new: new Set(v.new_exclude_integrations || []) },
