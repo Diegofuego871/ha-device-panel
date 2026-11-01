@@ -35,7 +35,7 @@ const VALUE_KEYS = Object.values(VALUES).flatMap((rows) => rows.map(([key]) => k
 // Labels (seit 2.155.0): Schlüssel in den Zuordnungen pro Integration, feste Zeiten zur Auswahl wie in den Einstellungen
 const LABEL_PREFIX = "label:";
 const LABEL_TIMES = [1, 2, 5, 10, 15, 30, 60, 120, 360, 720, 1440];
-const LABEL_MAPS = ["offline_after_integrations", "notify_delay_integrations", "flaky_outages_integrations", "battery_low_integrations"];
+const LABEL_MAPS = ["offline_after_integrations", "notify_delay_integrations", "flaky_outages_integrations", "liveness_connectivity_integrations", "battery_low_integrations"];
 // Wählbare Werte für "Instabil ab" (Unterbrüche in 24 Std.), wie im Panel
 const LABEL_FLAKY = [2, 3, 4, 5, 7, 10, 15, 20];
 const LABEL_LISTS = ["notify_exclude_integrations", "battery_push_exclude_integrations", "new_exclude_integrations", "charge_integrations", "updates_integrations_on", "updates_integrations_off"];
@@ -169,12 +169,14 @@ export class WizardUi {
       const off = map("offline_after_integrations", id);
       const delay = map("notify_delay_integrations", id);
       const flaky = map("flaky_outages_integrations", id);
+      const lconn = map("liveness_connectivity_integrations", id);
       const bat = map("battery_low_integrations", id);
       cfg[id] = {
         mon: off !== "off",
         after: Number.isInteger(off) ? String(off) : "",
         delay: Number.isInteger(delay) ? String(delay) : "",
         flaky: Number.isInteger(flaky) ? String(flaky) : "",
+        lconn: lconn === true ? "on" : lconn === false ? "off" : "",
         bat: bat === "off" ? "off" : Number.isInteger(bat) ? String(bat) : "",
         push: !has("notify_exclude_integrations", id),
         batPush: !has("battery_push_exclude_integrations", id),
@@ -283,6 +285,7 @@ export class WizardUi {
           after: text(y.after, (v) => v === "" || /^\d+$/.test(v)) ?? base.after,
           delay: text(y.delay, (v) => v === "" || /^\d+$/.test(v)) ?? base.delay,
           flaky: text(y.flaky, (v) => v === "" || /^\d+$/.test(v)) ?? base.flaky,
+          lconn: text(y.lconn, (v) => v === "" || v === "on" || v === "off") ?? base.lconn,
           bat: text(y.bat, (v) => v === "" || v === "off" || /^\d+$/.test(v)) ?? base.bat,
           push: typeof y.push === "boolean" ? y.push : base.push,
           batPush: typeof y.batPush === "boolean" ? y.batPush : base.batPush,
@@ -361,7 +364,7 @@ export class WizardUi {
   }
 
   labelDefault() {
-    return { mon: true, after: "", delay: "", flaky: "", bat: "", push: true, batPush: true, newPush: true, charge: false, upd: "default", status: true };
+    return { mon: true, after: "", delay: "", flaky: "", lconn: "", bat: "", push: true, batPush: true, newPush: true, charge: false, upd: "default", status: true };
   }
 
   labelName(id) {
@@ -786,7 +789,7 @@ export class WizardUi {
       .join("");
     const diff = (id) => {
       const c = d.lab.cfg[id];
-      const parts = [!c.mon && t("integUnmon"), c.mon && !c.status && t("integNoStatus"), c.after !== "" && t("offlineMin", Number(c.after)), c.delay !== "" && t("diffDelay", t("offlineMin", Number(c.delay))), c.flaky !== "" && t("diffFlaky", Number(c.flaky)), c.bat === "off" ? t("devBatOff") : c.bat !== "" && `${c.bat} %`,
+      const parts = [!c.mon && t("integUnmon"), c.mon && !c.status && t("integNoStatus"), c.after !== "" && t("offlineMin", Number(c.after)), c.delay !== "" && t("diffDelay", t("offlineMin", Number(c.delay))), c.flaky !== "" && t("diffFlaky", Number(c.flaky)), c.lconn !== "" && t("diffLconn", t(c.lconn === "on" ? "lconnOn" : "lconnOff")), c.bat === "off" ? t("devBatOff") : c.bat !== "" && `${c.bat} %`,
         !c.push && t("diffNoPush"), !c.batPush && t("optBatPush"), !c.newPush && t("diffNoNew"), c.charge && t("diffCharge"), c.upd !== "default" && `${t("optUpdNotify")}: ${t(c.upd === "on" ? "devChargeOn" : "devChargeOff")}`].filter(Boolean);
       return parts.length ? parts.join(" · ") : t("integStandard");
     };
@@ -817,6 +820,7 @@ export class WizardUi {
     const updSel = `<label class="wz-sel wz-sel-s"><select data-wz-lc="${escape(id)}" data-wz-lf="upd" aria-label="${escape(t("optUpdNotify"))}"${none ? " disabled" : ""}><option value="default"${c.upd === "default" ? " selected" : ""}>${escape(t("labelUpdDefault"))}</option><option value="on"${c.upd === "on" ? " selected" : ""}>${escape(t("devChargeOn"))}</option><option value="off"${c.upd === "off" ? " selected" : ""}>${escape(t("devChargeOff"))}</option></select>${mdi("chevronDown", 18)}</label>`;
     const flakyVals = [...new Set([...LABEL_FLAKY, ...(/^\d+$/.test(c.flaky) ? [Number(c.flaky)] : [])])].sort((a, b) => a - b);
     const flakySel = `<label class="wz-sel wz-sel-s"><select data-wz-lc="${escape(id)}" data-wz-lf="flaky" aria-label="${escape(t("optFlaky"))}"${c.mon && c.status ? "" : " disabled"}><option value=""${c.flaky === "" ? " selected" : ""}>${escape(t("wzLStd"))}</option>${flakyVals.map((v) => `<option value="${v}"${String(v) === c.flaky ? " selected" : ""}>${escape(t("flakyCount", v))}</option>`).join("")}</select>${mdi("chevronDown", 18)}</label>`;
+    const lconnSel = `<label class="wz-sel wz-sel-s"><select data-wz-lc="${escape(id)}" data-wz-lf="lconn" aria-label="${escape(t("optLconn"))}"${c.mon && c.status ? "" : " disabled"}><option value=""${c.lconn === "" ? " selected" : ""}>${escape(t("wzLStd"))}</option><option value="on"${c.lconn === "on" ? " selected" : ""}>${escape(t("lconnOnOpt"))}</option><option value="off"${c.lconn === "off" ? " selected" : ""}>${escape(t("lconnOffOpt"))}</option></select>${mdi("chevronDown", 18)}</label>`;
     const outDim = c.mon && c.status ? "" : "dim";
     return `<div class="wz-msg on wz-lcard"><div class="wz-li">${this.host._ibadge(`${LABEL_PREFIX}${id}`, this.labelName(id))}<div class="wz-nm">${escape(this.labelName(id))}<small>${escape(t("labelDevs", (this.s.data.labels.find((l) => l.id === id) || {}).devices || 0))}</small></div><button type="button" class="dlg-btn wz-lrm" data-wz-lrm="${escape(id)}">${mdi("close", 16)}${escape(t("wzLRemove"))}</button></div>
       ${row("eye", t("optMonitor"), t("optMonitorShort"), sw("mon", c.mon, t("optMonitor")))}
@@ -824,6 +828,7 @@ export class WizardUi {
       <div class="${outDim}">${row("pulse", t("optOfflineAfter"), "", timeSel("after", t("optOfflineAfter"), c.after, t("wzLStd")))}
       ${row("timer", t("optDelay"), "", timeSel("delay", t("optDelay"), c.delay, t("wzLStd")))}
       ${row("alert", t("optFlaky"), "", flakySel)}
+      ${row("link", t("optLconn"), "", lconnSel)}
       ${row("alert", t("wzM_outage"), "", sw("push", c.push, t("wzM_outage"), none || !c.mon || !c.status))}</div>
       ${row("battery", t("optBatteryLow"), "", batSel)}
       ${row("battery", t("wzM_battery"), "", sw("batPush", c.batPush, t("wzM_battery"), none))}
@@ -976,6 +981,7 @@ export class WizardUi {
       else if (c.after !== "") maps.offline_after_integrations[key] = Number(c.after);
       if (c.delay !== "") maps.notify_delay_integrations[key] = Number(c.delay);
       if (c.flaky !== "") maps.flaky_outages_integrations[key] = Number(c.flaky);
+      if (c.lconn !== "") maps.liveness_connectivity_integrations[key] = c.lconn === "on";
       if (c.bat === "off") maps.battery_low_integrations[key] = "off";
       else if (c.bat !== "") maps.battery_low_integrations[key] = Number(c.bat);
       if (!c.push) lists.notify_exclude_integrations.push(key);

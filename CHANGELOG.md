@@ -7,6 +7,16 @@ All notable changes to this integration are documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/).
 
+## [2.184.0] - 2026-11-01
+
+A connectivity sensor can be switched off as a sign of life, on every level.
+
+### Added
+
+- **"Connectivity sensor counts" (global, per integration, per label, per device):** a connectivity sensor (a binary sensor with the device class "Connectivity", for example "Cloud" on a Shelly, "Android Auto" on a phone or the water tank of a vacuum robot) alone decided whether a device was online. If it was off, the device counted as offline even though it ran locally. The new setting switches that off; then the other entities of the device count. Default: on, so nothing changes for existing installations. Order: device before label before integration before global; with several labels, "off" wins. The device pop-up shows the origin ("Same as integration (off)", "Global value (on)", "Own") and says when the device has no active connectivity sensor; the integration and label detail has the choice under "Outage" (Default / On / Off), the global setting is a switch in the tab "Outage" under "Detection", the overview lists devices with their own choice and resets them, and the setup assistant has the choice on the label page. A connectivity sensor stays in effect if it is the only sign of life (otherwise the device would show "no data").
+- **Tab "Entities":** a connectivity sensor that does not count is locked ("does not count", dashed) and cannot be switched; a tap opens a window that names where it is switched off (device, label, integration or general setting) with a button to the setting of this device. A note above the list says whether a connectivity sensor decides alone, does not count or stays in effect. The marks "Sign of life" of single entities work as before.
+- **Backup and restore** include the new values (global and per integration/label with the monitoring section, per device with the devices).
+
 ## [2.183.0] - 2026-10-31
 
 One card per routine: the name you chose is always the title.
@@ -5419,6 +5429,7 @@ First pre-release.
   GitHub Actions for HACS/hassfest validation and tests.
 
 [2.6.0]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v2.6.0
+[2.184.0]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v2.184.0
 [2.183.0]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v2.183.0
 [2.182.0]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v2.182.0
 [2.181.4]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v2.181.4

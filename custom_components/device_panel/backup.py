@@ -100,6 +100,7 @@ _DEVICE_SETTING_KEYS = (
     "offline",
     "notify_delay",
     "flaky",
+    "liveness_conn",
     "charge",
     "charge_full",
     "charge_rise",
@@ -336,7 +337,7 @@ def _options_part(hass: HomeAssistant, entry: Any, section: str, file_options: A
 
 
 def _valid_device_setting(key: str, value: Any) -> bool:
-    if key in ("notify", "charge", "charge_stop", "charge_live"):
+    if key in ("notify", "charge", "charge_stop", "charge_live", "liveness_conn"):
         return isinstance(value, bool)
     if key == "liveness_exclude":
         return isinstance(value, list) and 0 < len(value) <= 500 and all(isinstance(v, str) and 0 < len(v) < 256 for v in value)

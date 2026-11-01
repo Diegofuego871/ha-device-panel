@@ -65,6 +65,8 @@ from .const import (
     CONF_NOTIFY_DELAY,
     CONF_NOTIFY_DELAY_INTEGRATIONS,
     CONF_FLAKY_INTEGRATIONS,
+    CONF_LIVENESS_CONN,
+    CONF_LIVENESS_CONN_INTEGRATIONS,
     CONF_OFFLINE_AFTER,
     CONF_OFFLINE_INTEGRATIONS,
     CONF_NOTIFY_EXCLUDE,
@@ -101,7 +103,7 @@ from .const import (
 )
 from .labels import strip_address
 from .scope import configured_labels, first, highest, is_label_key, label_list, listed, lowest, off_wins, pick, scope_of, strictest_time
-from .options_api import battery_threshold, effective, flaky_for, notify_delay_for, notify_target, offline_after_for, signal_default, status_off_for
+from .options_api import battery_threshold, effective, flaky_for, liveness_conn_for, notify_delay_for, notify_target, offline_after_for, signal_default, status_off_for
 
 _LOGGER = logging.getLogger(__name__)
 
@@ -143,6 +145,14 @@ def _device_class(entry: er.RegistryEntry, state: State | None) -> str | None:
     return entry.device_class or entry.original_device_class or _attr(state, "device_class")
 
 
+def connectivity_entities(entries: list[er.RegistryEntry]) -> list[er.RegistryEntry]:
+    """Die aktivierten Verbindungssensoren (binary_sensor, Geräteklasse connectivity) unter den Entitäten."""
+    return [
+        e for e in entries
+        if not e.disabled_by and e.domain == "binary_sensor" and (e.device_class or e.original_device_class) == "connectivity"
+    ]
+
+
 def liveness_entities(entries: list[er.RegistryEntry], exclude: frozenset[str] | set[str] = frozenset()) -> tuple[list[er.RegistryEntry], bool]:
     """
     Entitäten, die zeigen, dass das Gerät lebt (Standard der Überwachung).
@@ -158,10 +168,7 @@ def liveness_entities(entries: list[er.RegistryEntry], exclude: frozenset[str] |
     enabled = [e for e in entries if not e.disabled_by]
     if exclude and (kept := [e for e in enabled if e.entity_id not in exclude]):
         enabled = kept
-    connectivity = [
-        e for e in enabled
-        if e.domain == "binary_sensor" and (e.device_class or e.original_device_class) == "connectivity"
-    ]
+    connectivity = connectivity_entities(enabled)
     if connectivity:
         return connectivity, True
     for candidates in (
@@ -551,6 +558,16 @@ def _notify_delay_default(opts: dict[str, Any], domain: str | None) -> dict[str,
         "minutes": own if own is not None else opts[CONF_NOTIFY_DELAY],
         "integration": source if own is not None else None,
         "global": opts[CONF_NOTIFY_DELAY],
+    }
+
+
+def _liveness_conn_default(opts: dict[str, Any], domain: str | None) -> dict[str, Any]:
+    """"Verbindungssensor zählt" ohne Einstellung des Geräts (seit 2.184.0): Wert, dazu das Label oder die Integration mit eigener Wahl."""
+    source, own = pick(opts[CONF_LIVENESS_CONN_INTEGRATIONS], domain, off_wins)
+    return {
+        "on": bool(opts[CONF_LIVENESS_CONN]) if own is None else bool(own),
+        "integration": source if own is not None else None,
+        "global": bool(opts[CONF_LIVENESS_CONN]),
     }
 
 
@@ -1004,6 +1021,8 @@ async def async_load_type_overrides(hass: HomeAssistant) -> None:
             "notify_delay": {str(k): v for k, v in (stored.get("notify_delay") or {}).items() if valid_notify_delay_setting(v)},
             # "Instabil ab" des Geräts: ganze Zahl Unterbrüche in 24 Std. (seit 2.182.0).
             "flaky": {str(k): v for k, v in (stored.get("flaky") or {}).items() if valid_flaky_setting(v)},
+            # "Verbindungssensor zählt" des Geräts: Ein/Aus (seit 2.184.0).
+            "liveness_conn": {str(k): v for k, v in (stored.get("liveness_conn") or {}).items() if isinstance(v, bool)},
             # Lademeldung des Geräts: True/False, ohne Eintrag gilt die Integration (seit 1.30.0).
             "charge": {str(k): v for k, v in (stored.get("charge") or {}).items() if isinstance(v, bool)},
             # Eigenes "Voll ab" und eigener Anstieg des Geräts für die Lademeldung (seit 1.35.0).
@@ -1040,6 +1059,8 @@ async def _async_save_devices(hass: HomeAssistant) -> None:
         data["notify_delay"] = dict(settings["notify_delay"])
     if settings.get("flaky"):
         data["flaky"] = dict(settings["flaky"])
+    if settings.get("liveness_conn"):
+        data["liveness_conn"] = dict(settings["liveness_conn"])
     if settings.get("charge"):
         data["charge"] = dict(settings["charge"])
     for key in ("charge_full", "charge_rise", "charge_stall", "charge_stop", "charge_live", "liveness_exclude"):
@@ -1048,9 +1069,38 @@ async def _async_save_devices(hass: HomeAssistant) -> None:
     await _types_store(hass).async_save(data)
 
 
-def liveness_exclude(hass: HomeAssistant, device_id: str) -> frozenset[str]:
-    """Entitäten, die der Nutzer an diesem Gerät als "kein Lebenszeichen" markiert hat (seit 2.165.0)."""
+def liveness_marked(hass: HomeAssistant, device_id: str) -> frozenset[str]:
+    """Entitäten, die der Nutzer an diesem Gerät von Hand als "kein Lebenszeichen" markiert hat (seit 2.165.0)."""
     return frozenset((device_settings(hass).get("liveness_exclude") or {}).get(device_id) or ())
+
+
+def liveness_conn(hass: HomeAssistant, device_id: str, opts: dict[str, Any] | None = None, device: dr.DeviceEntry | None = None) -> bool:
+    """Zählt ein Verbindungssensor an diesem Gerät als Lebenszeichen (seit 2.184.0): Gerät, Label, Integration, global."""
+    own = (device_settings(hass).get("liveness_conn") or {}).get(device_id)
+    if own is not None:
+        return bool(own)
+    device = device or dr.async_get(hass).async_get(device_id)
+    return liveness_conn_for(opts or effective(hass), primary_domain(hass, device) if device else None)
+
+
+def liveness_exclude(
+    hass: HomeAssistant,
+    device_id: str,
+    entries: list[er.RegistryEntry] | None = None,
+    opts: dict[str, Any] | None = None,
+    device: dr.DeviceEntry | None = None,
+) -> frozenset[str]:
+    """
+    Entitäten, die an diesem Gerät nicht als Lebenszeichen zählen: die von Hand markierten (seit 2.165.0) und, wenn "Verbindungssensor zählt" für das
+    Gerät aus ist, seine Verbindungssensoren (seit 2.184.0). Bliebe dadurch nichts übrig, gilt der Ausschluss nicht (liveness_entities).
+    """
+    marked = liveness_marked(hass, device_id)
+    if entries is None:
+        entries = er.async_entries_for_device(er.async_get(hass), device_id)
+    conn = connectivity_entities(entries)
+    if not conn or liveness_conn(hass, device_id, opts, device):
+        return marked
+    return marked | {e.entity_id for e in conn}
 
 
 @callback
@@ -1060,7 +1110,7 @@ def device_settings(hass: HomeAssistant) -> dict[str, Any]:
     "notify_mute": {Gerät: bis}, "signal": {Gerät: Schwelle | "off"},
     "offline": {Gerät: Minuten | "off"}, "charge": {Gerät: bool}}.
     """
-    return hass.data.get(DATA_DEVICE_SETTINGS) or {"battery": {}, "notify_off": set(), "notify_mute": {}, "signal": {}, "offline": {}, "notify_delay": {}, "flaky": {}, "charge": {}, "charge_full": {}, "charge_rise": {}, "charge_stall": {}, "charge_stop": {}, "charge_live": {}, "liveness_exclude": {}}
+    return hass.data.get(DATA_DEVICE_SETTINGS) or {"battery": {}, "notify_off": set(), "notify_mute": {}, "signal": {}, "offline": {}, "notify_delay": {}, "flaky": {}, "liveness_conn": {}, "charge": {}, "charge_full": {}, "charge_rise": {}, "charge_stall": {}, "charge_stop": {}, "charge_live": {}, "liveness_exclude": {}}
 
 
 def signal_limit(d: dict[str, Any]) -> Any:
@@ -1232,6 +1282,11 @@ async def async_set_device_settings(hass: HomeAssistant, device_id: str, **chang
             settings.setdefault("flaky", {}).pop(device_id, None)
         else:
             settings.setdefault("flaky", {})[device_id] = int(changes["flaky"])
+    if "liveness_conn" in changes:
+        if changes["liveness_conn"] is None:
+            settings.setdefault("liveness_conn", {}).pop(device_id, None)
+        else:
+            settings.setdefault("liveness_conn", {})[device_id] = bool(changes["liveness_conn"])
     if "liveness_exclude" in changes:
         ids = sorted({str(e) for e in (changes["liveness_exclude"] or [])})
         if ids:
@@ -1293,6 +1348,7 @@ async def async_reset_device_settings(
     charge: list[str] | None = None,
     notify_delay: list[str] | None = None,
     flaky: list[str] | None = None,
+    liveness_conn: list[str] | None = None,
 ) -> dict[str, int]:
     """
     Einstellungen mehrerer Geräte auf den globalen Wert zurück (Einstellungen,
@@ -1319,12 +1375,14 @@ async def async_reset_device_settings(
     done_delay = sum(1 for dev in set(notify_delay or []) if delays.pop(dev, None) is not None)
     flakies = settings.setdefault("flaky", {})
     done_flaky = sum(1 for dev in set(flaky or []) if flakies.pop(dev, None) is not None)
+    lconn = settings.setdefault("liveness_conn", {})
+    done_lconn = sum(1 for dev in set(liveness_conn or []) if lconn.pop(dev, None) is not None)
     done_charge = 0
     for dev in set(charge or []):
         # Ein Gerät zählt einmal, auch wenn mehrere seiner Lade-Werte wegfallen
         if sum(settings.setdefault(key, {}).pop(dev, None) is not None for key in CHARGE_SETTING_KEYS):
             done_charge += 1
-    if done_battery or done_notify or done_conn or done_signal or done_offline or done_delay or done_flaky or done_charge:
+    if done_battery or done_notify or done_conn or done_signal or done_offline or done_delay or done_flaky or done_lconn or done_charge:
         await _async_save_devices(hass)
     return {
         "battery": done_battery,
@@ -1334,6 +1392,7 @@ async def async_reset_device_settings(
         "offline": done_offline,
         "notify_delay": done_delay,
         "flaky": done_flaky,
+        "liveness_conn": done_lconn,
         "charge": done_charge,
     }
 
@@ -1356,8 +1415,9 @@ async def async_device_overrides(hass: HomeAssistant) -> dict[str, list[dict[str
     offline = settings.get("offline", {})
     notify_delay = settings.get("notify_delay", {})
     flaky_own = settings.get("flaky", {})
+    lconn_own = settings.get("liveness_conn", {})
     charge_devs = {dev for key in CHARGE_SETTING_KEYS for dev in settings.get(key, {})}
-    for dev in {*settings["battery"], *settings["notify_off"], *conns, *signal, *offline, *notify_delay, *flaky_own, *charge_devs}:
+    for dev in {*settings["battery"], *settings["notify_off"], *conns, *signal, *offline, *notify_delay, *flaky_own, *lconn_own, *charge_devs}:
         device = dev_reg.async_get(dev)
         if device is None:
             continue
@@ -1393,6 +1453,8 @@ async def async_device_overrides(hass: HomeAssistant) -> dict[str, list[dict[str
         "notify_delay": sorted(({**items[dev], "value": value} for dev, value in notify_delay.items() if dev in items), key=by_name),
         # "Instabil ab" des Geräts (seit 2.182.0): Zahl der Unterbrüche in 24 Std.
         "flaky": sorted(({**items[dev], "value": value} for dev, value in flaky_own.items() if dev in items), key=by_name),
+        # "Verbindungssensor zählt" des Geräts (seit 2.184.0): ein oder aus.
+        "liveness_conn": sorted(({**items[dev], "value": value} for dev, value in lconn_own.items() if dev in items), key=by_name),
         # Lademeldung des Geräts (seit 2.78.0): alle eigenen Werte (an/aus, voll ab, Anstieg, Ende, Push bei Ende, Live)
         "charge": sorted(
             (
@@ -1600,6 +1662,7 @@ async def async_list_devices(hass: HomeAssistant, log: Any = None) -> dict[str, 
     offline_default = opts[CONF_OFFLINE_AFTER] * 60
     flaky_outages = opts[CONF_FLAKY_OUTAGES]
     flaky_own = device_settings(hass).get("flaky", {})
+    lconn_own = device_settings(hass).get("liveness_conn", {})
 
     raw: list[tuple[dr.DeviceEntry, list[er.RegistryEntry], list[str]]] = []
     all_domains: set[str] = set()
@@ -1626,7 +1689,7 @@ async def async_list_devices(hass: HomeAssistant, log: Any = None) -> dict[str, 
         # Ohne Online-Status (seit 2.156.0): überwacht (Batterie, Laden, Empfang), aber ohne Status und Ausfälle
         no_status = not disabled and not unmonitored and device_status_off(hass, opts, device)
         # Deaktiviert, nicht überwacht oder ohne Online-Status: kein Status, keine Ausfälle.
-        online, since = (None, None) if disabled or unmonitored or no_status else live_status(hass, entries, now, offline_after, log, device.id, liveness_exclude(hass, device.id))
+        online, since = (None, None) if disabled or unmonitored or no_status else live_status(hass, entries, now, offline_after, log, device.id, liveness_exclude(hass, device.id, entries, opts, device))
         at_least = False
         if since is not None:
             since, at_least = outage_start(log, device.id, since, started_at, offline_after)
@@ -1695,6 +1758,11 @@ async def async_list_devices(hass: HomeAssistant, log: Any = None) -> dict[str, 
                 "flaky_outages": flaky_for(opts, scope, flaky_own.get(device.id)),
                 "flaky_setting": flaky_own.get(device.id),
                 "flaky_default": _flaky_default(opts, scope),
+                # "Verbindungssensor zählt" (seit 2.184.0): wirksam, Einstellung des Geräts, ohne sie (Label, Integration, global); has_connectivity = es gibt einen.
+                "liveness_conn": liveness_conn_for(opts, scope, lconn_own.get(device.id)),
+                "liveness_conn_setting": lconn_own.get(device.id),
+                "liveness_conn_default": _liveness_conn_default(opts, scope),
+                "has_connectivity": bool(connectivity_entities(entries)),
                 # Ausfall-Meldungen ohne Einstellung des Geräts (Herkunft im Popup).
                 "notify_default": _notify_default(opts, scope),
                 # Beginn des Ausfalls, auch über Neustarts von HA (outage_start).
@@ -1836,14 +1904,24 @@ async def async_device_detail(hass: HomeAssistant, device_id: str, log: Any = No
     entries = er.async_entries_for_device(
         er.async_get(hass), device_id, include_disabled_entities=bool(device.disabled_by)
     )
-    excluded = liveness_exclude(hass, device_id)
+    opts = effective(hass)
+    marked = liveness_marked(hass, device_id)
+    excluded = liveness_exclude(hass, device_id, entries, opts, device)
     relevant, _conn = liveness_entities(entries, excluded)
     relevant_ids = {e.entity_id for e in relevant}
+    # "Verbindungssensor zählt" (seit 2.184.0): ist es aus, sind die Verbindungssensoren gesperrt (nicht abwählbar), solange andere Entitäten zählen
+    conn_ids = {e.entity_id for e in connectivity_entities(entries)}
+    lconn_own = (device_settings(hass).get("liveness_conn") or {}).get(device_id)
+    lconn_default = _liveness_conn_default(opts, primary_domain(hass, device))
+    lconn_on = lconn_default["on"] if lconn_own is None else bool(lconn_own)
+    locked_ids = {x for x in conn_ids if not lconn_on and x not in relevant_ids}
     # Ohne Markierungen: welche Entitäten zählen würden (das Popup rechnet damit, solange eine Änderung noch nicht gespeichert ist)
     base_ids = {e.entity_id for e in liveness_entities(entries)[0]}
+    # Was zählen würde, wären die Verbindungssensoren ausgeschlossen (die Sperre bei "Verbindungssensor zählt: aus", seit 2.184.0)
+    alt_ids = {e.entity_id for e in liveness_entities([x for x in entries if x.entity_id not in {c.entity_id for c in connectivity_entities(entries)}])[0]}
     enabled_ids = {e.entity_id for e in entries if not e.disabled_by}
     # Hätte die Markierung alle Entitäten ausgeschlossen, gilt sie nicht (siehe liveness_entities); das Popup sagt es
-    excluded_all = bool(excluded & enabled_ids) and enabled_ids <= excluded
+    excluded_all = bool(marked & enabled_ids) and enabled_ids <= marked
     device_name = device.name_by_user or device.name
     entities = []
     for e in sorted(entries, key=lambda x: (x.entity_category is not None, x.entity_id)):
@@ -1859,7 +1937,10 @@ async def async_device_detail(hass: HomeAssistant, device_id: str, log: Any = No
                 "category": e.entity_category.value if e.entity_category else None,
                 "liveness": e.entity_id in relevant_ids,
                 "liveness_base": e.entity_id in base_ids,
-                "liveness_off": e.entity_id in excluded,
+                "liveness_off": e.entity_id in marked,
+                "liveness_locked": e.entity_id in locked_ids,
+                "connectivity": e.entity_id in conn_ids,
+                "liveness_alt": e.entity_id in alt_ids,
                 "platform": e.platform,
             }
         )
@@ -1876,6 +1957,15 @@ async def async_device_detail(hass: HomeAssistant, device_id: str, log: Any = No
         "id": device.id,
         "entities": entities,
         "liveness_ignored": excluded_all,
+        # Verbindungssensoren (seit 2.184.0): ob sie zählen, wer es bestimmt (eigene Wahl des Geräts, sonst Label bzw. Integration, sonst global) und
+        # ob die Wahl wirkt (aus, aber es gibt keine andere Entität, die zählen könnte: dann zählt der Sensor trotzdem)
+        "liveness_conn": {
+            "on": lconn_on,
+            "own": lconn_own is not None,
+            "source": None if lconn_own is not None else lconn_default["integration"],
+            "has": bool(conn_ids),
+            "applies": bool(conn_ids) and not lconn_on and bool(locked_ids),
+        },
         # Update-Entitäten, die sich aus dem Popup installieren lassen (seit 2.161.0), und Ende der Zurückhaltung der Ausfall-Meldungen
         "updates": installable_updates(hass, device_id),
         "update_hold_until": held_until(hass, device_id),

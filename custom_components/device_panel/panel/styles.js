@@ -614,6 +614,10 @@ dialog.discard-dlg::backdrop { background: rgba(0,0,0,0.55); }
 .dd-card small { display: block; margin-top: 6px; color: var(--dp-text2); font-size: 13.5px; line-height: 1.45; }
 .dd-btns { display: flex; gap: 8px; margin-top: 16px; }
 .dd-btns .dlg-btn { flex: 1 1 0; min-width: 0; }
+/* Mit drei Antworten (Weiter bearbeiten, Verwerfen, Speichern): untereinander, Speichern oben */
+.dd-btns.three { flex-direction: column-reverse; }
+.dd-btns.three .dlg-btn { flex: none; width: 100%; }
+.pill.live.locked { display: inline-flex; align-items: center; gap: 4px; border-style: dashed; color: var(--dp-text2); background: none; opacity: .9; }
 .set-count { align-self: center; color: var(--dp-text2); font-size: 12px; white-space: nowrap; }
 .set-count:empty { display: none; }
 .set-count.saved { color: var(--dp-success); font-weight: 500; }

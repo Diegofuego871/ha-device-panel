@@ -575,6 +575,7 @@
       offline: devices.filter((d) => d.id in s.offline).map((d) => ({ ...info(d), value: s.offline[d.id] })).sort(byName),
       notify_delay: devices.filter((d) => d.id in s.notifyDelay).map((d) => ({ ...info(d), value: s.notifyDelay[d.id] })).sort(byName),
       flaky: devices.filter((d) => d.id in s.flaky).map((d) => ({ ...info(d), value: s.flaky[d.id] })).sort(byName),
+      liveness_conn: devices.filter((d) => d.id in s.lconn).map((d) => ({ ...info(d), value: s.lconn[d.id] })).sort(byName),
       // Wie das Backend (seit 2.78.0): alle eigenen Werte der Lademeldung eines Geräts
       charge: devices
         .map((d) => {
@@ -622,15 +623,28 @@
     if (d.signal) entities.push({ entity_id: `sensor.${slug}_signal`, name: "Signal", state: String(d.signal.value), unit: d.signal.kind === "dbm" ? "dBm" : "lqi", category: "diagnostic", liveness: false });
     // Für Prüfungen: zusätzliche Entitäten je Gerät (window.__detailExtra = { <Geräte-ID>: [Entität, …] })
     if (window.__detailExtra?.[id]) entities.push(...window.__detailExtra[id]);
+    let lconnInfo = null;
     // Lebenszeichen (2.165.0): Grundwert ohne Markierungen, Markierung des Nutzers, wirksam = Grundwert und nicht markiert
     {
       const off = new Set(window.__devSettings.livenessExclude?.[id] || []);
-      for (const e of entities) { e.liveness_base = e.liveness_base ?? e.liveness; e.liveness_off = off.has(e.entity_id); e.liveness = e.liveness_base && !e.liveness_off; e.platform = e.platform || "test"; }
+      // "Verbindungssensor zählt" (2.184.0): aus = Verbindungssensoren zählen nicht, solange andere Entitäten zählen
+      const own = window.__devSettings.lconn[id];
+      const [lk, lv] = window.__scopePick(window.__opts.liveness_connectivity_integrations || {}, d, (found) => found.find(([, x]) => x === false) || found[0]);
+      const lon = own ?? lv ?? window.__opts.liveness_connectivity;
+      const conn = entities.filter((e) => e.connectivity);
+      const others = entities.filter((e) => !e.connectivity && (e.liveness ?? false) && !off.has(e.entity_id));
+      const applies = conn.length > 0 && !lon && others.length > 0;
+      for (const e of conn) e.liveness_locked = applies;
+      for (const e of entities) e.liveness_locked = e.liveness_locked || false;
+      for (const e of entities) e.liveness_alt = e.liveness_alt ?? (!e.connectivity && Boolean(e.liveness));
+      lconnInfo = { on: lon, own: own !== undefined, source: own !== undefined ? null : lk, has: conn.length > 0, applies };
+      for (const e of entities) { e.liveness_base = e.liveness_base ?? e.liveness; e.liveness_off = off.has(e.entity_id); e.liveness = e.liveness_base && !e.liveness_off && !e.liveness_locked; e.platform = e.platform || "test"; }
     }
     const state = id === "a" ? "setup_retry" : "loaded";
     return {
       id,
       entities,
+      liveness_conn: lconnInfo,
       config_entries: [{ domain: d.integration.domain, name: integrations[d.integration.domain], title: d.integration.title, state }],
       identifiers: [`${d.integration.domain}: ${id}`],
       // Update aus dem Popup (2.161.0): window.__updates = { <Geräte-ID>: [{ entity_id, features }] }
@@ -692,7 +706,7 @@
   };
   window.__statusSum = () => { const s = window.__statusSnap(Date.now() / 1000); return { problems: s.problems, down: s.down }; };
   window.__opts = {
-    labels: [], offline_after: 2, flaky_outages: 3, startup_grace: 5, battery_low: 15, battery_low_integrations: {}, offline_after_integrations: {}, notify_delay_integrations: {}, flaky_outages_integrations: {}, battery_push: false, battery_persistent: false,
+    labels: [], offline_after: 2, flaky_outages: 3, startup_grace: 5, battery_low: 15, battery_low_integrations: {}, offline_after_integrations: {}, notify_delay_integrations: {}, flaky_outages_integrations: {}, liveness_connectivity: true, liveness_connectivity_integrations: {}, battery_push: false, battery_persistent: false,
     battery_push_mode: "instant", battery_push_time: "08:00", battery_push_daily: "new",
     exclude_integrations: [], exclude_types: [], exclude_devices: [], notify_service: "none", notify_service_outage: "", notify_service_battery: "", notify_service_charge: "", notify_service_new: "", notify_service_updates: "", notify_service_routines: "", notify_service_panelupdate: "", update_check_time: "", update_notify: false, notify_click_target: "panel",
     quiet_enabled: false, quiet_mode: "summary", quiet_topics: ["outage", "online", "battery", "charge", "new", "updates", "panelupdate"], quiet_days: Array.from({ length: 7 }, () => ({ on: true, from: "22:00", to: "07:00" })),
@@ -713,7 +727,7 @@
   const EMOJI_DEFAULTS = { outage: "🔴", group: "🚨", online: "🟢", battery: "🪫", charge: "🔋", charge_stop: "🔌", new: "✨", updates: "⬆️" };
   window.__services = [];
   // Einstellungen pro Gerät (Batterie, Meldungen), wie .storage/device_panel.devices.
-  window.__devSettings = { battery: {}, notifyOff: new Set(), mute: {}, signal: {}, offline: {}, notifyDelay: {}, flaky: {}, charge: {}, chargeLive: {}, chargeFull: {}, chargeRise: {}, chargeStall: {}, chargeStop: {}, livenessExclude: {} };
+  window.__devSettings = { battery: {}, notifyOff: new Set(), mute: {}, signal: {}, offline: {}, notifyDelay: {}, flaky: {}, lconn: {}, charge: {}, chargeLive: {}, chargeFull: {}, chargeRise: {}, chargeStall: {}, chargeStop: {}, livenessExclude: {} };
   window.__connOverrides = {};
   // Labels von Home Assistant (seit 2.155.0): window.__labels = [{ id, name }], window.__devLabels = { Geräte-ID: [Label-IDs] }
   window.__labels = [];
@@ -996,7 +1010,9 @@
         for (const id of new Set(msg.notify_delay || [])) if (id in s.notifyDelay) { delete s.notifyDelay[id]; notifyDelay++; }
         let flaky = 0;
         for (const id of new Set(msg.flaky || [])) if (id in s.flaky) { delete s.flaky[id]; flaky++; }
-        return { battery, notify, connection, signal, offline, notify_delay: notifyDelay, flaky, charge };
+        let lconn = 0;
+        for (const id of new Set(msg.liveness_conn || [])) if (id in s.lconn) { delete s.lconn[id]; lconn++; }
+        return { battery, notify, connection, signal, offline, notify_delay: notifyDelay, flaky, liveness_conn: lconn, charge };
       }
       if (msg.type === "device_panel/wizard_data") {
         const labelCounts = {};
@@ -1201,6 +1217,11 @@
           const m = msg.values.offline_after_integrations;
           if (!m || typeof m !== "object" || Array.isArray(m) || Object.entries(m).some(([k, v]) => !KEY_RE.test(k) || (v !== "off" && v !== "nostatus" && (!Number.isInteger(v) || v < 1 || v > 1440)))) throw { code: "invalid_format", message: "offline map" };
         }
+        if ("liveness_connectivity_integrations" in msg.values) {
+          // Wie options_api.bool_map: Domain oder Label → true/false
+          const m = msg.values.liveness_connectivity_integrations;
+          if (!m || typeof m !== "object" || Array.isArray(m) || Object.entries(m).some(([k, v]) => !KEY_RE.test(k) || typeof v !== "boolean")) throw { code: "invalid_format", message: "liveness integrations" };
+        }
         if ("flaky_outages_integrations" in msg.values) {
           // Wie options_api.flaky_map: ganze Zahl 2 bis 50
           const m = msg.values.flaky_outages_integrations;
@@ -1271,6 +1292,14 @@
           if (v === null) delete window.__devSettings.notifyDelay[msg.device_id];
           else window.__devSettings.notifyDelay[msg.device_id] = v;
           out.notify_delay = v;
+        }
+        if ("liveness_conn" in msg) {
+          // Wie das Backend: ein, aus oder null (zurück auf Label, Integration, global)
+          const v = msg.liveness_conn;
+          if (!(v === null || typeof v === "boolean")) throw { code: "invalid_format", message: "liveness_conn" };
+          if (v === null) delete window.__devSettings.lconn[msg.device_id];
+          else window.__devSettings.lconn[msg.device_id] = v;
+          out.liveness_conn = v;
         }
         if ("flaky" in msg) {
           // Wie das Backend: ganze Zahl 2..50 oder null (zurück auf Label, Integration, global)
@@ -1973,6 +2002,8 @@
         // Wie das Backend (flaky_for): Gerät vor Label/Integration (höchster Wert) vor global
         const flakyDefault = (d) => { const [k, v] = window.__scopePick(flakyMap, d, (found) => found.reduce((a, b) => (b[1] > a[1] ? b : a))); return { count: v ?? window.__opts.flaky_outages, integration: k, global: window.__opts.flaky_outages }; };
         const flakyFor = (d) => window.__devSettings.flaky[d.id] ?? flakyDefault(d).count;
+        // "Verbindungssensor zählt": Gerät vor Label (ein Aus gewinnt) vor Integration vor global
+        const lconnDefault = (d) => { const [k, v] = window.__scopePick(window.__opts.liveness_connectivity_integrations || {}, d, (found) => found.find(([, x]) => x === false) || found[0]); return { on: v ?? window.__opts.liveness_connectivity, integration: k, global: window.__opts.liveness_connectivity }; };
         // Batterie schwach nach "Schwach ab"; Binärsensoren (ohne Prozent) bleiben.
         const batLow = window.__opts.battery_low;
         const own = window.__opts.battery_low_integrations || {};
@@ -2033,6 +2064,10 @@
             flaky: !unmon(d) && !nost(d) && Boolean(d.online && d.avail24 && d.avail24.outages >= flakyFor(d)),
             flaky_outages: flakyFor(d),
             flaky_setting: window.__devSettings.flaky[d.id] ?? null,
+            liveness_conn: window.__devSettings.lconn[d.id] ?? lconnDefault(d).on,
+            liveness_conn_setting: window.__devSettings.lconn[d.id] ?? null,
+            liveness_conn_default: lconnDefault(d),
+            has_connectivity: Boolean((window.__detailExtra?.[d.id] || []).some((e) => e.connectivity)),
             flaky_default: flakyDefault(d),
             battery: bat(d),
             has_battery: Boolean(d.battery),

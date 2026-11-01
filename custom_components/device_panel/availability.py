@@ -340,7 +340,7 @@ class AvailabilityLog:
         changes: list[tuple[str, Any, float]] = []
         for device, entries in status_devices(self.hass, opts):
             seen.add(device.id)
-            exclude = liveness_exclude(self.hass, device.id)
+            exclude = liveness_exclude(self.hass, device.id, entries, opts, device)
             online, since = device_status(self.hass, entries, now_dt, self._offline_after(opts, device), exclude)
             state = None if online is None else ONLINE if online else OFFLINE
             events = self._events.setdefault(device.id, [])

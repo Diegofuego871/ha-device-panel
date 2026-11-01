@@ -7,6 +7,16 @@ Alle nennenswerten Änderungen an dieser Integration stehen in dieser Datei.
 Das Format folgt [Keep a Changelog](https://keepachangelog.com/de/1.1.0/),
 die Versionsnummern folgen [Semantic Versioning](https://semver.org/lang/de/).
 
+## [2.184.0] - 2026-11-01
+
+Ein Verbindungssensor lässt sich als Lebenszeichen abschalten, auf jeder Ebene.
+
+### Hinzugefügt
+
+- **"Verbindungssensor zählt" (global, pro Integration, pro Label, pro Gerät):** Ein Verbindungssensor (ein Binärsensor mit der Geräteklasse "Verbindung", zum Beispiel "Cloud" bei einem Shelly, "Android Auto" bei einem Handy oder der Wasserkasten eines Saugroboters) entschied allein, ob ein Gerät online war. War er aus, galt das Gerät als ausgefallen, obwohl es lokal lief. Die neue Einstellung schaltet das ab; dann zählen die übrigen Entitäten des Geräts. Standard: an, für bestehende Installationen ändert sich also nichts. Reihenfolge: Gerät vor Label vor Integration vor global; bei mehreren Labels gewinnt "aus". Das Geräte-Popup zeigt die Herkunft ("Wie Integration (aus)", "Globaler Wert (an)", "Eigene") und sagt, wenn das Gerät keinen aktiven Verbindungssensor hat; das Detail von Integration und Label hat die Auswahl unter "Ausfall" (Standard / An / Aus), die globale Einstellung ist ein Schalter im Reiter "Ausfall" unter "Erkennung", die Übersicht listet Geräte mit eigener Wahl und setzt sie zurück, und der Einrichtungsassistent hat die Auswahl auf der Label-Seite. Ein Verbindungssensor bleibt wirksam, wenn er das einzige Lebenszeichen ist (sonst zeigte das Gerät "keine Daten").
+- **Reiter "Entitäten":** Ein Verbindungssensor, der nicht zählt, ist gesperrt ("zählt nicht", gestrichelt) und lässt sich nicht umschalten; ein Tipp öffnet ein Fenster, das nennt, wo er ausgeschaltet ist (Gerät, Label, Integration oder allgemeine Einstellung), mit einem Knopf zur Einstellung dieses Geräts. Ein Hinweis über der Liste sagt, ob ein Verbindungssensor allein entscheidet, nicht zählt oder wirksam bleibt. Die Marken "Lebenszeichen" einzelner Entitäten arbeiten wie bisher.
+- **Sichern und Wiederherstellen** enthalten die neuen Werte (global und pro Integration/Label mit dem Bereich Überwachung, pro Gerät mit den Geräten).
+
 ## [2.183.0] - 2026-10-31
 
 Eine Karte je Routine: Der Name, den du gewählt hast, ist immer der Titel.
@@ -5520,6 +5530,7 @@ Erste Vorabversion.
   GitHub Actions für die Prüfungen von HACS und hassfest sowie die Tests.
 
 [2.6.0]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v2.6.0
+[2.184.0]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v2.184.0
 [2.183.0]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v2.183.0
 [2.182.0]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v2.182.0
 [2.181.4]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v2.181.4

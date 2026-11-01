@@ -1085,6 +1085,8 @@ def _signal_setting(value: Any) -> Any:
         vol.Optional("notify_delay"): vol.Any(None, _notify_delay_setting),
         # "Instabil ab" (seit 2.182.0): None = Label, Integration bzw. global, Zahl = Unterbrüche in 24 Std.
         vol.Optional("flaky"): vol.Any(None, _flaky_setting),
+        # "Verbindungssensor zählt" des Geräts (seit 2.184.0): None = Label, Integration bzw. global, sonst ein oder aus.
+        vol.Optional("liveness_conn"): vol.Any(None, bool),
         # Lademeldung (seit 1.30.0): None = Integration, True/False = am Gerät.
         vol.Optional("charge"): vol.Any(None, bool),
         # Eigenes "Voll ab" und eigener Anstieg der Lademeldung (seit 1.35.0): None = global.
@@ -1108,7 +1110,7 @@ async def _ws_set_device_settings(
     if dr.async_get(hass).async_get(msg["device_id"]) is None:
         connection.send_error(msg["id"], websocket_api.ERR_NOT_FOUND, "device not found")
         return
-    changes = {k: msg[k] for k in ("battery", "notify", "signal", "offline", "notify_delay", "flaky", "charge", "charge_full", "charge_rise", "charge_stall", "charge_stop", "charge_live", "liveness_exclude") if k in msg}
+    changes = {k: msg[k] for k in ("battery", "notify", "signal", "offline", "notify_delay", "flaky", "liveness_conn", "charge", "charge_full", "charge_rise", "charge_stall", "charge_stop", "charge_live", "liveness_exclude") if k in msg}
     # "Erst melden nach" des Geräts nie kürzer als sein "Ausgefallen nach" (seit 2.91.0, wie global und pro Integration): Fehler, nichts gespeichert
     if error := await async_notify_delay_error(hass, msg["device_id"], changes):
         connection.send_error(msg["id"], websocket_api.ERR_INVALID_FORMAT, error)
@@ -1282,6 +1284,8 @@ async def _ws_rename_device(
         vol.Optional("notify_delay", default=[]): [str],
         # "Instabil ab" des Geräts (seit 2.182.0): zurück auf Label, Integration bzw. global.
         vol.Optional("flaky", default=[]): [str],
+        # "Verbindungssensor zählt" des Geräts (seit 2.184.0): zurück auf Label, Integration bzw. global.
+        vol.Optional("liveness_conn", default=[]): [str],
         # Lademeldung des Geräts: alle eigenen Werte zurück auf Integration bzw. global.
         vol.Optional("charge", default=[]): [str],
     }
@@ -1292,7 +1296,7 @@ async def _ws_reset_device_settings(
     hass: HomeAssistant, connection: websocket_api.ActiveConnection, msg: dict[str, Any]
 ) -> None:
     """Einstellungen pro Gerät zurücksetzen, gibt die Zahl der Geräte zurück."""
-    done = await async_reset_device_settings(hass, msg["battery"], msg["notify"], msg["connection"], msg["signal"], msg["offline"], msg["charge"], msg["notify_delay"], msg["flaky"])
+    done = await async_reset_device_settings(hass, msg["battery"], msg["notify"], msg["connection"], msg["signal"], msg["offline"], msg["charge"], msg["notify_delay"], msg["flaky"], msg["liveness_conn"])
     # Batterie-Warnung sofort nachführen (Push, anhaltende Benachrichtigung).
     if done["battery"] and (watch := hass.data.get(DATA_BATTERY)) is not None:
         await watch.async_check()

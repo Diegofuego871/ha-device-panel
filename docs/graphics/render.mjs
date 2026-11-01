@@ -35,6 +35,7 @@ const TEXT = {
     mxRows: [
       ["Überwachung und \"Ausgefallen nach\"", 1, 1, 1, 1],
       ["\"Instabil ab\" (Unterbrüche in 24 Std.)", 1, 1, 1, 1],
+      ["\"Verbindungssensor zählt\" (Cloud-Entität und Ähnliches)", 1, 1, 1, 1],
       ["\"Online-Status beobachten\" (aus: Ring, keine Ausfälle)", 0, 1, 1, 1],
       ["\"Erst melden nach\"", 1, 1, 1, 1],
       ["Meldungen bei Ausfall und Rückkehr (Push, anhaltend)", 1, 1, 1, 1],
@@ -95,6 +96,7 @@ const TEXT = {
     mxRows: [
       ["Monitoring and \"Offline after\"", 1, 1, 1, 1],
       ["\"Unstable from\" (outages in 24 h)", 1, 1, 1, 1],
+      ["\"Connectivity sensor counts\" (cloud entity and the like)", 1, 1, 1, 1],
       ["\"Watch online status\" (off: ring, no outages)", 0, 1, 1, 1],
       ["\"Report only after\"", 1, 1, 1, 1],
       ["Notifications for outage and return (push, persistent)", 1, 1, 1, 1],

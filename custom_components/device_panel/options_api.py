@@ -20,7 +20,7 @@ from homeassistant.config_entries import ConfigEntry
 from homeassistant.core import HomeAssistant
 
 from . import activity, quiet
-from .scope import highest, label_keys, lowest, pick, strictest_time
+from .scope import highest, label_keys, lowest, off_wins, pick, strictest_time
 from .ai_prompt import ai_prompt
 from .const import (
     BATTERY_FIELDS,
@@ -133,6 +133,8 @@ from .const import (
     CONF_OFFLINE_AFTER,
     CONF_NOTIFY_DELAY_INTEGRATIONS,
     CONF_FLAKY_INTEGRATIONS,
+    CONF_LIVENESS_CONN,
+    CONF_LIVENESS_CONN_INTEGRATIONS,
     CONF_OFFLINE_INTEGRATIONS,
     CONF_SHOW_DISABLED,
     CONF_SHOW_SERVICE,
@@ -203,6 +205,7 @@ BOOL_OPTIONS: tuple[tuple[str, bool], ...] = (
     (CONF_NOTIFY_OUTAGE, False),
     (CONF_NOTIFY_ONLINE, False),
     (CONF_NOTIFY_GROUP, True),
+    (CONF_LIVENESS_CONN, True),
     (CONF_QUIET_ENABLED, False),
     (CONF_OUTAGE_PERSISTENT, False),
     (CONF_BATTERY_PUSH, False),
@@ -749,6 +752,7 @@ PANEL_SCHEMA = vol.Schema(
         vol.Optional(CONF_OFFLINE_INTEGRATIONS): offline_map,
         vol.Optional(CONF_NOTIFY_DELAY_INTEGRATIONS): notify_delay_map,
         vol.Optional(CONF_FLAKY_INTEGRATIONS): flaky_map,
+        vol.Optional(CONF_LIVENESS_CONN_INTEGRATIONS): bool_map,
         vol.Optional(CONF_NOTIFY_SERVICE): _notify_target,
         **{vol.Optional(key): _notify_override for key in NOTIFY_TOPICS.values()},
         vol.Optional(CONF_AI_TASK): _ai_task,
@@ -839,6 +843,10 @@ def values_from(options: Mapping[str, Any]) -> dict[str, Any]:
             values[key] = charge_map(source)(options.get(key))
         except vol.Invalid:
             values[key] = {}
+    try:
+        values[CONF_LIVENESS_CONN_INTEGRATIONS] = bool_map(options.get(CONF_LIVENESS_CONN_INTEGRATIONS))
+    except vol.Invalid:
+        values[CONF_LIVENESS_CONN_INTEGRATIONS] = {}
     try:
         values[CONF_CHARGE_STOP_INTEGRATIONS] = bool_map(options.get(CONF_CHARGE_STOP_INTEGRATIONS))
     except vol.Invalid:
@@ -1029,6 +1037,14 @@ def offline_after_for(opts: Mapping[str, Any], domain: str | None) -> float | No
 def status_off_for(opts: Mapping[str, Any], domain: str | None) -> bool:
     """Gilt für ein Gerät der Integration (Label vor Integration vor global) "Ohne Online-Status" (seit 2.156.0)."""
     return offline_setting_for(opts, domain) == MONITOR_NOSTATUS
+
+
+def liveness_conn_for(opts: Mapping[str, Any], domain: str | None, own: bool | None = None) -> bool:
+    """Zählt ein Verbindungssensor als Lebenszeichen (seit 2.184.0): eigene Wahl des Geräts (own), sonst Label (ein Aus gewinnt), Integration, global."""
+    if own is not None:
+        return own
+    _key, value = pick(opts.get(CONF_LIVENESS_CONN_INTEGRATIONS), domain, off_wins)
+    return bool(opts[CONF_LIVENESS_CONN]) if value is None else bool(value)
 
 
 def flaky_for(opts: Mapping[str, Any], domain: str | None, own: int | None = None) -> int:
