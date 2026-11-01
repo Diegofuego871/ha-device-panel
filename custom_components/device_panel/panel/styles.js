@@ -618,6 +618,7 @@ dialog.discard-dlg::backdrop { background: rgba(0,0,0,0.55); }
 .dd-btns.three { flex-direction: column-reverse; }
 .dd-btns.three .dlg-btn { flex: none; width: 100%; }
 .pill.live.locked { display: inline-flex; align-items: center; gap: 4px; border-style: dashed; color: var(--dp-text2); background: none; opacity: .9; }
+.pill.live.shadow { opacity: .75; }
 .set-count { align-self: center; color: var(--dp-text2); font-size: 12px; white-space: nowrap; }
 .set-count:empty { display: none; }
 .set-count.saved { color: var(--dp-success); font-weight: 500; }

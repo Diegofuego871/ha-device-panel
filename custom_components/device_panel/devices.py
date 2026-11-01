@@ -1917,8 +1917,6 @@ async def async_device_detail(hass: HomeAssistant, device_id: str, log: Any = No
     locked_ids = {x for x in conn_ids if not lconn_on and x not in relevant_ids}
     # Ohne Markierungen: welche Entitäten zählen würden (das Popup rechnet damit, solange eine Änderung noch nicht gespeichert ist)
     base_ids = {e.entity_id for e in liveness_entities(entries)[0]}
-    # Was zählen würde, wären die Verbindungssensoren ausgeschlossen (die Sperre bei "Verbindungssensor zählt: aus", seit 2.184.0)
-    alt_ids = {e.entity_id for e in liveness_entities([x for x in entries if x.entity_id not in {c.entity_id for c in connectivity_entities(entries)}])[0]}
     enabled_ids = {e.entity_id for e in entries if not e.disabled_by}
     # Hätte die Markierung alle Entitäten ausgeschlossen, gilt sie nicht (siehe liveness_entities); das Popup sagt es
     excluded_all = bool(marked & enabled_ids) and enabled_ids <= marked
@@ -1940,7 +1938,9 @@ async def async_device_detail(hass: HomeAssistant, device_id: str, log: Any = No
                 "liveness_off": e.entity_id in marked,
                 "liveness_locked": e.entity_id in locked_ids,
                 "connectivity": e.entity_id in conn_ids,
-                "liveness_alt": e.entity_id in alt_ids,
+                # Stufe für die Wahl der Lebenszeichen, damit das Popup mit dem Entwurf rechnen kann wie liveness_entities (seit 2.184.0):
+                # 0 Verbindungssensor, 1 ohne Kategorie und nicht versteckt, 2 ohne Kategorie, 3 übrige aktivierte
+                "liveness_tier": 0 if e.entity_id in conn_ids else 1 if e.entity_category is None and not e.hidden_by else 2 if e.entity_category is None else 3,
                 "platform": e.platform,
             }
         )

@@ -190,3 +190,21 @@ async def test_global_option_roundtrips(hass: HomeAssistant, hass_ws_client, val
     assert (await client.receive_json())["success"]
     await client.send_json({"id": 2, "type": f"{DOMAIN}/get_options"})
     assert (await client.receive_json())["result"]["values"]["liveness_connectivity"] is value
+
+
+async def test_detail_tiers_and_marking_sole_connectivity_sensor(hass: HomeAssistant) -> None:
+    """Das Popup rechnet mit den Stufen wie liveness_entities: wird der Verbindungssensor von Hand ausgeschlossen, zählen die übrigen (2.184.0)."""
+    await _setup(hass)
+    device, cloud, switch = _shelly(hass)
+    ents = er.async_get(hass)
+    diag = ents.async_get_or_create("sensor", "shelly", "Steckdose-rssi", device_id=device.id, entity_category=er.EntityCategory.DIAGNOSTIC)
+    hass.states.async_set(diag.entity_id, "-60")
+    detail = await async_device_detail(hass, device.id)
+    tiers = {e["entity_id"]: e["liveness_tier"] for e in detail["entities"]}
+    assert tiers == {cloud: 0, switch: 1, diag.entity_id: 3}
+    # Server: von Hand ausgeschlossen, bleibt die Wahl nicht beim Verbindungssensor hängen, sondern fällt auf die übrigen zurück
+    await async_set_device_settings(hass, device.id, liveness_exclude=[cloud])
+    from custom_components.device_panel.devices import liveness_entities
+
+    relevant, is_conn = liveness_entities(er.async_entries_for_device(ents, device.id), liveness_exclude(hass, device.id))
+    assert is_conn is False and {e.entity_id for e in relevant} == {switch}

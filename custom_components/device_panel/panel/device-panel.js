@@ -5091,7 +5091,8 @@ class DevicePanel extends HTMLElement {
     // nicht als Lebenszeichen zählt (ausgeschlossen oder nie zählend; seit 2.168.0, Wunsch des Nutzers), sonst gäbe es nichts zu filtern; ein Chip ohne Treffer bleibt nur, solange er gewählt ist
     const off = new Set(d.liveness_exclude_setting || []);
     const counts = { on: 0, off: 0, rest: 0 };
-    for (const e of list) counts[this._entGroup(e, off)]++;
+    const lc = this._lconnState(d);
+    for (const e of list) counts[this._entGroup(e, off, lc)]++;
     const chips = [["on", "entFilterOn"], ["off", "entFilterOff"], ["rest", "entFilterRest"]]
       .filter(([v]) => counts[v] > 0 || this._entLive === v)
       .map(([v, k]) => `<button type="button" class="chip${this._entLive === v ? " on" : ""}" data-dlg="ent-live" data-val="${v}" aria-pressed="${this._entLive === v}"><span>${escape(this._t(k))}</span><span class="n">${counts[v]}</span></button>`)
@@ -5113,27 +5114,64 @@ class DevicePanel extends HTMLElement {
   _livenessAllExcluded(deviceId, exclude) {
     const all = this._detail?.id === deviceId ? this._detail?.data?.entities || [] : [];
     const d = this._devices.find((x) => x.id === deviceId);
-    const lc = d ? this._lconnState(d) : null;
-    const base = all.filter((e) => (lc ? lc.base(e) : e.liveness_base) && !lc?.locked.has(e.entity_id));
-    return base.length > 0 && base.every((e) => exclude.includes(e.entity_id));
+    if (!d || !all.length) return false;
+    return this._lconnState(d, exclude).ignored;
   }
 
   // Gruppe einer Entität für die Chips (seit 2.166.0): "on" = zählt als Lebenszeichen, "off" = von dir ausgeschlossen, "rest" = zählt nie (Diagnose, versteckt)
   _entGroup(e, off, lc = null) {
     if (lc?.locked.has(e.entity_id)) return "off";
-    return off.has(e.entity_id) ? "off" : (lc ? lc.base(e) : e.liveness_base) ? "on" : "rest";
+    if (lc?.shadow.has(e.entity_id) && !off.has(e.entity_id)) return "rest";
+    if (off.has(e.entity_id)) return "off";
+    return lc ? (lc.counts(e) ? "on" : "rest") : e.liveness_base ? "on" : "rest";
   }
 
-  // "Verbindungssensor zählt" (seit 2.184.0), rechnet mit dem Entwurf: die Verbindungssensoren, ob die Wahl an ist, ob sie wirkt (aus und es gibt
-  // andere Entitäten, die zählen können) und welche Entität als Lebenszeichen gilt (base). Wirkt sie, sind die Verbindungssensoren gesperrt.
-  _lconnState(d) {
+  // Welche Entitäten als Lebenszeichen zählen, gerechnet mit dem Entwurf (seit 2.184.0). Verbindungssensoren zählen allein, solange einer nicht
+  // ausgeschlossen ist (von Hand markiert oder bei "Verbindungssensor zählt: aus"); sonst die übrigen in der gewohnten Reihenfolge: ohne Kategorie und
+  // nicht versteckt, dann alle ohne Kategorie, dann alle. Schliesst die Markierung von Hand alle diese übrigen aus, ginge es nicht zu speichern (ignored).
+  // exclude: andere Markierungen als die im Entwurf (zum Beispiel beim Prüfen vor dem Speichern).
+  _lconnState(d, exclude = null) {
     const all = this._detail?.data?.entities || [];
     const conn = all.filter((e) => e.connectivity);
-    const off = new Set(d.liveness_exclude_setting || []);
+    const off = new Set(exclude || d.liveness_exclude_setting || []);
     const ld = d.liveness_conn_default || { on: true };
     const on = typeof d.liveness_conn_setting === "boolean" ? d.liveness_conn_setting : ld.on !== false;
-    const applies = conn.length > 0 && !on && all.some((e) => !e.connectivity && e.liveness_alt && !off.has(e.entity_id));
-    return { conn, on, applies, locked: new Set(applies ? conn.map((e) => e.entity_id) : []), base: (e) => (applies ? e.liveness_alt : e.liveness_base) };
+    const out = new Set([...off, ...(on ? [] : conn.map((e) => e.entity_id))]);
+    const tier = (e) => (typeof e.liveness_tier === "number" ? e.liveness_tier : 1);
+    const rest = all.filter((e) => !e.connectivity);
+    const nat = (() => {
+      for (const f of [(e) => tier(e) === 1, (e) => tier(e) <= 2, () => true]) {
+        const g = rest.filter(f);
+        if (g.length) return g;
+      }
+      return [];
+    })();
+    const connKept = conn.filter((e) => !out.has(e.entity_id));
+    const natKept = nat.filter((e) => !out.has(e.entity_id));
+    let group;
+    let ignored = false;
+    let applies = false;
+    if (connKept.length) group = connKept;
+    else if (!nat.length) group = conn;
+    else if (natKept.length) {
+      group = natKept;
+      applies = conn.length > 0 && !on;
+    } else {
+      group = nat;
+      ignored = off.size > 0;
+    }
+    const ids = new Set(group.map((e) => e.entity_id));
+    return {
+      conn,
+      on,
+      applies,
+      // Gesperrt: Verbindungssensoren, die wegen der Wahl nicht zählen (nicht die von Hand markierten), solange die Wahl wirkt
+      locked: new Set(applies ? conn.filter((e) => !off.has(e.entity_id)).map((e) => e.entity_id) : []),
+      ignored,
+      // Verdeckt: Entitäten, die ohne den Verbindungssensor zählen würden, solange dieser allein entscheidet (nur Hinweis, nichts ist verstellt)
+      shadow: new Set(connKept.length ? nat.filter((e) => !off.has(e.entity_id)).map((e) => e.entity_id) : []),
+      counts: (e) => ids.has(e.entity_id),
+    };
   }
 
   // Wo die Wahl "Verbindungssensor zählt" für dieses Gerät eingestellt ist (Gerät, Label, Integration oder allgemein)
@@ -5156,6 +5194,19 @@ class DevicePanel extends HTMLElement {
     );
   }
 
+  // Tipp auf die verdeckte Marke: erklärt, warum diese Entität nicht zählt, solange der Verbindungssensor allein entscheidet
+  _lconnShadowInfo(entityId) {
+    const d = this._devices.find((x) => x.id === this._detailId);
+    if (!d) return;
+    const lc = this._lconnState(d);
+    const e = (this._detail?.data?.entities || []).find((x) => x.entity_id === entityId);
+    this._askConfirm(
+      { title: "lconnShadowTitle", note: "lconnShadowNote", args: [e?.name || entityId, lc.conn.map((x) => x.name).join(", "), this._lconnLevel(d)], no: "lconnLockClose", save: "lconnLockOpen", saveIcon: "pencil", noIcon: "close" },
+      () => {},
+      () => this._lconnGoto()
+    );
+  }
+
   _lconnGoto() {
     this._devTab = "set";
     this._devSub = "out";
@@ -5173,17 +5224,19 @@ class DevicePanel extends HTMLElement {
     // Helfer, der immer verfügbar ist. Rechnet mit dem Entwurf (liveness_exclude_setting), bis gespeichert ist.
     const off = new Set(d.liveness_exclude_setting || []);
     const lc = this._lconnState(d);
-    const base = all.filter((e) => lc.base(e) && !lc.locked.has(e.entity_id));
-    const ignored = base.length > 0 && base.every((e) => off.has(e.entity_id));
-    const live = (e) => lc.base(e) && !lc.locked.has(e.entity_id) && !off.has(e.entity_id);
+    const base = all.filter((e) => lc.counts(e) || off.has(e.entity_id));
+    const ignored = lc.ignored;
+    const live = (e) => lc.counts(e) && !lc.locked.has(e.entity_id) && !off.has(e.entity_id);
     const items = list
       .map((e) => {
         const { text, bad } = this._formatState(e);
-        const mark = lc.locked.has(e.entity_id)
+        const mark = lc.shadow.has(e.entity_id) && !off.has(e.entity_id)
+          ? `<button type="button" class="pill live locked shadow" data-dlg="live-shadow" data-entity="${escape(e.entity_id)}" title="${escape(this._t("lconnShadowTip"))}">${mdi("lock", 13)}${escape(this._t("lconnShadow"))}</button>`
+          : lc.locked.has(e.entity_id)
           ? `<button type="button" class="pill live locked" data-dlg="live-locked" data-entity="${escape(e.entity_id)}" title="${escape(this._t("lconnLockedTip"))}">${mdi("lock", 13)}${escape(this._t("lconnLocked"))}</button>`
           : off.has(e.entity_id)
           ? `<button type="button" class="pill live off" data-dlg="live-toggle" data-entity="${escape(e.entity_id)}" aria-pressed="false" title="${escape(this._t("livenessOnTip"))}">${escape(this._t("livenessOff"))}</button>`
-          : lc.base(e)
+          : lc.counts(e)
             ? `<button type="button" class="pill live" data-dlg="live-toggle" data-entity="${escape(e.entity_id)}" aria-pressed="true" title="${escape(this._t("livenessOffTip"))}">${escape(this._t("liveness"))}</button>`
             : "";
         return `<li class="entity" role="button" tabindex="0" data-dlg="more-info" data-entity="${escape(e.entity_id)}">
@@ -5440,6 +5493,8 @@ class DevicePanel extends HTMLElement {
       this._renderDevice();
     } else if (action === "live-locked") {
       this._lconnLockInfo(btn.dataset.entity);
+    } else if (action === "live-shadow") {
+      this._lconnShadowInfo(btn.dataset.entity);
     } else if (action === "lconn-goto") {
       this._lconnGoto();
     } else if (action === "live-toggle") {

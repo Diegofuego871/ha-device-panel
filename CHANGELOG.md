@@ -7,6 +7,18 @@ All notable changes to this integration are documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/).
 
+## [2.184.1] - 2026-11-01
+
+Excluding the only connectivity sensor now lets the other entities count at once.
+
+### Changed
+
+- **Tab "Entities":** while a connectivity sensor decides alone, the other entities that would count without it carry a locked mark "sensor decides" (dashed). A tap opens a window that explains why and names the sensor, with a button to the setting. Nothing is changed by it; the mark disappears as soon as the sensor is excluded or "Connectivity sensor counts" is off.
+
+### Fixed
+
+- **Tab "Entities", sign of life:** if a device had only its connectivity sensor as a sign of life and you excluded it by hand, the pop-up said "all signs of life are excluded" and blocked saving, although the server falls back to the other entities in that case. The pop-up now calculates with the same rule as the server: the other entities (those without a category, then all without a category, then all) get the mark "Sign of life" at once, before you save, and saving works. Excluding all of those by hand is still blocked ("at least one must count"). The setting "Connectivity sensor counts" switches to the other entities the same way.
+
 ## [2.184.0] - 2026-11-01
 
 A connectivity sensor can be switched off as a sign of life, on every level.
@@ -5429,6 +5441,7 @@ First pre-release.
   GitHub Actions for HACS/hassfest validation and tests.
 
 [2.6.0]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v2.6.0
+[2.184.1]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v2.184.1
 [2.184.0]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v2.184.0
 [2.183.0]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v2.183.0
 [2.182.0]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v2.182.0

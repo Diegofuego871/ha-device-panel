@@ -636,7 +636,7 @@
       const applies = conn.length > 0 && !lon && others.length > 0;
       for (const e of conn) e.liveness_locked = applies;
       for (const e of entities) e.liveness_locked = e.liveness_locked || false;
-      for (const e of entities) e.liveness_alt = e.liveness_alt ?? (!e.connectivity && Boolean(e.liveness));
+      for (const e of entities) e.liveness_tier = e.liveness_tier ?? (e.connectivity ? 0 : e.category ? 3 : 1);
       lconnInfo = { on: lon, own: own !== undefined, source: own !== undefined ? null : lk, has: conn.length > 0, applies };
       for (const e of entities) { e.liveness_base = e.liveness_base ?? e.liveness; e.liveness_off = off.has(e.entity_id); e.liveness = e.liveness_base && !e.liveness_off && !e.liveness_locked; e.platform = e.platform || "test"; }
     }

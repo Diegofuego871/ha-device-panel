@@ -94,7 +94,7 @@ for (const lang of ["de", "en"]) {
     // --- Gerät: eigene Wahl "An" hebt die Sperre auf (Entwurf, "Speichern" sendet)
     await pick('select[data-dlg="dev-lconn"]', "on");
     await tap('dialog.device .dev-tabs [data-tab="ent"]');
-    check(`[${tag}] eigene Wahl "An" (Entwurf): keine Sperre mehr`, await wait(`return !r.querySelector("dialog.device .pill.live.locked")`) );
+    check(`[${tag}] eigene Wahl "An" (Entwurf): keine Sperre mehr`, await wait(`return !r.querySelector("dialog.device .pill.live.locked:not(.shadow)")`) );
     await tap('dialog.device [data-dlg="save"]');
     check(`[${tag}] gespeichert: liveness_conn true`, (await wait(`return ${dev("b")}.liveness_conn_setting === true`)) && (await setCalls()).at(-1)?.liveness_conn === true, JSON.stringify((await setCalls()).at(-1)));
     // Eigene Wahl "Aus" auf Geräteebene: Fenster nennt "dieses Gerät"
@@ -111,6 +111,18 @@ for (const lang of ["de", "en"]) {
     await tap('dialog.device [data-dlg="save"]');
     check(`[${tag}] zurück auf Standard (null gesendet)`, (await wait(`return ${dev("b")}.liveness_conn_setting === null`)) && (await setCalls()).at(-1)?.liveness_conn === null);
 
+    // --- Sensor entscheidet allein: die übrigen Entitäten tragen die verdeckte Marke, Tipp erklärt warum
+    await tap('dialog.device .dev-tabs [data-tab="set"]');
+    await pick('select[data-dlg="dev-lconn"]', "on");
+    await tap('dialog.device .dev-tabs [data-tab="ent"]');
+    await wait(`return !!r.querySelector("dialog.device .pill.live.shadow")`);
+    check(`[${tag}] Sensor entscheidet allein: Relais verdeckt, Cloud trägt die normale Marke`, await ev(`const rows = [...r.querySelectorAll("dialog.device .entity")]; const c = rows.find((x) => x.textContent.includes("binary_sensor.geraet_cloud")); const rl = rows.find((x) => x.textContent.includes("switch.geraet_relais")); return !!rl.querySelector(".pill.live.shadow") && !!c.querySelector(".pill.live:not(.locked):not(.off)")`));
+    await tap('dialog.device .pill.live.shadow');
+    check(`[${tag}] verdeckte Marke: Fenster nennt den Sensor, nichts im Entwurf`, (await wait(`return !!r.querySelector("dialog.discard-dlg")?.open && r.querySelector("dialog.discard-dlg").textContent.includes("Cloud") || false`)) || (await wait(`return !!r.querySelector("dialog.discard-dlg")?.open`)));
+    await tap('dialog.discard-dlg [data-dd="no"]');
+    await tap('dialog.device .dev-tabs [data-tab="set"]');
+    await pick('select[data-dlg="dev-lconn"]', "default");
+
     // --- Einziges Lebenszeichen: bleibt nur der Verbindungssensor übrig, wirkt die Sperre nicht (der Sensor zählt trotzdem), der Hinweis sagt es
     await ev(`r.host._closeDevice?.()`);
     await p.evaluate(([c]) => { window.__detailExtra = { b: [c] }; window.__devSettings.livenessExclude = { b: ["binary_sensor.bewegungsmelder_flur"] }; }, [{ ...cloud }]);
@@ -120,6 +132,28 @@ for (const lang of ["de", "en"]) {
     await tap('dialog.device .dev-tabs [data-tab="ent"]');
     await wait(`return r.querySelectorAll("dialog.device .entity").length >= 2`);
     check(`[${tag}] nur der Verbindungssensor übrig: nicht gesperrt, Hinweis "bleibt wirksam"`, (await wait(`return !r.querySelector("dialog.device .pill.live.locked") && /${lang === "de" ? "bleibt wirksam" : "stays effective"}/.test(r.querySelector("dialog.device .note-lconn")?.textContent || "")`)));
+    // --- Von Hand: Wird der einzige Lebenszeichen-Verbindungssensor ausgeschlossen, zählen sofort die übrigen (Entwurf), und es lässt sich speichern
+    await ev(`r.host._closeDevice?.()`);
+    await p.evaluate(([c, x]) => { window.__opts.liveness_connectivity_integrations = {}; window.__detailExtra = { b: [c, x] }; window.__devSettings.livenessExclude = {}; window.__devSettings.lconn = {}; window.__wsCalls = []; }, [cloud, relay]);
+    await ev(`r.host._fetch(true)`);
+    await ev(`r.host._openDevice("b")`);
+    await wait(`return r.querySelector("dialog.device")?.open && r.querySelector('dialog.device .dev-tabs [data-tab="ent"]')`);
+    await tap('dialog.device .dev-tabs [data-tab="ent"]');
+    await wait(`return r.querySelectorAll("dialog.device .entity").length >= 3`);
+    const live = () => ev(`return [...r.querySelectorAll("dialog.device .entity")].filter((x) => x.querySelector(".pill.live:not(.off):not(.locked)")).map((x) => x.querySelector(".ent-name small").textContent).sort().join()`);
+    check(`[${tag}] Verbindungssensor an: nur er trägt die Marke`, (await live()) === "binary_sensor.geraet_cloud", await live());
+    await tap('dialog.device [data-entity="binary_sensor.geraet_cloud"][data-dlg="live-toggle"]');
+    check(`[${tag}] Sensor von Hand ausgeschlossen: die übrigen zählen sofort (Entwurf)`, (await wait(`return !!r.querySelector('dialog.device [data-entity="switch.geraet_relais"][data-dlg="live-toggle"]')`)) && (await live()).includes("switch.geraet_relais") && !(await live()).includes("geraet_cloud"), await live());
+    check(`[${tag}] ... und kein Hinweis "alle ausgeschlossen"`, await ev(`return !r.querySelector("dialog.device .dlg-note.warn")`));
+    await tap('dialog.device [data-dlg="save"]');
+    check(`[${tag}] ... Speichern geht: liveness_exclude gesendet, kein Sperrfenster`, (await wait(`return ${dev("b")}.liveness_exclude_setting?.includes("binary_sensor.geraet_cloud")`)) && !(await ev(`return !!r.querySelector("dialog.discard-dlg")?.open`)) && (await setCalls()).at(-1)?.liveness_exclude?.includes("binary_sensor.geraet_cloud"), JSON.stringify((await setCalls()).at(-1)));
+    // Alle ausgeschlossen: weiter gesperrt
+    await tap('dialog.device [data-entity="switch.geraet_relais"][data-dlg="live-toggle"]');
+    await tap('dialog.device [data-entity="binary_sensor.bewegungsmelder_flur"][data-dlg="live-toggle"]');
+    check(`[${tag}] alle Lebenszeichen ausgeschlossen: Hinweis, Speichern gesperrt`, await wait(`return !!r.querySelector("dialog.device .dlg-note.warn")`));
+    await ev(`r.host._devDiscard()`);
+    await ev(`r.host._closeDevice?.()`);
+
     // --- Assistent, Seite "Labels": Auswahl je Label ("Verbindungssensor zählt" und "Instabil ab"), geschrieben mit dem Schlüssel des Labels
     await ev(`r.host._closeDevice?.()`);
     await p.evaluate(() => { window.__labels = [{ id: "oft_offline", name: "Oft offline" }]; window.__devLabels = { b: ["oft_offline"] }; });

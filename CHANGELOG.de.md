@@ -7,6 +7,18 @@ Alle nennenswerten Änderungen an dieser Integration stehen in dieser Datei.
 Das Format folgt [Keep a Changelog](https://keepachangelog.com/de/1.1.0/),
 die Versionsnummern folgen [Semantic Versioning](https://semver.org/lang/de/).
 
+## [2.184.1] - 2026-11-01
+
+Wird der einzige Verbindungssensor ausgeschlossen, zählen sofort die übrigen Entitäten.
+
+### Geändert
+
+- **Reiter "Entitäten":** Solange ein Verbindungssensor allein entscheidet, tragen die übrigen Entitäten, die ohne ihn zählen würden, eine gesperrte Marke "Sensor entscheidet" (gestrichelt). Ein Tipp öffnet ein Fenster, das erklärt warum und den Sensor nennt, mit einem Knopf zur Einstellung. Es ändert nichts; die Marke verschwindet, sobald der Sensor ausgeschlossen oder "Verbindungssensor zählt" aus ist.
+
+### Behoben
+
+- **Reiter "Entitäten", Lebenszeichen:** Hatte ein Gerät nur seinen Verbindungssensor als Lebenszeichen und schlossest du ihn von Hand aus, sagte das Popup "alle Lebenszeichen ausgeschlossen" und sperrte das Speichern, obwohl der Server in diesem Fall auf die übrigen Entitäten zurückfällt. Das Popup rechnet jetzt mit derselben Regel wie der Server: Die übrigen Entitäten (zuerst die ohne Kategorie, dann alle ohne Kategorie, dann alle) tragen sofort, noch vor dem Speichern, die Marke "Lebenszeichen", und das Speichern geht. Schliesst man alle diese von Hand aus, bleibt es gesperrt ("mindestens eines muss zählen"). Die Einstellung "Verbindungssensor zählt" schaltet auf dieselbe Weise auf die übrigen Entitäten um.
+
 ## [2.184.0] - 2026-11-01
 
 Ein Verbindungssensor lässt sich als Lebenszeichen abschalten, auf jeder Ebene.
@@ -5530,6 +5542,7 @@ Erste Vorabversion.
   GitHub Actions für die Prüfungen von HACS und hassfest sowie die Tests.
 
 [2.6.0]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v2.6.0
+[2.184.1]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v2.184.1
 [2.184.0]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v2.184.0
 [2.183.0]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v2.183.0
 [2.182.0]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v2.182.0
