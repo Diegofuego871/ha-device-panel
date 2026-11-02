@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 from dataclasses import dataclass
+import time
 from datetime import datetime, timedelta
 from typing import Any
 
@@ -219,7 +220,7 @@ async def test_watch_is_quiet_after_a_successful_run(hass: HomeAssistant, freeze
 async def test_watch_judges_a_manual_run_only_by_the_limit(hass: HomeAssistant, freezer: Any) -> None:
     """Ein Handbackup hat nie "letzter Erfolg" (der Sensor führt nur automatische nach): das Urteil nach dem Lauf entfällt, das Zeitlimit gilt."""
     handy = async_mock_service(hass, "notify", "handy")
-    await _setup(hass, status_backup_minutes=10)
+    await _setup(hass, status_backup_auto=False, status_backup_minutes=10)
     ids = _sensors(hass)
     await _start_run(hass, ids, automatic=False)
     hass.states.async_set(ids["state"], "idle")
@@ -233,7 +234,7 @@ async def test_watch_judges_a_manual_run_only_by_the_limit(hass: HomeAssistant, 
 
 async def test_watch_reports_a_run_over_the_limit_once(hass: HomeAssistant, freezer: Any) -> None:
     handy = async_mock_service(hass, "notify", "handy")
-    await _setup(hass, status_backup_minutes=10)
+    await _setup(hass, status_backup_auto=False, status_backup_minutes=10)
     ids = _sensors(hass)
     await _start_run(hass, ids, automatic=True)
     await _fire(hass, freezer, 9 * 60)
@@ -319,7 +320,7 @@ class _Backup:
 async def test_late_finish_after_a_hang_suggests_a_longer_limit(hass: HomeAssistant, freezer: Any) -> None:
     sent = async_mock_service(hass, "notify", "handy")
     handy = _Backup(sent)  # die Status-Wache meldet beim Vorstellen der Uhr eigene Dinge: nur Backup-Meldungen zählen
-    alert = await _setup(hass, status_backup_minutes=60)
+    alert = await _setup(hass, status_backup_auto=False, status_backup_minutes=60)
     ids = _sensors(hass)
     await _start_run(hass, ids, automatic=True)
     await _fire(hass, freezer, 61 * 60)
@@ -369,3 +370,92 @@ async def test_backup_minutes_option_range(hass: HomeAssistant) -> None:
     for bad in (9, 1441, 0):
         with pytest.raises(vol.Invalid):
             options_api.PANEL_SCHEMA({"status_backup_minutes": bad})
+
+
+# --- Längste Dauer "Automatisch" (2.188.0) --------------------------------------------------------------------------------
+
+
+def test_auto_minutes() -> None:
+    assert backup_alert.auto_minutes([]) is None
+    assert backup_alert.auto_minutes([3600]) is None  # zu wenige Läufe
+    assert backup_alert.auto_minutes([600, 3600]) == 80  # längste 60 Min. plus 20
+    assert backup_alert.auto_minutes([61, 62]) == 22  # 62 s + 20 Min. -> aufgerundet auf Minuten
+    assert backup_alert.auto_minutes([100 * 3600, 90]) == 1440  # höchstens 24 Stunden
+
+
+@dataclass
+class _St:
+    state: str
+    last_changed: datetime
+
+
+def test_runs_from_history() -> None:
+    base = datetime(2026, 10, 25, 3, 0, tzinfo=dt_util.UTC)
+    at = lambda minutes: base + timedelta(minutes=minutes)  # noqa: E731
+    ids = {"state": "sensor.m", "attempted": "sensor.a", "success": "sensor.s"}
+    states = {
+        "sensor.m": [_St("idle", at(-60)), _St("create_backup", at(0)), _St("idle", at(45)), _St("create_backup", at(600)), _St("idle", at(612)), _St("create_backup", at(1440)), _St("idle", at(1500))],
+        # Versuch und Erfolg beim ersten und dritten Lauf; der zweite (von Hand) setzt beides nicht
+        "sensor.a": [_St("2026-10-24T03:00:00+00:00", at(-60)), _St("2026-10-25T03:00:00+00:00", at(0)), _St("2026-10-26T03:00:00+00:00", at(1440))],
+        "sensor.s": [_St("2026-10-24T03:30:00+00:00", at(-60)), _St("2026-10-25T03:45:00+00:00", at(45)), _St("2026-10-26T04:00:00+00:00", at(1500))],
+    }
+    runs = backup_alert.runs_from_history(states, ids)
+    assert [round(r["secs"] / 60) for r in runs] == [45, 60]
+
+
+async def test_auto_limit_follows_the_longest_recent_run(hass: HomeAssistant, freezer: Any) -> None:
+    handy = async_mock_service(hass, "notify", "handy")
+    alert = await _setup(hass)
+    assert alert.minutes() == 180 and alert.info() == {"minutes": None, "runs": 0}  # zu wenige Läufe: der feste Wert
+    for secs in (1800, 3000):
+        alert._record(time.time(), secs)
+    assert alert.minutes() == 70 and alert.info() == {"minutes": 70, "runs": 2}  # 50 Min. plus 20
+    ids = _sensors(hass)
+    await _start_run(hass, ids, automatic=True)
+    await _fire(hass, freezer, 69 * 60)
+    assert handy == []
+    await _fire(hass, freezer, 2 * 60)
+    assert len(handy) == 1 and "1 Std. 10 Min." in handy[0].data["message"]
+
+
+async def test_fixed_value_when_auto_is_off(hass: HomeAssistant) -> None:
+    alert = await _setup(hass, status_backup_auto=False, status_backup_minutes=45)
+    for secs in (1800, 3000, 3300):
+        alert._record(time.time(), secs)
+    assert alert.minutes() == 45
+
+
+async def test_only_the_last_five_runs_count(hass: HomeAssistant) -> None:
+    alert = await _setup(hass)
+    for secs in (7200, 600, 600, 600, 600, 600):  # der lange Lauf fällt als sechster zurück heraus
+        alert._record(time.time(), secs)
+    assert alert.minutes() == 30
+
+
+async def test_successful_run_is_recorded_and_survives_a_restart(hass: HomeAssistant, freezer: Any) -> None:
+    alert = await _setup(hass)
+    ids = _sensors(hass)
+    await _start_run(hass, ids, automatic=True)
+    await _fire(hass, freezer, 20 * 60)
+    alert._on_event(_Done())
+    await hass.async_block_till_done()
+    assert len(alert._runs) == 1 and round(alert._runs[0]["secs"] / 60) == 20
+    await alert._store.async_save({"pending": None, "open": None, "runs": alert._runs})
+    fresh = backup_alert.BackupAlert(hass)
+    await fresh.async_start()
+    assert fresh._runs == alert._runs
+    await fresh.async_stop()
+
+
+async def test_late_finish_in_auto_mode_has_no_suggestion(hass: HomeAssistant, freezer: Any) -> None:
+    handy = async_mock_service(hass, "notify", "handy")
+    alert = await _setup(hass)  # zu wenige Läufe: fest 180 Minuten
+    ids = _sensors(hass)
+    await _start_run(hass, ids, automatic=True)
+    await _fire(hass, freezer, 181 * 60)
+    await _fire(hass, freezer, 20 * 60)
+    alert._on_event(_Done())
+    await hass.async_block_till_done()
+    late = [h for h in handy if "doch noch" in h.data["title"]]
+    assert len(late) == 1 and "passt sich" in late[0].data["message"] and "stelle sie auf" not in late[0].data["message"]
+    assert late[0].data["data"]["url"] == "/config/backup"

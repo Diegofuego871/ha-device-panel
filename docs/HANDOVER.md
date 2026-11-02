@@ -3,6 +3,12 @@
 Einstieg für jede neue Claude-Code-Session. Zuerst diese Datei lesen, dann
 `CLAUDE.md`, `docs/CONCEPT.md`, `docs/LEARNINGS.md`, `docs/DESIGN.md`.
 
+## Stand (2.188.0, längste Dauer automatisch)
+
+- Option `status_backup_auto` (bool, Standard an, Bereich "monitor" der Sicherung) neben `status_backup_minutes` (fester Wert, Standard 180). `BackupAlert.minutes()`: Automatisch = `auto_minutes` (längster der letzten `RUNS_KEPT` = 5 gelungenen Läufe plus 20 Minuten, 10 bis 1440; mindestens `RUNS_MIN` = 2 Läufe, sonst der feste Wert). Läufe zählen, nicht Tage (wöchentliche Backups). `_record` merkt jeden gelungenen Lauf (Ereignis oder Sensor) in der Datei `device_panel.backup_alert` (`runs`); beim ersten Start holt `_seed` frühere Läufe aus dem Recorder (`runs_from_history`: Zeiträume "create_backup", in denen "letzter Versuch" und "letzter Erfolg" nachgeführt wurden, nur automatische; Handbackups bleiben draussen). `info()` geht in `status_get` (`backup`) für die Anzeige. Im automatischen Modus hat die "doch noch fertig"-Meldung keinen Vorschlag (`backup_late_auto_text`), nur bei "Fest".
+- Panel: Reiterleiste "Automatisch / Fest" (`data-st-bkauto`) unter "Längste Dauer"; eine ungültige feste Zahl wird beim Wechsel auf Automatisch verworfen.
+- Tests: `test_backup_alert` (auto_minutes, runs_from_history, letzte fünf, feste Dauer, Neustart), Suite `backupalert`.
+
 ## Stand (2.187.0, Erklärungen im Assistenten)
 
 - Mockup `docs/mockups/wizard-info-v1` (Variante B gewählt). In den Schritten "Meldungen" und "Labels" steht hinter jedem Namen ein ⓘ (`infoBtn`, Klasse `info-btn wz-i`, `data-wz-info`); der Tipp öffnet über `_askConfirm` (neu: `keys.html`, `keys.cls`) das Fenster `dd-info` mit Titel `wzI_<id>_t`, Text `wzI_<id>`, auf Wunsch Kasten `_el`/`_e` und eine kleine Grafik (`infoFigure`: `delay` und `flaky` als Zeitstrahl, `bat` als Batterieleiste mit Schwelle). Neue Einträge: in `INFO_IDS` (und `INFO_EXAMPLE`/`INFO_FIGURE`) und in beiden Sprachen in `strings.js`.

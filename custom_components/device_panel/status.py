@@ -34,6 +34,7 @@ from .const import (
     CONF_STATUS_RAM_LIMIT,
     CONF_STATUS_RAM_MINUTES,
     DATA_AVAILABILITY,
+    DATA_BACKUP_ALERT,
     DATA_BATTERY,
     DATA_CHARGE,
     DATA_MAGIC,
@@ -170,6 +171,7 @@ class StatusWatch:
             "down": sum(1 for p in parts if p["state"] == "down"),
             "routines_loaded": len(manager.routines()) if manager is not None else 0,
             "routines_missed": manager.missed_since(self.started) if manager is not None else 0,
+            "backup": alert.info() if (alert := self.hass.data.get(DATA_BACKUP_ALERT)) is not None else {"minutes": None, "runs": 0},
         }
 
     def summary(self) -> dict[str, int]:

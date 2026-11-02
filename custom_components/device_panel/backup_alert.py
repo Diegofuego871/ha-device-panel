@@ -21,11 +21,12 @@ from homeassistant.const import EVENT_COMPONENT_LOADED, EVENT_STATE_CHANGED
 from homeassistant.core import CALLBACK_TYPE, Event, HomeAssistant, callback
 from homeassistant.helpers import entity_registry as er
 from homeassistant.helpers.event import async_call_later
+from homeassistant.helpers.start import async_at_started
 from homeassistant.helpers.storage import Store
 from homeassistant.util import dt as dt_util
 
 from . import push
-from .const import CONF_STATUS_BACKUP_ALERT, CONF_STATUS_BACKUP_MINUTES, CONF_STATUS_BACKUP_TIME, DOMAIN, NOTIFY_NONE, STORAGE_VERSION
+from .const import CONF_STATUS_BACKUP_ALERT, CONF_STATUS_BACKUP_AUTO, CONF_STATUS_BACKUP_MINUTES, CONF_STATUS_BACKUP_TIME, DOMAIN, NOTIFY_NONE, STORAGE_VERSION
 from .options_api import effective, notify_target
 
 _LOGGER = logging.getLogger(__name__)
@@ -37,6 +38,11 @@ SENSOR_KEYS = {"state": "backup_manager_state", "attempted": "last_attempted_aut
 # Der Versuch wird kurz vor dem Zustandswechsel vermerkt; nach dem Lauf bekommen die Sensoren noch einen Moment, bis sie nachgeführt sind
 STAMP_SLACK_S = 120
 JUDGE_DELAY_S = 30
+# Längste Dauer "Automatisch": die längste der letzten RUNS_KEPT gelungenen Läufe plus Zuschlag; mindestens RUNS_MIN Läufe müssen bekannt sein
+RUNS_KEPT = 5
+RUNS_MIN = 2
+RESERVE_S = 20 * 60
+SEED_DAYS = 30
 
 
 def release_at(clock: str, failed: datetime) -> datetime | None:
@@ -51,6 +57,31 @@ def release_at(clock: str, failed: datetime) -> datetime | None:
 def is_success(event: Any) -> bool:
     """Ein gelungener Lauf beim Erstellen eines Backups."""
     return getattr(event, "manager_state", None) == "create_backup" and getattr(event, "state", None) == "completed"
+
+
+def auto_minutes(durations: list[float]) -> int | None:
+    """Längste Dauer aus den Dauern der letzten gelungenen Backups: die längste plus 20 Minuten (10 bis 1440); None bei zu wenigen Läufen."""
+    if len(durations) < RUNS_MIN:
+        return None
+    return min(1440, max(10, -(-int(max(durations) + RESERVE_S) // 60)))
+
+
+def runs_from_history(states: dict[str, list[Any]], ids: dict[str, str]) -> list[dict[str, float]]:
+    """Gelungene automatische Läufe aus dem Verlauf der Sensoren (Recorder): Zeiträume mit Zustand "create_backup", in denen "letzter Versuch" und
+    "letzter Erfolg" nachgeführt wurden. Ein von Hand gestarteter Lauf setzt den Versuch nicht und bleibt draussen."""
+    runs: list[dict[str, float]] = []
+    manager = sorted(states.get(ids.get("state", ""), []), key=lambda s: s.last_changed)
+
+    def changed_in(name: str, start: float, end: float) -> bool:
+        return any(start - STAMP_SLACK_S <= s.last_changed.timestamp() <= end + JUDGE_DELAY_S * 2 for s in states.get(ids.get(name, ""), [])[1:])
+
+    for index, state in enumerate(manager):
+        if state.state != "create_backup" or index + 1 >= len(manager):
+            continue
+        start, end = state.last_changed.timestamp(), manager[index + 1].last_changed.timestamp()
+        if changed_in("attempted", start, end) and changed_in("success", start, end):
+            runs.append({"end": end, "secs": end - start})
+    return runs[-RUNS_KEPT:]
 
 
 def suggest_minutes(seconds: float) -> int:
@@ -72,6 +103,7 @@ class BackupAlert:
         # Wartende Meldung: {"ts": Zeitpunkt, "kind": "failed" | "hang" | "ok" | "late", "secs": Dauer für ok/late}
         self._pending: dict[str, Any] | None = None
         self._open: float | None = None  # Zeitpunkt der zuletzt gesendeten Fehlermeldung, solange kein Backup danach gelang
+        self._runs: list[dict[str, float]] = []  # die letzten gelungenen Läufe: {"end": Zeitpunkt, "secs": Dauer}
         self._ids: dict[str, str] = {}  # gefundene Sensoren
         self._run: dict[str, Any] | None = None  # laufendes Backup: Start, Zeitlimit, schon gemeldet
         self._unsub_events: CALLBACK_TYPE | None = None
@@ -84,16 +116,58 @@ class BackupAlert:
         if isinstance(data, dict):
             pending = data.get("pending")
             if isinstance(pending, dict) and pending.get("kind") in ("failed", "hang", "ok", "late") and isinstance(pending.get("ts"), (int, float)):
-                self._pending = {"ts": float(pending["ts"]), "kind": pending["kind"], "secs": float(pending.get("secs") or 0)}
+                self._pending = {"ts": float(pending["ts"]), "kind": pending["kind"], "secs": float(pending.get("secs") or 0), "limit": float(pending.get("limit") or 0)}
             elif isinstance(pending, (int, float)):  # 2.185.0: nur der Zeitpunkt (und "hang")
-                self._pending = {"ts": float(pending), "kind": "hang" if data.get("hang") else "failed", "secs": 0.0}
+                self._pending = {"ts": float(pending), "kind": "hang" if data.get("hang") else "failed", "secs": 0.0, "limit": 0.0}
             if isinstance(data.get("open"), (int, float)):
                 self._open = float(data["open"])
+            runs = data.get("runs")
+            if isinstance(runs, list):
+                self._runs = [
+                    {"end": float(r["end"]), "secs": float(r["secs"])}
+                    for r in runs
+                    if isinstance(r, dict) and isinstance(r.get("end"), (int, float)) and isinstance(r.get("secs"), (int, float)) and r["secs"] > 0
+                ][-RUNS_KEPT:]
         self._unsub_state = self.hass.bus.async_listen(EVENT_STATE_CHANGED, self._on_state, event_filter=self._state_filter)
         if not self._subscribe():
             # Die Backup-Integration kann nach uns starten: auf ihr Laden warten
             self._unsub_loaded = self.hass.bus.async_listen(EVENT_COMPONENT_LOADED, self._on_component_loaded)
         self._schedule()
+        if len(self._runs) < RUNS_MIN:
+            async_at_started(self.hass, self._seed)
+
+    async def _seed(self, _hass: HomeAssistant) -> None:
+        """Beim ersten Start die Dauern früherer Läufe aus dem Verlauf des Recorders holen, damit "Automatisch" gleich Werte hat."""
+        if len(self._runs) >= RUNS_MIN or "recorder" not in self.hass.config.components:
+            return
+        ids = {name: self._id(name) for name in SENSOR_KEYS}
+        if not all(ids.values()):
+            return
+        try:
+            from homeassistant.components.recorder import get_instance, history  # noqa: PLC0415
+
+            end = dt_util.utcnow()
+            states = await get_instance(self.hass).async_add_executor_job(
+                lambda: history.get_significant_states(self.hass, end - timedelta(days=SEED_DAYS), end, list(ids.values()), None, True, False, False, True)
+            )
+        except Exception:  # noqa: BLE001 - ohne Verlauf bleibt es beim festen Wert, bis genug Läufe bekannt sind
+            _LOGGER.debug("Verlauf der Backup-Sensoren nicht lesbar", exc_info=True)
+            return
+        seeded = runs_from_history(states, ids)
+        if len(seeded) > len(self._runs):
+            self._runs = seeded
+            self._save()
+
+    def minutes(self) -> int:
+        """Die längste Dauer, die jetzt gilt: berechnet ("Automatisch", genug Läufe bekannt) oder der feste Wert."""
+        opts = effective(self.hass)
+        if opts[CONF_STATUS_BACKUP_AUTO] and (auto := auto_minutes([r["secs"] for r in self._runs])) is not None:
+            return auto
+        return opts[CONF_STATUS_BACKUP_MINUTES]
+
+    def info(self) -> dict[str, Any]:
+        """Für die Anzeige in der Status-App: die berechnete Dauer (None = zu wenige Läufe) und die Zahl der bekannten Läufe."""
+        return {"minutes": auto_minutes([r["secs"] for r in self._runs]), "runs": len(self._runs)}
 
     async def async_stop(self) -> None:
         self._cancel_run()
@@ -185,8 +259,8 @@ class BackupAlert:
 
     def _run_started(self) -> None:
         self._cancel_run()
-        minutes = effective(self.hass)[CONF_STATUS_BACKUP_MINUTES]
-        self._run = {"start": time.time(), "reported": False, "hang": False, "done": False, "timeout": async_call_later(self.hass, minutes * 60, self._on_timeout), "judge": None}
+        minutes = self.minutes()
+        self._run = {"start": time.time(), "limit": minutes * 60, "reported": False, "hang": False, "done": False, "timeout": async_call_later(self.hass, minutes * 60, self._on_timeout), "judge": None}
 
     @callback
     def _on_timeout(self, _now: Any) -> None:
@@ -198,7 +272,7 @@ class BackupAlert:
             return
         run["reported"] = True
         run["hang"] = True
-        self._queue("hang", dt_util.now())
+        self._queue("hang", dt_util.now(), limit=run["limit"])
 
     def _run_ended(self) -> None:
         run = self._run
@@ -240,9 +314,11 @@ class BackupAlert:
             run["done"] = True
         hung = bool(run and run["hang"])
         now = time.time()
+        if run is not None:
+            self._record(now, now - run["start"])
         if hung:
-            # Dasselbe Backup lief über die längste Dauer hinaus und wurde doch fertig: Vorschlag, sie zu erhöhen
-            self._queue("late", dt_util.now(), secs=now - run["start"])
+            # Dasselbe Backup lief über die längste Dauer hinaus und wurde doch fertig: fest: Vorschlag, sie zu erhöhen; automatisch: sie passt sich an
+            self._queue("late", dt_util.now(), secs=now - run["start"], limit=run["limit"])
         elif self._pending is not None and self._pending["kind"] in ("failed", "hang"):
             # Die Fehlermeldung wartet noch auf ihre Uhrzeit: sie ist überholt
             self._pending = None
@@ -251,20 +327,27 @@ class BackupAlert:
         elif self._open is not None:
             self._queue("ok", dt_util.now(), secs=now - self._open)
 
+    def _record(self, end: float, secs: float) -> None:
+        """Dauer eines gelungenen Laufs merken (die letzten RUNS_KEPT)."""
+        if secs <= 0:
+            return
+        self._runs = [*self._runs, {"end": end, "secs": secs}][-RUNS_KEPT:]
+        self._save()
+
     # --- Melden --------------------------------------------------------------------
 
     @callback
-    def _queue(self, kind: str, when: datetime, secs: float = 0.0) -> None:
+    def _queue(self, kind: str, when: datetime, secs: float = 0.0, limit: float = 0.0) -> None:
         """Eine Meldung vormerken: sofort oder zur nächsten eingestellten Uhrzeit. Eine neuere ersetzt eine wartende."""
         opts = effective(self.hass)
         if not opts[CONF_STATUS_BACKUP_ALERT] or notify_target(opts, "status") == NOTIFY_NONE:
             return
-        self._pending = {"ts": when.timestamp(), "kind": kind, "secs": secs}
+        self._pending = {"ts": when.timestamp(), "kind": kind, "secs": secs, "limit": limit}
         self._save()
         self._schedule()
 
     def _save(self) -> None:
-        self._store.async_delay_save(lambda: {"pending": self._pending, "open": self._open}, 0)
+        self._store.async_delay_save(lambda: {"pending": self._pending, "open": self._open, "runs": self._runs}, 0)
 
     def _schedule(self) -> None:
         if self._unsub_timer is not None:
@@ -305,7 +388,8 @@ class BackupAlert:
         failed = dt_util.as_local(dt_util.utc_from_timestamp(pending["ts"]))
         same_day = failed.date() == dt_util.now().date()
         when = failed.strftime("%H:%M") if same_day else failed.strftime("%d.%m. %H:%M")
-        limit_s = opts[CONF_STATUS_BACKUP_MINUTES] * 60
+        limit_s = pending.get("limit") or self.minutes() * 60
+        auto = bool(opts[CONF_STATUS_BACKUP_AUTO])
         url = CLICK_URL
         if kind == "hang":
             title = push.text(hass, "backup_failed_title")
@@ -313,6 +397,10 @@ class BackupAlert:
         elif kind == "ok":
             title = push.text(hass, "backup_ok_title")
             message = push.text(hass, "backup_ok_text", since=push.duration(hass, pending["secs"]), when=when)
+        elif kind == "late" and auto:
+            # Automatisch: das Backup ist jetzt in der Reihe der letzten Läufe, die Grenze wächst beim nächsten Mal von selbst mit
+            title = push.text(hass, "backup_late_title")
+            message = push.text(hass, "backup_late_auto_text", duration=push.duration(hass, pending["secs"]), limit=push.duration(hass, limit_s), when=when)
         elif kind == "late":
             title = push.text(hass, "backup_late_title")
             message = push.text(

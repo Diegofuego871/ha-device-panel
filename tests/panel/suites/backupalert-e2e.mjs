@@ -10,8 +10,8 @@ const R = `document.querySelector("device-panel").shadowRoot`;
 const win = "dialog.status-dlg";
 const D = "dialog.wizard-dlg";
 const TEXT = {
-  de: { title: "Meldung bei Backup-Fehler", now: "Sofort", from: "Einmal täglich", wz: "Backup", sum: "Backup-Fehler", sumNow: "sofort", link: "Systemmeldungen öffnen", sys: "Systemmeldungen", sumFrom: "täglich um 06:30", off: "aus" },
-  en: { title: "Alert when a backup fails", now: "At once", from: "Once a day", wz: "Backup", sum: "Backup failure", sumNow: "at once", link: "Open system alerts", sys: "System alerts", sumFrom: "daily at 06:30", off: "off" },
+  de: { title: "Meldung bei Backup-Fehler", now: "Sofort", from: "Einmal täglich", auto: "Automatisch", fixed: "Fest", autoNow: "Aktuell 2 Std. 15 Min.", wz: "Backup", sum: "Backup-Fehler", sumNow: "sofort", link: "Systemmeldungen öffnen", sys: "Systemmeldungen", sumFrom: "täglich um 06:30", off: "aus" },
+  en: { title: "Alert when a backup fails", now: "At once", from: "Once a day", auto: "Automatic", fixed: "Fixed", autoNow: "Currently 2 h 15 min", wz: "Backup", sum: "Backup failure", sumNow: "at once", link: "Open system alerts", sys: "System alerts", sumFrom: "daily at 06:30", off: "off" },
 };
 
 for (const lang of ["de", "en"]) {
@@ -58,18 +58,26 @@ for (const lang of ["de", "en"]) {
     await tap(`${win} [data-st-save]`);
     const v2 = await lastOpts();
     check(`[${tag}] "${T.now}": status_backup_time leer gespeichert`, v2 && v2.status_backup_time === "");
-    // Längste Dauer: Standard 180, Bereich 10 bis 1440, ungültig sperrt das Speichern
-    check(`[${tag}] Längste Dauer: Feld mit 180`, await ev(`return r.querySelector("${win} [data-st-bkmin]")?.value === "180"`));
+    // Längste Dauer: Standard "Automatisch" mit dem berechneten Wert, "Fest" zeigt das Feld (Standard 180, Bereich 10 bis 1440)
+    check(`[${tag}] Längste Dauer: "${T.auto}" gewählt, berechneter Wert "${T.autoNow}" steht da, kein Zahlenfeld`, await ev(`const d = r.querySelector("${win}"); return d.querySelector('[data-st-bkauto="auto"]').classList.contains("on") && d.querySelector("[data-st-bkauto-info]").textContent.includes(${JSON.stringify(T.autoNow)}) && !d.querySelector("[data-st-bkmin]")`));
+    await p.evaluate(() => { window.__wsCalls = []; });
+    await tap(`${win} [data-st-bkauto="fixed"]`);
+    check(`[${tag}] "${T.fixed}": Zahlenfeld mit 180, nichts gespeichert`, (await wait(`return r.querySelector("${win} [data-st-bkmin]")?.value === "180"`)) && (await calls("device_panel/set_options")).length === 0);
     await setField(`${win} [data-st-bkmin]`, "5");
     check(`[${tag}] Längste Dauer 5: Fehler am Feld, Speichern gesperrt`, (await wait(`return !!r.querySelector('${win} [data-st-bkmin]').closest(".opt.invalid")`)) && await ev(`return r.querySelector("${win} [data-st-save]").disabled`));
+    await tap(`${win} [data-st-bkauto="auto"]`);
+    check(`[${tag}] zurück auf "${T.auto}": die ungültige Zahl stört nicht, Speichern frei`, (await wait(`return !r.querySelector("${win} [data-st-bkmin]")`)) && await ev(`return r.querySelector("${win} [data-st-save]").disabled`) === true);
+    await tap(`${win} [data-st-bkauto="fixed"]`);
     await p.evaluate(() => { window.__wsCalls = []; });
     await setField(`${win} [data-st-bkmin]`, "360");
     await tap(`${win} [data-st-save]`);
     const v4 = await lastOpts();
-    check(`[${tag}] Längste Dauer 360: als Zahl gespeichert`, v4 && v4.status_backup_minutes === 360 && Number.isInteger(v4.status_backup_minutes));
+    check(`[${tag}] Fest 360: status_backup_minutes als Zahl und status_backup_auto false gespeichert`, v4 && v4.status_backup_minutes === 360 && Number.isInteger(v4.status_backup_minutes) && v4.status_backup_auto === false);
     await wait(`return r.querySelector("${win} [data-st-bkmin]")?.value === "360" && r.querySelector("${win} [data-st-save]").disabled`);
-    await setField(`${win} [data-st-bkmin]`, "180");
+    await tap(`${win} [data-st-bkauto="auto"]`);
+    await setField(`${win} [data-st-bkmin]`, "180").catch(() => {});
     await tap(`${win} [data-st-save]`);
+    await wait(`return !!r.querySelector("${win} [data-st-bkauto-info]") && r.querySelector("${win} [data-st-save]").disabled`);
     // Ausschalten
     await p.evaluate(() => { window.__wsCalls = []; });
     await tap(`${win} [data-st-bkon]`);

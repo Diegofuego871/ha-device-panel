@@ -105,6 +105,14 @@ export class StatusUi {
         });
         return;
       }
+      const ba = ev.target.closest("[data-st-bkauto]");
+      if (ba) {
+        this.setDraft("status_backup_auto", ba.dataset.stBkauto === "auto");
+        // Eine ungültige feste Zahl wird beim Wechsel auf "Automatisch" verworfen (sonst bliebe sie als Änderung stehen und liesse sich speichern)
+        if (this.val("status_backup_auto") && this.intBad("status_backup_minutes", [10, 1440])) delete this.draft.status_backup_minutes;
+        this.render(true);
+        return;
+      }
       const bk = ev.target.closest("[data-st-bk]");
       if (bk) {
         // "Sofort" = leere Uhrzeit; "Einmal täglich" beginnt mit 09:00 (der Nutzer stellt sie dann ein)
@@ -323,6 +331,7 @@ export class StatusUi {
   }
 
   backupMinutesBad() {
+    if (this.val("status_backup_auto")) return false;
     return this.intBad("status_backup_minutes", [10, 1440]);
   }
 
@@ -484,10 +493,20 @@ export class StatusUi {
       : "";
     const [mlo, mhi] = this.cfg.limits?.status_backup_minutes || [10, 1440];
     const mbad = this.backupMinutesBad();
-    const longest = on
-      ? `<div class="opt${mbad ? " invalid" : ""}"><div class="opt-line"><span class="opt-label">${escape(t("stBkMax"))}</span>
+    const auto = Boolean(this.val("status_backup_auto"));
+    const info = this.data?.backup || { minutes: null, runs: 0 };
+    const dur = (m) => (m >= 60 ? t("stBkHM", Math.floor(m / 60), m % 60) : t("stBkM", m));
+    const modes = [["auto", "stBkMaxAuto"], ["fixed", "stBkMaxFixed"]]
+      .map(([id, k]) => `<button type="button" role="tab" class="sub-tab${(id === "auto") === auto ? " on" : ""}" data-st-bkauto="${id}" aria-selected="${(id === "auto") === auto}">${escape(t(k))}</button>`)
+      .join("");
+    // Automatisch: der berechnete Wert (längster der letzten gelungenen Backups plus 20 Minuten) oder der feste Wert, solange zu wenige Läufe bekannt sind
+    const autoLine = info.minutes != null ? t("stBkMaxNow", dur(info.minutes), info.runs) : t("stBkMaxFew", dur(Number(this.val("status_backup_minutes")) || 180), info.runs);
+    const fixed = `<div class="opt-line st-min"><span class="opt-label">${escape(t("stBkMaxValue"))}</span>
           <span class="opt-input${mbad ? " bad" : ""}"><input type="number" inputmode="numeric" step="1" min="${mlo}" max="${mhi}" data-st-bkmin value="${escape(String(this.val("status_backup_minutes")))}" aria-label="${escape(t("stBkMax"))}"><span class="unit">${escape(t("stLoadMinUnit"))}</span></span></div>
-          ${mbad ? `<div class="opt-warn" role="alert">${this.h.mdi("alert", 14)}<span>${escape(t("stBkMaxRange", mlo, mhi))}</span></div>` : ""}
+          ${mbad ? `<div class="opt-warn" role="alert">${this.h.mdi("alert", 14)}<span>${escape(t("stBkMaxRange", mlo, mhi))}</span></div>` : ""}`;
+    const longest = on
+      ? `<div class="opt${mbad ? " invalid" : ""}"><div class="opt-line"><span class="opt-label">${escape(t("stBkMax"))}</span><div class="sub-tabs" role="tablist">${modes}</div></div>
+          ${auto ? `<div class="opt-short" data-st-bkauto-info>${escape(autoLine)}</div>` : fixed}
           <div class="opt-short">${escape(t("stBkMaxShort"))}</div></div>`
       : "";
     return `<div class="set-title">${escape(t("stBkTitle"))}</div>
