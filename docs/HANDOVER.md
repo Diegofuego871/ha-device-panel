@@ -3,6 +3,11 @@
 Einstieg für jede neue Claude-Code-Session. Zuerst diese Datei lesen, dann
 `CLAUDE.md`, `docs/CONCEPT.md`, `docs/LEARNINGS.md`, `docs/DESIGN.md`.
 
+## Stand (2.187.0, Erklärungen im Assistenten)
+
+- Mockup `docs/mockups/wizard-info-v1` (Variante B gewählt). In den Schritten "Meldungen" und "Labels" steht hinter jedem Namen ein ⓘ (`infoBtn`, Klasse `info-btn wz-i`, `data-wz-info`); der Tipp öffnet über `_askConfirm` (neu: `keys.html`, `keys.cls`) das Fenster `dd-info` mit Titel `wzI_<id>_t`, Text `wzI_<id>`, auf Wunsch Kasten `_el`/`_e` und eine kleine Grafik (`infoFigure`: `delay` und `flaky` als Zeitstrahl, `bat` als Batterieleiste mit Schwelle). Neue Einträge: in `INFO_IDS` (und `INFO_EXAMPLE`/`INFO_FIGURE`) und in beiden Sprachen in `strings.js`.
+- Test: Suite `wizardinfo` (alle Knöpfe und Texte beider Schritte, Grafik nur bei drei Zahlen, Entwurf unverändert, Esc).
+
 ## Stand (2.186.0, Backup-Wächter und längste Dauer)
 
 - `backup_alert.py` hat zwei Wege: das Ereignis der Backup-Verwaltung (sofort, mit Grund) und den Wächter über die öffentlichen Sensoren (Plattform "backup", Kennungen `backup_manager_state`, `last_attempted_automatic_backup`, `last_successful_automatic_backup`, gefunden über die Entitätsverwaltung). Wechselt der Zustand auf `create_backup`, startet `_run` mit Zeitlimit `status_backup_minutes` (Standard 180, 10 bis 1440; der Upload gehört zum Lauf); nach dem Lauf entscheidet `_on_judge` nach 30 s (automatisch = "letzter Versuch" ab Start minus 120 s, Erfolg = "letzter Erfolg" ab Start minus 120 s). Das Urteil "ohne Erfolg" gilt nur für automatische Läufe (nur sie setzen "letzter Versuch" und "letzter Erfolg"); Zeitlimit und Ereignis gelten für alle. Ereignis und Wächter melden einen Lauf einmal (`_run["reported"]`). Meldungsarten `_pending["kind"]`: `failed`, `hang`, `ok` (nach einer gesendeten Fehlermeldung `_open` gelingt ein Backup), `late` (dasselbe Backup nach "hang" doch fertig, mit `suggest_minutes` und Klick auf `?app=status&tab=settings`); gleicher Tag der Meldung, die zweite ersetzt die erste auf dem Telefon. Wartet eine Fehlermeldung noch auf ihre Uhrzeit und das Backup gelingt, entfällt sie.

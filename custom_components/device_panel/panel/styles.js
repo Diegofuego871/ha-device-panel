@@ -618,6 +618,25 @@ dialog.discard-dlg::backdrop { background: rgba(0,0,0,0.55); }
 .dd-btns.three { flex-direction: column-reverse; }
 .dd-btns.three .dlg-btn { flex: none; width: 100%; }
 .pill.live.locked { display: inline-flex; align-items: center; gap: 4px; border-style: dashed; color: var(--dp-text2); background: none; opacity: .9; }
+.wz-i { width: 22px; height: 22px; margin-left: 3px; vertical-align: middle; }
+.wz-lab .wz-i { vertical-align: -6px; }
+.dd-card.dd-info { text-align: left; width: min(400px, calc(100vw - 32px)); }
+.dd-card.dd-info small { color: var(--dp-text); font-size: 14px; line-height: 1.5; margin-top: 8px; }
+.dd-ex { margin-top: 12px; padding: 10px 12px; border-radius: 12px; background: var(--dp-hover); font-size: 13px; line-height: 1.45; }
+.dd-ex em { display: block; margin-bottom: 2px; color: var(--dp-primary); font-style: normal; font-weight: 600; font-size: 12px; letter-spacing: .04em; text-transform: uppercase; }
+.dd-fig { position: relative; margin-top: 12px; }
+.dd-tl { height: 74px; }
+.dd-tl i { position: absolute; }
+.dd-tl .ax { left: 0; right: 0; top: 34px; height: 3px; border-radius: 2px; background: var(--dp-divider); }
+.dd-tl .seg { top: 34px; height: 3px; background: var(--dp-error); }
+.dd-tl .dot { top: 27px; width: 16px; height: 16px; border-radius: 50%; background: var(--dp-error); }
+.dd-tl .dot.ok { background: var(--dp-success); }
+.dd-tl .bell { top: 2px; font-style: normal; font-size: 18px; }
+.dd-tl span { position: absolute; font-size: 11px; color: var(--dp-text2); white-space: nowrap; }
+.dd-bat { display: flex; align-items: flex-end; gap: 4px; height: 56px; }
+.dd-bat i { flex: 1; border-radius: 3px; background: var(--dp-divider); }
+.dd-bat i.lo { background: var(--dp-error); }
+.dd-bat b { position: absolute; left: 0; right: 0; height: 0; border-top: 2px dashed var(--dp-error); }
 .pill.live.shadow { opacity: .75; }
 .mon-sysnote .dlg-btn { width: 100%; justify-content: flex-start; margin-top: 12px; }
 .mon-sysnote .dlg-btn > span:not(.cbtn) { flex: 1; text-align: left; }

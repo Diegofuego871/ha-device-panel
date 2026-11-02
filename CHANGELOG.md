@@ -7,6 +7,14 @@ All notable changes to this integration are documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/).
 
+## [2.187.0] - 2026-11-02
+
+The setup assistant explains its options in plain words.
+
+### Added
+
+- **Explanations in the setup assistant:** in the steps "Notifications" and "Labels" a small info mark behind each option (target, failed devices, low battery, fully charged, new devices, updates, monitor, online status, failed after, notify only after, unstable from, connectivity sensor counts, low from) opens a window that explains in simple words what it does and what the value means, with a short example where a number is involved. "Notify only after", "Unstable from" and "Low from" also have a small picture (a timeline, a day bar, a battery bar with the threshold). The mark sits behind the name, so the page does not get longer; the window changes nothing in your choices. It closes with "Got it", a tap beside it or Esc.
+
 ## [2.186.1] - 2026-11-01
 
 "System alerts" is its own chapter in the settings.
@@ -5481,6 +5489,7 @@ First pre-release.
   GitHub Actions for HACS/hassfest validation and tests.
 
 [2.6.0]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v2.6.0
+[2.187.0]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v2.187.0
 [2.186.1]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v2.186.1
 [2.186.0]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v2.186.0
 [2.184.1]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v2.184.1

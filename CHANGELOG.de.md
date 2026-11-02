@@ -7,6 +7,14 @@ Alle nennenswerten Änderungen an dieser Integration stehen in dieser Datei.
 Das Format folgt [Keep a Changelog](https://keepachangelog.com/de/1.1.0/),
 die Versionsnummern folgen [Semantic Versioning](https://semver.org/lang/de/).
 
+## [2.187.0] - 2026-11-02
+
+Der Einrichtungsassistent erklärt seine Optionen in einfachen Worten.
+
+### Hinzugefügt
+
+- **Erklärungen im Einrichtungsassistenten:** In den Schritten "Meldungen" und "Labels" öffnet ein kleines Info-Zeichen hinter jeder Position (Ziel, Ausgefallene Geräte, Niedrige Batterie, Voll geladen, Neue Geräte, Updates, Überwachen, Online-Status, Ausgefallen nach, Erst melden nach, Instabil ab, Verbindungssensor zählt, Schwach ab) ein Fenster, das in einfachen Worten erklärt, was sie macht und was der Wert bedeutet, bei Zahlen mit einem kurzen Beispiel. "Erst melden nach", "Instabil ab" und "Schwach ab" haben zusätzlich eine kleine Grafik (Zeitstrahl, Tagesleiste, Batterieleiste mit Schwelle). Das Zeichen sitzt hinter dem Namen, die Seite wird dadurch nicht länger; das Fenster ändert nichts an deinen Wahlen. Es schliesst mit "Verstanden", einem Tipp daneben oder Esc.
+
 ## [2.186.1] - 2026-11-01
 
 "Systemmeldungen" ist ein eigenes Kapitel in den Einstellungen.
@@ -5582,6 +5590,7 @@ Erste Vorabversion.
   GitHub Actions für die Prüfungen von HACS und hassfest sowie die Tests.
 
 [2.6.0]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v2.6.0
+[2.187.0]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v2.187.0
 [2.186.1]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v2.186.1
 [2.186.0]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v2.186.0
 [2.184.1]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v2.184.1

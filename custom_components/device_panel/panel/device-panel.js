@@ -4288,7 +4288,8 @@ class DevicePanel extends HTMLElement {
     this._discardYes = onYes;
     this._discardSave = onSave;
     const args = keys.args || [];
-    dlg.innerHTML = `<div class="dd-card" role="alertdialog" aria-labelledby="dd-t"><b id="dd-t">${escape(this._t(keys.title, ...args))}</b><small>${escape(this._t(keys.note, ...args))}</small>
+    // keys.html: eigener Zusatz unter dem Text (nur Markup aus dem Panel selbst, nie Eingaben); keys.cls: Klasse der Karte (zum Beispiel "dd-info": linksbündig)
+    dlg.innerHTML = `<div class="dd-card${keys.cls ? ` ${keys.cls}` : ""}" role="alertdialog" aria-labelledby="dd-t"><b id="dd-t">${escape(this._t(keys.title, ...args))}</b><small>${escape(this._t(keys.note, ...args))}</small>${keys.html || ""}
       <div class="dd-btns${onSave && keys.save && keys.yes ? " three" : ""}"><button type="button" class="dlg-btn" data-dd="no">${mdi(keys.noIcon || "close", 18)}${escape(this._t(keys.no))}</button>${keys.yes ? `<button type="button" class="dlg-btn danger" data-dd="yes">${mdi(keys.yesIcon || "check", 18)}${escape(this._t(keys.yes))}</button>` : ""}${onSave && keys.save ? `<button type="button" class="dlg-btn primary" data-dd="save">${mdi(keys.saveIcon || "check", 18)}${escape(this._t(keys.save))}</button>` : ""}</div></div>`;
     if (!dlg.open) {
       if (typeof dlg.showModal === "function") dlg.showModal();

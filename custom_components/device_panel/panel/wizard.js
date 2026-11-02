@@ -43,6 +43,11 @@ const TIME_RE = /^([01]\d|2[0-3]):[0-5]\d$/;
 const isTime = (key) => key === "updates_time";
 // Geräte einer Integration, die schon beim Öffnen aufgeklappt sind: keine (die Liste bleibt kurz)
 const SEARCH_MIN = 8;
+// Erklärungen (seit 2.187.0, docs/mockups/wizard-info-v1, B): ⓘ hinter einer Position in den Schritten "Meldungen" und "Labels" öffnet ein Fenster in einfachen
+// Worten. Je Eintrag: Titel und Text (wzI_<id>_t, wzI_<id>), auf Wunsch ein Kasten "Beispiel" (wzI_<id>_el, wzI_<id>_e); Grafik nur bei drei Zahlen.
+const INFO_IDS = ["target", "outage", "battery", "charge", "new", "updates", "mon", "status", "after", "delay", "flaky", "lconn", "bat"];
+const INFO_EXAMPLE = ["outage", "battery", "charge", "new", "delay", "flaky", "bat"];
+const INFO_FIGURE = ["delay", "flaky", "bat"];
 
 export class WizardUi {
   constructor(host, deps) {
@@ -703,6 +708,38 @@ export class WizardUi {
     return out.length ? out.join("") : `<p class="wz-p small">${escape(this.t("wzNoMatch"))}</p>`;
   }
 
+  // ⓘ hinter dem Namen einer Position: nimmt keinen Platz in der Seite, die Erklärung steht im Fenster
+  infoBtn(id) {
+    const { escape, mdi } = this.h;
+    const label = `${this.t("wzIOpen")}: ${this.t(`wzI_${id}_t`)}`;
+    return `<button type="button" class="info-btn wz-i" data-wz-info="${id}" title="${escape(label)}" aria-label="${escape(label)}">${mdi("info", 16)}</button>`;
+  }
+
+  // Kleine Grafik zu einer Zahl: "delay" Zeitstrahl (kurzer Aussetzer bleibt still, langer Ausfall meldet), "flaky" Tagesleiste mit drei Ausfällen,
+  // "bat" Batterieleiste mit gestrichelter Schwelle
+  infoFigure(id) {
+    const { escape } = this.h;
+    const t = (k) => escape(this.t(k));
+    if (id === "delay") {
+      return `<div class="dd-fig dd-tl" aria-hidden="true"><i class="ax"></i><i class="seg" style="left:8%;width:12%"></i><i class="dot" style="left:6%"></i><i class="dot ok" style="left:21%"></i><i class="seg" style="left:50%;width:34%"></i><i class="dot" style="left:48%"></i><i class="bell" style="left:82%">🔔</i>
+        <span style="left:0;top:48px">${t("wzIFigOut")}</span><span style="left:15%;top:6px">${t("wzIFigBack")}</span><span style="left:44%;top:48px">${t("wzIFigOut")}</span><span style="left:76%;top:48px">${t("wzIFigMsg")}</span></div>`;
+    }
+    if (id === "flaky") {
+      return `<div class="dd-fig dd-tl" aria-hidden="true"><i class="ax"></i><i class="dot" style="left:12%"></i><i class="dot" style="left:44%"></i><i class="dot" style="left:78%"></i>
+        <span style="left:0;top:48px">${t("wzIFig0")}</span><span style="left:44%;top:48px">${t("wzIFig12")}</span><span style="right:0;top:48px">${t("wzIFig24")}</span></div>`;
+    }
+    const bars = [100, 85, 70, 55, 40, 26, 14, 7].map((h) => `<i${h < 15 ? ' class="lo"' : ""} style="height:${h}%"></i>`).join("");
+    return `<div class="dd-fig dd-bat" aria-hidden="true">${bars}<b style="bottom:15%"></b></div>`;
+  }
+
+  showInfo(id) {
+    if (!INFO_IDS.includes(id)) return;
+    const { escape } = this.h;
+    const example = INFO_EXAMPLE.includes(id) ? `<div class="dd-ex"><em>${escape(this.t(`wzI_${id}_el`))}</em>${escape(this.t(`wzI_${id}_e`))}</div>` : "";
+    const figure = INFO_FIGURE.includes(id) ? this.infoFigure(id) : "";
+    this.host._askConfirm({ title: `wzI_${id}_t`, note: `wzI_${id}`, no: "wzIClose", noIcon: "check", cls: "dd-info", html: `${figure}${example}` }, () => {});
+  }
+
   // Schritt 4: Meldungen: Ziel, ein Schalter je Art, darunter die jetzigen Werte zum Anpassen
   messagesHtml() {
     const { escape, mdi } = this.h;
@@ -722,10 +759,10 @@ export class WizardUi {
       const list = open ? this.integListMsgHtml(id, none) : "";
       const hint = id === "charge" && d.on.charge && !none && !this.rowIntegrations("charge").some((i) => this.integState("charge", i.domain) !== "off") ? `<p class="wz-p small wz-hint">${escape(this.t("wzChargeHint"))}</p>` : "";
       const chev = !PER_INTEGRATION.includes(id) ? `<span class="wz-mx"></span>` : `<button type="button" class="wz-mx" data-wz-mopen="${id}" aria-expanded="${open}" title="${escape(this.t("wzMInteg"))}" aria-label="${escape(this.t("wzMInteg"))}"><span class="wz-chev${open ? " open" : ""}">${mdi("chevronRight", 16)}</span></button>`;
-      return `<div class="wz-msg${d.on[id] && !none ? " on" : ""}"><div class="wz-li">${chev}<span class="wz-ic">${mdi(MSG_ICON[id], 18)}</span><div class="wz-nm">${escape(this.t(`wzM_${id}`))}<small>${escape(this.t(`wzM_${id}_s`))}</small></div>${this.toggle("data-wz-msg", id, d.on[id] && !none, this.t(`wzM_${id}`)).replace("<input", none ? "<input disabled" : "<input")}</div><div class="wz-vals">${vals}</div>${hint}${list}</div>`;
+      return `<div class="wz-msg${d.on[id] && !none ? " on" : ""}"><div class="wz-li">${chev}<span class="wz-ic">${mdi(MSG_ICON[id], 18)}</span><div class="wz-nm">${escape(this.t(`wzM_${id}`))}${this.infoBtn(id)}<small>${escape(this.t(`wzM_${id}_s`))}</small></div>${this.toggle("data-wz-msg", id, d.on[id] && !none, this.t(`wzM_${id}`)).replace("<input", none ? "<input disabled" : "<input")}</div><div class="wz-vals">${vals}</div>${hint}${list}</div>`;
     }).join("");
     return `<h2 class="wz-h2">${escape(this.t("wzMTitle"))}</h2><p class="wz-p">${escape(this.t("wzMText"))}</p>
-      <div class="wz-lab">${escape(this.t("wzMTarget"))}</div><label class="wz-sel"><select data-wz-target aria-label="${escape(this.t("wzMTarget"))}">${targets}</select>${mdi("chevronDown", 18)}</label>
+      <div class="wz-lab">${escape(this.t("wzMTarget"))}${this.infoBtn("target")}</div><label class="wz-sel"><select data-wz-target aria-label="${escape(this.t("wzMTarget"))}">${targets}</select>${mdi("chevronDown", 18)}</label>
       ${none ? `<p class="wz-p small">${escape(this.t("wzMNoTargetHint"))}</p>` : `<div class="wz-testrow"><button type="button" class="dlg-btn" data-wz="test"${this.s.testing ? " disabled" : ""}>${mdi("send", 18)}${escape(this.t("wzTest"))}</button><span class="wz-testres ${this.s.test ? this.s.test.split(":")[0] : ""}" data-wz-testres role="status">${escape(this.testText())}</span></div>`}
       <div class="wz-lab">${escape(this.t("wzMRows"))}</div>${rows}
       <div class="opt-error wz-err" data-wz-err role="alert">${escape(this.invalid())}</div>
@@ -819,7 +856,7 @@ export class WizardUi {
       const times = [...new Set([...LABEL_TIMES, ...(value !== "" ? [Number(value)] : [])])].sort((a, b) => a - b);
       return `<label class="wz-sel wz-sel-s"><select data-wz-lc="${escape(id)}" data-wz-lf="${field}" aria-label="${escape(label)}"${c.mon && c.status ? "" : " disabled"}><option value=""${value === "" ? " selected" : ""}>${escape(std)}</option>${times.map((m) => `<option value="${m}"${String(m) === value ? " selected" : ""}>${escape(t("offlineMin", m))}</option>`).join("")}</select>${mdi("chevronDown", 18)}</label>`;
     };
-    const row = (icon, title, sub, control) => `<div class="wz-li"><span class="wz-ic">${mdi(icon, 18)}</span><div class="wz-nm">${escape(title)}${sub ? `<small>${escape(sub)}</small>` : ""}</div>${control}</div>`;
+    const row = (icon, title, sub, control, info = "") => `<div class="wz-li"><span class="wz-ic">${mdi(icon, 18)}</span><div class="wz-nm">${escape(title)}${info ? this.infoBtn(info) : ""}${sub ? `<small>${escape(sub)}</small>` : ""}</div>${control}</div>`;
     const batValues = [...new Set([10, 15, 20, 25, 30, ...(/^\d+$/.test(c.bat) ? [Number(c.bat)] : [])])].sort((a, b) => a - b);
     const batSel = `<label class="wz-sel wz-sel-s"><select data-wz-lc="${escape(id)}" data-wz-lf="bat" aria-label="${escape(t("optBatteryLow"))}"><option value=""${c.bat === "" ? " selected" : ""}>${escape(t("wzLStd"))}</option>${batValues.map((v) => `<option value="${v}"${String(v) === c.bat ? " selected" : ""}>${v} %</option>`).join("")}<option value="off"${c.bat === "off" ? " selected" : ""}>${escape(t("devBatOff"))}</option></select>${mdi("chevronDown", 18)}</label>`;
     const updSel = `<label class="wz-sel wz-sel-s"><select data-wz-lc="${escape(id)}" data-wz-lf="upd" aria-label="${escape(t("optUpdNotify"))}"${none ? " disabled" : ""}><option value="default"${c.upd === "default" ? " selected" : ""}>${escape(t("labelUpdDefault"))}</option><option value="on"${c.upd === "on" ? " selected" : ""}>${escape(t("devChargeOn"))}</option><option value="off"${c.upd === "off" ? " selected" : ""}>${escape(t("devChargeOff"))}</option></select>${mdi("chevronDown", 18)}</label>`;
@@ -828,19 +865,19 @@ export class WizardUi {
     const lconnSel = `<label class="wz-sel wz-sel-s"><select data-wz-lc="${escape(id)}" data-wz-lf="lconn" aria-label="${escape(t("optLconn"))}"${c.mon && c.status ? "" : " disabled"}><option value=""${c.lconn === "" ? " selected" : ""}>${escape(t("wzLStd"))}</option><option value="on"${c.lconn === "on" ? " selected" : ""}>${escape(t("lconnOnOpt"))}</option><option value="off"${c.lconn === "off" ? " selected" : ""}>${escape(t("lconnOffOpt"))}</option></select>${mdi("chevronDown", 18)}</label>`;
     const outDim = c.mon && c.status ? "" : "dim";
     return `<div class="wz-msg on wz-lcard"><div class="wz-li">${this.host._ibadge(`${LABEL_PREFIX}${id}`, this.labelName(id))}<div class="wz-nm">${escape(this.labelName(id))}<small>${escape(t("labelDevs", (this.s.data.labels.find((l) => l.id === id) || {}).devices || 0))}</small></div><button type="button" class="dlg-btn wz-lrm" data-wz-lrm="${escape(id)}">${mdi("close", 16)}${escape(t("wzLRemove"))}</button></div>
-      ${row("eye", t("optMonitor"), t("optMonitorShort"), sw("mon", c.mon, t("optMonitor")))}
-      ${!c.mon ? "" : `<div>${row("circleOutline", t("optStatus"), t("wzLNsSub"), sw("status", c.status, t("optStatus"), !c.mon))}
-      <div class="${outDim}">${row("pulse", t("optOfflineAfter"), "", timeSel("after", t("optOfflineAfter"), c.after, t("wzLStd")))}
-      ${row("timer", t("optDelay"), "", timeSel("delay", t("optDelay"), c.delay, t("wzLStd")))}
-      ${row("alert", t("optFlaky"), "", flakySel)}
-      ${row("link", t("optLconn"), "", lconnSel)}
-      ${row("alert", t("wzM_outage"), "", sw("push", c.push, t("wzM_outage"), none || !c.mon || !c.status))}</div>
-      ${row("battery", t("optBatteryLow"), "", batSel)}
-      ${row("battery", t("wzM_battery"), "", sw("batPush", c.batPush, t("wzM_battery"), none))}
-      ${row("batteryCharging", t("wzM_charge"), "", sw("charge", c.charge, t("wzM_charge"), none))}</div>
+      ${row("eye", t("optMonitor"), t("optMonitorShort"), sw("mon", c.mon, t("optMonitor")), "mon")}
+      ${!c.mon ? "" : `<div>${row("circleOutline", t("optStatus"), t("wzLNsSub"), sw("status", c.status, t("optStatus"), !c.mon), "status")}
+      <div class="${outDim}">${row("pulse", t("optOfflineAfter"), "", timeSel("after", t("optOfflineAfter"), c.after, t("wzLStd")), "after")}
+      ${row("timer", t("optDelay"), "", timeSel("delay", t("optDelay"), c.delay, t("wzLStd")), "delay")}
+      ${row("alert", t("optFlaky"), "", flakySel, "flaky")}
+      ${row("link", t("optLconn"), "", lconnSel, "lconn")}
+      ${row("alert", t("wzM_outage"), "", sw("push", c.push, t("wzM_outage"), none || !c.mon || !c.status), "outage")}</div>
+      ${row("battery", t("optBatteryLow"), "", batSel, "bat")}
+      ${row("battery", t("wzM_battery"), "", sw("batPush", c.batPush, t("wzM_battery"), none), "battery")}
+      ${row("batteryCharging", t("wzM_charge"), "", sw("charge", c.charge, t("wzM_charge"), none), "charge")}</div>
 `}
-      ${row("sparkle", t("wzM_new"), "", sw("newPush", c.newPush, t("wzM_new"), none))}
-      ${row("download", t("wzM_updates"), "", updSel)}
+      ${row("sparkle", t("wzM_new"), "", sw("newPush", c.newPush, t("wzM_new"), none), "new")}
+      ${row("download", t("wzM_updates"), "", updSel, "updates")}
       ${none ? `<p class="wz-p small">${escape(t("wzMNoTargetHint"))}</p>` : ""}</div>`;
   }
 
@@ -1184,6 +1221,12 @@ export class WizardUi {
     dlg.addEventListener("click", (ev) => {
       const s = this.s;
       if (!s?.d) return;
+      const inf = ev.target.closest?.("[data-wz-info]");
+      if (inf) {
+        ev.preventDefault();
+        this.showInfo(inf.dataset.wzInfo);
+        return;
+      }
       const bk = ev.target.closest?.("[data-wz-bk]");
       if (bk) {
         s.d.backup.mode = bk.dataset.wzBk === "time" ? "time" : "now";
