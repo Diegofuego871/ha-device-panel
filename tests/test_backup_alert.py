@@ -375,6 +375,23 @@ async def test_backup_minutes_option_range(hass: HomeAssistant) -> None:
 # --- Längste Dauer "Automatisch" (2.187.0) --------------------------------------------------------------------------------
 
 
+def test_fallback_minutes() -> None:
+    assert backup_alert.fallback_minutes([], 180) == 180
+    assert backup_alert.fallback_minutes([600], 180) == 180  # ein kurzer Lauf senkt den festen Wert nicht
+    assert backup_alert.fallback_minutes([4 * 3600], 180) == 260  # ein langer Lauf hebt ihn gleich an (4 Std. plus 20 Min.)
+    assert backup_alert.fallback_minutes([100 * 3600], 180) == 1440
+
+
+async def test_one_long_run_raises_the_limit_at_once(hass: HomeAssistant) -> None:
+    alert = await _setup(hass)
+    alert._record(time.time(), 4 * 3600)
+    assert alert.minutes() == 260 and alert.info()["minutes"] is None and alert.info()["fallback"] == 260
+    alert._record(time.time(), 1800)  # ab zwei Läufen: längster plus 20 Minuten
+    assert alert.minutes() == 260
+    alert._record(time.time(), 1200)
+    assert alert.minutes() == 260  # der lange Lauf zählt weiter, solange er zu den letzten fünf gehört
+
+
 def test_auto_minutes() -> None:
     assert backup_alert.auto_minutes([]) is None
     assert backup_alert.auto_minutes([3600]) is None  # zu wenige Läufe
@@ -406,10 +423,10 @@ def test_runs_from_history() -> None:
 async def test_auto_limit_follows_the_longest_recent_run(hass: HomeAssistant, freezer: Any) -> None:
     handy = async_mock_service(hass, "notify", "handy")
     alert = await _setup(hass)
-    assert alert.minutes() == 180 and alert.info() == {"minutes": None, "runs": 0}  # zu wenige Läufe: der feste Wert
+    assert alert.minutes() == 180 and alert.info() == {"minutes": None, "fallback": 180, "runs": 0}  # zu wenige Läufe: der feste Wert
     for secs in (1800, 3000):
         alert._record(time.time(), secs)
-    assert alert.minutes() == 70 and alert.info() == {"minutes": 70, "runs": 2}  # 50 Min. plus 20
+    assert alert.minutes() == 70 and alert.info() == {"minutes": 70, "fallback": 180, "runs": 2}  # 50 Min. plus 20
     ids = _sensors(hass)
     await _start_run(hass, ids, automatic=True)
     await _fire(hass, freezer, 69 * 60)

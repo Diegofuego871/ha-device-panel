@@ -13,7 +13,7 @@ PANEL_HTML_FILE = "panel.html"
 STATIC_URL_PATH = f"/{DOMAIN}"
 PANEL_STATIC_URL_PATH = f"{STATIC_URL_PATH}/panel"
 # Cache-Buster: bei jeder Änderung unter panel/ von Hand erhöhen.
-PANEL_VERSION = "425"
+PANEL_VERSION = "426"
 PANEL_PAGE_URL = f"{PANEL_STATIC_URL_PATH}/{PANEL_HTML_FILE}?v={PANEL_VERSION}"
 
 # Mitgeliefertes Bild für Push-Meldungen (Companion-App, "icon_url"), wie in
@@ -272,7 +272,7 @@ CONF_STATUS_BACKUP_TIME = "status_backup_time"
 CONF_STATUS_BACKUP_MINUTES = "status_backup_minutes"
 DEFAULT_STATUS_BACKUP_MINUTES = 180
 # Seit 2.187.0 rechnet das Panel die längste Dauer selbst (Standard): längste der letzten 5 gelungenen Backups plus 20 Minuten; der feste Wert gilt, wenn
-# "Automatisch" aus ist oder noch zu wenige Backups bekannt sind
+# "Automatisch" aus ist; bei zu wenigen bekannten Backups gilt er, nie unter dem längsten bekannten plus 20 Minuten
 CONF_STATUS_BACKUP_AUTO = "status_backup_auto"
 # Status-App, System (seit 2.68.0): Sensor für CPU, Arbeitsspeicher und Festplatte; leer = automatisch gefunden
 CONF_STATUS_CPU_ENTITY = "status_cpu_entity"

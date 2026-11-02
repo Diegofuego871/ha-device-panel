@@ -66,6 +66,13 @@ def auto_minutes(durations: list[float]) -> int | None:
     return min(1440, max(10, -(-int(max(durations) + RESERVE_S) // 60)))
 
 
+def fallback_minutes(durations: list[float], fixed: int) -> int:
+    """Längste Dauer bei zu wenigen Läufen: der feste Wert, nie unter dem längsten bekannten Lauf plus 20 Minuten (ein einzelner langer Lauf zählt gleich)."""
+    if not durations:
+        return fixed
+    return min(1440, max(fixed, -(-int(max(durations) + RESERVE_S) // 60)))
+
+
 def runs_from_history(states: dict[str, list[Any]], ids: dict[str, str]) -> list[dict[str, float]]:
     """Gelungene automatische Läufe aus dem Verlauf der Sensoren (Recorder): Zeiträume mit Zustand "create_backup", in denen "letzter Versuch" und
     "letzter Erfolg" nachgeführt wurden. Ein von Hand gestarteter Lauf setzt den Versuch nicht und bleibt draussen."""
@@ -161,13 +168,17 @@ class BackupAlert:
     def minutes(self) -> int:
         """Die längste Dauer, die jetzt gilt: berechnet ("Automatisch", genug Läufe bekannt) oder der feste Wert."""
         opts = effective(self.hass)
-        if opts[CONF_STATUS_BACKUP_AUTO] and (auto := auto_minutes([r["secs"] for r in self._runs])) is not None:
-            return auto
+        secs = [r["secs"] for r in self._runs]
+        if opts[CONF_STATUS_BACKUP_AUTO]:
+            if (auto := auto_minutes(secs)) is not None:
+                return auto
+            return fallback_minutes(secs, opts[CONF_STATUS_BACKUP_MINUTES])
         return opts[CONF_STATUS_BACKUP_MINUTES]
 
     def info(self) -> dict[str, Any]:
-        """Für die Anzeige in der Status-App: die berechnete Dauer (None = zu wenige Läufe) und die Zahl der bekannten Läufe."""
-        return {"minutes": auto_minutes([r["secs"] for r in self._runs]), "runs": len(self._runs)}
+        """Für die Anzeige in der Status-App: die berechnete Dauer (None = zu wenige Läufe), die Dauer, die dann gilt, und die Zahl der bekannten Läufe."""
+        secs = [r["secs"] for r in self._runs]
+        return {"minutes": auto_minutes(secs), "fallback": fallback_minutes(secs, effective(self.hass)[CONF_STATUS_BACKUP_MINUTES]), "runs": len(secs)}
 
     async def async_stop(self) -> None:
         self._cancel_run()

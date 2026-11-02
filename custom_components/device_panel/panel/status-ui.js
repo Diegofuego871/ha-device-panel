@@ -500,7 +500,7 @@ export class StatusUi {
       .map(([id, k]) => `<button type="button" role="tab" class="sub-tab${(id === "auto") === auto ? " on" : ""}" data-st-bkauto="${id}" aria-selected="${(id === "auto") === auto}">${escape(t(k))}</button>`)
       .join("");
     // Automatisch: der berechnete Wert (längster der letzten gelungenen Backups plus 20 Minuten) oder der feste Wert, solange zu wenige Läufe bekannt sind
-    const autoLine = info.minutes != null ? t("stBkMaxNow", dur(info.minutes), info.runs) : t("stBkMaxFew", dur(Number(this.val("status_backup_minutes")) || 180), info.runs);
+    const autoLine = info.minutes != null ? t("stBkMaxNow", dur(info.minutes), info.runs) : t("stBkMaxFew", dur(info.fallback ?? (Number(this.val("status_backup_minutes")) || 180)), info.runs);
     const fixed = `<div class="opt-line st-min"><span class="opt-label">${escape(t("stBkMaxValue"))}</span>
           <span class="opt-input${mbad ? " bad" : ""}"><input type="number" inputmode="numeric" step="1" min="${mlo}" max="${mhi}" data-st-bkmin value="${escape(String(this.val("status_backup_minutes")))}" aria-label="${escape(t("stBkMax"))}"><span class="unit">${escape(t("stLoadMinUnit"))}</span></span></div>
           ${mbad ? `<div class="opt-warn" role="alert">${this.h.mdi("alert", 14)}<span>${escape(t("stBkMaxRange", mlo, mhi))}</span></div>` : ""}`;
