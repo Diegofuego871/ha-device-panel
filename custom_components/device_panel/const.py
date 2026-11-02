@@ -271,7 +271,7 @@ CONF_STATUS_BACKUP_TIME = "status_backup_time"
 # Längste Dauer eines Backups in Minuten (seit 2.186.0): läuft es länger (zum Beispiel ein Upload, der hängt), gilt es als nicht fertig geworden
 CONF_STATUS_BACKUP_MINUTES = "status_backup_minutes"
 DEFAULT_STATUS_BACKUP_MINUTES = 180
-# Seit 2.188.0 rechnet das Panel die längste Dauer selbst (Standard): längste der letzten 5 gelungenen Backups plus 20 Minuten; der feste Wert gilt, wenn
+# Seit 2.187.0 rechnet das Panel die längste Dauer selbst (Standard): längste der letzten 5 gelungenen Backups plus 20 Minuten; der feste Wert gilt, wenn
 # "Automatisch" aus ist oder noch zu wenige Backups bekannt sind
 CONF_STATUS_BACKUP_AUTO = "status_backup_auto"
 # Status-App, System (seit 2.68.0): Sensor für CPU, Arbeitsspeicher und Festplatte; leer = automatisch gefunden

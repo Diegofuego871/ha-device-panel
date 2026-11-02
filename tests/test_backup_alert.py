@@ -372,7 +372,7 @@ async def test_backup_minutes_option_range(hass: HomeAssistant) -> None:
             options_api.PANEL_SCHEMA({"status_backup_minutes": bad})
 
 
-# --- Längste Dauer "Automatisch" (2.188.0) --------------------------------------------------------------------------------
+# --- Längste Dauer "Automatisch" (2.187.0) --------------------------------------------------------------------------------
 
 
 def test_auto_minutes() -> None:

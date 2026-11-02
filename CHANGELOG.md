@@ -7,27 +7,16 @@ All notable changes to this integration are documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/).
 
-## [2.188.0] - 2026-11-02
-
-The longest duration of the backup alert adapts to your backups on its own.
-
-Includes the changes from 2.187.0.
-
-### Added
-
-- **"Longest duration: Automatic" (Status app, Settings, default for everyone):** the panel calculates the longest duration itself: the longest of the last 5 successful backups plus 20 minutes (10 minutes to 24 hours). It counts the last 5 runs, not days, so a backup that runs only once a week works too. The settings show the value that applies now ("Currently 2 h 15 min, calculated from the last 5 backups"). Until at least two backups are known, the fixed value (default 3 hours) applies. On first start the panel reads earlier runs from the history of Home Assistant (the sensor `sensor.backup_backup_manager_state`), so the value is usually there from day one; from then on it records every successful run itself. "Fixed" gives the number field back.
-- A backup that finishes after the limit is part of the last runs afterwards, so the limit grows with it. In automatic mode its message therefore says that the longest duration will adapt; the suggestion to raise it appears only with "Fixed".
-- **Backup and restore** include the choice "Automatic / Fixed" (the recorded durations are runtime data and stay out).
-
 ## [2.187.0] - 2026-11-02
 
-The setup assistant explains its options in plain words.
-
-Not released; included in 2.188.0.
+The setup assistant explains its options in plain words, and the longest duration of the backup alert adapts to your backups on its own.
 
 ### Added
 
 - **Explanations in the setup assistant:** in the steps "Notifications" and "Labels" a small info mark behind each option (target, failed devices, low battery, fully charged, new devices, updates, monitor, online status, failed after, notify only after, unstable from, connectivity sensor counts, low from) opens a window that explains in simple words what it does and what the value means, with a short example where a number is involved. "Notify only after", "Unstable from" and "Low from" also have a small picture (a timeline, a day bar, a battery bar with the threshold). The mark sits behind the name, so the page does not get longer; the window changes nothing in your choices. It closes with "Got it", a tap beside it or Esc.
+- **"Longest duration: Automatic" (Status app, Settings, default for everyone):** the panel calculates the longest duration itself: the longest of the last 5 successful backups plus 20 minutes (10 minutes to 24 hours). It counts the last 5 runs, not days, so a backup that runs only once a week works too. The settings show the value that applies now ("Currently 2 h 15 min, calculated from the last 5 backups"). Until at least two backups are known, the fixed value (default 3 hours) applies. On first start the panel reads earlier runs from the history of Home Assistant (the sensor `sensor.backup_backup_manager_state`), so the value is usually there from day one; from then on it records every successful run itself. "Fixed" gives the number field back.
+- A backup that finishes after the limit is part of the last runs afterwards, so the limit grows with it. In automatic mode its message therefore says that the longest duration will adapt; the suggestion to raise it appears only with "Fixed".
+- **Backup and restore** include the choice "Automatic / Fixed" (the recorded durations are runtime data and stay out).
 
 ## [2.186.1] - 2026-11-01
 
@@ -5503,7 +5492,7 @@ First pre-release.
   GitHub Actions for HACS/hassfest validation and tests.
 
 [2.6.0]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v2.6.0
-[2.188.0]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v2.188.0
+[2.187.0]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v2.187.0
 [2.186.1]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v2.186.1
 [2.186.0]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v2.186.0
 [2.184.1]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v2.184.1

@@ -7,27 +7,16 @@ Alle nennenswerten Änderungen an dieser Integration stehen in dieser Datei.
 Das Format folgt [Keep a Changelog](https://keepachangelog.com/de/1.1.0/),
 die Versionsnummern folgen [Semantic Versioning](https://semver.org/lang/de/).
 
-## [2.188.0] - 2026-11-02
-
-Die längste Dauer der Backup-Meldung passt sich von selbst an deine Backups an.
-
-Enthält die Änderungen von 2.187.0.
-
-### Hinzugefügt
-
-- **"Längste Dauer: Automatisch" (Status-App, Einstellungen, Standard für alle):** Das Panel rechnet die längste Dauer selbst: das längste der letzten 5 gelungenen Backups plus 20 Minuten (10 Minuten bis 24 Stunden). Es zählt die letzten 5 Läufe, nicht Tage, so funktioniert es auch bei einem Backup, das nur einmal pro Woche läuft. Die Einstellungen zeigen den Wert, der jetzt gilt ("Aktuell 2 Std. 15 Min., berechnet aus den letzten 5 Backups"). Solange weniger als zwei Backups bekannt sind, gilt der feste Wert (Standard 3 Stunden). Beim ersten Start liest das Panel frühere Läufe aus dem Verlauf von Home Assistant (der Sensor `sensor.backup_backup_manager_state`), der Wert steht also meist am ersten Tag; danach merkt es sich jeden gelungenen Lauf selbst. "Fest" gibt das Zahlenfeld zurück.
-- Ein Backup, das nach dem Limit fertig wird, gehört danach zu den letzten Läufen, das Limit wächst also mit. Seine Meldung sagt im automatischen Modus deshalb, dass sich die längste Dauer anpasst; der Vorschlag, sie zu erhöhen, kommt nur bei "Fest".
-- **Sicherung und Wiederherstellung** enthalten die Wahl "Automatisch / Fest" (die aufgezeichneten Dauern sind Laufzeitdaten und bleiben draussen).
-
 ## [2.187.0] - 2026-11-02
 
-Der Einrichtungsassistent erklärt seine Optionen in einfachen Worten.
-
-Nicht veröffentlicht; enthalten in 2.188.0.
+Der Einrichtungsassistent erklärt seine Optionen in einfachen Worten, und die längste Dauer der Backup-Meldung passt sich von selbst an deine Backups an.
 
 ### Hinzugefügt
 
 - **Erklärungen im Einrichtungsassistenten:** In den Schritten "Meldungen" und "Labels" öffnet ein kleines Info-Zeichen hinter jeder Position (Ziel, Ausgefallene Geräte, Niedrige Batterie, Voll geladen, Neue Geräte, Updates, Überwachen, Online-Status, Ausgefallen nach, Erst melden nach, Instabil ab, Verbindungssensor zählt, Schwach ab) ein Fenster, das in einfachen Worten erklärt, was sie macht und was der Wert bedeutet, bei Zahlen mit einem kurzen Beispiel. "Erst melden nach", "Instabil ab" und "Schwach ab" haben zusätzlich eine kleine Grafik (Zeitstrahl, Tagesleiste, Batterieleiste mit Schwelle). Das Zeichen sitzt hinter dem Namen, die Seite wird dadurch nicht länger; das Fenster ändert nichts an deinen Wahlen. Es schliesst mit "Verstanden", einem Tipp daneben oder Esc.
+- **"Längste Dauer: Automatisch" (Status-App, Einstellungen, Standard für alle):** Das Panel rechnet die längste Dauer selbst: das längste der letzten 5 gelungenen Backups plus 20 Minuten (10 Minuten bis 24 Stunden). Es zählt die letzten 5 Läufe, nicht Tage, so funktioniert es auch bei einem Backup, das nur einmal pro Woche läuft. Die Einstellungen zeigen den Wert, der jetzt gilt ("Aktuell 2 Std. 15 Min., berechnet aus den letzten 5 Backups"). Solange weniger als zwei Backups bekannt sind, gilt der feste Wert (Standard 3 Stunden). Beim ersten Start liest das Panel frühere Läufe aus dem Verlauf von Home Assistant (der Sensor `sensor.backup_backup_manager_state`), der Wert steht also meist am ersten Tag; danach merkt es sich jeden gelungenen Lauf selbst. "Fest" gibt das Zahlenfeld zurück.
+- Ein Backup, das nach dem Limit fertig wird, gehört danach zu den letzten Läufen, das Limit wächst also mit. Seine Meldung sagt im automatischen Modus deshalb, dass sich die längste Dauer anpasst; der Vorschlag, sie zu erhöhen, kommt nur bei "Fest".
+- **Sicherung und Wiederherstellung** enthalten die Wahl "Automatisch / Fest" (die aufgezeichneten Dauern sind Laufzeitdaten und bleiben draussen).
 
 ## [2.186.1] - 2026-11-01
 
@@ -5604,7 +5593,7 @@ Erste Vorabversion.
   GitHub Actions für die Prüfungen von HACS und hassfest sowie die Tests.
 
 [2.6.0]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v2.6.0
-[2.188.0]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v2.188.0
+[2.187.0]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v2.187.0
 [2.186.1]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v2.186.1
 [2.186.0]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v2.186.0
 [2.184.1]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v2.184.1
