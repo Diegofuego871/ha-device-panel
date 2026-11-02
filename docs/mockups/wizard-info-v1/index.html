@@ -1,0 +1,127 @@
+<!doctype html><meta charset="utf-8"><title>Assistent: Info-i bei den Positionen</title><style>
+:root{--p:#43a047;--ps:#e3f1e5;--bg:#1c1c1c;--card:#262626;--ln:#3a3a3a;--t2:#a9a9a9;--tx:#eee}
+*{box-sizing:border-box}
+body{margin:0;background:#e9ecef;font:14px/1.4 Roboto,Arial,sans-serif;color:#1d1d1d;padding:26px;width:1540px}
+h1{margin:0 0 4px;font-size:22px}h2{margin:30px 0 4px;font-size:18px}.rec{color:#2e8b57}
+.sub{color:#555;font-size:13px;margin:0 0 12px;max-width:1300px}
+.row{display:flex;gap:26px;align-items:flex-start}
+.cap{color:#777;font-size:12px;letter-spacing:.04em;text-transform:uppercase;margin-bottom:6px}
+.ph{width:390px;height:700px;background:var(--bg);color:var(--tx);border-radius:26px;padding:18px 16px;position:relative;overflow:hidden;box-shadow:0 2px 14px #0004}
+.ph .st{font-size:12px;color:var(--t2);margin-bottom:6px}
+.bars{display:flex;gap:5px;margin-bottom:12px}.bars i{flex:1;height:4px;border-radius:2px;background:#444}.bars i.on{background:var(--p)}
+.ph h3{margin:10px 0 2px;font-size:19px;border-left:4px solid var(--p);padding-left:9px}
+.li{display:flex;align-items:center;gap:10px;padding:9px 0}
+.ic{width:34px;height:34px;border-radius:10px;background:#2f2f2f;display:grid;place-items:center;flex:none;color:#ddd;font-size:15px}
+.nm{flex:1;font-size:15px}.nm small{display:block;color:var(--t2);font-size:12px}
+.i{display:inline-grid;place-items:center;width:18px;height:18px;border:1.5px solid var(--p);border-radius:50%;color:var(--p);font:italic 700 11px Georgia,serif;margin-left:7px;vertical-align:1px}
+.sw{width:42px;height:24px;border-radius:12px;background:var(--p);position:relative;flex:none}.sw:after{content:"";position:absolute;right:3px;top:3px;width:18px;height:18px;border-radius:50%;background:#fff}.sw.off{background:#555}.sw.off:after{right:auto;left:3px}
+.vals{display:flex;gap:10px;margin:0 0 6px 44px}.vals label{flex:1;font-size:11.5px;color:var(--t2)}.vals b{display:block;border:1px solid var(--ln);border-radius:10px;padding:6px 9px;color:var(--tx);font-weight:400;font-size:14px;margin-top:3px}
+.sel{border:1px solid var(--ln);border-radius:12px;padding:8px 12px;min-width:150px;font-size:13.5px;display:flex;justify-content:space-between}.sel:after{content:"⌄";color:var(--t2);margin-left:10px}
+.dim:before{content:"";position:absolute;inset:0;background:#000a;z-index:2}
+.dlg{position:absolute;left:18px;right:18px;top:150px;z-index:3;background:#2b2b2b;border-radius:20px;padding:20px 20px 16px;box-shadow:0 4px 24px #000a}
+.dlg b{display:block;font-size:18px;margin-bottom:8px}.dlg p{margin:0 0 10px;color:#ddd;font-size:14px;line-height:1.5}
+.dlg .ex{background:#333;border-radius:12px;padding:10px 12px;font-size:13px;color:#ddd}.dlg .ex em{display:block;color:var(--p);font-style:normal;font-weight:600;margin-bottom:3px;font-size:12px;text-transform:uppercase;letter-spacing:.04em}
+.dlg .bt{margin-top:14px;border:1px solid #666;border-radius:20px;padding:10px;text-align:center;color:#eee}
+.sheet{position:absolute;left:0;right:0;bottom:0;z-index:3;background:#2b2b2b;border-radius:22px 22px 0 0;padding:10px 20px 20px;box-shadow:0 -4px 24px #000a}
+.sheet .grab{width:40px;height:4px;background:#666;border-radius:2px;margin:0 auto 14px}.sheet b{display:block;font-size:18px;margin-bottom:8px}.sheet p{margin:0 0 10px;color:#ddd;font-size:14px;line-height:1.5}
+.tl{margin:10px 0 4px;position:relative;height:74px}
+.tl .ax{position:absolute;left:0;right:0;top:34px;height:3px;background:#555;border-radius:2px}
+.tl .dot{position:absolute;top:27px;width:16px;height:16px;border-radius:50%;background:#e5534b}
+.tl .ok{background:var(--p)}
+.tl .seg{position:absolute;top:34px;height:3px;background:#e5534b}
+.tl .t{position:absolute;font-size:11px;color:#bbb;white-space:nowrap}
+.tl .bell{position:absolute;top:2px;font-size:18px}
+.bat{display:flex;align-items:flex-end;gap:4px;height:46px;margin:8px 0}.bat i{flex:1;background:#555;border-radius:3px}.bat i.lo{background:#e5534b}
+.thr{position:relative;height:2px;background:repeating-linear-gradient(90deg,#e5534b 0 6px,transparent 6px 10px);margin:-30px 0 26px}
+.tbl{background:#fff;border-radius:14px;padding:14px 18px;box-shadow:0 2px 10px #0002;font-size:13px;width:1480px}
+.tbl table{border-collapse:collapse;width:100%}.tbl td{padding:7px 10px;border-top:1px solid #e3e3e3;vertical-align:top}.tbl td:first-child{width:200px;font-weight:600}
+.rule{background:#fff;border-radius:14px;padding:12px 16px;box-shadow:0 2px 10px #0002;max-width:1300px;font-size:13.5px}
+</style>
+<h1>Assistent: Info-i hinter jeder Position (Schritte "Meldungen" und "Labels")</h1>
+<p class="sub">Erfundene Daten. Das Info-i sitzt direkt hinter dem Namen der Position, die Zeile wird dadurch nicht höher und die Seite nicht länger. Ein Tipp öffnet ein Fenster mit einfachen Worten, auf Wunsch mit einem Beispiel und einer kleinen Grafik. Schliessen mit "Verstanden", Tipp daneben oder Esc.</p>
+
+<h2>Variante A <span class="rec">· Empfehlung</span>: Fenster in der Mitte, wie die bisherigen Fenster im Panel</h2>
+<p class="sub">Gleicher Stil wie die anderen Rückfragen (dunkles Fenster, ein Knopf). Titel, ein bis zwei einfache Sätze, ein Kasten "Beispiel". Ohne Grafik.</p>
+<div class="row">
+ <div><div class="cap">Schritt 4 · Meldungen: die Seite</div>
+ <div class="ph"><div class="st">Schritt 4 von 7 · Meldungen</div><div class="bars"><i class="on"></i><i class="on"></i><i class="on"></i><i class="on"></i><i></i><i></i><i></i></div>
+  <h3>Was soll gemeldet werden?</h3>
+  <div class="li"><span class="ic">⚠</span><div class="nm">Ausgefallene Geräte<span class="i">i</span><small>Meldung beim Ausfall und bei der Rückkehr</small></div><span class="sw"></span></div>
+  <div class="vals"><label>Melden nach<b>2 &nbsp;Min.</b></label></div>
+  <div class="li"><span class="ic">▯</span><div class="nm">Niedrige Batterie<span class="i">i</span><small>Meldung beim Unterschreiten der Schwelle</small></div><span class="sw"></span></div>
+  <div class="vals"><label>Batterie schwach unter<b>15 &nbsp;%</b></label></div>
+  <div class="li"><span class="ic">⚡</span><div class="nm">Voll geladen<span class="i">i</span><small>Meldung, wenn ein ladendes Gerät voll ist</small></div><span class="sw off"></span></div>
+  <div class="li"><span class="ic">✦</span><div class="nm">Neue Geräte<span class="i">i</span><small>Gesammelt, mit Bereich und Integration</small></div><span class="sw"></span></div>
+  <div class="li"><span class="ic">⤓</span><div class="nm">Updates<span class="i">i</span><small>Neue Updates für Home Assistant, Apps und HACS</small></div><span class="sw off"></span></div>
+ </div></div>
+ <div><div class="cap">Tipp auf das Info-i bei "Ausgefallene Geräte"</div>
+ <div class="ph dim"><div class="st">Schritt 4 von 7 · Meldungen</div><div class="bars"><i class="on"></i><i class="on"></i><i class="on"></i><i class="on"></i><i></i><i></i><i></i></div>
+  <h3>Was soll gemeldet werden?</h3>
+  <div class="li"><span class="ic">⚠</span><div class="nm">Ausgefallene Geräte<span class="i">i</span></div><span class="sw"></span></div>
+  <div class="li"><span class="ic">▯</span><div class="nm">Niedrige Batterie</div><span class="sw"></span></div>
+  <div class="dlg"><b>Ausgefallene Geräte</b>
+   <p>Du bekommst eine Nachricht aufs Handy, wenn ein Gerät nicht mehr erreichbar ist, zum Beispiel eine Lampe, die vom WLAN getrennt wurde. Kommt sie zurück, gibt es eine zweite Nachricht.</p>
+   <div class="ex"><em>Melden nach</em>So lange muss ein Gerät weg sein, bevor du etwas hörst. Bei 5 Minuten bleibt es still, wenn die Lampe nur kurz aussetzt.</div>
+   <div class="bt">Verstanden</div></div></div></div>
+ <div><div class="cap">Schritt 5 · Labels: gleiche Idee</div>
+ <div class="ph"><div class="st">Schritt 5 von 7 · Labels</div><div class="bars"><i class="on"></i><i class="on"></i><i class="on"></i><i class="on"></i><i class="on"></i><i></i><i></i></div>
+  <div class="li"><span class="ic">👁</span><div class="nm">Überwachen<span class="i">i</span></div><span class="sw"></span></div>
+  <div class="li"><span class="ic">○</span><div class="nm">Online-Status beobachten<span class="i">i</span></div><span class="sw"></span></div>
+  <div class="li"><span class="ic">〜</span><div class="nm">Ausgefallen nach<span class="i">i</span></div><span class="sel">Standard</span></div>
+  <div class="li"><span class="ic">⏱</span><div class="nm">Erst melden nach<span class="i">i</span></div><span class="sel">Standard</span></div>
+  <div class="li"><span class="ic">⚠</span><div class="nm">Instabil ab<span class="i">i</span></div><span class="sel">Standard</span></div>
+  <div class="li"><span class="ic">🔗</span><div class="nm">Verbindungssensor zählt<span class="i">i</span></div><span class="sel">Standard</span></div>
+  <div class="li"><span class="ic">▯</span><div class="nm">Schwach ab<span class="i">i</span></div><span class="sel">Standard</span></div>
+  <div class="li"><span class="ic">▯</span><div class="nm">Niedrige Batterie<span class="i">i</span></div><span class="sw"></span></div>
+  <div class="li"><span class="ic">⚡</span><div class="nm">Voll geladen<span class="i">i</span></div><span class="sw off"></span></div>
+ </div></div>
+</div>
+
+<h2>Variante B: Fenster mit kleiner Grafik, wo sie beim Verstehen hilft</h2>
+<p class="sub">Wie A, aber bei Positionen mit einer Zahl eine Mini-Grafik: "Erst melden nach" als Zeitstrahl, "Instabil ab" als Tagesleiste, "Schwach ab" als Batterieleiste mit Schwelle. Bei reinen Schaltern keine Grafik. Mehr Arbeit (etwa vier Grafiken), dafür für Laien deutlich anschaulicher.</p>
+<div class="row">
+ <div class="ph dim"><div class="st">Schritt 5 von 7 · Labels</div><div class="li"><span class="ic">⏱</span><div class="nm">Erst melden nach<span class="i">i</span></div><span class="sel">Standard</span></div>
+  <div class="dlg" style="top:90px"><b>Erst melden nach</b>
+   <p>Wie lange ein Gerät weg sein muss, bevor das Panel dir eine Nachricht schickt. So gibt es keinen Alarm bei einem kurzen Aussetzer.</p>
+   <div class="tl"><div class="ax"></div><div class="seg" style="left:8%;width:12%"></div><div class="dot" style="left:6%"></div><div class="dot ok" style="left:21%"></div><span class="t" style="left:0;top:48px">Gerät fällt aus</span><span class="t" style="left:17%;top:10px">wieder da</span>
+    <div class="seg" style="left:50%;width:34%"></div><div class="dot" style="left:48%"></div><span class="bell" style="left:82%">🔔</span><span class="t" style="left:44%;top:48px">Gerät fällt aus</span><span class="t" style="left:78%;top:48px">Nachricht</span></div>
+   <div class="ex"><em>Beispiel: 5 Minuten</em>Links: nach 2 Minuten wieder da, keine Nachricht. Rechts: nach 5 Minuten noch weg, jetzt kommt die Nachricht.</div>
+   <div class="bt">Verstanden</div></div></div>
+ <div class="ph dim"><div class="st">Schritt 5 von 7 · Labels</div><div class="li"><span class="ic">▯</span><div class="nm">Schwach ab<span class="i">i</span></div><span class="sel">Standard</span></div>
+  <div class="dlg" style="top:90px"><b>Schwach ab</b>
+   <p>Ab welchem Ladestand die Batterie als schwach gilt. Dann zeigt das Panel eine Warnung, und du kannst die Batterie wechseln, bevor das Gerät ausgeht.</p>
+   <div class="bat"><i style="height:100%"></i><i style="height:85%"></i><i style="height:70%"></i><i style="height:55%"></i><i style="height:40%"></i><i style="height:26%"></i><i class="lo" style="height:14%"></i><i class="lo" style="height:7%"></i></div>
+   <div class="thr"></div>
+   <div class="ex"><em>Beispiel: 15 %</em>Die roten Balken liegen unter 15 %: Hier kommt die Warnung.</div>
+   <div class="bt">Verstanden</div></div></div>
+ <div class="ph dim"><div class="st">Schritt 5 von 7 · Labels</div><div class="li"><span class="ic">⚠</span><div class="nm">Instabil ab<span class="i">i</span></div><span class="sel">Standard</span></div>
+  <div class="dlg" style="top:90px"><b>Instabil ab</b>
+   <p>Ein Gerät, das immer wieder kurz ausfällt, ist unzuverlässig, auch wenn es gerade läuft. Hier legst du fest, ab wie vielen Ausfällen innerhalb eines Tages das Panel es als "instabil" zeigt.</p>
+   <div class="tl"><div class="ax"></div><div class="dot" style="left:12%"></div><div class="dot" style="left:44%"></div><div class="dot" style="left:78%"></div><span class="t" style="left:0;top:48px">0 Uhr</span><span class="t" style="left:46%;top:48px">12 Uhr</span><span class="t" style="right:0;top:48px">24 Uhr</span></div>
+   <div class="ex"><em>Beispiel: 3 Ausfälle</em>Drei Ausfälle an einem Tag: das Gerät gilt als instabil.</div>
+   <div class="bt">Verstanden</div></div></div>
+</div>
+
+<h2>Variante C: Blatt von unten (nur Handy)</h2>
+<p class="sub">Das Fenster schiebt sich von unten ein und lässt die Seite oben sichtbar, so sieht man die Position, um die es geht. Auf dem Desktop wäre es das mittige Fenster aus A. Ein Stil mehr im Panel, den es bisher nicht gibt.</p>
+<div class="row"><div class="ph dim"><div class="st">Schritt 4 von 7 · Meldungen</div>
+  <div class="li"><span class="ic">⚠</span><div class="nm">Ausgefallene Geräte<span class="i">i</span></div><span class="sw"></span></div>
+  <div class="li"><span class="ic">▯</span><div class="nm">Niedrige Batterie</div><span class="sw"></span></div>
+  <div class="sheet"><div class="grab"></div><b>Ausgefallene Geräte</b><p>Du bekommst eine Nachricht aufs Handy, wenn ein Gerät nicht mehr erreichbar ist. Kommt es zurück, gibt es eine zweite Nachricht.</p><div class="bt" style="border:1px solid #666;border-radius:20px;padding:10px;text-align:center">Verstanden</div></div></div></div>
+
+<h2>Entwurf der Texte (einfache Sprache, Schweizer Rechtschreibung)</h2>
+<div class="tbl"><table>
+<tr><td>Ziel der Meldungen</td><td>Hierhin schickt das Panel alle Nachrichten, meist auf dein Handy. Mit der Testmeldung siehst du gleich, ob sie ankommen.</td></tr>
+<tr><td>Ausgefallene Geräte</td><td>Du bekommst eine Nachricht, wenn ein Gerät nicht mehr erreichbar ist, zum Beispiel eine Lampe, die vom WLAN getrennt wurde. Kommt sie zurück, gibt es eine zweite Nachricht. <i>Melden nach:</i> So lange muss das Gerät weg sein, bevor du etwas hörst.</td></tr>
+<tr><td>Niedrige Batterie</td><td>Eine Nachricht, wenn die Batterie eines Geräts fast leer ist, zum Beispiel beim Rauchmelder. So wechselst du sie rechtzeitig. <i>Schwach unter:</i> Ab diesem Ladestand gilt die Batterie als schwach.</td></tr>
+<tr><td>Voll geladen</td><td>Eine Nachricht, wenn ein Gerät, das gerade lädt (Handy, Saugroboter), voll ist. Dann weisst du, wann du es vom Ladegerät nehmen kannst. <i>Voll ab:</i> Ab diesem Ladestand gilt es als voll.</td></tr>
+<tr><td>Neue Geräte</td><td>Eine Nachricht, wenn ein neues Gerät in Home Assistant auftaucht. Mehrere in kurzer Zeit kommen als eine Nachricht. <i>Sammeln:</i> So lange wartet das Panel auf weitere neue Geräte.</td></tr>
+<tr><td>Updates</td><td>Eine Nachricht, wenn es etwas zu aktualisieren gibt: Home Assistant selbst, Apps oder HACS. Du wählst die Uhrzeit, zu der sie kommt.</td></tr>
+<tr><td>Überwachen</td><td>Aus: Die Geräte bleiben sichtbar, aber das Panel prüft sie nicht mehr. Es gibt keine Ausfälle, keine Batterie-Warnung und keine Meldungen für sie.</td></tr>
+<tr><td>Online-Status beobachten</td><td>Aus: Das Panel zeigt nur einen neutralen Ring statt grün (online) oder rot (ausgefallen). Gut für Geräte, die oft absichtlich aus sind. Batterie und Empfang werden weiter geprüft.</td></tr>
+<tr><td>Ausgefallen nach</td><td>Wie lange ein Gerät nichts von sich hören lassen darf, bis das Panel es als ausgefallen zeigt. Standard: 2 Minuten.</td></tr>
+<tr><td>Erst melden nach</td><td>Wie lange ein Gerät weg sein muss, bevor du eine Nachricht bekommst. So gibt es keinen Alarm bei einem kurzen Aussetzer.</td></tr>
+<tr><td>Instabil ab</td><td>Ein Gerät, das immer wieder kurz ausfällt, gilt als "instabil". Hier stellst du ein, ab wie vielen Ausfällen in 24 Stunden. Standard: 3.</td></tr>
+<tr><td>Verbindungssensor zählt</td><td>Manche Geräte haben einen eigenen "Verbindungs-Sensor", zum Beispiel die Cloud-Verbindung eines Shelly. Er entscheidet sonst allein, ob das Gerät online ist, auch wenn es zu Hause tadellos läuft. Aus: Dann zählen die übrigen Werte des Geräts.</td></tr>
+<tr><td>Schwach ab</td><td>Ab welchem Ladestand die Batterie als schwach gilt. Dann zeigt das Panel eine Warnung. Standard: 15 %.</td></tr>
+</table></div>
