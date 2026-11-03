@@ -5388,7 +5388,7 @@ class DevicePanel extends HTMLElement {
         if (d.battery?.low) why.push([this._t("warnBatteryLow"), d.battery.level != null ? `${d.battery.level} %` : ""]);
       }
       const whyHtml = why.length
-        ? `<div class="why-tags">${why.map(([k, v]) => `<span class="why">${mdi("alert", 15)}<b>${escape(k)}</b>${v ? ` · ${escape(v)}` : ""}</span>`).join("")}</div>`
+        ? `<div class="why-tags">${why.map(([k, v]) => `<span class="why">${mdi("alert", 15)}<b>${escape(k)}</b>${v ? ` <span class="wv">${escape(v)}</span>` : ""}</span>`).join("")}</div>`
         : "";
       const ents = this._entitiesHtml(d);
       // Reiter (seit 1.37.0, docs/mockups/popup-tabs-log-v1, R3): Übersicht zum Lesen, alle Einstellungen des Geräts

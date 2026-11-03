@@ -59,8 +59,11 @@ for (const lang of langs) {
     if (mobile) { await ev(`window.scrollTo(0, 0)`); }
 
     // Pop-up eines instabilen Geräts mit Batterie
+    // Handy: höheres Fenster, damit die ganze Übersicht über der festen Leiste "Gerät ausblenden / Schliessen" liegt und kein Abschnitt darunter abgeschnitten wirkt
+    if (mobile) await p.setViewportSize({ width: 390, height: 1070 });
     await open("e");
     await shotDlg("popup", "dialog.device");
+    if (mobile) await p.setViewportSize({ width: 390, height: 844 });
     // Batterie-Verlauf mit Prognose (3 Monate)
     await tap('dialog.device .st-tile[data-kind="battery"]');
     await wait(`return r.querySelector("dialog.stat-dlg")?.open && !!r.querySelector("dialog.stat-dlg .bh-svg")`);

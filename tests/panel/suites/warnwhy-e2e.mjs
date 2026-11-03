@@ -7,7 +7,7 @@ const b = await chromium.launch(launchOptions);
 let ok = true;
 const check = (l, c, i = "") => { ok &&= !!c; console.log(`${c ? "PASS" : "FAIL"} ${l}${i ? " - " + i : ""}`); };
 const R = `document.querySelector("device-panel").shadowRoot`;
-const T = { de: { flaky: "Instabil · 5× in 24 Std.", weak: "Empfang schwach", bat: "Batterie niedrig · 9 %" }, en: { flaky: "Unstable · 5× in 24 h", weak: "Weak signal", bat: "Battery low · 9 %" } };
+const T = { de: { flaky: "Instabil 5× in 24 Std.", weak: "Empfang schwach", bat: "Batterie niedrig 9 %" }, en: { flaky: "Unstable 5× in 24 h", weak: "Weak signal", bat: "Battery low 9 %" } };
 for (const lang of ["de", "en"]) for (const mobile of [false, true]) {
   const tag = `${lang}/${mobile ? "mobile" : "desktop"}`;
   const ctx = await b.newContext(mobile ? { viewport: { width: 402, height: 874 }, isMobile: true, hasTouch: true, deviceScaleFactor: 2 } : { viewport: { width: 1400, height: 900 } });
@@ -25,6 +25,9 @@ for (const lang of ["de", "en"]) for (const mobile of [false, true]) {
   const warned = () => ev(`return [...r.querySelectorAll("dialog.device .st-tile.warned .st-k")].map(x=>x.textContent)`);
   await open("e");
   check(`[${tag}] Instabil: Marke im Kopf`, JSON.stringify(await tags()) === JSON.stringify([T[lang].flaky]), JSON.stringify(await tags()));
+  // Schmale Spalte (Handy: Name und drei Knöpfe daneben): der Wert bricht als Ganzes um, nie mitten im Wort, und die Marke bleibt in der Spalte
+  check(`[${tag}] Marke: Wert in einer Zeile, innerhalb der Spalte`, await ev(`const w = r.querySelector("dialog.device .why"); const v = w.querySelector(".wv"); const col = r.querySelector("dialog.device .dlg-title").getBoundingClientRect(); const wr = w.getBoundingClientRect(); return v.getBoundingClientRect().height < 24 && wr.right <= col.right + 1 && wr.height < 64`));
+  check(`[${tag}] Kachel mit Pfeil: der Text läuft nicht unter den Pfeil`, await ev(`return [...r.querySelectorAll("dialog.device .st-tile")].filter((t) => t.querySelector(":scope > .chev")).every((t) => { const s = t.querySelector(".st-sub").getBoundingClientRect(); const c = t.querySelector(":scope > .chev").getBoundingClientRect(); return s.right <= c.left + 1 || s.bottom <= c.top + 1 })`));
   check(`[${tag}] nur die Kachel Verfügbarkeit markiert`, (await warned()).length === 1);
   check(`[${tag}] Pille "Instabil" ersetzt`, !(await ev(`return !!r.querySelector("dialog.device .dlg-sub .pill.warn")`)));
   await p.screenshot({ path: `${outDir}/warnwhy-${tag.replace("/", "-")}.png` });

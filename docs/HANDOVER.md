@@ -3,6 +3,10 @@
 Einstieg für jede neue Claude-Code-Session. Zuerst diese Datei lesen, dann
 `CLAUDE.md`, `docs/CONCEPT.md`, `docs/LEARNINGS.md`, `docs/DESIGN.md`.
 
+## Stand (2.188.1, Popup auf dem Handy)
+
+- Die Warnmarken im Popup-Kopf (`.why`, Wert in `<span class="wv">`, ohne Punkt) umbrechen als Ganzes und bleiben in der Spalte; Kacheln mit Pfeil (`.st-tile:has(> .chev) .st-sub`) lassen Platz für den Pfeil. Test: Suite `warnwhy`. README-Bilder `popup.png` und `popup-mobile.png` neu (`readme-shots.mjs`: für das Handybild ein Fenster mit 1070 px Höhe, damit keine Abschnitte hinter der festen Leiste verschwinden).
+
 ## Stand (2.188.0, App "Updates" für alle Updates)
 
 - Die App "Geräte-Updates" heisst "Updates" und zeigt jede offene Update-Entität, die Home Assistant kennt und installieren lässt (`update_queue.available`): Geräte, Apps (hassio), HACS, Core, Betriebssystem, Supervisor. Felder je Eintrag: `kind` (`update_kind`: core/addons/hacs/devices), `restart` (nur `update.home_assistant_core_update` und `..._operating_system_update`), `device_id` darf fehlen. Warteschlange: Neustart-Updates warten, bis alles andere durch ist, laufen allein und nur eines je Start (`enqueue`, `_pump_once`; die Warteschlange liegt im Arbeitsspeicher und endet mit dem Neustart). Start über `device_update.async_install_entity(hass, entity_id, hold_key, ...)`; Zurückhaltung der Ausfall-Meldungen: Gerät bei Geräte-Updates, `HOLD_ALL` ("*") bei App-Updates (`held_until` kennt beides), sonst keine.

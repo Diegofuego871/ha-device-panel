@@ -7,6 +7,16 @@ Alle nennenswerten Änderungen an dieser Integration stehen in dieser Datei.
 Das Format folgt [Keep a Changelog](https://keepachangelog.com/de/1.1.0/),
 die Versionsnummern folgen [Semantic Versioning](https://semver.org/lang/de/).
 
+## [2.188.1] - 2026-11-03
+
+Das Geräte-Popup sieht auf einem schmalen Handy richtig aus, und die README-Bilder des Popups sind neu.
+
+### Behoben
+
+- **Popup, Kopf auf dem Handy:** Die Warnmarke ("Instabil 5× in 24 Std.", "Empfang schwach", "Batterie niedrig") stand in der schmalen Spalte neben dem Namen und den drei Knöpfen und brach zu einer hohen, schmalen Kapsel um. Sie bricht jetzt als Ganzes um: der Name der Warnung in der ersten Zeile, der Wert darunter in gedämpfter Farbe (der Punkt dazwischen entfällt), in einem Kasten mit runden Ecken statt einer vollen Kapsel.
+- **Popup, Kacheln der Statistik mit Pfeil:** Die Zeile unter dem Wert (zum Beispiel "5 Unterbrüche · längster 9 Min.") läuft nicht mehr unter den Pfeil unten rechts, sondern bricht in die nächste Zeile um.
+- **README:** Die Bilder des Popups (Desktop und Handy, Deutsch und Englisch) sind neu. Das Handybild entsteht in einem höheren Fenster, die ganze Übersicht liegt also über der festen Leiste "Gerät ausblenden / Schliessen", und kein Abschnitt wirkt abgeschnitten.
+
 ## [2.188.0] - 2026-11-03
 
 Die App "Updates" zeigt und startet jedes Update, das Home Assistant kennt.
@@ -5605,6 +5615,7 @@ Erste Vorabversion.
   GitHub Actions für die Prüfungen von HACS und hassfest sowie die Tests.
 
 [2.6.0]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v2.6.0
+[2.188.1]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v2.188.1
 [2.188.0]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v2.188.0
 [2.187.0]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v2.187.0
 [2.186.1]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v2.186.1

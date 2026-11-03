@@ -1261,10 +1261,12 @@ button.ver-link { border: none; background: none; font: inherit; font-size: 13px
 .st-tile.static { cursor: default; }
 /* Grund der Warnung (seit 1.27.0): Marken im Kopf, gelber Rahmen und Punkt an der Kachel */
 .why-tags { display: flex; flex-wrap: wrap; gap: 6px; margin-top: 8px; }
-.why { display: inline-flex; align-items: center; gap: 6px; min-height: 28px; padding: 0 11px; border-radius: 999px; font-size: 13px;
+.why { display: inline-flex; flex-wrap: wrap; align-items: center; gap: 0 6px; min-height: 28px; padding: 3px 11px; border-radius: 16px; font-size: 13px; line-height: 1.3; max-width: 100%;
   border: 1px solid color-mix(in srgb, var(--dp-warning) 45%, transparent); background: var(--dp-warning-soft); }
 .why svg { color: var(--dp-warning); flex: none; }
 .why b { font-weight: 600; }
+/* Der Wert steht hinter dem Namen und bricht als Ganzes in die nächste Zeile, wenn die Spalte schmal ist (Handy: Name und drei Knöpfe daneben) */
+.why .wv { color: var(--dp-text2); white-space: nowrap; }
 .st-tile.warned { border-color: var(--dp-warning); box-shadow: 0 0 0 1px var(--dp-warning) inset; background: color-mix(in srgb, var(--dp-warning) 10%, var(--dp-card)); }
 .st-tile.warned::after { content: ""; position: absolute; top: 8px; right: 10px; width: 9px; height: 9px; border-radius: 50%; background: var(--dp-warning); }
 .st-tile.static:hover { border-color: var(--dp-divider); }
@@ -1273,6 +1275,8 @@ button.ver-link { border: none; background: none; font: inherit; font-size: 13px
 .st-v { display: inline-flex; align-items: center; gap: 6px; font-size: 18px; font-weight: 500; font-variant-numeric: tabular-nums; white-space: nowrap; }
 .st-v small { color: var(--dp-text2); font-size: 12px; font-weight: 400; }
 .st-v.bad { color: var(--dp-error); }
+/* Kachel mit Pfeil unten rechts: der Text darunter läuft nicht unter den Pfeil (24 px breit, 10 px vom Rand), sondern bricht um */
+.st-tile:has(> .chev) .st-sub { max-width: calc(100% - 36px); }
 .st-sub { max-width: calc(100% - 14px); color: var(--dp-text3); font-size: 11.5px; line-height: 1.3; }
 
 /* Angaben als Kacheln */
