@@ -25,8 +25,8 @@ for (const lang of ["de", "en"]) for (const mobile of [false, true]) {
   const warned = () => ev(`return [...r.querySelectorAll("dialog.device .st-tile.warned .st-k")].map(x=>x.textContent)`);
   await open("e");
   check(`[${tag}] Instabil: Marke im Kopf`, JSON.stringify(await tags()) === JSON.stringify([T[lang].flaky]), JSON.stringify(await tags()));
-  // Schmale Spalte (Handy: Name und drei Knöpfe daneben): der Wert bricht als Ganzes um, nie mitten im Wort, und die Marke bleibt in der Spalte
-  check(`[${tag}] Marke: Wert in einer Zeile, innerhalb der Spalte`, await ev(`const w = r.querySelector("dialog.device .why"); const v = w.querySelector(".wv"); const col = r.querySelector("dialog.device .dlg-title").getBoundingClientRect(); const wr = w.getBoundingClientRect(); return v.getBoundingClientRect().height < 24 && wr.right <= col.right + 1 && wr.height < 64`));
+  // Die Marke steht unter dem Kopf über die ganze Breite (nicht in der schmalen Spalte neben dem Namen und den Knöpfen): eine Zeile, klein
+  check(`[${tag}] Marke: unter dem Kopf, eine Zeile, nicht höher als 30 px`, await ev(`const w = r.querySelector("dialog.device .why"); const head = r.querySelector("dialog.device .dlg-head").getBoundingClientRect(); const wr = w.getBoundingClientRect(); return !w.closest(".dlg-head") && wr.top >= head.bottom - 1 && wr.height <= 30 && w.querySelector(".wv").getBoundingClientRect().height < 24`));
   check(`[${tag}] Kachel mit Pfeil: der Text läuft nicht unter den Pfeil`, await ev(`return [...r.querySelectorAll("dialog.device .st-tile")].filter((t) => t.querySelector(":scope > .chev")).every((t) => { const s = t.querySelector(".st-sub").getBoundingClientRect(); const c = t.querySelector(":scope > .chev").getBoundingClientRect(); return s.right <= c.left + 1 || s.bottom <= c.top + 1 })`));
   check(`[${tag}] nur die Kachel Verfügbarkeit markiert`, (await warned()).length === 1);
   check(`[${tag}] Pille "Instabil" ersetzt`, !(await ev(`return !!r.querySelector("dialog.device .dlg-sub .pill.warn")`)));

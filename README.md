@@ -188,7 +188,7 @@ Each kind has its own tab in the settings. Outage, battery, charging, new device
 - **Charging:** push when a device is fully charged ("Full from", default 100 %) or the charge stops early, off by default and only for rechargeable devices; devices that charge right now get the chip "Charging" with a green mark and a charge bar
 - **Live activity:** optionally the charge progress on the lock screen (iPhone, live activity) or as a live update (Android 16), with quiet updates and, once it is reliable, an estimate of when the target is reached ("done around 14:35"), off by default
 - **New devices:** a collecting window, then one message with all devices that appeared; the device carries a "New" mark for three days
-- **Update reminder:** daily, weekly or immediately for updates of Home Assistant, add-ons, HACS / Marketplace and device firmware, adjustable per app, per integration and per firmware, optionally repeated while an update stays open; replaces two hand-made automations
+- **Update reminder:** daily, weekly or immediately for updates of Home Assistant, add-ons, HACS / Marketplace and device firmware (every kind by default), adjustable per app, per integration and per firmware, optionally repeated while an update stays open; replaces two hand-made automations
 - **Signal:** a warning threshold per connection type, per integration and per device (default weak below -80 dBm or LQI 61), also switchable off
 - **Panel updates:** an optional push once per version when a new version of the panel is found or installed
 
@@ -266,7 +266,14 @@ Switches an entity of a device once or on a schedule, without an automation.
 
 ## Updates
 
-The app "Updates" (administrators) lists every open update Home Assistant knows in one window: devices, apps, HACS / Marketplace, Home Assistant Core, operating system and Supervisor. Chips by kind and by integration preselect, checkboxes refine, one button starts the selection after a confirmation (optionally with a backup first). The integration works the selection off in a queue, so it keeps running with the window closed. Updates that restart Home Assistant or the machine (Core, operating system) are never preselected, run last and alone, and only one of them per start.
+The app "Updates" (administrators) lists every open update Home Assistant knows in one window and starts them from there.
+
+- **What it lists:** devices (firmware), apps (add-ons), HACS / Marketplace, Home Assistant Core, operating system and Supervisor. A row without a device (app, HACS, Home Assistant) opens the dialog of Home Assistant with the release notes.
+- **Choose:** chips by kind (Home Assistant, Apps, HACS) and by integration of the devices preselect, checkboxes refine, one button starts the selection after a confirmation, optionally with a backup first where the update supports it.
+- **Queue:** the integration works the selection off in a queue, so it keeps running with the window closed: at most three updates at a time and one per integration.
+- **Restarts:** updates that restart Home Assistant or the machine (Core, operating system) are never preselected, run last and alone, and only one of them per start. The confirmation says so; the view ends with the restart.
+- **Outage messages:** during a device update the panel holds back that device's outage messages, during an app update those of all devices (devices may depend on the app), plus 5 minutes after it.
+- **Launcher and reminder:** the icon in the launcher shakes and shows the number of open updates. The update reminder (Settings › Monitoring and notifications › Updates) covers every kind by default and opens this app when you tap it.
 
 <p align="center"><img src="https://raw.githubusercontent.com/Diegofuego871/ha-device-panel/main/docs/screenshots/en/updates.png" alt="Window Updates with chips by kind and integration and a selection" width="480"></p>
 

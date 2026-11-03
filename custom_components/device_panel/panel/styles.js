@@ -1261,9 +1261,11 @@ button.ver-link { border: none; background: none; font: inherit; font-size: 13px
 .st-tile.static { cursor: default; }
 /* Grund der Warnung (seit 1.27.0): Marken im Kopf, gelber Rahmen und Punkt an der Kachel */
 .why-tags { display: flex; flex-wrap: wrap; gap: 6px; margin-top: 8px; }
-.why { display: inline-flex; flex-wrap: wrap; align-items: center; gap: 0 6px; min-height: 28px; padding: 3px 11px; border-radius: 16px; font-size: 13px; line-height: 1.3; max-width: 100%;
+/* Unter dem Kopf über die ganze Breite (seit 2.188.1): in der schmalen Spalte neben dem Namen und den Knöpfen brach die Marke zu einer hohen Kapsel um */
+.why-tags.dlg-why { margin: 0; padding: 0 22px 12px; }
+.why { display: inline-flex; flex-wrap: wrap; align-items: center; gap: 0 6px; min-height: 24px; padding: 2px 10px; border-radius: 14px; font-size: 12.5px; line-height: 1.3; max-width: 100%;
   border: 1px solid color-mix(in srgb, var(--dp-warning) 45%, transparent); background: var(--dp-warning-soft); }
-.why svg { color: var(--dp-warning); flex: none; }
+.why svg { color: var(--dp-warning); flex: none; width: 14px; height: 14px; }
 .why b { font-weight: 600; }
 /* Der Wert steht hinter dem Namen und bricht als Ganzes in die nächste Zeile, wenn die Spalte schmal ist (Handy: Name und drei Knöpfe daneben) */
 .why .wv { color: var(--dp-text2); white-space: nowrap; }
@@ -1582,6 +1584,7 @@ button.pill.live.off:hover { background: var(--dp-hover); }
   dialog.settings .dlg-head .dlg-close, dialog.log-dlg .dlg-head .dlg-close, dialog.rtall-dlg .dlg-head .dlg-close, dialog.mgall-dlg .dlg-head .dlg-close, dialog.status-dlg .dlg-head .dlg-close,
   dialog.settings .dlg-head .dlg-acts, dialog.rtall-dlg .dlg-head .dlg-acts, dialog.mgall-dlg .dlg-head .dlg-acts { margin-top: -6px; }
   .dlg-quick { padding: 0 16px 14px; flex-wrap: nowrap; gap: 6px; }
+  .why-tags.dlg-why { padding: 0 16px 12px; }
   /* Handy: beide Knöpfe (Gerät, Integration) auf einer Zeile; bei sehr schmalem Fenster kürzt "…" den Text */
   .qbtn { padding: 0 12px; gap: 6px; min-width: 0; white-space: nowrap; }
   .qbtn .q-t { overflow: hidden; text-overflow: ellipsis; }

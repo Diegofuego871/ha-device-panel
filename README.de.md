@@ -188,7 +188,7 @@ Jede Art hat in den Einstellungen einen eigenen Reiter. Ausfall, Batterie, Laden
 - **Laden:** Push, wenn ein Gerät voll geladen ist ("Voll ab", Standard 100 %) oder die Ladung vorzeitig endet, standardmässig aus und nur für wiederaufladbare Geräte; Geräte, die gerade laden, bekommen den Chip "Lädt" mit grüner Markierung und Ladebalken
 - **Live-Aktivität:** auf Wunsch der Ladefortschritt auf dem Sperrbildschirm (iPhone, Live-Aktivität) oder als Live-Update (Android 16), mit leisen Aktualisierungen und, sobald sie verlässlich ist, einer Schätzung, wann das Ziel erreicht ist ("fertig gegen 14:35"), standardmässig aus
 - **Neue Geräte:** ein Sammelfenster, dann eine Meldung mit allen neu erschienenen Geräten; das Gerät trägt drei Tage die Markierung "Neu"
-- **Update-Erinnerung:** täglich, wöchentlich oder sofort für Updates von Home Assistant, Add-ons, HACS / Marketplace und Geräte-Firmware, einstellbar pro App, pro Integration und pro Firmware, auf Wunsch wiederholt, solange ein Update offen bleibt; ersetzt zwei selbstgebaute Automationen
+- **Update-Erinnerung:** täglich, wöchentlich oder sofort für Updates von Home Assistant, Add-ons, HACS / Marketplace und Geräte-Firmware (standardmässig jede Art), einstellbar pro App, pro Integration und pro Firmware, auf Wunsch wiederholt, solange ein Update offen bleibt; ersetzt zwei selbstgebaute Automationen
 - **Empfang:** eine Warnschwelle pro Verbindungsart, pro Integration und pro Gerät (Standard schwach unter -80 dBm oder LQI 61), auch abschaltbar
 - **Panel-Updates:** ein optionaler Push einmal pro Version, wenn eine neue Version des Panels gefunden oder installiert wird
 
@@ -266,7 +266,14 @@ Schaltet eine Entität eines Geräts einmalig oder nach Zeitplan, ohne Automatio
 
 ## Updates
 
-Die App "Updates" (Administratoren) listet jedes offene Update, das Home Assistant kennt, in einem Fenster: Geräte, Apps, HACS / Marketplace, Home Assistant Core, Betriebssystem und Supervisor. Chips nach Art und nach Integration wählen vor, Häkchen verfeinern, ein Knopf startet die Auswahl nach einer Bestätigung (auf Wunsch mit vorheriger Sicherung). Die Integration arbeitet die Auswahl in einer Warteschlange ab, sie läuft also auch bei geschlossenem Fenster weiter. Updates, die Home Assistant oder den Rechner neu starten (Core, Betriebssystem), sind nie vorgewählt, laufen zuletzt und allein, und nur eines davon je Start.
+Die App "Updates" (Administratoren) listet jedes offene Update, das Home Assistant kennt, in einem Fenster und startet sie von dort.
+
+- **Was sie listet:** Geräte (Firmware), Apps (Add-ons), HACS / Marketplace, Home Assistant Core, Betriebssystem und Supervisor. Eine Zeile ohne Gerät (App, HACS, Home Assistant) öffnet den Dialog von Home Assistant mit den Release Notes.
+- **Wählen:** Chips nach Art (Home Assistant, Apps, HACS) und nach Integration der Geräte wählen vor, Häkchen verfeinern, ein Knopf startet die Auswahl nach einer Bestätigung, auf Wunsch mit vorheriger Sicherung, wo das Update sie kann.
+- **Warteschlange:** Die Integration arbeitet die Auswahl in einer Warteschlange ab, sie läuft also auch bei geschlossenem Fenster weiter: höchstens drei Updates gleichzeitig und eines je Integration.
+- **Neustarts:** Updates, die Home Assistant oder den Rechner neu starten (Core, Betriebssystem), sind nie vorgewählt, laufen zuletzt und allein, und nur eines davon je Start. Die Rückfrage sagt es; die Anzeige endet mit dem Neustart.
+- **Ausfall-Meldungen:** Während eines Geräte-Updates hält das Panel die Ausfall-Meldungen dieses Geräts zurück, während eines App-Updates die aller Geräte (Geräte können an der App hängen), dazu 5 Minuten danach.
+- **Launcher und Erinnerung:** Das Symbol im Launcher wackelt und zeigt die Zahl der offenen Updates. Die Update-Erinnerung (Einstellungen › Überwachung und Meldungen › Updates) gilt standardmässig für jede Art und öffnet bei einem Tipp diese App.
 
 <p align="center"><img src="https://raw.githubusercontent.com/Diegofuego871/ha-device-panel/main/docs/screenshots/de/updates.png" alt="Fenster Updates mit Chips nach Art und Integration und einer Auswahl" width="480"></p>
 

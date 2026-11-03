@@ -13,9 +13,9 @@ Das Geräte-Popup sieht auf einem schmalen Handy richtig aus, und die README-Bil
 
 ### Behoben
 
-- **Popup, Kopf auf dem Handy:** Die Warnmarke ("Instabil 5× in 24 Std.", "Empfang schwach", "Batterie niedrig") stand in der schmalen Spalte neben dem Namen und den drei Knöpfen und brach zu einer hohen, schmalen Kapsel um. Sie bricht jetzt als Ganzes um: der Name der Warnung in der ersten Zeile, der Wert darunter in gedämpfter Farbe (der Punkt dazwischen entfällt), in einem Kasten mit runden Ecken statt einer vollen Kapsel.
+- **Popup, Kopf auf dem Handy:** Die Warnmarke ("Instabil 5× in 24 Std.", "Empfang schwach", "Batterie niedrig") stand in der schmalen Spalte neben dem Namen und den drei Knöpfen und brach zu einer hohen, aufgeblähten Kapsel um. Sie steht jetzt unter dem Kopf über die ganze Breite, klein und in einer Zeile, mit dem Wert in gedämpfter Farbe (der Punkt dazwischen entfällt).
 - **Popup, Kacheln der Statistik mit Pfeil:** Die Zeile unter dem Wert (zum Beispiel "5 Unterbrüche · längster 9 Min.") läuft nicht mehr unter den Pfeil unten rechts, sondern bricht in die nächste Zeile um.
-- **README:** Die Bilder des Popups (Desktop und Handy, Deutsch und Englisch) sind neu. Das Handybild entsteht in einem höheren Fenster, die ganze Übersicht liegt also über der festen Leiste "Gerät ausblenden / Schliessen", und kein Abschnitt wirkt abgeschnitten.
+- **README:** Der Abschnitt "Updates" beschreibt jetzt die ganze neue App, und die Bilder des Popups (Desktop und Handy, Deutsch und Englisch) sind neu. Das Handybild entsteht in einem höheren Fenster, die ganze Übersicht liegt also über der festen Leiste "Gerät ausblenden / Schliessen", und kein Abschnitt wirkt abgeschnitten.
 
 ## [2.188.0] - 2026-11-03
 

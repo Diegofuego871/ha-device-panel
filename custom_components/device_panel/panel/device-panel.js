@@ -5388,7 +5388,7 @@ class DevicePanel extends HTMLElement {
         if (d.battery?.low) why.push([this._t("warnBatteryLow"), d.battery.level != null ? `${d.battery.level} %` : ""]);
       }
       const whyHtml = why.length
-        ? `<div class="why-tags">${why.map(([k, v]) => `<span class="why">${mdi("alert", 15)}<b>${escape(k)}</b>${v ? ` <span class="wv">${escape(v)}</span>` : ""}</span>`).join("")}</div>`
+        ? `<div class="why-tags dlg-why">${why.map(([k, v]) => `<span class="why">${mdi("alert", 14)}<b>${escape(k)}</b>${v ? ` <span class="wv">${escape(v)}</span>` : ""}</span>`).join("")}</div>`
         : "";
       const ents = this._entitiesHtml(d);
       // Reiter (seit 1.37.0, docs/mockups/popup-tabs-log-v1, R3): Übersicht zum Lesen, alle Einstellungen des Geräts
@@ -5433,8 +5433,8 @@ class DevicePanel extends HTMLElement {
           <h3>${escape(this._t("secDevice"))}</h3>${this._deviceSectionHtml(d)}`;
       html = `<div class="dlg-head"><span class="dlg-avatar ${avatar}">${typeIcon(d.type, 28)}</span>
           <div class="dlg-title">${this._nameHtml(d)}
-            <div class="dlg-sub">${status}<span>${[this._t(typeKey(d.type)), d.area].filter(Boolean).map(escape).join(" · ")}</span></div>${whyHtml}</div>
-          ${logBtn}${heart}${close}</div>
+            <div class="dlg-sub">${status}<span>${[this._t(typeKey(d.type)), d.area].filter(Boolean).map(escape).join(" · ")}</span></div></div>
+          ${logBtn}${heart}${close}</div>${whyHtml}
         <div class="dlg-quick"><button type="button" class="qbtn" data-dlg="open-device">${mdi("open", 17)}<span class="q-t">${escape(this._t("openDevicePage"))}</span></button>${d.integration?.domain ? `<button type="button" class="qbtn" data-dlg="open-integration" data-domain="${escape(d.integration.domain)}">${mdi("open", 17)}<span class="q-t">${escape(this._t("openIntegPage"))}</span></button>` : ""}</div>
         <div class="dev-tabs">${tabs}</div>
         <div class="dlg-body" role="tabpanel">${body}

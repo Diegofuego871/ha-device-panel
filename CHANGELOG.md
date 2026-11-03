@@ -13,9 +13,9 @@ The device pop-up looks right on a narrow phone, and the README pop-up images ar
 
 ### Fixed
 
-- **Pop-up, header on a phone:** the warning tag ("Unstable 5× in 24 h", "Weak signal", "Battery low") sat in the narrow column next to the name and the three buttons and broke into a tall, narrow capsule. It now breaks as a whole: the label on the first line, its value below in a muted color (the dot between them is gone), in a rounded box instead of a full capsule.
+- **Pop-up, header on a phone:** the warning tag ("Unstable 5× in 24 h", "Weak signal", "Battery low") sat in the narrow column next to the name and the three buttons and broke into a tall, bloated capsule. It now sits below the header across the full width, small and in one line, with the value in a muted color (the dot between them is gone).
 - **Pop-up, statistics tiles with an arrow:** the line under the value (for example "5 outages · longest 9 min") no longer runs under the arrow at the bottom right; it breaks to the next line instead.
-- **README:** the pop-up images (desktop and phone, German and English) are renewed. The phone image is taken in a taller window, so the whole overview sits above the fixed bar "Hide device / Close" and no section looks cut off.
+- **README:** the section "Updates" now describes the whole new app, and the pop-up images (desktop and phone, German and English) are renewed. The phone image is taken in a taller window, so the whole overview sits above the fixed bar "Hide device / Close" and no section looks cut off.
 
 ## [2.188.0] - 2026-11-03
 
