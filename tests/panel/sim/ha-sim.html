@@ -397,6 +397,9 @@
     for (const x of q) {
       if (running.length >= 3) break;
       if (x.status !== "waiting" || busy.has(x.platform)) continue;
+      // Wie der Server (update_queue.py): ein Update mit Neustart (Core, Betriebssystem) beginnt erst, wenn alles andere durch ist, und läuft allein
+      if (x.restart && q.some((o) => o !== x && ["waiting", "running"].includes(o.status))) continue;
+      if (q.some((o) => o.restart && o.status === "running")) break;
       x.status = "running";
       running.push(x);
       busy.add(x.platform);
@@ -2111,7 +2114,7 @@
             connection_manual: d.id in window.__connOverrides,
           })),
           ai_assessment: Boolean(window.__opts.ai_assessment),
-          debug: Boolean(window.__log?.debug), status: window.__statusSum(), wizard: window.__opts.wizard_state,
+          debug: Boolean(window.__log?.debug), status: window.__statusSum(), updates: (window.__appUpdates || window.__devices.filter((d) => d.update_install && !d.disabled)).filter((u) => !(window.__uq || []).some((q) => q.entity_id === (u.entity_id || `update.${u.id}_fw`) && q.status === "done")).length, wizard: window.__opts.wizard_state,
           routine_fail: window.__rtFail || { at: null, devices: {} },
           integrations, now: new Date().toISOString(), offline_after: window.__opts.offline_after * 60, battery_low: batLow,
           flaky_outages: window.__opts.flaky_outages, hide_chips: [...window.__opts.hide_chips], hide_connections: [...window.__opts.hide_connections], connection_order: [...window.__opts.connection_order], chip_order: [...window.__opts.chip_order], pulse: pulse(), incidents,

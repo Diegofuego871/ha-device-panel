@@ -678,10 +678,10 @@ export class AppLauncher {
     return Boolean(this.host._rtFailFor?.(""));
   }
 
-  // Offene Geräte-Updates, die sich aus der App starten lassen (nur Administratoren)
+  // Offene Updates, die sich aus der App starten lassen: Geräte, Apps, HACS, Home Assistant (nur Administratoren); die Zahl kommt vom Server
   updCount() {
     if (!this._admin()) return 0;
-    return (this.host._devices || []).filter((d) => d.update_install && !d.disabled).length;
+    return this.host._updCount ?? (this.host._devices || []).filter((d) => d.update_install && !d.disabled).length;
   }
 
   // Punkte (seit 2.62.0): orange = Debug-Modus, rot = Störung des Status; seit 2.88.0 rot auch für "Neustart steht aus" (Einstellungen). Ist die

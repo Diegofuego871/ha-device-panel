@@ -2081,6 +2081,7 @@ class DevicePanel extends HTMLElement {
       this._debugOn = result.debug === true;
       this._rtFail = result.routine_fail || null;
       this._statusSum = result.status || { problems: 0, down: 0 };
+      this._updCount = Number.isInteger(result.updates) ? result.updates : null;
       this._wizardState = result.wizard || "done";
       this._apps.paintDots();
       this._paintRtFail();

@@ -51,10 +51,16 @@ def last_error(hass: HomeAssistant, entity_id: str) -> str | None:
     return hass.data.get(DATA_UPDATE_ERRORS, {}).get(entity_id)
 
 
+# Schlüssel der Zurückhaltung für alle Geräte (seit 2.188.0): ein App-Update startet die App neu, an der Geräte hängen können
+HOLD_ALL = "*"
+
+
 def held_until(hass: HomeAssistant, device_id: str, now: float | None = None) -> float | None:
-    """Ende der Zurückhaltung der Ausfall-Meldungen für das Gerät (Unix-Zeit), sonst None."""
-    until = _hold(hass).get(device_id)
-    return until if until is not None and until > (now if now is not None else time.time()) else None
+    """Ende der Zurückhaltung der Ausfall-Meldungen für das Gerät (Unix-Zeit), sonst None; auch die für alle Geräte zählt."""
+    now = now if now is not None else time.time()
+    holds = _hold(hass)
+    untils = [u for u in (holds.get(device_id), holds.get(HOLD_ALL)) if u is not None and u > now]
+    return max(untils) if untils else None
 
 
 def installable_updates(hass: HomeAssistant, device_id: str) -> list[dict[str, Any]]:
@@ -87,11 +93,27 @@ def async_install(hass: HomeAssistant, device_id: str, entity_id: str, backup: b
     match = next((u for u in installable_updates(hass, device_id) if u["entity_id"] == entity_id), None)
     if match is None:
         raise UpdateError("no installable update for this device")
-    if backup and not match["features"] & FEATURE_BACKUP:
+    async_install_entity(hass, entity_id, device_id, backup, on_error)
+
+
+@callback
+def async_install_entity(hass: HomeAssistant, entity_id: str, hold_key: str | None, backup: bool = False, on_error: Callable[[str], None] | None = None) -> None:
+    """
+    Update einer beliebigen Update-Entität starten (seit 2.188.0, auch Apps, HACS, Home Assistant selbst): wie async_install, aber ohne Gerät.
+    hold_key: Gerät (oder HOLD_ALL), dessen Ausfall-Meldungen zurückgehalten werden; None = nichts zurückhalten.
+    """
+    state = hass.states.get(entity_id)
+    if state is None or state.state != STATE_ON:
+        raise UpdateError("no installable update for this entity")
+    features = int(state.attributes.get("supported_features") or 0)
+    if not features & FEATURE_INSTALL:
+        raise UpdateError("no installable update for this entity")
+    if backup and not features & FEATURE_BACKUP:
         raise UpdateError("backup not supported")
     now = time.time()
-    _hold(hass)[device_id] = now + HOLD_SECONDS
-    _watch(hass, device_id, entity_id, now)
+    if hold_key:
+        _hold(hass)[hold_key] = now + HOLD_SECONDS
+        _watch(hass, hold_key, entity_id, now)
     data: dict[str, Any] = {"entity_id": entity_id}
     if backup:
         data["backup"] = True

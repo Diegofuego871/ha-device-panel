@@ -62,16 +62,16 @@ async def test_instant_collects_in_one_message(hass: HomeAssistant, freezer) -> 
 async def test_kinds_and_skipped(hass: HomeAssistant, freezer) -> None:
     calls = async_mock_service(hass, "notify", "handy")
     await _setup(hass, updates_mode="instant")
-    # Geräte-Firmware ist standardmässig aus, übersprungene (off) zählen nie
-    _update(hass, "shelly_fw", "shelly", "Shelly Plug", "1.0", "1.1")
+    # Seit 2.188.0 melden alle Arten (Standard), übersprungene (off) zählen nie
     _update(hass, "hacs_x", "hacs", "Device Panel", "1.27.0", "1.28.0", state="off")
     await hass.async_block_till_done()
     await _wait(hass, freezer, 6)
     assert not calls
+    _update(hass, "shelly_fw", "shelly", "Shelly Plug", "1.0", "1.1")
     _update(hass, "hacs_y", "hacs", "Beispiel-Karte", "2.0", "2.1")
     await hass.async_block_till_done()
     await _wait(hass, freezer, 6)
-    assert [c.data["message"] for c in calls] == ["1 available:\n• Beispiel-Karte 2.0 → 2.1"]
+    assert [c.data["message"] for c in calls] == ["2 available:\n• Beispiel-Karte 2.0 → 2.1\n• Shelly Plug 1.0 → 1.1"]
 
 
 async def test_disabled_sends_nothing(hass: HomeAssistant, freezer) -> None:
@@ -141,9 +141,9 @@ def test_option_values() -> None:
     values = values_from({})
     assert values["notify_updates"] is False
     assert (values["updates_mode"], values["updates_time"], values["updates_window"], values["updates_repeat"]) == ("daily", "09:00", 5, "never")
-    assert values["updates_kinds"] == ["core", "addons", "hacs"]
+    assert values["updates_kinds"] == ["core", "addons", "hacs", "devices"]
     bad = values_from({"updates_mode": "x", "updates_time": "25:00", "updates_window": 99, "updates_repeat": "x", "updates_kinds": "x"})
-    assert (bad["updates_mode"], bad["updates_time"], bad["updates_window"], bad["updates_repeat"], bad["updates_kinds"]) == ("daily", "09:00", 5, "never", ["core", "addons", "hacs"])
+    assert (bad["updates_mode"], bad["updates_time"], bad["updates_window"], bad["updates_repeat"], bad["updates_kinds"]) == ("daily", "09:00", 5, "never", ["core", "addons", "hacs", "devices"])
     assert update_kinds(["hacs", "core"]) == ["core", "hacs"]
     with pytest.raises(vol.Invalid):
         update_kinds(["firmware"])
@@ -164,7 +164,7 @@ async def test_per_item_exceptions(hass: HomeAssistant, freezer) -> None:
     _update(hass, "hue_fw", "hue", "Hue Bridge", "1.0", "1.1")
     await hass.async_block_till_done()
     await _wait(hass, freezer, 6)
-    assert [c.data["message"] for c in calls] == ["2 available:\n• Duck DNS 1.0 → 1.1\n• Shelly Plug 1.0 → 1.1"]
+    assert [c.data["message"] for c in calls] == ["3 available:\n• Duck DNS 1.0 → 1.1\n• Hue Bridge 1.0 → 1.1\n• Shelly Plug 1.0 → 1.1"]
 
 
 async def test_catalog_lists_all_updates(hass: HomeAssistant) -> None:
@@ -190,11 +190,11 @@ def test_is_wanted_and_option_values() -> None:
     assert is_wanted(opts, "update.a", "addons") is False
     assert is_wanted(opts, "update.b", "devices") is True
     assert is_wanted(opts, "update.c", "addons") is True
-    assert is_wanted(opts, "update.d", "devices") is False
+    assert is_wanted(opts, "update.d", "devices") is True  # seit 2.188.0 melden alle Arten
     # Pro Integration (seit 2.139.0): Eintrag vor Integration vor Art
     integ = values_from({"updates_integrations_off": ["hue"], "updates_integrations_on": ["shelly"], "updates_exclude": ["update.keep_off"], "updates_include": ["update.keep_on"]})
     assert is_wanted(integ, "update.x", "hacs", "hue") is False and is_wanted(integ, "update.x", "devices", "shelly") is True
-    assert is_wanted(integ, "update.x", "devices", "other") is False and is_wanted(integ, "update.x", "hacs", "other") is True and is_wanted(integ, "update.x", "hacs") is True
+    assert is_wanted(integ, "update.x", "devices", "other") is True and is_wanted(integ, "update.x", "hacs", "other") is True and is_wanted(integ, "update.x", "hacs") is True
     assert is_wanted(integ, "update.keep_on", "devices", "hue") is True and is_wanted(integ, "update.keep_off", "devices", "shelly") is False
     assert values_from({})["updates_integrations_on"] == [] and values_from({"updates_integrations_off": ["x", 3, "A b", "x"]})["updates_integrations_off"] == ["x"]
     assert values_from({})["updates_exclude"] == [] and values_from({})["updates_include"] == []

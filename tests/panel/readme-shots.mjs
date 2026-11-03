@@ -425,15 +425,19 @@ for (const lang of langs) {
     // Geräte-Updates (2.164.0), Lebenszeichen ausschliessen (2.165.0, Chips 2.166.0), Kachel "Software" mit Update (2.163.0)
     await step("updates", async () => {
       const de = lang === "de";
-      const mk = (id, platform, name, a, b) => ({ entity_id: `update.${id}`, device_id: id, platform, features: 13, installed: a, latest: b, title: name });
+      const mk = (id, platform, name, a, b) => ({ entity_id: `update.${id}`, device_id: id, platform, kind: "devices", restart: false, features: 13, installed: a, latest: b, title: name });
+      // Seit 2.188.0 auch Apps, HACS und Home Assistant (ohne Gerät); Core startet neu und ist nie vorgewählt
+      const plain = (id, platform, kind, name, a, b, restart = false) => ({ entity_id: `update.${id}`, device_id: null, platform, kind, restart, features: 29, installed: a, latest: b, title: name });
       await p.evaluate((l) => { window.__appUpdates = l; window.__uq = []; }, [
+        plain("esphome_builder_update", "hassio", "addons", "ESPHome Device Builder", "2026.10.1", "2026.10.2"), plain("beispiel_karte_update", "hacs", "hacs", de ? "Beispiel-Karte" : "Example card", "2.0", "2.1"),
         mk("s1", "shelly", de ? "Licht Bad" : "Bathroom light", "1.7.5", "1.7.6"), mk("s2", "shelly", de ? "Wandschalter Flur" : "Hallway switch", "1.7.5", "1.7.6"),
-        mk("s3", "shelly", de ? "Steckdose Büro" : "Office plug", "1.7.4", "1.7.6"), mk("s4", "shelly", de ? "Rollladen Küche" : "Kitchen shutter", "1.7.5", "1.7.6"),
-        mk("z1", "zha", de ? "Bewegungsmelder Keller" : "Basement motion sensor", "2.1", "2.2"), mk("z2", "zha", de ? "Leuchte Wohnzimmer" : "Living room lamp", "1.0.3", "1.0.4"),
+        mk("s3", "shelly", de ? "Steckdose Büro" : "Office plug", "1.7.4", "1.7.6"),
+        mk("z1", "zha", de ? "Bewegungsmelder Keller" : "Basement motion sensor", "2.1", "2.2"),
         mk("e1", "esphome", de ? "Stromzähler Haus" : "House power meter", "2026.9", "2026.10"),
+        plain("home_assistant_core_update", "hassio", "core", "Home Assistant Core", "2026.10.3", "2026.11.0", true),
       ]);
       await ev(`r.host._updApp.open()`);
-      await wait(`return r.querySelectorAll("dialog.updapp-dlg .ua-row").length === 7`);
+      await wait(`return r.querySelectorAll("dialog.updapp-dlg .ua-row").length === 8`);
       await shotDlg("updates", "dialog.updapp-dlg");
       await tap('dialog.updapp-dlg [data-ua="next"]');
       await tap('dialog.updapp-dlg [data-ua="go"]');
@@ -441,7 +445,7 @@ for (const lang of langs) {
       await p.evaluate(() => {
         const ha = document.querySelector("home-assistant").hass;
         const st = (id, attrs) => ({ entity_id: id, state: "on", attributes: { supported_features: 13, ...attrs } });
-        ha.states = { ...ha.states, "update.s1": st("update.s1", { in_progress: true, update_percentage: 62 }), "update.z1": { entity_id: "update.z1", state: "unavailable", attributes: {} }, "update.e1": st("update.e1", { in_progress: true, update_percentage: 18 }) };
+        ha.states = { ...ha.states, "update.s1": st("update.s1", { in_progress: true, update_percentage: 62 }), "update.z1": { entity_id: "update.z1", state: "unavailable", attributes: {} }, "update.e1": st("update.e1", { in_progress: true, update_percentage: 18 }), "update.esphome_builder_update": st("update.esphome_builder_update", { in_progress: true, update_percentage: 40 }), "update.beispiel_karte_update": st("update.beispiel_karte_update", { in_progress: true, update_percentage: 85 }) };
         window.__uqSet("update.s1", "running");
         window.__pushHass();
       });

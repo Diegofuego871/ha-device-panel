@@ -1,6 +1,8 @@
 /**
- * App "Geräte-Updates" (seit 2.164.0, docs/mockups/updates-v1, Variante A): alle offenen Geräte-Updates in einem Fenster. Chips nach Integration
- * wählen vor, die Kästchen vorne verfeinern, ein Knopf startet die Auswahl nach einer Rückfrage. Der Server (update_queue.py) arbeitet die Auswahl
+ * App "Updates" (seit 2.164.0 als "Geräte-Updates", docs/mockups/updates-v1, Variante A; seit 2.188.0 alle Updates, die Home Assistant kennt: Geräte, Apps,
+ * HACS, Home Assistant Core, Betriebssystem, Supervisor): alle offenen Updates in einem Fenster. Chips nach Art und Integration
+ * wählen vor, die Kästchen vorne verfeinern, ein Knopf startet die Auswahl nach einer Rückfrage. Updates, die Home Assistant oder den Rechner neu
+ * starten (Core, Betriebssystem), sind nie vorgewählt, nur eines davon je Start; der Server lässt sie zuletzt und allein laufen. Der Server (update_queue.py) arbeitet die Auswahl
  * ab, höchstens drei Updates gleichzeitig und eines je Integration; das Fenster darf zu sein. Die Zahlen kommen von device_panel/updates_list,
  * der Fortschritt (Prozent, Neustart) direkt aus dem Zustand der Update-Entität in hass.states. Nur für Administratoren.
  */
@@ -87,15 +89,19 @@ export class UpdApp {
         this.ui.step = "list";
         this.render();
       } else if (act === "info") {
-        // Einzelnes Update mit Release Notes im bekannten Fenster (2.161.0), darüber gelegt
-        this.host._openUpdate(el.dataset.entity, el.dataset.device);
+        // Einzelnes Update mit Release Notes im bekannten Fenster (2.161.0), darüber gelegt; ohne Gerät (Apps, HACS, Home Assistant) der Dialog von Home Assistant
+        if (el.dataset.device) this.host._openUpdate(el.dataset.entity, el.dataset.device);
+        else this.host._openMoreInfo(el.dataset.entity);
       }
     });
     dlg.addEventListener("change", (ev) => {
       const el = ev.target;
       if (el.matches?.("[data-ua-sel]")) {
-        if (el.checked) this.ui.sel.add(el.dataset.uaSel);
-        else this.ui.sel.delete(el.dataset.uaSel);
+        if (el.checked) {
+          this.ui.sel.add(el.dataset.uaSel);
+          // Nur ein Update mit Neustart je Start: ein zweites (Core und Betriebssystem) nimmt das erste heraus
+          if (this.byId(el.dataset.uaSel)?.restart) for (const u of this.data.available) if (u.restart && u.entity_id !== el.dataset.uaSel) this.ui.sel.delete(u.entity_id);
+        } else this.ui.sel.delete(el.dataset.uaSel);
         this.render();
       } else if (el.matches?.("[data-ua-backup]")) this.ui.backup = el.checked;
     });
@@ -107,12 +113,14 @@ export class UpdApp {
     try {
       const res = await this.host._hass.callWS({ type: "device_panel/updates_list" });
       this.data = res;
+      this.host._updCount = res.available.length;
+      this.host._apps?.paintDots?.();
       this.error = "";
       const active = res.queue.some((q) => q.status === "waiting" || q.status === "running");
       if (first && !this.ui.loaded) {
         // Beim ersten Öffnen: läuft schon etwas, gleich den Stand zeigen; sonst alles vorwählen
         this.ui.view = active ? "run" : "list";
-        this.ui.sel = new Set(res.available.map((u) => u.entity_id));
+        this.ui.sel = new Set(res.available.filter((u) => !u.restart).map((u) => u.entity_id));
       }
       this.ui.loaded = true;
       // Was nicht mehr offen ist, aus der Auswahl nehmen
@@ -122,6 +130,10 @@ export class UpdApp {
       this.error = this.h.errText(err);
     }
     this.render();
+  }
+
+  byId(id) {
+    return this.data.available.find((u) => u.entity_id === id);
   }
 
   // Aus set hass: nur neu zeichnen, wenn sich Zustand oder Prozent einer gezeigten Update-Entität geändert haben
@@ -135,10 +147,21 @@ export class UpdApp {
     this.render();
   }
 
-  // Zeilen: Name des Geräts, Integration (Anzeigename), Versionen
+  // Zeilen: Name des Geräts oder der Entität, Art (Apps, HACS, Home Assistant) oder Integration (Anzeigename), Versionen
   info(u) {
-    const d = this.host._devices.find((x) => x.id === u.device_id);
-    return { name: d?.name || u.title, integ: this.host._scopeName(u.platform) };
+    const d = u.device_id ? this.host._devices.find((x) => x.id === u.device_id) : null;
+    const kind = u.kind || "devices";
+    return { name: d?.name || u.title, integ: kind === "devices" ? this.host._scopeName(u.platform) : this.t(`appupKind_${kind}`) };
+  }
+
+  // Chip einer Zeile: Geräte nach Integration, alles andere nach Art
+  groupKey(u) {
+    return !u.kind || u.kind === "devices" ? u.platform : `kind:${u.kind}`;
+  }
+
+  // Welches Update startet was neu: Home Assistant oder den Rechner (Hinweis in der Zeile und in der Rückfrage)
+  restartKind(u) {
+    return !u.restart ? "" : u.entity_id.includes("operating_system") ? "os" : "core";
   }
 
   async start(ids) {
@@ -166,8 +189,11 @@ export class UpdApp {
 
   setFilter(key) {
     this.ui.filter = key;
-    // Der Chip wählt genau seine Geräte vor ("Alle": alle)
-    this.ui.sel = new Set(this.data.available.filter((u) => key === "all" || u.platform === key).map((u) => u.entity_id));
+    // Der Chip wählt genau seine Einträge vor ("Alle": alle); ein Update mit Neustart nur auf ausdrücklichen Wunsch (der Chip "Home Assistant" nimmt eines)
+    const items = this.data.available.filter((u) => key === "all" || this.groupKey(u) === key);
+    const sel = items.filter((u) => !u.restart);
+    const restart = key === "all" ? null : items.find((u) => u.restart);
+    this.ui.sel = new Set([...sel, ...(restart ? [restart] : [])].map((u) => u.entity_id));
     this.ui.step = "list";
     this.render();
   }
@@ -224,14 +250,21 @@ export class UpdApp {
       const n = this.ui.sel.size;
       sub.textContent = t("appupAvail", avail.length);
       const backup = this.backupPossible([...this.ui.sel]);
-      body.innerHTML = `${err}<div class="nf-note">${this.h.mdi("alert", 16)}<div><p><b>${escape(t("appupConfirmTitle", n))}</b></p><p>${escape(t("appupConfirmText"))}</p></div></div>
+      const picked = [...this.ui.sel].map((id) => this.byId(id)).filter(Boolean);
+      const restart = picked.map((u) => this.restartKind(u)).find(Boolean);
+      const hasApp = picked.some((u) => u.kind === "addons");
+      const extra = [restart ? t(restart === "os" ? "appupConfirmRestartOs" : "appupConfirmRestartCore") : "", hasApp ? t("appupConfirmApps") : ""].filter(Boolean);
+      body.innerHTML = `${err}<div class="nf-note">${this.h.mdi("alert", 16)}<div><p><b>${escape(t("appupConfirmTitle", n))}</b></p><p>${escape(t("appupConfirmText"))}</p>${extra.map((x) => `<p>${escape(x)}</p>`).join("")}</div></div>
         ${backup ? `<label class="ua-backup"><span class="switch"><input type="checkbox" data-ua-backup ${this.ui.backup ? "checked" : ""}><span></span></span><span>${escape(t("appupBackup"))}<small>${escape(t("appupBackupHint"))}</small></span></label>` : ""}`;
       foot.innerHTML = `<button type="button" class="dlg-btn" data-ua="back">${this.h.mdi("arrowLeft", 18)}${escape(t("updBack"))}</button><button type="button" class="dlg-btn primary" data-ua="go" ${this.ui.busy ? "disabled" : ""}>${this.h.mdi("verDownload", 18)}${escape(t("appupConfirmYes", n))}</button>`;
     } else {
       sub.textContent = t("appupAvail", avail.length);
       const groups = new Map();
-      for (const u of avail) groups.set(u.platform, (groups.get(u.platform) || 0) + 1);
-      const chips = [["all", t("appupAll"), avail.length], ...[...groups].map(([k, n]) => [k, this.host._scopeName(k), n])]
+      for (const u of avail) groups.set(this.groupKey(u), (groups.get(this.groupKey(u)) || 0) + 1);
+      const label = (k) => (k.startsWith("kind:") ? t(`appupGroup_${k.slice(5)}`) : this.host._scopeName(k));
+      // Erst die Arten (Home Assistant, Apps, HACS), dann die Integrationen der Geräte
+      const rank = (k) => ["kind:core", "kind:addons", "kind:hacs"].indexOf(k) + 1 || 9;
+      const chips = [["all", t("appupAll"), avail.length], ...[...groups].sort(([a], [b]) => rank(a) - rank(b)).map(([k, n]) => [k, label(k), n])]
         .map(([k, label, n]) => `<button type="button" class="chip${this.ui.filter === k ? " on" : ""}" data-ua="filter" data-key="${escape(k)}"><span>${escape(label)}</span><span class="n">${n}</span></button>`)
         .join("");
       const rows = avail.map((u) => this.listRow(u)).join("");
@@ -247,7 +280,7 @@ export class UpdApp {
     const { name, integ } = this.info(u);
     const on = this.ui.sel.has(u.entity_id);
     return `<div class="ua-row"><label class="ua-cb"><input type="checkbox" data-ua-sel="${escape(u.entity_id)}" ${on ? "checked" : ""} aria-label="${escape(name)}"><span>${mdi("check", 14)}</span></label>
-      <button type="button" class="ua-main" data-ua="info" data-entity="${escape(u.entity_id)}" data-device="${escape(u.device_id)}"><span class="ua-t"><b>${escape(name)}</b><small>${escape(integ)} · ${escape(u.installed ?? "?")} → ${escape(u.latest ?? "?")}</small></span><span class="cbtn" aria-hidden="true">${mdi("chevronRight", 16)}</span></button></div>`;
+      <button type="button" class="ua-main" data-ua="info" data-entity="${escape(u.entity_id)}" data-device="${escape(u.device_id || "")}"><span class="ua-t"><b>${escape(name)}</b><small>${escape(integ)} · ${escape(u.installed ?? "?")} → ${escape(u.latest ?? "?")}</small>${this.restartKind(u) ? `<small class="ua-restart">${escape(this.t(this.restartKind(u) === "os" ? "appupRestartOs" : "appupRestartCore"))}</small>` : ""}</span><span class="cbtn" aria-hidden="true">${mdi("chevronRight", 16)}</span></button></div>`;
   }
 
   // Zustand einer gestarteten Zeile: Warteschlange des Servers, Fortschritt aus dem Zustand der Entität
@@ -266,7 +299,7 @@ export class UpdApp {
   runRow(x) {
     const { escape, mdi } = this.h;
     const t = (k, ...a) => this.t(k, ...a);
-    const d = this.host._devices.find((v) => v.id === x.device_id);
+    const d = x.device_id ? this.host._devices.find((v) => v.id === x.device_id) : null;
     const name = d?.name || x.title;
     const s = this.runState(x);
     let line = "";
@@ -289,7 +322,7 @@ export class UpdApp {
       extra = `<button type="button" class="ua-retry" data-ua="retry" data-entity="${escape(x.entity_id)}" title="${escape(t("appupRetry"))}" aria-label="${escape(t("appupRetry"))}">${mdi("reset", 16)}</button>`;
     } else {
       const finishing = x.settling && !s.gone && !s.active;
-      line = s.gone ? t("updRebooting") : finishing ? t("updFinishing") : s.percent != null ? t("updPercent", Math.round(s.percent)) : t("updRunning");
+      line = s.gone ? t(x.kind === "addons" ? "updRebootingApp" : x.kind === "core" || x.kind === "hacs" ? "updRebootingOther" : "updRebooting") : finishing ? t("updFinishing") : s.percent != null ? t("updPercent", Math.round(s.percent)) : t("updRunning");
       extra = s.gone ? `<div class="upd-bar"><i style="width:100%"></i></div>` : s.percent != null ? `<div class="upd-bar" role="progressbar" aria-valuenow="${Math.round(s.percent)}" aria-valuemin="0" aria-valuemax="100"><i style="width:${Math.max(2, Math.min(100, s.percent))}%"></i></div>` : `<div class="ver-prog"><i></i></div>`;
     }
     return `<div class="ua-row run ${s.kind}">${lead}<div class="ua-t"><b>${escape(name)}</b><small class="ua-st${cls}">${escape(line)}</small>${why ? `<small class="ua-why">${escape(why)}</small>` : ""}${s.kind === "running" ? extra : ""}</div>${s.kind === "failed" ? extra : ""}</div>`;

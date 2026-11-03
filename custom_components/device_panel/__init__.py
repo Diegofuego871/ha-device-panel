@@ -471,7 +471,10 @@ async def _ws_list_devices(
     hass: HomeAssistant, connection: websocket_api.ActiveConnection, msg: dict[str, Any]
 ) -> None:
     """Alle Geräte mit Status, Verbindung, Empfang, Batterie und Softwarestand."""
-    connection.send_result(msg["id"], await async_list_devices(hass, hass.data.get(DATA_AVAILABILITY)))
+    result = await async_list_devices(hass, hass.data.get(DATA_AVAILABILITY))
+    # Zahl der offenen, startbaren Updates für den Launcher (App "Updates", seit 2.188.0: auch Apps, HACS und Home Assistant)
+    result["updates"] = len(update_available(hass))
+    connection.send_result(msg["id"], result)
 
 
 @websocket_api.websocket_command({vol.Required("type"): f"{DOMAIN}/updates_list"})

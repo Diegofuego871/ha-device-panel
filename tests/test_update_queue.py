@@ -1,4 +1,4 @@
-"""App "Geräte-Updates" (2.164.0): offene Geräte-Updates, Warteschlange (höchstens drei gleichzeitig, eines je Integration), Push-Link."""
+"""App "Updates" (2.164.0, seit 2.188.0 für alle Updates): offene Updates, Warteschlange (höchstens drei gleichzeitig, eines je Integration), Neustart-Updates zuletzt."""
 
 from __future__ import annotations
 
@@ -32,16 +32,72 @@ def _update(hass: HomeAssistant, device, platform: str, key: str = "fw", state: 
     return entry.entity_id
 
 
-async def test_available_only_device_updates(hass: HomeAssistant, setup) -> None:
+def _plain(hass: HomeAssistant, platform: str, object_id: str, state: str = "on", features: int = 13, **attrs) -> str:
+    """Update-Entität ohne Gerät (Home Assistant selbst, Apps, HACS)."""
+    entry = er.async_get(hass).async_get_or_create("update", platform, object_id, suggested_object_id=object_id)
+    hass.states.async_set(entry.entity_id, state, {"supported_features": features, "installed_version": "1.0", "latest_version": "1.1", "title": object_id, **attrs})
+    return entry.entity_id
+
+
+async def test_available_lists_every_kind(hass: HomeAssistant, setup) -> None:
     lamp = _device(hass, "Lampe")
     fw = _update(hass, lamp, "shelly")
-    # Kein Update offen, nicht installierbar, von Home Assistant selbst oder von HACS: nicht dabei
+    # Kein Update offen oder nicht installierbar: nicht dabei
     _update(hass, _device(hass, "Aktuell"), "shelly", state="off")
     _update(hass, _device(hass, "Nur Anzeige"), "shelly", features=0)
-    _update(hass, _device(hass, "Core"), "hassio")
-    _update(hass, _device(hass, "Karte"), "hacs")
-    assert [u["entity_id"] for u in available(hass)] == [fw]
-    assert available(hass)[0]["platform"] == "shelly" and available(hass)[0]["device_id"] == lamp.id
+    core = _plain(hass, "hassio", "home_assistant_core_update")
+    os_ = _plain(hass, "hassio", "home_assistant_operating_system_update")
+    addon = _plain(hass, "hassio", "esphome_device_builder_update")
+    card = _plain(hass, "hacs", "karte_update")
+    found = available(hass)
+    # Reihenfolge: zuerst Apps, HACS, Geräte, am Ende die Neustart-Updates
+    assert [u["entity_id"] for u in found] == [addon, card, fw, core, os_]
+    by = {u["entity_id"]: u for u in found}
+    assert by[fw]["kind"] == "devices" and by[fw]["device_id"] == lamp.id and not by[fw]["restart"]
+    assert by[addon]["kind"] == "addons" and by[addon]["device_id"] is None and not by[addon]["restart"]
+    assert by[card]["kind"] == "hacs"
+    assert by[core]["kind"] == "core" and by[core]["restart"] and by[os_]["restart"]
+
+
+async def test_restart_updates_run_last_and_alone(hass: HomeAssistant, setup) -> None:
+    calls = async_mock_service(hass, "update", "install")
+    fw = _update(hass, _device(hass, "Lampe"), "shelly")
+    addon = _plain(hass, "hassio", "mosquitto_update")
+    card = _plain(hass, "hacs", "karte_update")
+    core = _plain(hass, "hassio", "home_assistant_core_update")
+    os_ = _plain(hass, "hassio", "home_assistant_operating_system_update")
+    queue = get_queue(hass)
+    snap = queue.enqueue([core, os_, addon, card, fw], backup=False)
+    await hass.async_block_till_done()
+    status = {i["entity_id"]: i["status"] for i in snap}
+    # Nur eines der beiden Neustart-Updates wird eingereiht (die Warteschlange endet mit dem Neustart)
+    assert core in status and os_ not in status
+    # Apps, HACS und Geräte laufen zuerst, das Core-Update wartet
+    assert {c.data["entity_id"] for c in calls} == {addon, card, fw}
+    assert status[core] == "waiting"
+    # Erst wenn alles andere durch ist, startet das Core-Update allein
+    for eid in (addon, card, fw):
+        hass.states.async_set(eid, "off", {"supported_features": 13})
+        await hass.async_block_till_done()
+    assert calls[-1].data["entity_id"] == core and len(calls) == 4
+    assert {i["entity_id"]: i["status"] for i in queue.snapshot()}[core] == "running"
+
+
+async def test_app_update_holds_all_outage_messages_and_hacs_none(hass: HomeAssistant, setup) -> None:
+    from custom_components.device_panel.device_update import HOLD_ALL, held_until  # noqa: PLC0415
+
+    async_mock_service(hass, "update", "install")
+    addon = _plain(hass, "hassio", "mosquitto_update")
+    card = _plain(hass, "hacs", "karte_update")
+    other = _device(hass, "Irgendein Gerät")
+    queue = get_queue(hass)
+    queue.enqueue([card], backup=False)
+    await hass.async_block_till_done()
+    assert held_until(hass, other.id) is None  # HACS lädt nur herunter
+    queue.enqueue([addon], backup=False)
+    await hass.async_block_till_done()
+    assert held_until(hass, other.id) is not None  # die App startet neu: Geräte an ihr sehen ausgefallen aus
+    assert HOLD_ALL == "*"
 
 
 async def test_queue_limits_and_progress(hass: HomeAssistant, setup) -> None:

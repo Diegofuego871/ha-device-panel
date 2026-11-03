@@ -7,6 +7,18 @@ All notable changes to this integration are documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/).
 
+## [2.188.0] - 2026-11-03
+
+The app "Updates" shows and starts every update Home Assistant knows.
+
+### Added
+
+- **App "Updates" (formerly "Device updates"):** one window for every open update that Home Assistant knows and can install: devices, apps, HACS / Marketplace, Home Assistant Core, operating system and Supervisor. Chips preselect by kind (Home Assistant, Apps, HACS) and by integration of the devices; rows without a device (apps, HACS, Home Assistant) open the dialog of Home Assistant with release notes. Updates that restart Home Assistant or the machine (Core, operating system) are never preselected, only one of them can be chosen per start, they run last and alone, and the confirmation says that Home Assistant restarts at the end and that this view then ends. During an app update the panel holds back the outage notifications of all devices (devices may depend on the app) and for 5 minutes after it; for a device update only that device's, as before. The number on the launcher counts all open updates (from the server). The queue rules stay: at most three at a time and one per integration, optionally with a backup first where the update supports it.
+
+### Changed
+
+- **Update notification covers every kind by default:** Home Assistant (Core, operating system, Supervisor), apps, HACS / Marketplace and devices (before: without devices). Where you have already chosen the kinds in the settings, your choice stays. The notification still opens the app "Updates".
+
 ## [2.187.0] - 2026-11-02
 
 The setup assistant explains its options in plain words, and the longest duration of the backup alert adapts to your backups on its own.
@@ -5492,6 +5504,7 @@ First pre-release.
   GitHub Actions for HACS/hassfest validation and tests.
 
 [2.6.0]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v2.6.0
+[2.188.0]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v2.188.0
 [2.187.0]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v2.187.0
 [2.186.1]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v2.186.1
 [2.186.0]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v2.186.0

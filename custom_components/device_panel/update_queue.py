@@ -1,8 +1,9 @@
 """
-App "Geräte-Updates" (seit 2.164.0): alle offenen Geräte-Updates auf einmal starten.
+App "Updates" (seit 2.164.0 als "Geräte-Updates", seit 2.188.0 für alle Updates): alle offenen Updates auf einmal starten.
 
-Das Panel zeigt alle Update-Entitäten von Geräten (keine Updates von Home Assistant selbst, seinen Apps und HACS), der Benutzer wählt aus und
-startet. Der Server arbeitet die Auswahl als Warteschlange ab, damit sie auch weiterläuft, wenn das Fenster zu ist: höchstens drei
+Das Panel zeigt alle Update-Entitäten, die Home Assistant kennt (Geräte, Apps, HACS, Home Assistant Core, Betriebssystem, Supervisor), der Benutzer
+wählt aus und startet. Updates, die Home Assistant oder den Rechner neu starten (Core, Betriebssystem), laufen zuletzt und allein, und nur eines je
+Start: der Neustart beendet die Warteschlange (sie liegt im Arbeitsspeicher). Ein App-Update hält die Ausfall-Meldungen aller Geräte zurück. Der Server arbeitet die Auswahl als Warteschlange ab, damit sie auch weiterläuft, wenn das Fenster zu ist: höchstens drei
 Updates gleichzeitig und höchstens eines je Integration (parallele Updates bei Zigbee oder Z-Wave bremsen das Funknetz). Jedes Update
 startet über device_update.async_install; damit ruhen auch die Ausfall-Meldungen des Geräts während des Updates und kurz danach.
 Der Fortschritt (Prozent) kommt im Panel direkt aus dem Zustand der Update-Entität; hier steht nur, was der Server weiss: wartet, läuft,
@@ -20,7 +21,7 @@ from homeassistant.helpers import entity_registry as er
 from homeassistant.helpers.event import async_call_later, async_track_state_change_event
 
 from .const import DOMAIN
-from .device_update import EXCLUDED_PLATFORMS, FEATURE_BACKUP, FEATURE_INSTALL, UpdateError, async_install
+from .device_update import FEATURE_BACKUP, FEATURE_INSTALL, HOLD_ALL, UpdateError, async_install_entity
 from .updates import update_kind
 
 DATA_UPDATE_QUEUE = f"{DOMAIN}_update_queue"
@@ -38,16 +39,20 @@ MAX_SECONDS = 60 * 60
 KEEP_SECONDS = 60 * 60
 
 
+# Updates, die Home Assistant oder den Rechner neu starten: laufen zuletzt und allein
+RESTART_IDS = frozenset({"update.home_assistant_core_update", "update.home_assistant_operating_system_update"})
+KIND_ORDER = {"core": 0, "addons": 1, "hacs": 2, "devices": 3}
+
+
 def available(hass: HomeAssistant) -> list[dict[str, Any]]:
-    """Offene Geräte-Updates, die sich installieren lassen (nach Gerät und Entität)."""
+    """Offene Updates, die sich installieren lassen: Geräte, Apps, HACS, Home Assistant (nach Art, Integration und Name)."""
     registry = er.async_get(hass)
     out: list[dict[str, Any]] = []
     for state in hass.states.async_all("update"):
         entry = registry.async_get(state.entity_id)
-        if entry is None or not entry.device_id or entry.disabled_by or entry.platform in EXCLUDED_PLATFORMS:
+        if entry is None or entry.disabled_by or state.state != "on":
             continue
-        if state.state != "on" or update_kind(hass, state.entity_id) != "devices":
-            continue
+        kind = update_kind(hass, state.entity_id)
         features = int(state.attributes.get("supported_features") or 0)
         if not features & FEATURE_INSTALL:
             continue
@@ -57,13 +62,15 @@ def available(hass: HomeAssistant) -> list[dict[str, Any]]:
                 "entity_id": state.entity_id,
                 "device_id": entry.device_id,
                 "platform": entry.platform,
+                "kind": kind,
+                "restart": state.entity_id in RESTART_IDS,
                 "features": features,
                 "installed": attrs.get("installed_version"),
                 "latest": attrs.get("latest_version"),
                 "title": str(attrs.get("title") or attrs.get("friendly_name") or state.entity_id),
             }
         )
-    return sorted(out, key=lambda i: (i["platform"], i["title"].lower()))
+    return sorted(out, key=lambda i: (i["restart"], KIND_ORDER[i["kind"]], i["platform"], i["title"].lower()))
 
 
 class UpdateQueue:
@@ -77,17 +84,23 @@ class UpdateQueue:
         now = time.time()
         for eid in [e for e, i in self.items.items() if i["status"] in ("done", "failed") and now - i["ended"] > KEEP_SECONDS]:
             del self.items[eid]
-        keys = ("entity_id", "device_id", "platform", "status", "error", "installed", "latest", "title", "settling")
+        keys = ("entity_id", "device_id", "platform", "kind", "restart", "status", "error", "installed", "latest", "title", "settling")
         return [{k: i[k] for k in keys} for i in self.items.values()]
 
     def enqueue(self, entity_ids: list[str], backup: bool) -> list[dict[str, Any]]:
         """Gewählte Updates einreihen; was schon wartet oder läuft, bleibt wie es ist; Fertiges und Fehlgeschlagenes wird neu eingereiht."""
         by_id = {u["entity_id"]: u for u in available(self.hass)}
-        for eid in entity_ids:
+        # Nur ein Update, das neu startet, je Start: danach ist die Warteschlange weg; ein zweites (Core und Betriebssystem) bliebe liegen
+        restart_taken = any(i["restart"] and i["status"] in ("waiting", "running") for i in self.items.values())
+        for eid in sorted(entity_ids, key=lambda e: by_id.get(e, {}).get("restart", False)):
             cur = self.items.get(eid)
             if eid not in by_id or (cur and cur["status"] in ("waiting", "running")):
                 continue
             u = by_id[eid]
+            if u["restart"]:
+                if restart_taken:
+                    continue
+                restart_taken = True
             self.items[eid] = {**u, "backup": backup, "status": "waiting", "error": None, "seen": False, "settling": False, "started": 0.0, "ended": 0.0, "cancel": [], "settle_cancel": None}
         self._listen()
         self._pump()
@@ -115,14 +128,21 @@ class UpdateQueue:
                 break
             if item["status"] != "waiting" or item["platform"] in busy:
                 continue
+            # Ein Update mit Neustart (Core, Betriebssystem) beginnt erst, wenn alles andere durch ist, und läuft allein
+            if item["restart"] and any(i is not item and i["status"] in ("waiting", "running") for i in self.items.values()):
+                continue
+            if any(i["restart"] and i["status"] == "running" for i in self.items.values()):
+                break
             # Zuerst als laufend führen: eine Aufgabe, die sofort anläuft, meldet ihren Fehler schon während async_install
             item["status"] = "running"
             item["started"] = time.time()
+            # Zurückhaltung der Ausfall-Meldungen: ein Gerät für sein Update, eine App für alle Geräte (Geräte hängen an ihr), sonst nichts
+            hold = item["device_id"] if item["kind"] == "devices" and item["device_id"] else HOLD_ALL if item["kind"] == "addons" else None
             try:
-                async_install(
+                async_install_entity(
                     self.hass,
-                    item["device_id"],
                     item["entity_id"],
+                    hold,
                     bool(item["backup"]) and bool(item["features"] & FEATURE_BACKUP),
                     lambda msg, i=item: self._service_error(i, msg),
                 )

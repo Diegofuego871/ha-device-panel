@@ -9,8 +9,8 @@ let ok = true;
 const check = (l, c, i = "") => { ok &&= !!c; console.log(`${c ? "PASS" : "FAIL"} ${l}${i ? " - " + i : ""}`); };
 const R = `document.querySelector("device-panel").shadowRoot`;
 const T = {
-  de: { title: "Geräte-Updates", all: "Alle", start: (n) => `${n} Updates starten`, yes: (n) => `Ja, ${n} Updates starten`, wait: "Wartet", pct: /Update läuft: 40 %/, done: /Fertig: Version/, failed: "Fehlgeschlagen", finishing: "Update wird abgeschlossen", empty: "Alle Geräte sind auf dem neuesten Stand.", dot: /Geräte-Updates verfügbar/ },
-  en: { title: "Device updates", all: "All", start: (n) => `Start ${n} updates`, yes: (n) => `Yes, start ${n} updates`, wait: "Waiting", pct: /Update running: 40 %/, done: /Done: version/, failed: "Failed", finishing: "Finishing the update", empty: "All devices are up to date.", dot: /device updates available/ },
+  de: { title: "Updates", all: "Alle", start: (n) => `${n} Updates starten`, yes: (n) => `Ja, ${n} Updates starten`, wait: "Wartet", pct: /Update läuft: 40 %/, done: /Fertig: Version/, failed: "Fehlgeschlagen", finishing: "Update wird abgeschlossen", empty: "Alles ist auf dem neuesten Stand.", dot: /Updates verfügbar/ },
+  en: { title: "Updates", all: "All", start: (n) => `Start ${n} updates`, yes: (n) => `Yes, start ${n} updates`, wait: "Waiting", pct: /Update running: 40 %/, done: /Done: version/, failed: "Failed", finishing: "Finishing the update", empty: "Everything is up to date.", dot: /updates available/ },
 };
 const mk = (id, platform, device, title, from, to) => ({ entity_id: `update.${id}`, device_id: device, platform, features: 13, installed: from, latest: to, title });
 const LIST = [

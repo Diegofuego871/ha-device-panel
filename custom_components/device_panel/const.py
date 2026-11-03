@@ -13,7 +13,7 @@ PANEL_HTML_FILE = "panel.html"
 STATIC_URL_PATH = f"/{DOMAIN}"
 PANEL_STATIC_URL_PATH = f"{STATIC_URL_PATH}/panel"
 # Cache-Buster: bei jeder Änderung unter panel/ von Hand erhöhen.
-PANEL_VERSION = "426"
+PANEL_VERSION = "428"
 PANEL_PAGE_URL = f"{PANEL_STATIC_URL_PATH}/{PANEL_HTML_FILE}?v={PANEL_VERSION}"
 
 # Mitgeliefertes Bild für Push-Meldungen (Companion-App, "icon_url"), wie in
@@ -152,7 +152,7 @@ DEFAULT_UPDATES_WINDOW = 5
 # Welche Arten gemeldet werden: Home Assistant (Core, OS, Supervisor), Add-ons, HACS, Geräte-Firmware.
 CONF_UPDATES_KINDS = "updates_kinds"
 UPDATE_KINDS = ("core", "addons", "hacs", "devices")
-DEFAULT_UPDATES_KINDS = ("core", "addons", "hacs")
+DEFAULT_UPDATES_KINDS = ("core", "addons", "hacs", "devices")
 # Ausnahmen pro Eintrag (seit 1.31.0): ein Eintrag folgt seiner Art, bis er hier steht.
 # Aus: Entität gemeldet wird nie; An: wird gemeldet, auch wenn die Art aus ist.
 CONF_UPDATES_EXCLUDE = "updates_exclude"

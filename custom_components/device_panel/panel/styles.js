@@ -638,6 +638,7 @@ dialog.discard-dlg::backdrop { background: rgba(0,0,0,0.55); }
 .dd-bat i.lo { background: var(--dp-error); }
 .dd-bat b { position: absolute; left: 0; right: 0; height: 0; border-top: 2px dashed var(--dp-error); }
 .pill.live.shadow { opacity: .75; }
+.ua-restart { color: var(--dp-warning) !important; }
 .mon-sysnote .dlg-btn { width: 100%; justify-content: flex-start; margin-top: 12px; }
 .mon-sysnote .dlg-btn > span:not(.cbtn) { flex: 1; text-align: left; }
 .set-count { align-self: center; color: var(--dp-text2); font-size: 12px; white-space: nowrap; }

@@ -7,6 +7,18 @@ Alle nennenswerten Änderungen an dieser Integration stehen in dieser Datei.
 Das Format folgt [Keep a Changelog](https://keepachangelog.com/de/1.1.0/),
 die Versionsnummern folgen [Semantic Versioning](https://semver.org/lang/de/).
 
+## [2.188.0] - 2026-11-03
+
+Die App "Updates" zeigt und startet jedes Update, das Home Assistant kennt.
+
+### Hinzugefügt
+
+- **App "Updates" (früher "Geräte-Updates"):** ein Fenster für jedes offene Update, das Home Assistant kennt und installieren kann: Geräte, Apps, HACS / Marketplace, Home Assistant Core, Betriebssystem und Supervisor. Chips wählen nach Art (Home Assistant, Apps, HACS) und nach Integration der Geräte vor; Zeilen ohne Gerät (Apps, HACS, Home Assistant) öffnen den Dialog von Home Assistant mit den Release Notes. Updates, die Home Assistant oder den Rechner neu starten (Core, Betriebssystem), sind nie vorgewählt, es lässt sich nur eines davon je Start wählen, sie laufen zuletzt und allein, und die Rückfrage sagt, dass Home Assistant am Schluss neu startet und diese Anzeige dann endet. Während eines App-Updates hält das Panel die Ausfall-Meldungen aller Geräte zurück (Geräte können an der App hängen), bis 5 Minuten danach; bei einem Geräte-Update wie bisher nur die dieses Geräts. Die Zahl am Launcher zählt alle offenen Updates (vom Server). Die Regeln der Warteschlange bleiben: höchstens drei gleichzeitig und eines je Integration, auf Wunsch mit vorherigem Backup, wo das Update es kann.
+
+### Geändert
+
+- **Die Update-Meldung gilt standardmässig für jede Art:** Home Assistant (Core, Betriebssystem, Supervisor), Apps, HACS / Marketplace und Geräte (vorher ohne Geräte). Wo du die Arten in den Einstellungen schon gewählt hast, bleibt deine Wahl. Die Meldung öffnet weiter die App "Updates".
+
 ## [2.187.0] - 2026-11-02
 
 Der Einrichtungsassistent erklärt seine Optionen in einfachen Worten, und die längste Dauer der Backup-Meldung passt sich von selbst an deine Backups an.
@@ -5593,6 +5605,7 @@ Erste Vorabversion.
   GitHub Actions für die Prüfungen von HACS und hassfest sowie die Tests.
 
 [2.6.0]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v2.6.0
+[2.188.0]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v2.188.0
 [2.187.0]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v2.187.0
 [2.186.1]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v2.186.1
 [2.186.0]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v2.186.0

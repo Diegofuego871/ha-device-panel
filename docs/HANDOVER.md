@@ -3,7 +3,14 @@
 Einstieg für jede neue Claude-Code-Session. Zuerst diese Datei lesen, dann
 `CLAUDE.md`, `docs/CONCEPT.md`, `docs/LEARNINGS.md`, `docs/DESIGN.md`.
 
-## Stand (2.187.0, längste Dauer automatisch; gleiche Version wie die Erklärungen im Assistenten, noch ohne Tag)
+## Stand (2.188.0, App "Updates" für alle Updates)
+
+- Die App "Geräte-Updates" heisst "Updates" und zeigt jede offene Update-Entität, die Home Assistant kennt und installieren lässt (`update_queue.available`): Geräte, Apps (hassio), HACS, Core, Betriebssystem, Supervisor. Felder je Eintrag: `kind` (`update_kind`: core/addons/hacs/devices), `restart` (nur `update.home_assistant_core_update` und `..._operating_system_update`), `device_id` darf fehlen. Warteschlange: Neustart-Updates warten, bis alles andere durch ist, laufen allein und nur eines je Start (`enqueue`, `_pump_once`; die Warteschlange liegt im Arbeitsspeicher und endet mit dem Neustart). Start über `device_update.async_install_entity(hass, entity_id, hold_key, ...)`; Zurückhaltung der Ausfall-Meldungen: Gerät bei Geräte-Updates, `HOLD_ALL` ("*") bei App-Updates (`held_until` kennt beides), sonst keine.
+- Panel: `updapp.js` (Chips `kind:<art>` vor den Integrationen, Neustart-Updates nie vorgewählt, `data-ua-sel` mit Neustart nimmt das andere heraus, Hinweise in der Rückfrage, Zeile ohne Gerät öffnet `_openMoreInfo`); die Zahl am Launcher kommt aus `list_devices` (`updates`, `host._updCount`).
+- Die Update-Meldung gilt standardmässig für alle vier Arten (`DEFAULT_UPDATES_KINDS`).
+- Tests: `test_update_queue` (alle Arten, Reihenfolge, Zurückhaltung), `test_updates`, Suiten `updappall` und `updapp`; Bilder `docs/screenshots/*/updates.png` neu (`readme-shots.mjs`, Schritt "updates").
+
+## Stand (2.187.0, längste Dauer automatisch; gleiche Version wie die Erklärungen im Assistenten)
 
 - Option `status_backup_auto` (bool, Standard an, Bereich "monitor" der Sicherung) neben `status_backup_minutes` (fester Wert, Standard 180). `BackupAlert.minutes()`: Automatisch = `auto_minutes` (längster der letzten `RUNS_KEPT` = 5 gelungenen Läufe plus 20 Minuten, 10 bis 1440; mindestens `RUNS_MIN` = 2 Läufe, sonst `fallback_minutes`: der feste Wert, nie unter dem längsten bekannten Lauf plus 20 Minuten). Läufe zählen, nicht Tage (wöchentliche Backups). `_record` merkt jeden gelungenen Lauf (Ereignis oder Sensor) in der Datei `device_panel.backup_alert` (`runs`); beim ersten Start holt `_seed` frühere Läufe aus dem Recorder (`runs_from_history`: Zeiträume "create_backup", in denen "letzter Versuch" und "letzter Erfolg" nachgeführt wurden, nur automatische; Handbackups bleiben draussen). `info()` geht in `status_get` (`backup`) für die Anzeige. Im automatischen Modus hat die "doch noch fertig"-Meldung keinen Vorschlag (`backup_late_auto_text`), nur bei "Fest".
 - Panel: Reiterleiste "Automatisch / Fest" (`data-st-bkauto`) unter "Längste Dauer"; eine ungültige feste Zahl wird beim Wechsel auf Automatisch verworfen.
