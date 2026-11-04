@@ -9,10 +9,11 @@ die Versionsnummern folgen [Semantic Versioning](https://semver.org/lang/de/).
 
 ## [2.190.1] - 2026-11-04
 
-Die gestrichelte Linie eines Sammelausfalls entfällt auf dem Handy.
+Die gestrichelte Linie eines Sammelausfalls entfällt auf dem Handy, und die Willkommensseite des Einrichtungsassistenten nennt alles, was er abdeckt, in grösserer Schrift.
 
 ### Geändert
 
+- **Einrichtungsassistent, Willkommensseite:** Die Übersicht nennt jetzt fünf statt drei Punkte: was das Panel zeigt, worüber es informiert (neu auch Updates), was für Gruppen von Geräten gilt (Labels), was es sonst überwacht (fehlgeschlagene Backups und Systemauslastung) und wann es ruhig bleibt. Die Schrift ist grösser.
 - **Ausfall-Puls, Sammelausfall auf dem Handy:** Die gestrichelte Linie eines Sammelausfalls entfällt auf kleinen Bildschirmen (bis 600 px), wo sie schlecht zu sehen war; der Hinweis unter dem Diagramm bleibt.
 
 ## [2.190.0] - 2026-11-04

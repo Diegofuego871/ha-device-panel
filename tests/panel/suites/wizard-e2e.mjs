@@ -58,6 +58,7 @@ for (const lang of ["de", "en"]) {
       if (mobile) check(`[${tag}] Handy: Vollbild`, box[0] === 0 && box[1] === 0 && box[2] === box[4] && box[3] === box[5], JSON.stringify(box));
       else check(`[${tag}] Desktop: Popup in der Mitte, so gross wie die Einstellungen (höchstens 880 px breit)`, box[2] <= 880 && box[2] > 640 && Math.abs(box[0] + box[2] / 2 - box[4] / 2) < 4, JSON.stringify(box));
       check(`[${tag}] Willkommen: die Rakete wackelt wie in der Kachel (wz-rocket)`, (await s.ev(`return getComputedStyle(r.querySelector("${s.D} .wz-hero svg")).animationName`)) === "wz-rocket");
+      check(`[${tag}] Willkommen: fünf Punkte (auch Labels, Backup und System), grosse Schrift`, await s.ev(`const p=r.querySelectorAll("${s.D} .wz-pts > div"); return p.length === 5 && parseFloat(getComputedStyle(p[0]).fontSize) >= 17`));
       await s.shot("1-welcome");
       check(`[${tag}] Kachel "${L.tile}" im Launcher und oranger Punkt am Knopf`, (await s.tileShown()) && (await s.launcherDot()));
 

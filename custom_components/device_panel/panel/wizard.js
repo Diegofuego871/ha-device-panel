@@ -608,10 +608,10 @@ export class WizardUi {
     const { escape, mdi } = this.h;
     const t = (k, ...a) => this.t(k, ...a);
     const point = (n, a, b) => `<div><u>${n}</u><span>${escape(t(a))}<small>${escape(t(b))}</small></span></div>`;
-    return `<div class="wz-hero">${mdi("rocket", 36)}</div><h1 class="wz-h">${escape(t("wzWelcomeTitle"))}</h1>
-      <p class="wz-p">${escape(t("wzWelcomeText"))}</p>
-      <div class="wz-pts">${point(1, "wzP1", "wzP1s")}${point(2, "wzP2", "wzP2s")}${point(3, "wzP3", "wzP3s")}</div>
-      <p class="wz-p small">${escape(t("wzTime"))}</p>`;
+    return `<div class="wz-hero">${mdi("rocket", 36)}</div><h1 class="wz-h big">${escape(t("wzWelcomeTitle"))}</h1>
+      <p class="wz-p big">${escape(t("wzWelcomeText"))}</p>
+      <div class="wz-pts big">${[1, 2, 3, 4, 5].map((n) => point(n, `wzP${n}`, `wzP${n}s`)).join("")}</div>
+      <p class="wz-p small big">${escape(t("wzTime"))}</p>`;
   }
 
   toggle(attr, value, on, label) {

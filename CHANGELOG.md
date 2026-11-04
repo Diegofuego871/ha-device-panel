@@ -9,10 +9,11 @@ and this project adheres to [Semantic Versioning](https://semver.org/).
 
 ## [2.190.1] - 2026-11-04
 
-The dashed line of a collective outage is left out on phones.
+The dashed line of a collective outage is left out on phones, and the welcome page of the setup wizard lists everything it covers, in larger type.
 
 ### Changed
 
+- **Setup wizard, welcome page:** The overview now lists five points instead of three: what the panel shows, what it tells you (now including updates), what applies to groups of devices (labels), what else it watches (failed backups and system load) and when it stays quiet. The type is larger.
 - **Outage pulse, collective outage on the phone:** The dashed line of a collective outage is left out on small screens (up to 600 px), where it was hard to see; the note below the chart stays.
 
 ## [2.190.0] - 2026-11-04

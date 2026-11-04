@@ -2520,6 +2520,14 @@ dialog.wizard-dlg[open] { display: flex; flex-direction: column; }
 .wz-pts > div { display: flex; gap: 12px; align-items: flex-start; font-size: 14.5px; }
 .wz-pts u { text-decoration: none; flex: none; width: 30px; height: 30px; border-radius: 9px; background: var(--dp-subtle); display: grid; place-items: center; color: var(--dp-primary); font-size: 14px; }
 .wz-pts small { display: block; color: color-mix(in srgb, var(--dp-text) 65%, transparent); font-size: 12.5px; }
+/* Willkommensseite (seit 2.190.2): grössere Schrift, es ist genug Platz */
+.wz-h.big { font-size: 24px; }
+.wz-p.big { font-size: 16px; }
+.wz-p.small.big { font-size: 14px; }
+.wz-pts.big { gap: 14px; }
+.wz-pts.big > div { font-size: 17px; }
+.wz-pts.big u { width: 36px; height: 36px; border-radius: 11px; font-size: 16px; }
+.wz-pts.big small { font-size: 14.5px; }
 .wz-li { display: flex; align-items: center; gap: 12px; padding: 10px 2px; border-top: 1px solid var(--dp-divider); }
 [data-wz-list] > .wz-li:first-child, .wz-sum > .wz-li:first-child { border-top: 0; }
 .wz-ic { display: inline-grid; place-items: center; flex: none; width: 34px; height: 34px; border-radius: 10px; background: var(--dp-subtle); color: var(--dp-text); }
