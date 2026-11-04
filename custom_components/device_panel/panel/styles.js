@@ -580,7 +580,8 @@ dialog.status-dlg .dlg-title h2 { margin: 0; }
 .dlg-act.run-ok { background: var(--dp-success); border-color: var(--dp-success); color: #fff; }
 .dlg-act.run-err { background: var(--dp-error); border-color: var(--dp-error); color: #fff; }
 .dlg-act:disabled { cursor: progress; }
-.dlg-sep { flex: none; width: 1px; height: 26px; margin: 0 2px; background: var(--dp-divider); }
+/* Der Strich steht mittig zwischen dem Aktionsknopf und dem Schliessen-Knopf (links 8 + 8, rechts 2 + 14 = je 16 px; seit 2.192.0) */
+.dlg-sep { flex: none; width: 1px; height: 26px; margin: 0 2px 0 8px; background: var(--dp-divider); }
 /* Herz im Kopf des Geräte-Popups (seit 2.22.0): wie das Kreuz ein runder Knopf, rot sobald Favorit */
 .dlg-fav { flex: none; display: grid; place-items: center; width: 42px; height: 42px; margin-right: 8px; border: 1px solid var(--dp-divider); border-radius: 50%;
   background: var(--dp-card); color: var(--dp-text2); cursor: pointer; transition: color .2s ease, background .2s ease; }

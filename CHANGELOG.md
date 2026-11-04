@@ -13,6 +13,10 @@ The marks for own settings next to the device names in the list are now off by d
 
 Includes the changes from 2.191.0.
 
+### Changed
+
+- **Window headers, separator line:** In the headers of Settings, Magic Push and Routines the thin line between the action button and the close button now stands exactly in the middle (16 px on each side); the action button moved to the left.
+
 ### Added
 
 - **View, "Marks for own settings":** A switch in the view (desktop: tab "Columns", phone: "Sorting") shows or hides the small icons next to a device name that mark own values (reception, battery, notify after, connection type and so on). Off by default, also for existing installations; it is stored per user and per device kind (desktop, phone) like the rest of the view, and "Restore default" switches it off.

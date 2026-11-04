@@ -13,6 +13,10 @@ Die Markierungen für eigene Einstellungen neben den Gerätenamen in der Liste s
 
 Enthält die Änderungen von 2.191.0.
 
+### Geändert
+
+- **Fensterköpfe, Trennstrich:** In den Köpfen von Einstellungen, Magic Push und Routinen steht der dünne Strich zwischen dem Aktionsknopf und dem Schliessen-Knopf jetzt genau in der Mitte (je 16 px); der Aktionsknopf ist nach links gerückt.
+
 ### Hinzugefügt
 
 - **Ansicht, "Markierungen für eigene Einstellungen":** Ein Schalter in der Ansicht (Desktop: Reiter "Spalten", Handy: "Sortierung") zeigt oder verbirgt die kleinen Symbole neben dem Gerätenamen, die eigene Werte markieren (Empfang, Batterie, Melden nach, Verbindungsart und so weiter). Standardmässig aus, auch bei bestehenden Installationen; er wird wie die übrige Ansicht je Benutzer und Gerät (Desktop, Handy) gespeichert, und "Standard wiederherstellen" schaltet ihn aus.
