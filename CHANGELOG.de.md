@@ -7,9 +7,26 @@ Alle nennenswerten Änderungen an dieser Integration stehen in dieser Datei.
 Das Format folgt [Keep a Changelog](https://keepachangelog.com/de/1.1.0/),
 die Versionsnummern folgen [Semantic Versioning](https://semver.org/lang/de/).
 
+## [2.190.0] - 2026-11-04
+
+Magic Push kann eine Meldung bis zu einer Uhrzeit zurückhalten, und die Vorschau zeigt das Symbol der Integration.
+
+Enthält die Änderungen von 2.189.0.
+
+### Hinzugefügt
+
+- **Magic Push, Senden zu einer Uhrzeit:** Schritt 3 "Wohin und wie oft?" hat neu die Wahl "Wann senden?": "Sofort" (wie bisher) oder "Zu einer Uhrzeit". Mit einer Uhrzeit, zum Beispiel 10:00, wird die Meldung zurückgehalten und kommt zur nächsten Uhrzeit, sofern die Bedingung dann noch gilt; ist der Wert vorher wieder normal, entfällt die Meldung. "Wiederholen" bietet dann "Nur einmal" oder "Täglich" (jeden Tag zur gleichen Uhrzeit, solange die Bedingung gilt). Eine Regel der Art "ändert sich" wird ebenso zurückgehalten (ohne Wiederholung). Meldungen "wieder normal" kommen weiterhin sofort. Die Zusammenfassung einer Regel zeigt "um 10:00 Uhr" und "täglich". Die Einstellung gilt für die einzelne Regel (sie wird mit ihr gespeichert, gesichert und wiederhergestellt); Simulator und Tests kennen sie.
+
+### Geändert
+
+- **Fenster der Apps, Symbol:** Die Fenster von Status, Protokoll, Ansicht, Magic Push, Routinen, Updates und Einstellungen zeigen jetzt dasselbe runde Symbol in derselben Farbe wie ihre Kachel im Launcher (weisses Symbol auf farbigem Kreis) statt eines blassen Quadrats.
+- **Magic Push, Vorschau:** Die Vorschau der Meldung zeigt vor der App-Zeile das Logo der Integration des Geräts, wie es die echte Meldung trägt, statt des Home-Assistant-Logos; ohne Logo bleibt es wie bisher.
+
 ## [2.189.0] - 2026-11-04
 
 Die App "Updates" zeigt vor jeder Zeile ein Symbol.
+
+Nicht veröffentlicht; enthalten in 2.190.0.
 
 Enthält die Änderungen von 2.188.1.
 
@@ -5632,7 +5649,7 @@ Erste Vorabversion.
   GitHub Actions für die Prüfungen von HACS und hassfest sowie die Tests.
 
 [2.6.0]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v2.6.0
-[2.189.0]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v2.189.0
+[2.190.0]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v2.190.0
 [2.188.0]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v2.188.0
 [2.187.0]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v2.187.0
 [2.186.1]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v2.186.1

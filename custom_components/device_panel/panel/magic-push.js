@@ -27,7 +27,7 @@ let LEAF_SEQ = 0;
 const leafId = () => `c${(LEAF_SEQ += 1)}`;
 const PREVIEW_DELAY_MS = 300;
 // Felder, die der Server in einer Meldung annimmt (alles andere, etwa "active", würde er ablehnen).
-const RULE_KEYS = ["id", "device_id", "entity_id", "name", "kind", "value", "for_s", "reset_value", "message", "body", "recover", "recover_message", "recover_body", "repeat_s", "target", "enabled", "critical", "critical_volume", "conditions", "reset_for_s"];
+const RULE_KEYS = ["id", "device_id", "entity_id", "name", "kind", "value", "for_s", "reset_value", "message", "body", "recover", "recover_message", "recover_body", "repeat_s", "target", "enabled", "critical", "critical_volume", "conditions", "reset_for_s", "send_at"];
 
 // Zeichen vor dem Eintrag: nach Geräteklasse, sonst nach Art der Entität.
 const EMOJI_CLASS = {
@@ -413,8 +413,9 @@ export class MagicPush {
     const many = rule.conditions?.items && this.leavesOf({ conds: rule.conditions }).length > 1;
     const parts = [many ? this.treeText(rule.conditions, (id) => this.entityByIdOf(rule, id)) : `${this.entityName(rule)} ${this.condText(rule)}`];
     parts.push(rule.for_s ? this.t("mgSentenceFor", this.fmtDur(rule.for_s)) : this.t("mgSentenceNow"));
+    if (rule.send_at) parts.push(this.t("mgSentenceAt", rule.send_at));
     if (rule.kind !== "change") {
-      parts.push(this.repeatText(rule.repeat_s));
+      parts.push(rule.send_at ? this.t(rule.repeat_s ? "mgSentenceDaily" : "mgSentenceOnce") : this.repeatText(rule.repeat_s));
       if (rule.recover) parts.push(this.t("mgSentenceRecover"));
       if (rule.reset_for_s) parts.push(this.t("mgSentenceResetFor", this.fmtDur(rule.reset_for_s)));
     }
@@ -663,6 +664,7 @@ export class MagicPush {
       recover_message: d.recover_message,
       recover_body: d.recover_body,
       repeat_s: d.kind === "change" ? 0 : d.repeat_s,
+      send_at: d.sendAt ? d.send_at : "",
       target: d.target || null,
       enabled: d.enabled,
       critical: d.critical,
@@ -999,6 +1001,9 @@ export class MagicPush {
       touched: { message: false, body: false, recover_message: false, recover_body: false },
       repeat_s: 0,
       repeatOwn: { text: "", unit: 3600 },
+      // Uhrzeit "HH:MM": die Meldung wird bis dahin zurückgehalten; "" = sofort. sendAt: Wahl "zu einer Uhrzeit" (auch noch ohne Zeit)
+      send_at: "",
+      sendAt: false,
       target: "",
       critical: false,
       critical_volume: VOLUME_MAX,
@@ -1033,6 +1038,8 @@ export class MagicPush {
       recover_body: rule.recover_body || "",
       touched: { message: true, body: true, recover_message: true, recover_body: true },
       repeat_s: rule.repeat_s || 0,
+      send_at: rule.send_at || "",
+      sendAt: Boolean(rule.send_at),
       target: rule.target || "",
       critical: Boolean(rule.critical),
       critical_volume: rule.critical_volume ?? VOLUME_MAX,
@@ -1345,6 +1352,18 @@ export class MagicPush {
     }
   }
 
+  setSendMode(at) {
+    const d = this.wiz.draft;
+    d.sendAt = at;
+    if (at && !d.send_at) d.send_at = "10:00";
+    // Mit Uhrzeit gibt es nur "einmal" oder "täglich"
+    if (at && d.repeat_s) {
+      d.repeat_s = 86400;
+      d.repeatOwn.text = "";
+    }
+    this.paint();
+  }
+
   // Wahl in einer Reiterleiste ändern; die Kapsel folgt der Klasse "on" (Beobachter im Panel).
   setOn(btn, on) {
     btn.classList.toggle("on", on);
@@ -1396,7 +1415,7 @@ export class MagicPush {
       return leaves.length > 0 && !this.wiz.adding && leaves.every((l) => this.leafValid(l));
     }
     if (step === 2) return !this.forError() && !this.resetForError();
-    if (step === 3) return !this.repeatError();
+    if (step === 3) return !this.repeatError() && (!d.sendAt || /^([01]\d|2[0-3]):[0-5]\d$/.test(d.send_at));
     if (step === 4) return d.message.trim() !== "" && (!d.recover || d.kind === "change" || d.recover_message.trim() !== "");
     return d.name.trim() !== "";
   }
@@ -1996,7 +2015,20 @@ export class MagicPush {
         <div class="mg-volrow"><input id="mg-volume" type="range" min="1" max="${VOLUME_MAX}" step="1" value="${d.critical_volume}" data-mg="volume" aria-valuetext="${esc(t("mgVolumeOf", d.critical_volume))}"><output class="mg-volval" for="mg-volume">${esc(t("mgVolumeOf", d.critical_volume))}</output></div>
         <p class="mg-hint">${esc(t("mgVolumeHint"))}</p></div>`;
     }
+    html += `<div class="mg-k">${esc(t("mgSendWhen"))}</div>
+      ${this.tabsHtml([
+        { on: !d.sendAt, attrs: `data-mg="sendmode" data-v="now"`, label: t("mgSendNow") },
+        { on: d.sendAt, attrs: `data-mg="sendmode" data-v="at"`, label: t("mgSendAt") },
+      ])}`;
+    if (d.sendAt) {
+      html += `<div class="mg-own"><span>${esc(t("mgSendTime"))}</span><input class="mg-pill num mg-ownin" type="time" data-mg="sendtime" value="${esc(d.send_at)}" aria-label="${esc(t("mgSendTime"))}"></div>
+        <p class="mg-hint">${esc(t("mgSendHint"))}</p>`;
+    }
     if (change) return `${html}<p class="mg-hint">${esc(t("mgChangeNote"))}</p>`;
+    if (d.sendAt) {
+      return `${html}<div class="mg-k">${esc(t("mgRepeatAt"))}</div>
+      ${this.tabsHtml([0, 86400].map((s) => ({ on: d.repeat_s === s || (s === 86400 && d.repeat_s > 0), attrs: `data-mg="repeat" data-s="${s}"`, label: s ? t("mgRepeat_86400") : t("mgRepeatOnce") })))}`;
+    }
     return `${html}<div class="mg-k">${esc(t("mgRepeat"))}</div>
       ${this.tabsHtml(PRESET_REPEAT.map((s) => ({ on: !d.repeatOwn.text && d.repeat_s === s, attrs: `data-mg="repeat" data-s="${s}"`, label: s ? t(`mgRepeat_${s}`) : t("mgRepeatOnce") })))}
       <div class="mg-own"><span>${esc(t("mgRepeatOwn"))}</span>
@@ -2164,7 +2196,7 @@ export class MagicPush {
       else if (!p.title) inner = `<div class="pv-text">${esc(t("mgPvEmpty"))}</div>`;
       else inner = `<div class="pv-title">${esc(p.title)}</div><div class="pv-text">${esc(p.message)}</div>`;
       const test = w.step === 4 ? this.testHtml(which) : "";
-      return `<div class="mg-pv"><div class="pv-k">${esc(t("mgPvLabel"))}</div><div class="pv-card"><div class="pv-app">${this.h.logo}${esc(t("mgPvApp"))}${which === "main" && w.draft.critical ? ` · ${esc(t("mgPvCritical"))}` : ""}</div>${inner}</div><div class="opt-short">${esc(note)}</div>${test}</div>`;
+      return `<div class="mg-pv"><div class="pv-k">${esc(t("mgPvLabel"))}</div><div class="pv-card"><div class="pv-app">${this.pvIcon()}${esc(t("mgPvApp"))}${which === "main" && w.draft.critical ? ` · ${esc(t("mgPvCritical"))}` : ""}</div>${inner}</div><div class="opt-short">${esc(note)}</div>${test}</div>`;
     };
     const recoverOn = w.draft.recover && w.draft.kind !== "change";
     if (only === "main") return card(w.pv.main, t("mgPvNote"), "main");
@@ -2172,6 +2204,13 @@ export class MagicPush {
     let html = card(w.pv.main, t("mgPvNote"), "main");
     if (w.step >= 4 && recoverOn) html += card(w.pv.recover, t("mgPvNoteRecover"), "recover");
     return html;
+  }
+
+  // Symbol der Vorschau: wie in der echten Meldung das Logo der Integration des Geräts (push_icon.py), sonst das von Home Assistant
+  pvIcon() {
+    const domain = this.host._devices?.find((d) => d.id === this.deviceId)?.integration?.domain;
+    const src = this.host._brandSrc?.(domain);
+    return src ? `<img class="pv-brand" src="${this.esc(src)}" alt="" width="16" height="16" draggable="false">` : this.h.logo;
   }
 
   testHtml(which) {
@@ -2392,6 +2431,9 @@ export class MagicPush {
       case "rfor":
         this.setResetForSeconds(Number(el.dataset.s));
         break;
+      case "sendmode":
+        this.setSendMode(el.dataset.v === "at");
+        break;
       case "repeat":
         this.setRepeatSeconds(Number(el.dataset.s));
         break;
@@ -2465,6 +2507,9 @@ export class MagicPush {
     } else if (action === "rfor-own") {
       this.wiz.draft.resetForOwn.text = el.value;
       this.applyOwnResetFor();
+    } else if (action === "sendtime") {
+      this.wiz.draft.send_at = el.value;
+      this.syncNav();
     } else if (action === "repeat-own") {
       this.wiz.draft.repeatOwn.text = el.value;
       this.applyOwnRepeat();

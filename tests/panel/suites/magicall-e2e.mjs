@@ -83,6 +83,7 @@ for (const lang of ["de", "en"]) {
     await ev(`r.host._openMagicAll()`);
     await expandAll();
     check(`[${tag}] Fenster "Magic Push" mit Titel und Untertitel`, await wait(`const d=r.querySelector("dialog.mgall-dlg"); return d?.open && d.querySelector("h2")?.textContent.trim() === "Magic Push" && !!d.querySelector(".dlg-sub")`));
+    check(`[${tag}] Fenster "Magic Push": Symbol rund, violett wie im Launcher, weisses Symbol`, await wait(`const a=r.querySelector("dialog.mgall-dlg .dlg-avatar.app-magic"); if(!a) return false; const c=getComputedStyle(a); return c.backgroundColor==="rgb(142, 36, 170)" && c.color==="rgb(255, 255, 255)" && c.borderRadius.startsWith("50%")`));
     check(`[${tag}] Fenster mit Knopf "Neue Meldung" unten ( seit 2.102.0; der Ablauf steht in magicadd-e2e)`, !!(await ev(`return !!r.querySelector('dialog.mgall-dlg .dlg-addbar .mg-add[data-mga="magic-add"]')`)));
 
     check(`[${tag}] Reiter zeigt Hinweis und Zahl`, await wait(`const t=r.querySelector('${body}')?.textContent || ""; return t.includes(${JSON.stringify(T.intro)}) && t.includes(${JSON.stringify(T.count)})`), await text(body));

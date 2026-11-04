@@ -7837,7 +7837,7 @@ class DevicePanel extends HTMLElement {
     if (!dialog || !st) return;
     const t = (k, ...a) => this._t(k, ...a);
     const viewMode = st.mode === "view";
-    const head = `<div class="dlg-head"><span class="dlg-avatar">${mdi(viewMode ? "viewSettings" : "gear", 28)}</span>
+    const head = `<div class="dlg-head"><span class="dlg-avatar app app-${viewMode ? "view" : "settings"}">${mdi(viewMode ? "viewSettings" : "gear", 28)}</span>
         <div class="dlg-title"><h2>${escape(t(viewMode ? "viewTitle" : "settingsTitle"))}</h2><div class="dlg-sub">${escape(t(viewMode ? "viewSub" : "settingsSub"))}</div></div>
         <span class="dlg-acts" data-ap-actions>${viewMode ? "" : this._apps?.settingsActionsHtml?.() || ""}</span>
         <button type="button" class="dlg-close" data-set="close" title="${escape(t("close"))}" aria-label="${escape(t("close"))}">${mdi("close", 18)}</button></div>`;
@@ -8243,7 +8243,7 @@ class DevicePanel extends HTMLElement {
   _renderRtAllFrame() {
     const dlg = this.shadowRoot.querySelector("dialog.rtall-dlg");
     const t = (k, ...a) => this._t(k, ...a);
-    dlg.innerHTML = `<div class="dlg-head"><span class="dlg-avatar">${mdi("flash", 28)}</span>
+    dlg.innerHTML = `<div class="dlg-head"><span class="dlg-avatar app app-routine">${mdi("flash", 28)}</span>
         <div class="dlg-title"><h2>${escape(t("rtAllTitle"))}</h2><div class="dlg-sub">${escape(t("rtAllSub"))}</div></div>
         ${this._protoHeadBtn("routine")}<button type="button" class="dlg-close" data-rta-close title="${escape(t("close"))}" aria-label="${escape(t("close"))}">${mdi("close", 18)}</button></div>
       <div class="dlg-body"><div class="rt-all-wrap" data-rta-body></div>
@@ -8483,7 +8483,7 @@ class DevicePanel extends HTMLElement {
   _renderMagicAllFrame() {
     const dlg = this.shadowRoot.querySelector("dialog.mgall-dlg");
     const t = (k, ...a) => this._t(k, ...a);
-    dlg.innerHTML = `<div class="dlg-head"><span class="dlg-avatar">${mdi("bell", 28)}</span>
+    dlg.innerHTML = `<div class="dlg-head"><span class="dlg-avatar app app-magic">${mdi("bell", 28)}</span>
         <div class="dlg-title"><h2>${escape(t("mgAllTitle"))}</h2><div class="dlg-sub">${escape(t("mgAllSub"))}</div></div>
         ${this._protoHeadBtn("magic")}<button type="button" class="dlg-close" data-mga-close title="${escape(t("close"))}" aria-label="${escape(t("close"))}">${mdi("close", 18)}</button></div>
       <div class="dlg-body"><div class="rt-all-wrap" data-mga-body></div>

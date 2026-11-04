@@ -7,6 +7,10 @@ kommt eine Push-Meldung mit frei geschriebenem Text. Optional folgt eine Meldung
 wieder normal ist (ebenfalls frei geschrieben), und die Meldung kann in Abständen wiederholt
 werden, solange der Wert so bleibt.
 
+Seit 2.190.0 kann eine Meldung bis zu einer Uhrzeit zurückgehalten werden ("send_at", "HH:MM", leer = sofort): Gilt die Bedingung (nach der
+Dauer) und ist die Uhrzeit noch nicht erreicht, wartet die Meldung bis zur nächsten dieser Uhrzeit und geht nur hinaus, wenn die Bedingung dann
+noch gilt. Mit Wiederholung kommt sie jeden Tag zu dieser Uhrzeit, solange die Bedingung gilt (die Wiederholung ist dann immer "täglich").
+
 Seit 2.15.0 kann eine Meldung mehrere Bedingungen verknüpfen (Und/Oder, mit einer Ebene Gruppen): "conditions" ist
 ein Baum {"op": "and"|"or", "items": [Bedingung | Gruppe]}, eine Gruppe {"op", "items": [Bedingung]}, eine Bedingung
 {"entity_id", "kind" (über, unter, ist), "value", "reset_value"}. Die erste Bedingung (der Reihe nach) steht zusätzlich in den
@@ -29,6 +33,7 @@ import logging
 import re
 import time
 import uuid
+from datetime import timedelta
 from functools import partial
 from typing import Any
 
@@ -70,6 +75,8 @@ IGNORED = ("unavailable", "unknown", "", None)
 _ID_RE = re.compile(r"^[0-9a-f]{12}$")
 _ENTITY_RE = re.compile(r"^[a-z0-9_]+\.[a-z0-9_]+$")
 _NOTIFY_RE = re.compile(r"^notify\.[a-z0-9_]+$")
+_CLOCK_RE = re.compile(r"^([01]\d|2[0-3]):[0-5]\d$")
+DAY_S = 86400
 _DEVICE_RE = re.compile(r"^[A-Za-z0-9_-]{1,64}$")
 _VAR_RE = re.compile(r"\{(\w+)\}")
 
@@ -413,6 +420,22 @@ def clean_conditions(hass: HomeAssistant, raw: Any) -> dict[str, Any]:
     return tree
 
 
+def next_send(clock: str, after: float) -> float:
+    """Der nächste Zeitpunkt zur Uhrzeit `clock` ("HH:MM", Ortszeit) ab `after` (Unix-Zeit): heute, wenn sie noch nicht war, sonst morgen."""
+    local = dt_util.as_local(dt_util.utc_from_timestamp(after))
+    due = local.replace(hour=int(clock[:2]), minute=int(clock[3:5]), second=0, microsecond=0)
+    if due < local:
+        due = dt_util.as_local(due + timedelta(days=1))
+    return due.timestamp()
+
+
+def _clock_text(value: Any) -> str:
+    text = str(value or "").strip()[:5] if isinstance(value, str) else ""
+    if not _CLOCK_RE.match(text):
+        raise vol.Invalid("Uhrzeit HH:MM erwartet")
+    return text
+
+
 def _text(max_len: int, minimum: int = 0):
     def check(value: Any) -> str:
         if not isinstance(value, str):
@@ -480,6 +503,8 @@ RULE_SCHEMA = vol.Schema(
         vol.Optional("body", default=""): _body(TEXT_MAX),
         vol.Optional("recover_body", default=""): _body(TEXT_MAX),
         vol.Optional("repeat_s", default=0): _seconds(REPEAT_MAX),
+        # Uhrzeit (seit 2.190.0): die Meldung wartet bis zur nächsten dieser Uhrzeit; leer = sofort (nach der Dauer)
+        vol.Optional("send_at", default=""): vol.Any("", None, _clock_text),
         vol.Optional("target"): vol.Any(None, "", vol.All(str, vol.Match(_NOTIFY_RE))),
         vol.Optional("enabled", default=True): bool,
         # Kritische Mitteilung (seit 2.7.0): durchbricht stumm und "Nicht stören"; Lautstärke 1 bis 10 (iOS: 0.1 bis 1.0)
@@ -550,6 +575,10 @@ def clean_rule(hass: HomeAssistant, raw: dict[str, Any]) -> dict[str, Any]:
         rule["recover"] = False
         rule["repeat_s"] = 0
         rule["reset_for_s"] = 0
+    # Mit einer Uhrzeit heisst Wiederholen "täglich zu dieser Uhrzeit"
+    rule["send_at"] = rule.get("send_at") or ""
+    if rule["send_at"] and rule["repeat_s"] > 0:
+        rule["repeat_s"] = DAY_S
     rule["recover_message"] = rule.get("recover_message") or ""
     if rule["recover"] and not rule["recover_message"]:
         raise vol.Invalid("Für die Meldung bei wieder normal fehlt der Text")
@@ -776,7 +805,7 @@ class MagicPush:
                 raise vol.Invalid(f"Höchstens {MAX_PER_DEVICE} Meldungen pro Gerät")
             rule["id"] = str(rule["id"]) if adopt_id and rule.get("id") else uuid.uuid4().hex[:12]
         rule["created"] = existing["created"] if existing and "created" in existing else time.time()
-        changed = existing is None or any(existing.get(k) != rule.get(k) for k in ("entity_id", "kind", "value", "reset_value", "conditions", "for_s", "repeat_s", "recover", "reset_for_s"))
+        changed = existing is None or any(existing.get(k) != rule.get(k) for k in ("entity_id", "kind", "value", "reset_value", "conditions", "for_s", "repeat_s", "send_at", "recover", "reset_for_s"))
         self._rules[rule["id"]] = rule
         if changed:
             self._reset(rule["id"])
@@ -911,12 +940,13 @@ class MagicPush:
             if old is None or old.state in IGNORED or old.state == state.state:
                 return
             self._cancel(rule_id)
-            if rule["for_s"] <= 0:
+            due = self._due(rule, now + rule["for_s"])
+            if due <= now:
                 self._fire(rule, state, now, old=old.state)
             else:
-                self._pending[rule_id] = {"old": old.state, "new": state.state, "due": now + rule["for_s"]}
+                self._pending[rule_id] = {"old": old.state, "new": state.state, "due": due}
                 self._save()
-                self._timers[rule_id] = async_call_later(self.hass, rule["for_s"], partial(self._on_timer, rule_id))
+                self._timers[rule_id] = async_call_later(self.hass, due - now, partial(self._on_timer, rule_id))
             return
         # Mit mehreren Bedingungen kann sich eine andere Entität geändert haben: Stand der ersten für Variablen und Meldung
         state = self.hass.states.get(rule["entity_id"])
@@ -934,7 +964,7 @@ class MagicPush:
                 self._arm(rule, state, now)
             elif rt["fired"] and rule["repeat_s"] > 0 and rule_id not in self._timers:
                 # Wiederholung ruhte im Zwischenbereich des Rücksetzwerts: ab jetzt weiter, im alten Takt
-                delay = max(0.0, (rt["last_sent"] or now) + rule["repeat_s"] - now)
+                delay = self._repeat_delay(rule, rt["last_sent"] or now, now)
                 self._timers[rule_id] = async_call_later(self.hass, delay, partial(self._on_timer, rule_id))
         elif rt["since"] is not None:
             # Schon gemeldet und ein eigener Rücksetzwert gesetzt: im Zwischenbereich bleibt alles still und gemeldet,
@@ -965,9 +995,20 @@ class MagicPush:
             return
         self._resolve(rule, state, time.time())
 
+    @staticmethod
+    def _due(rule: dict[str, Any], ready: float) -> float:
+        """Wann eine Meldung hinausgeht, die ab `ready` bereit ist: sofort, mit Uhrzeit zur nächsten dieser Uhrzeit ab `ready`."""
+        return next_send(rule["send_at"], ready) if rule.get("send_at") else ready
+
+    @staticmethod
+    def _repeat_delay(rule: dict[str, Any], last: float, now: float) -> float:
+        """Sekunden bis zur nächsten Wiederholung: im Abstand, mit Uhrzeit jeden Tag zu dieser Uhrzeit (nach der letzten Meldung)."""
+        due = next_send(rule["send_at"], last + 60) if rule.get("send_at") else last + rule["repeat_s"]
+        return max(0.0, due - now)
+
     def _arm(self, rule: dict[str, Any], state: State, now: float) -> None:
         rt = self.runtime(rule["id"])
-        delay = (rt["since"] or now) + rule["for_s"] - now
+        delay = self._due(rule, (rt["since"] or now) + rule["for_s"]) - now
         if delay <= 0:
             self._fire(rule, state, now)
         else:
@@ -1010,7 +1051,7 @@ class MagicPush:
         code = "magic_repeat" if repeat else "magic_fired"
         self.hass.async_create_task(self._async_send(rule, title, message, code, ctx, critical=rule["critical"]))
         if rule["repeat_s"] > 0 and rule["kind"] != "change":
-            self._timers[rule_id] = async_call_later(self.hass, rule["repeat_s"], partial(self._on_timer, rule_id))
+            self._timers[rule_id] = async_call_later(self.hass, self._repeat_delay(rule, now, now), partial(self._on_timer, rule_id))
 
     def _resolve(self, rule: dict[str, Any], state: State, now: float) -> None:
         rule_id = rule["id"]

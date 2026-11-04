@@ -7,9 +7,26 @@ All notable changes to this integration are documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/).
 
+## [2.190.0] - 2026-11-04
+
+Magic Push can hold a message back until a time of day, and the preview shows the icon of the integration.
+
+Includes the changes from 2.189.0.
+
+### Added
+
+- **Magic Push, send at a time of day:** Step 3 "Where and how often?" has a new choice "When to send?": "Immediately" (as before) or "At a time of day". With a time, for example 10:00, the message is held back and arrives at the next occurrence of that time, provided the condition still holds then; if the value is back to normal before, the message is dropped. "Repeat" then offers "Only once" or "Daily" (every day at the same time, as long as the condition holds). A rule of the kind "changes" is held back the same way (without repetition). "Back to normal" messages still come at once. The summary of a rule shows "at 10:00" and "daily". The option applies to a single rule (it is saved, backed up and restored with it); the simulator and the tests know it.
+
+### Changed
+
+- **Windows of the apps, icon:** The windows of Status, Log, View, Magic Push, Routines, Updates and Settings now show the same round icon in the same colour as their tile in the launcher (white symbol on a coloured circle) instead of a pale square.
+- **Magic Push, preview:** The preview of the message shows the logo of the integration of the device in front of the app line, as the real message carries it, instead of the Home Assistant logo; without a logo it stays as before.
+
 ## [2.189.0] - 2026-11-04
 
 The app "Updates" shows an icon in front of every row.
+
+Not released; included in 2.190.0.
 
 Includes the changes from 2.188.1.
 
@@ -5531,7 +5548,7 @@ First pre-release.
   GitHub Actions for HACS/hassfest validation and tests.
 
 [2.6.0]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v2.6.0
-[2.189.0]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v2.189.0
+[2.190.0]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v2.190.0
 [2.188.0]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v2.188.0
 [2.187.0]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v2.187.0
 [2.186.1]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v2.186.1

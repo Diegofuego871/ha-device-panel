@@ -771,3 +771,68 @@ async def test_free_entity_search_and_panel_data(hass: HomeAssistant, setup, has
     got = (await call("magic_get", device_id=keller.id))["result"]
     assert [e["entity_id"] for e in got["extra_entities"]] == [foreign] and got["extra_entities"][0]["unit"] == "g/m³"
     assert all(e["entity_id"] != foreign for e in got["entities"])
+
+
+async def test_next_send_picks_next_occurrence(hass: HomeAssistant) -> None:
+    from homeassistant.util import dt as dt_util
+
+    await hass.config.async_set_time_zone("Europe/Zurich")
+    before = dt_util.parse_datetime("2026-03-10T08:00:00+01:00").timestamp()
+    after = dt_util.parse_datetime("2026-03-10T11:00:00+01:00").timestamp()
+    assert dt_util.as_local(dt_util.utc_from_timestamp(magic.next_send("10:00", before))).strftime("%d %H:%M") == "10 10:00"
+    assert dt_util.as_local(dt_util.utc_from_timestamp(magic.next_send("10:00", after))).strftime("%d %H:%M") == "11 10:00"
+
+
+async def test_send_at_validation_and_daily_repeat(hass: HomeAssistant, setup) -> None:  # noqa: F811
+    device = _device(hass, "Lüftung")
+    sensor = _sensor(hass, device, "filter", "0", domain="sensor")
+    magic_push = hass.data[DATA_MAGIC]
+    saved = await magic_push.async_save_rule(_rule(device, sensor, kind="above", value=5, send_at="10:00", repeat_s=1800))
+    assert saved["send_at"] == "10:00" and saved["repeat_s"] == 86400
+    saved = await magic_push.async_save_rule(_rule(device, sensor, name="Zwei", kind="above", value=5, send_at="10:00", repeat_s=0))
+    assert saved["repeat_s"] == 0
+    with pytest.raises(vol.Invalid):
+        await magic_push.async_save_rule(_rule(device, sensor, name="Drei", kind="above", value=5, send_at="25:99"))
+
+
+async def test_send_at_holds_until_time_and_repeats_daily(hass: HomeAssistant, setup, freezer) -> None:  # noqa: F811
+    from homeassistant.util import dt as dt_util
+
+    freezer.move_to("2026-03-10 08:00:00+00:00")
+    calls = async_mock_service(hass, "notify", "handy")
+    await _options(hass, notify_service="notify.handy")
+    device = _device(hass, "Lüftung")
+    sensor = _sensor(hass, device, "filter", "0", domain="sensor")
+    now = dt_util.as_local(dt_util.utcnow())
+    clock = (now + timedelta(hours=2)).strftime("%H:%M")
+    await hass.data[DATA_MAGIC].async_save_rule(_rule(device, sensor, kind="above", value=5, for_s=0, send_at=clock, repeat_s=86400, message="Filter tauschen"))
+    hass.states.async_set(sensor, "9")
+    await hass.async_block_till_done()
+    assert calls == []
+    await _tick(hass, freezer, 3600)
+    assert calls == []
+    await _tick(hass, freezer, 3700)
+    assert [c.data["title"] for c in calls] == ["Filter tauschen"]
+    await _tick(hass, freezer, 86400)
+    assert len(calls) == 2
+    # zurück auf normal: keine weitere Meldung
+    hass.states.async_set(sensor, "1")
+    await _tick(hass, freezer, 86400)
+    assert len(calls) == 2
+
+
+async def test_send_at_dropped_when_cleared_before_time(hass: HomeAssistant, setup, freezer) -> None:  # noqa: F811
+    from homeassistant.util import dt as dt_util
+
+    freezer.move_to("2026-03-10 08:00:00+00:00")
+    calls = async_mock_service(hass, "notify", "handy")
+    await _options(hass, notify_service="notify.handy")
+    device = _device(hass, "Lüftung")
+    sensor = _sensor(hass, device, "filter", "0", domain="sensor")
+    clock = (dt_util.as_local(dt_util.utcnow()) + timedelta(hours=2)).strftime("%H:%M")
+    await hass.data[DATA_MAGIC].async_save_rule(_rule(device, sensor, kind="above", value=5, for_s=0, send_at=clock, message="Filter tauschen"))
+    hass.states.async_set(sensor, "9")
+    await _tick(hass, freezer, 600)
+    hass.states.async_set(sensor, "1")
+    await _tick(hass, freezer, 4 * 3600)
+    assert calls == []

@@ -190,6 +190,18 @@ for (const lang of ["de", "en"]) {
     check(`[${tag}] Wiederholung frei: keine Voreinstellung leuchtet`, await wait(`return !r.querySelector('${W} [data-mg="repeat"].on')`));
     await tap('[data-mg="repeat"][data-s="1800"]');
     check(`[${tag}] Voreinstellung 30 Min. ersetzt die freie Zeit`, await wait(`return r.querySelector('${W} [data-mg="repeat"].on')?.dataset.s === "1800" && r.querySelector('${W} input[data-mg="repeat-own"]').value === ""`));
+    // Zeitpunkt (2.190.0): "Zu einer Uhrzeit" blendet die Zeit ein, die Wiederholung wird "einmal"/"täglich"
+    check(`[${tag}] Zeitpunkt: "Sofort" gewählt, keine Zeitangabe`, await wait(`return r.querySelector('${W} [data-mg="sendmode"][data-v="now"].on') && !r.querySelector('${W} input[data-mg="sendtime"]')`));
+    await tap('[data-mg="sendmode"][data-v="at"]');
+    check(`[${tag}] Zeitpunkt: Uhrzeit 10:00 vorbelegt, nur "einmal" und "täglich"`, await wait(`return r.querySelector('${W} input[data-mg="sendtime"]')?.value === "10:00" && r.querySelectorAll('${W} [data-mg="repeat"]').length === 2 && !r.querySelector('${W} input[data-mg="repeat-own"]')`));
+    await tap('[data-mg="repeat"][data-s="86400"]');
+    check(`[${tag}] Zeitpunkt: täglich gewählt`, await wait(`return r.querySelector('${W} [data-mg="repeat"].on')?.dataset.s === "86400"`));
+    await ev(`const i=r.querySelector('${W} input[data-mg="sendtime"]'); i.value=""; i.dispatchEvent(new Event("input",{bubbles:true}));`);
+    check(`[${tag}] Zeitpunkt: ohne Uhrzeit ist "Weiter" gesperrt`, await wait(`return r.querySelector('${W} [data-mg="next"]').disabled === true`));
+    await ev(`const i=r.querySelector('${W} input[data-mg="sendtime"]'); i.value="10:00"; i.dispatchEvent(new Event("input",{bubbles:true}));`);
+    check(`[${tag}] Zeitpunkt: mit Uhrzeit "Weiter" frei`, await wait(`return r.querySelector('${W} [data-mg="next"]').disabled === false`));
+    await tap('[data-mg="sendmode"][data-v="now"]');
+    check(`[${tag}] Zeitpunkt: zurück auf "Sofort" zeigt die Zeitangabe nicht mehr`, await wait(`return !r.querySelector('${W} input[data-mg="sendtime"]') && r.querySelectorAll('${W} [data-mg="repeat"]').length > 2`));
     await fill('input[data-mg="repeat-own"]', "3");
     await ev(`const s=r.querySelector('${W} select[data-mg="repeat-unit"]'); s.value="3600"; s.dispatchEvent(new Event("change",{bubbles:true}));`);
     await next();

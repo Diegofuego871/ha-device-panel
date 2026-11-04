@@ -529,6 +529,14 @@ dialog.stat-dlg::backdrop { background: rgba(0,0,0,0.7); -webkit-backdrop-filter
 :host([stat-open]) dialog.device .dlg-head .dlg-close { visibility: hidden; }
 .dlg-head { position: sticky; top: 0; z-index: 4; display: flex; align-items: flex-start; gap: 14px; padding: 20px 16px 14px 22px; background: var(--dp-card); }
 .dlg-avatar { flex: none; display: grid; place-items: center; width: 52px; height: 52px; border-radius: 15px; background: var(--dp-primary-soft); color: var(--dp-primary); }
+/* Fenster der Apps: dasselbe Symbol und dieselbe Farbe wie im Launcher (PANEL_COLOR in apps.js), rund mit weissem Symbol */
+.dlg-avatar.app { border-radius: 50%; background: var(--dp-primary); color: #fff; }
+.dlg-avatar.app-routine { background: #00838F; }
+.dlg-avatar.app-magic { background: #8E24AA; }
+.dlg-avatar.app-log { background: #4A5963; }
+.dlg-avatar.app-status { background: #2E8B57; }
+.dlg-avatar.app-view { background: #1E88E5; }
+.dlg-avatar.app-settings { background: #8D6E63; }
 .dlg-avatar.off { background: var(--dp-error-soft); color: var(--dp-error); }
 .dlg-avatar.warn { background: var(--dp-warning-soft); color: var(--dp-warning); }
 .dlg-avatar.none { background: var(--dp-subtle); color: var(--dp-text2); }
@@ -961,6 +969,7 @@ button.ai-head:focus-visible { outline: 2px solid #7c4dff; outline-offset: -2px;
 .pv { margin-top: 12px; padding: 12px; border-radius: 14px; background: var(--dp-subtle); }
 .pv-k { margin-bottom: 8px; color: var(--dp-text2); font-size: 12px; }
 .pv-card { padding: 10px 12px 8px; border-radius: 12px; background: var(--dp-card); box-shadow: 0 1px 4px rgba(0,0,0,.12); font-size: 13px; }
+.pv-brand { width: 16px; height: 16px; object-fit: contain; border-radius: 4px; flex: none; }
 .pv-app { display: flex; align-items: center; gap: 6px; color: var(--dp-text2); font-size: 11.5px; }
 .pv-title { margin-top: 4px; font-weight: 600; }
 .pv-text { color: var(--dp-text); line-height: 1.35; }

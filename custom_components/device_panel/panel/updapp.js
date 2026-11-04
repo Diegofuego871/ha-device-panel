@@ -211,7 +211,7 @@ export class UpdApp {
 
   frame() {
     const { escape, mdi } = this.h;
-    this.dlg.innerHTML = `<div class="dlg-head"><span class="dlg-avatar">${mdi("verUp", 28)}</span>
+    this.dlg.innerHTML = `<div class="dlg-head"><span class="dlg-avatar app app-updates">${mdi("verUp", 28)}</span>
         <div class="dlg-title"><h2>${escape(this.t("appupTitle"))}</h2><div class="dlg-sub" data-ua-sub></div></div>
         <button type="button" class="dlg-close" data-ua="close" title="${escape(this.t("close"))}" aria-label="${escape(this.t("close"))}">${mdi("close", 18)}</button></div>
       <div class="dlg-body" data-ua-body></div><div class="dlg-actions" data-ua-foot></div>`;

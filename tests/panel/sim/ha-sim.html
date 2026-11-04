@@ -1836,6 +1836,8 @@
           check(r);
           if (r.conditions && leavesOf(r).length < 2) r.conditions = null;
           if (r.kind === "change") { r.value = null; r.recover = false; r.repeat_s = 0; r.reset_for_s = 0; }
+          r.send_at = /^([01]\d|2[0-3]):[0-5]\d$/.test(r.send_at || "") ? r.send_at : "";
+          if (r.send_at && r.repeat_s > 0) r.repeat_s = 86400;
           r.reset_for_s ||= 0;
           if (r.reset_for_s < 0 || r.reset_for_s > 7 * 86400) fail("Dauer ungültig");
           r.recover_message ||= "";

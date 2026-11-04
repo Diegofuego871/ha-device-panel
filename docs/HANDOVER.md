@@ -3,6 +3,13 @@
 Einstieg für jede neue Claude-Code-Session. Zuerst diese Datei lesen, dann
 `CLAUDE.md`, `docs/CONCEPT.md`, `docs/LEARNINGS.md`, `docs/DESIGN.md`.
 
+## Stand (2.190.0, Magic Push zu einer Uhrzeit)
+
+- Regelfeld `send_at` ("HH:MM" oder ""; `_clock_text`-Prüfung in `RULE_SCHEMA`). `magic.next_send(clock, after)` rechnet in der Ortszeit; `_due(rule, ready)` und `_repeat_delay(rule, last, now)` ersetzen in `_arm`, `_evaluate` (Art "ändert sich": `_pending[...]["due"]`) und `_fire` die Zeitrechnung: bis zur Uhrzeit zurückhalten, nur senden, wenn die Bedingung noch gilt (sonst fällt die Meldung weg), mit `send_at` ist eine Wiederholung immer täglich (`clean_rule` setzt `repeat_s = 86400`). "Wieder normal" kommt sofort. `send_at` gehört zu `async_save_rule`-Schlüsseln, die die Laufzeit zurücksetzen; die Sicherung nimmt es über die Regel mit.
+- Panel (`magic-push.js`): Schritt 3 "Wann senden?" (`data-mg="sendmode"`, Zeitfeld `sendtime`), mit Uhrzeit nur "Nur einmal / Täglich"; `sentence()` ergänzt "um HH:MM Uhr" und "täglich". Entwurf: `send_at` plus `sendAt` (Wahl).
+- Vorschau: `pvIcon()` zeigt das Logo der Integration des Geräts (`host._brandSrc`), sonst das HA-Logo; `.pv-brand` in `styles.js`.
+- Tests: `test_magic` (next_send, Prüfung, Zurückhalten und täglich, Abbruch vor der Uhrzeit), Suite `magic-e2e`; Simulator prüft `send_at`.
+
 ## Stand (2.189.0, Symbole in der App "Updates")
 
 - Der Pfeil einer Zeile (`data-ua="info"`) öffnet für Geräte, die das Panel zeigt, `_openUpdate` (Release Notes), sonst den Dialog von Home Assistant (`_openMoreInfo`); vorher tat er bei einem Gerät, das das Panel nicht zeigt (HACS-Dienst-Gerät), nichts.
