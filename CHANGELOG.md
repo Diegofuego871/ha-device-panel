@@ -7,6 +7,14 @@ All notable changes to this integration are documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/).
 
+## [2.191.0] - 2026-11-04
+
+The version line in the settings shows a violet pill "pre-release" while you run a pre-release.
+
+### Added
+
+- **Settings, pill "pre-release":** If the installed version is marked as a pre-release on GitHub, a violet pill "pre-release" stands behind the title of the version line (with an explanation on hover). The version number alone cannot tell, so the integration reads the "Pre-release" flag of the release (one request, cached for 6 hours; "Check for updates" asks at once). Once the release is made official, the pill disappears with the next check; if GitHub is unreachable or has no release for the number, no pill is shown. A number with a/b/rc always counts as a pre-release. New field `installed_prerelease` in the version answer.
+
 ## [2.190.1] - 2026-11-04
 
 The dashed line of a collective outage is left out on phones, and the welcome page of the setup wizard lists everything it covers, in larger type.
@@ -5557,6 +5565,7 @@ First pre-release.
   GitHub Actions for HACS/hassfest validation and tests.
 
 [2.6.0]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v2.6.0
+[2.191.0]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v2.191.0
 [2.190.1]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v2.190.1
 [2.190.0]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v2.190.0
 [2.188.0]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v2.188.0

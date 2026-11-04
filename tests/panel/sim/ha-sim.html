@@ -846,7 +846,7 @@
         return {
           installed: v.installed, latest: v.latest, release_url: v.latest ? `https://github.com/Diegofuego871/ha-device-panel/releases/tag/v${String(v.latest).replace(/^v/, "")}` : null,
           checked_at: Date.now() / 1000 - (msg.force ? 0 : 3 * 3600), error: window.__versionError || null,
-          prerelease: pre, prerelease_url: pre ? `https://github.com/Diegofuego871/ha-device-panel/releases/tag/v${pre}` : null, panel: { ...window.__panelSettings },
+          installed_prerelease: window.__installedPre ?? null, prerelease: pre, prerelease_url: pre ? `https://github.com/Diegofuego871/ha-device-panel/releases/tag/v${pre}` : null, panel: { ...window.__panelSettings },
         };
       }
       // Release Notes im Fenster (seit 2.3.0, erfundene Texte): window.__notesFail = Fehlertext (Antwort mit error),

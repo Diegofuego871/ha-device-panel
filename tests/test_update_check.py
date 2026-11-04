@@ -882,3 +882,25 @@ async def test_release_text_arrives_complete_and_is_capped(hass: HomeAssistant, 
     assert await update_check._async_get_text(hass, "https://raw.example/a.md") == (body, None)
     aioclient_mock.get("https://raw.example/b.md", content=b"x" * (update_check.NOTES_MAX_BYTES + 1))
     assert await update_check._async_get_text(hass, "https://raw.example/b.md") == (None, "too large")
+
+
+async def test_installed_prerelease_follows_github_flag(hass: HomeAssistant, entry, hass_ws_client, github_offline) -> None:
+    installed = await update_check.async_installed_version(hass)
+    client = await hass_ws_client(hass)
+
+    async def ask(force: bool) -> dict[str, Any]:
+        await client.send_json({"id": ask.n, "type": f"{DOMAIN}/version", "force": force})
+        ask.n += 1
+        return (await client.receive_json())["result"]
+
+    ask.n = 1
+    # kein Release zur installierten Nummer (oder GitHub nicht erreichbar): unbekannt, keine Kennzeichnung
+    assert (await ask(False))["installed_prerelease"] is None
+    # mit dem Haken "Pre-release": Vorabversion
+    github_offline[RELEASES] = ([_release(f"v{installed}", prerelease=True)], None)
+    hass.data.pop(update_check._PRE_CACHE_KEY, None)
+    assert (await ask(False))["installed_prerelease"] is True
+    # Haken entfernt (offiziell geworden): nach der nächsten Prüfung nicht mehr
+    github_offline[RELEASES] = ([_release(f"v{installed}", prerelease=False)], None)
+    hass.data.pop(update_check._PRE_CACHE_KEY, None)
+    assert (await ask(False))["installed_prerelease"] is False

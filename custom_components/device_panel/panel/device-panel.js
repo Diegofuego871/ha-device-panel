@@ -11296,7 +11296,7 @@ class DevicePanel extends HTMLElement {
     // Fehlgeschlagene Prüfung nicht mit Häkchen ("aktuell") darstellen.
     const failed = Boolean(v.error && !v.checking);
     return row(failed ? "err" : "ok", failed ? "alert" : "verOk", t("verName", installed || "?"), sub,
-      `${currentNotes}<button type="button" class="ver-btn" data-ver="check" ${v.checking ? `disabled aria-busy="true" title="${escape(t("verChecking"))}"` : ""}>${v.checking ? `<span class="ver-spin"></span>` : mdi("verCheck", 16)}${escape(t("verCheck"))}</button>`, auto && !failed ? autoMark() : "");
+      `${currentNotes}<button type="button" class="ver-btn" data-ver="check" ${v.checking ? `disabled aria-busy="true" title="${escape(t("verChecking"))}"` : ""}>${v.checking ? `<span class="ver-spin"></span>` : mdi("verCheck", 16)}${escape(t("verCheck"))}</button>`, `${d.installed_prerelease === true && !failed ? `<span class="ver-pre" role="img" title="${escape(t("verPreOn"))}" aria-label="${escape(t("verPreOn"))}">${mdi("flask", 12)}${escape(t("verPreShort"))}</span>` : ""}${auto && !failed ? autoMark() : ""}`);
   }
 
   _renderSettingsVersion() {

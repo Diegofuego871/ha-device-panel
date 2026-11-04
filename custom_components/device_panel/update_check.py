@@ -197,14 +197,22 @@ async def async_latest_prerelease(hass: HomeAssistant, force: bool = False) -> d
     if (hit := _cached(hass, _PRE_CACHE_KEY, force)) is not None:
         return hit
     now = time.time()
-    result: dict[str, Any] = {"checked_at": now, "prerelease": None, "prerelease_url": None, "error": None}
+    # tags: alle veröffentlichten Versionen der Liste, pre_tags: davon die mit Haken "Pre-release" (für die Pille "Vorabversion" im Panel)
+    result: dict[str, Any] = {"checked_at": now, "prerelease": None, "prerelease_url": None, "error": None, "tags": [], "pre_tags": []}
     data, error = await _async_get_json(hass, RELEASES_URL)
     if error:
         result["error"] = error
     else:
         best: tuple[str, str | None] | None = None
         for rel in data if isinstance(data, list) else []:
-            if not isinstance(rel, dict) or rel.get("draft") or not rel.get("prerelease"):
+            if not isinstance(rel, dict) or rel.get("draft"):
+                continue
+            tag = _strip_v(rel.get("tag_name"))
+            if tag:
+                result["tags"].append(tag)
+                if rel.get("prerelease"):
+                    result["pre_tags"].append(tag)
+            if not rel.get("prerelease"):
                 continue
             version = _strip_v(rel.get("tag_name"))
             if version and (best is None or compare_versions(version, best[0]) > 0):
@@ -216,6 +224,29 @@ async def async_latest_prerelease(hass: HomeAssistant, force: bool = False) -> d
         result = {**previous, "error": result["error"], "checked_at": now}
     hass.data[_PRE_CACHE_KEY] = result
     return result
+
+
+async def async_installed_prerelease(hass: HomeAssistant, installed: str | None, force: bool = False) -> bool | None:
+    """
+    Ist die installierte Version eine Vorabversion? (seit 2.190.2)
+
+    Die Nummer allein sagt es nicht (Vorabversionen tragen dieselbe Nummer wie
+    offizielle), darum zählt der Haken "Pre-release" am GitHub-Release; eine
+    Nummer mit a/b/rc ist es ohnehin. None = unbekannt (kein Release dazu, kein
+    Netz): dann zeigt das Panel nichts. Wird das Release später offiziell,
+    verschwindet die Kennzeichnung mit der nächsten Prüfung (Zwischenspeicher
+    6 Stunden, "Nach Updates suchen" sofort).
+    """
+    if not installed:
+        return None
+    if is_prerelease(installed):
+        return True
+    pre = await async_latest_prerelease(hass, force=force)
+    if installed in pre.get("pre_tags", []):
+        return True
+    if installed in pre.get("tags", []):
+        return False
+    return None
 
 
 def _enabled(hass: HomeAssistant) -> bool:

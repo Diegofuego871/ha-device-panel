@@ -1204,6 +1204,7 @@ button.ai-head:focus-visible { outline: 2px solid #7c4dff; outline-offset: -2px;
 /* Versionszeile oben in den Einstellungen */
 .ver { display: flex; flex-wrap: wrap; align-items: center; gap: 10px 12px; padding: 11px 12px 11px 14px; border-radius: 14px; background: var(--dp-subtle); }
 /* Automatisch installieren ist aktiv: Pille "Auto" hinter dem Titel, wie die Pille "Beta" (2.38.0) */
+.ver-pre { display: inline-flex; align-items: center; gap: 3px; margin-left: 6px; padding: 1px 8px 1px 6px; border-radius: 999px; background: color-mix(in srgb, var(--dp-beta) 20%, transparent); color: var(--dp-beta); font-size: 11px; font-weight: 600; vertical-align: 1px; white-space: nowrap; }
 .ver-auto { display: inline-flex; align-items: center; gap: 3px; margin-left: 6px; padding: 1px 8px 1px 6px; border-radius: 999px; background: var(--dp-primary-soft); color: var(--dp-primary); font-size: 11px; font-weight: 600; vertical-align: 1px; white-space: nowrap; }
 .ver-ic { display: grid; flex: none; place-items: center; width: 34px; height: 34px; border-radius: 10px; background: var(--dp-success-soft); color: var(--dp-success); }
 .ver-t { flex: 1 1 200px; min-width: 0; }

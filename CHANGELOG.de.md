@@ -7,6 +7,14 @@ Alle nennenswerten Änderungen an dieser Integration stehen in dieser Datei.
 Das Format folgt [Keep a Changelog](https://keepachangelog.com/de/1.1.0/),
 die Versionsnummern folgen [Semantic Versioning](https://semver.org/lang/de/).
 
+## [2.191.0] - 2026-11-04
+
+Die Versionszeile in den Einstellungen zeigt eine violette Pille "Vorabversion", solange du eine Vorabversion verwendest.
+
+### Hinzugefügt
+
+- **Einstellungen, Pille "Vorabversion":** Ist die installierte Version bei GitHub als Pre-release markiert, steht hinter dem Titel der Versionszeile eine violette Pille "Vorabversion" (mit Erklärung beim Darüberfahren). Die Nummer allein sagt es nicht, darum liest die Integration den Haken "Pre-release" des Releases (eine Abfrage, 6 Stunden zwischengespeichert; "Nach Updates suchen" fragt sofort). Wird das Release offiziell, verschwindet die Pille mit der nächsten Prüfung; ist GitHub nicht erreichbar oder gibt es zur Nummer kein Release, steht keine Pille. Eine Nummer mit a/b/rc gilt immer als Vorabversion. Neues Feld `installed_prerelease` in der Antwort der Versionsabfrage.
+
 ## [2.190.1] - 2026-11-04
 
 Die gestrichelte Linie eines Sammelausfalls entfällt auf dem Handy, und die Willkommensseite des Einrichtungsassistenten nennt alles, was er abdeckt, in grösserer Schrift.
@@ -5658,6 +5666,7 @@ Erste Vorabversion.
   GitHub Actions für die Prüfungen von HACS und hassfest sowie die Tests.
 
 [2.6.0]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v2.6.0
+[2.191.0]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v2.191.0
 [2.190.1]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v2.190.1
 [2.190.0]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v2.190.0
 [2.188.0]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v2.188.0

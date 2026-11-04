@@ -3,6 +3,11 @@
 Einstieg für jede neue Claude-Code-Session. Zuerst diese Datei lesen, dann
 `CLAUDE.md`, `docs/CONCEPT.md`, `docs/LEARNINGS.md`, `docs/DESIGN.md`.
 
+## Stand (2.191.0, Pille "Vorabversion")
+
+- `update_check.async_installed_prerelease(hass, installed, force)`: True bei a/b/rc oder wenn die Nummer in `pre_tags` der Releases-Liste steht (Haken "Pre-release"), False bei einem offiziellen Release in `tags`, sonst None (unbekannt). `async_latest_prerelease` liefert dafür `tags` und `pre_tags`; Zwischenspeicher 6 Stunden. `_ws_version` antwortet mit `installed_prerelease`.
+- Panel: `.ver-pre` (violett wie `--dp-beta`) in `_versionRowHtml`, nur bei "Aktuell" und `installed_prerelease === true`. Tests: `test_update_check`, Suite `versionpre`.
+
 ## Stand (2.190.1, Sammelausfall-Linie auf dem Handy)
 
 - `.pchart .imark` ist bis 600 px Breite ausgeblendet (`display: none`, die Marke bleibt im DOM); Test in `table-e2e`.

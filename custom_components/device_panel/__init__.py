@@ -844,6 +844,7 @@ async def _ws_version(
         **release,
         "prerelease": None,
         "prerelease_url": None,
+        "installed_prerelease": await update_check.async_installed_prerelease(hass, installed, force=msg["force"]),
         "panel": update_check.panel_settings(hass),
     }
     if msg["prerelease"]:
