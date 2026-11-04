@@ -93,10 +93,15 @@ Bereich. Vorbild in Aufbau, Arbeitsweise und Design ist die Integration
   liefert Claude die Release-Angaben für den aktuellen Stand von `main`:
   - Version (wie in `manifest.json`), Tag und Titel `vX.Y.Z`
   - Ziel: `main` mit Commit-Hash
-  - Vorabversion ja (Nummer mit a/b/rc) oder nein
+  - Vorabversion: standardmässig **ja**. Jedes Release ist eine Vorabversion (GitHub-Haken "Pre-release"), bis der Nutzer ausdrücklich sagt,
+    dass eine Version offiziell wird. Die Versionsnummern bleiben dabei unverändert (keine a/b/rc-Suffixe in `manifest.json`); der Unterschied
+    liegt nur am Haken im Release. Erst auf Ansage "offiziell" gebe ich "Vorabversion: nein" an. Grund: HACS zeigt Vorabversionen nur Nutzern,
+    die sie selbst einschalten; so kommen nicht täglich Updates bei allen an.
   - Release Notes (Englisch) als Markdown-Codeblock, beginnend mit
     `## X.Y.Z (JJJJ-MM-TT)`. Grundlage ist der Abschnitt aus
     `CHANGELOG.md` (`python3 .github/scripts/changelog_section.py X.Y.Z`).
+  - **Offizielles Release nach Vorabversionen:** Machen wir eine Version offiziell, fassen die Notes alles seit dem letzten *offiziellen*
+    Release zusammen (alle Vorabversionen dazwischen, wie bei übersprungenen Versionen), mit dem Satz "Includes the changes from X and Y".
   - **Übersprungene Versionen:** Gibt es zwischen dem letzten
     veröffentlichten Release und der aktuellen Version Versionen ohne
     Release, fassen die Notes alles seit dem letzten Release zusammen:
