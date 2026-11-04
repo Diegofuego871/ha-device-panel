@@ -145,7 +145,7 @@ Alles, was dich benachrichtigt, folgt einem Prinzip: Du setzt einmal eine Vorgab
 - **Integration:** am selben Ort, Reiter "Integrationen": eine Liste aller Integrationen mit dem, was von der Vorgabe abweicht, und eine Detailseite pro Integration mit eigenen Reitern
 - **Label (optional):** in den Einstellungen unter "Überwachung und Meldungen", Reiter "Labels" (neben "Integrationen"): ein Label aus Home Assistant bekommt dieselben Reiter wie eine Integration und gilt für alle Geräte, die es tragen, vor der Integration und nach dem Gerät. Bei mehreren Labels gilt das strengste ("Nicht überwachen", dann die längere Zeit oder die tiefere Schwelle)
 - **Gerät:** im Pop-up des Geräts, Reiter "Einstellungen": nur dieses Gerät, mit der Herkunft jedes Werts
-- **Herkunft:** jede Einstellung sagt, woher sie stammt (Standard, Integration, Label oder Gerät), und ein Chip "Eigene Einstellung" filtert Geräte mit eigenen Werten; in den Einstellungen lassen sie sich einzeln oder alle auf einmal zurücksetzen
+- **Herkunft:** jede Einstellung sagt, woher sie stammt (Standard, Integration, Label oder Gerät), und ein Chip "Eigene Einstellung" filtert Geräte mit eigenen Werten (die kleinen Markierungen neben den Gerätenamen sind standardmässig aus; der Schalter "Markierungen für eigene Einstellungen" steht in der Ansicht); in den Einstellungen lassen sie sich einzeln oder alle auf einmal zurücksetzen
 
 ### Vom Ausfall zur Meldung
 

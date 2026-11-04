@@ -783,6 +783,8 @@ const defaultView = () => ({
   sort: "default",
   dir: "asc",
   flat: false,
+  // Markierungen für eigene Einstellungen am Gerät in der Liste (seit 2.191.1): standardmässig aus
+  marks: false,
   cols: COLUMNS.map(([k, , on]) => [k, on]),
   fields: CARD_FIELDS.map(([k, , on]) => [k, on]),
   conn: "all",
@@ -820,6 +822,7 @@ function sanitizeView(raw) {
     sort: SORT_KEYS.includes(raw.sort) ? raw.sort : d.sort,
     dir: raw.dir === "desc" ? "desc" : "asc",
     flat: Boolean(raw.flat),
+    marks: raw.marks === true,
     cols: order(raw.cols, COLUMNS),
     fields: order(raw.fields, CARD_FIELDS),
     conn: raw.conn === "all" || (typeof raw.conn === "string" && CONN[raw.conn]) ? raw.conn : "all",
@@ -2635,7 +2638,7 @@ class DevicePanel extends HTMLElement {
   // Stand der Ansicht beim Öffnen, zum Vergleichen und Zurückstellen
   _viewSnap() {
     const v = this._view;
-    return { sort: v.sort, dir: v.dir, flat: v.flat, cols: v.cols.map((x) => [...x]), fields: v.fields.map((x) => [...x]) };
+    return { sort: v.sort, dir: v.dir, flat: v.flat, marks: v.marks, cols: v.cols.map((x) => [...x]), fields: v.fields.map((x) => [...x]) };
   }
 
   _viewChanged() {
@@ -2662,7 +2665,9 @@ class DevicePanel extends HTMLElement {
     const v = this._view;
     const reset = (what) => `<div class="drag-reset"><button type="button" class="ovr-all" data-vreset="${what}">${mdi("reset", 15)}${escape(t("restoreDefault"))}</button></div>`;
     const groups = `<div class="vline first"><span>${escape(t("viewGroupsOrList"))}</span>${this._vseg("vflat", [["0", escape(t("viewGroups"))], ["1", escape(t("viewList"))]], v.flat ? "1" : "0")}</div>
-      <div class="vnote">${escape(t("viewGroupsNote"))}</div>`;
+      <div class="vnote">${escape(t("viewGroupsNote"))}</div>
+      <div class="vline"><span>${escape(t("viewMarks"))}</span><label class="switch"><input type="checkbox" data-vmarks ${v.marks ? "checked" : ""} aria-label="${escape(t("viewMarks"))}"><span></span></label></div>
+      <div class="vnote">${escape(t("viewMarksNote"))}</div>`;
     const intro = `<div class="nf-note view-own">${mdi("info", 16)}<div><p>${escape(t(this._narrowQuery.matches ? "viewSubMobile" : "customizeSub"))}</p></div></div>`;
     if (!this._narrowQuery.matches) {
       return `${intro}${groups}
@@ -2770,15 +2775,16 @@ class DevicePanel extends HTMLElement {
     dialog.addEventListener("click", (ev) => {
       if (!inView()) return;
       if (toggle(ev)) return;
-      const el = ev.target.closest("[data-vsort],[data-vdir],[data-vflat],[data-vreset]");
+      const el = ev.target.closest("[data-vsort],[data-vdir],[data-vflat],[data-vmarks],[data-vreset]");
       if (!el) return;
       if (el.dataset.vsort) draft({ sort: el.dataset.vsort, dir: el.dataset.vsort === this._view.sort ? this._view.dir : "asc" });
       else if (el.dataset.vdir) draft({ dir: el.dataset.vdir });
       else if (el.dataset.vflat) draft({ flat: el.dataset.vflat === "1" });
-      else if (el.dataset.vreset === "cols") draft({ cols: defaultView().cols, flat: defaultView().flat });
+      else if (el.hasAttribute("data-vmarks")) draft({ marks: el.checked });
+      else if (el.dataset.vreset === "cols") draft({ cols: defaultView().cols, flat: defaultView().flat, marks: defaultView().marks });
       else {
         const d = defaultView();
-        draft({ sort: d.sort, dir: d.dir, flat: d.flat, fields: d.fields });
+        draft({ sort: d.sort, dir: d.dir, flat: d.flat, marks: d.marks, fields: d.fields });
       }
     });
     // Ein Klick in die Liste, der ein Popover schliesst (Filter "Bereich"),
@@ -3821,6 +3827,8 @@ class DevicePanel extends HTMLElement {
   // Einstellungen pro Gerät beim Namen (Variante A, docs/mockups/override-v1):
   // je Art ein Symbol, Wert und globaler Wert im Tooltip.
   _overrideHtml(d) {
+    // Nur, wenn der Benutzer die Markierungen in der Ansicht eingeschaltet hat (Standard aus)
+    if (!this._view.marks) return "";
     const out = [];
     const tag = (cls, icon, text, label) =>
       `<span class="ovr ${cls}" role="img" title="${escape(label)}" aria-label="${escape(label)}">${mdi(icon, 12)}${text ? escape(text) : ""}</span>`;

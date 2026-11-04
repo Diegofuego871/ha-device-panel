@@ -3,6 +3,11 @@
 Einstieg für jede neue Claude-Code-Session. Zuerst diese Datei lesen, dann
 `CLAUDE.md`, `docs/CONCEPT.md`, `docs/LEARNINGS.md`, `docs/DESIGN.md`.
 
+## Stand (2.192.0, Markierungen für eigene Einstellungen aus der Liste nehmen)
+
+- Ansicht-Feld `marks` (Standard `false`, `sanitizeView` nur bei `=== true`); `_overrideHtml` liefert ohne `marks` nichts. Schalter `data-vmarks` im Block `groups` von `_viewControlsHtml` (Desktop und Handy), "Standard wiederherstellen" setzt es zurück. Pro Benutzer und Gerät gespeichert wie die übrige Ansicht (Benutzerdaten, nicht in der Sicherung).
+- Simulator: ohne gespeicherten Stand liefert er eine Ansicht mit `marks: true` (die Suiten zu Markierungen), `?marks=off` gibt den echten Standard. Suite `viewmarks`.
+
 ## Stand (2.191.0, Pille "Vorabversion")
 
 - `update_check.async_installed_prerelease(hass, installed, force)`: True bei a/b/rc oder wenn die Nummer in `pre_tags` der Releases-Liste steht (Haken "Pre-release"), False bei einem offiziellen Release in `tags`, sonst None (unbekannt). `async_latest_prerelease` liefert dafür `tags` und `pre_tags`; Zwischenspeicher 6 Stunden. `_ws_version` antwortet mit `installed_prerelease`.

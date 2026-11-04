@@ -7,9 +7,21 @@ Alle nennenswerten Änderungen an dieser Integration stehen in dieser Datei.
 Das Format folgt [Keep a Changelog](https://keepachangelog.com/de/1.1.0/),
 die Versionsnummern folgen [Semantic Versioning](https://semver.org/lang/de/).
 
+## [2.192.0] - 2026-11-04
+
+Die Markierungen für eigene Einstellungen neben den Gerätenamen in der Liste sind standardmässig aus und lassen sich in der Ansicht einschalten.
+
+Enthält die Änderungen von 2.191.0.
+
+### Hinzugefügt
+
+- **Ansicht, "Markierungen für eigene Einstellungen":** Ein Schalter in der Ansicht (Desktop: Reiter "Spalten", Handy: "Sortierung") zeigt oder verbirgt die kleinen Symbole neben dem Gerätenamen, die eigene Werte markieren (Empfang, Batterie, Melden nach, Verbindungsart und so weiter). Standardmässig aus, auch bei bestehenden Installationen; er wird wie die übrige Ansicht je Benutzer und Gerät (Desktop, Handy) gespeichert, und "Standard wiederherstellen" schaltet ihn aus.
+
 ## [2.191.0] - 2026-11-04
 
 Die Versionszeile in den Einstellungen zeigt eine violette Pille "Vorabversion", solange du eine Vorabversion verwendest.
+
+Nicht veröffentlicht; enthalten in 2.192.0.
 
 ### Hinzugefügt
 
@@ -5666,7 +5678,7 @@ Erste Vorabversion.
   GitHub Actions für die Prüfungen von HACS und hassfest sowie die Tests.
 
 [2.6.0]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v2.6.0
-[2.191.0]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v2.191.0
+[2.192.0]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v2.192.0
 [2.190.1]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v2.190.1
 [2.190.0]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v2.190.0
 [2.188.0]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v2.188.0

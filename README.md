@@ -145,7 +145,7 @@ Everything that notifies you follows one principle: you set a default once, chan
 - **Integration:** in the same place, tab "Integrations": a list of all integrations with what differs from the default, and a detail page per integration with its own tabs
 - **Label (optional):** in the settings under "Monitoring and notifications", tab "Labels" (next to "Integrations"): a Home Assistant label gets the same tabs as an integration and applies to all devices that carry it, before the integration and after the device. With several labels the strictest one applies ("Do not monitor", then the longer time or the lower threshold)
 - **Device:** in the pop-up of the device, tab "Settings": only this device, with the origin of every value
-- **Origin:** every setting says where it comes from (default, integration, label or device), and a chip "Own setting" filters devices that have their own values; in the settings they can be reset one by one or all at once
+- **Origin:** every setting says where it comes from (default, integration, label or device), and a chip "Own setting" filters devices that have their own values (the small marks next to the device names are off by default; the switch "Marks for own settings" is in the view); in the settings they can be reset one by one or all at once
 
 ### From outage to notification
 

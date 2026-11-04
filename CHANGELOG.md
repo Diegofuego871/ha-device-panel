@@ -7,9 +7,21 @@ All notable changes to this integration are documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/).
 
+## [2.192.0] - 2026-11-04
+
+The marks for own settings next to the device names in the list are now off by default and can be switched on in the view.
+
+Includes the changes from 2.191.0.
+
+### Added
+
+- **View, "Marks for own settings":** A switch in the view (desktop: tab "Columns", phone: "Sorting") shows or hides the small icons next to a device name that mark own values (reception, battery, notify after, connection type and so on). Off by default, also for existing installations; it is stored per user and per device kind (desktop, phone) like the rest of the view, and "Restore default" switches it off.
+
 ## [2.191.0] - 2026-11-04
 
 The version line in the settings shows a violet pill "pre-release" while you run a pre-release.
+
+Not released; included in 2.192.0.
 
 ### Added
 
@@ -5565,7 +5577,7 @@ First pre-release.
   GitHub Actions for HACS/hassfest validation and tests.
 
 [2.6.0]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v2.6.0
-[2.191.0]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v2.191.0
+[2.192.0]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v2.192.0
 [2.190.1]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v2.190.1
 [2.190.0]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v2.190.0
 [2.188.0]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v2.188.0
