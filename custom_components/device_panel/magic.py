@@ -56,7 +56,7 @@ from .options_api import effective
 _LOGGER = logging.getLogger(__name__)
 
 STORE_KEY = f"{DOMAIN}.magic"
-KINDS = ("above", "below", "is", "change")
+KINDS = ("above", "below", "is", "change", "time")
 NUMERIC_KINDS = ("above", "below")
 MAX_PER_DEVICE = 20
 MAX_TOTAL = 200
@@ -67,7 +67,7 @@ FOR_MAX = 7 * 86400
 REPEAT_MAX = 30 * 86400
 # Verknüpfte Bedingungen (seit 2.15.0)
 OPS = ("and", "or")
-LEAF_KINDS = ("above", "below", "is")
+LEAF_KINDS = ("above", "below", "is", "time")
 MAX_LEAVES = 10
 MAX_GROUPS = 4
 IGNORED = ("unavailable", "unknown", "", None)
@@ -276,8 +276,14 @@ def rule_entities(rule: dict[str, Any]) -> list[str]:
     """Entitäten aller Bedingungen, ohne Wiederholung, die erste zuerst."""
     seen: dict[str, None] = {}
     for leaf in tree_leaves(rule_tree(rule)):
-        seen.setdefault(leaf["entity_id"], None)
+        if leaf["entity_id"]:
+            seen.setdefault(leaf["entity_id"], None)
     return list(seen)
+
+
+def primary_of(leaves: list[dict[str, Any]]) -> dict[str, Any]:
+    """Die Bedingung der alten Felder: die erste mit Entität (für Variablen und Namen), sonst die erste (nur Zeit)."""
+    return next((leaf for leaf in leaves if leaf["entity_id"]), leaves[0])
 
 
 def combine(op: str, values: list[bool | None]) -> bool | None:
@@ -300,14 +306,16 @@ def eval_tree(node: dict[str, Any], leaf_value: Any) -> bool | None:
     return combine(node.get("op", "and"), values)
 
 
-def leaf_met(leaf: dict[str, Any], state: str | None) -> bool | None:
-    """Gilt die Bedingung für den Zustand?"""
+def leaf_met(leaf: dict[str, Any], state: str | None, ts: float | None = None) -> bool | None:
+    """Gilt die Bedingung für den Zustand (Zeit-Bedingung: zum Zeitpunkt ts, sonst jetzt)?"""
+    if leaf["kind"] == "time":
+        return time_met(leaf, time.time() if ts is None else ts)
     return cond_met(leaf["kind"], leaf.get("value"), state)
 
 
-def leaf_hold(leaf: dict[str, Any], state: str | None) -> bool | None:
+def leaf_hold(leaf: dict[str, Any], state: str | None, ts: float | None = None) -> bool | None:
     """Nach der Meldung: gilt die Bedingung noch, auch im Zwischenbereich des eigenen Rücksetzwerts?"""
-    met = leaf_met(leaf, state)
+    met = leaf_met(leaf, state, ts)
     if met is False and leaf.get("reset_value") not in (None, "") and reset_met(leaf["kind"], leaf.get("value"), leaf["reset_value"], state) is False:
         return True
     return met
@@ -318,7 +326,13 @@ def has_reset(rule: dict[str, Any]) -> bool:
 
 
 def _leaf_text(hass: HomeAssistant, leaf: dict[str, Any]) -> str:
-    """Eine Bedingung als Satzteil: "Temperatur unter 12 °C", "Fenster ist offen"."""
+    """Eine Bedingung als Satzteil: "Temperatur unter 12 °C", "Fenster ist offen", "Uhrzeit ab 10:00, Mo,Di"."""
+    if leaf["kind"] == "time":
+        key = "magic_time_between" if leaf.get("to") else "magic_time_from"
+        text = push.text(hass, "magic_time", range=push.text(hass, key, start=leaf["from"], end=leaf.get("to") or ""))
+        names = push.text(hass, "magic_days").split(",")
+        days = leaf.get("days") or []
+        return f"{text}, {','.join(names[d] for d in days)}" if days else text
     registry = er.async_get(hass)
     entry = registry.async_get(leaf["entity_id"])
     state = hass.states.get(leaf["entity_id"])
@@ -346,10 +360,25 @@ def condition_text(hass: HomeAssistant, rule: dict[str, Any]) -> str:
     return node_text(rule_tree(rule), False)
 
 
+def _clean_time(raw: dict[str, Any]) -> dict[str, Any]:
+    """Zeit-Bedingung prüfen: "from" HH:MM, "to" HH:MM oder leer (bis Mitternacht), "days" 0 bis 6 (leer = jeden Tag)."""
+    start = _clock_text(raw.get("from"))
+    end = raw.get("to")
+    end = _clock_text(end) if end not in (None, "") else ""
+    if end == start:
+        raise vol.Invalid("Beginn und Ende der Uhrzeit dürfen nicht gleich sein")
+    days = raw.get("days") or []
+    if not isinstance(days, list) or any(not isinstance(d, int) or isinstance(d, bool) or not 0 <= d <= 6 for d in days):
+        raise vol.Invalid("Wochentage 0 bis 6 erwartet")
+    return {"entity_id": "", "kind": "time", "value": None, "reset_value": None, "from": start, "to": end, "days": sorted(set(days))}
+
+
 def _clean_leaf(hass: HomeAssistant, raw: Any, *, alone: bool) -> dict[str, Any]:
     """Eine Bedingung prüfen: Entität gibt es, über/unter mit Zahl, ist mit Zustand, Rücksetzwert auf der Seite des Normalen."""
     if not isinstance(raw, dict):
         raise vol.Invalid("Bedingung erwartet")
+    if raw.get("kind") == "time":
+        return _clean_time(raw)
     entity_id = raw.get("entity_id")
     if not isinstance(entity_id, str) or not _ENTITY_RE.match(entity_id):
         raise vol.Invalid("Entität erwartet")
@@ -429,6 +458,40 @@ def next_send(clock: str, after: float) -> float:
     return due.timestamp()
 
 
+def _minutes(clock: str) -> int:
+    return int(clock[:2]) * 60 + int(clock[3:5])
+
+
+def time_met(leaf: dict[str, Any], ts: float) -> bool:
+    """
+    Gilt die Zeit-Bedingung zum Zeitpunkt ts? (seit 2.193.0) Fenster von "from" bis "to" (ohne "to": bis Mitternacht), in der
+    Ortszeit. "days" (0 = Montag) nennt die Tage, an denen das Fenster beginnt; leer = jeden Tag. Ein Fenster über Mitternacht
+    (to kleiner als from) gehört zum Tag, an dem es beginnt.
+    """
+    local = dt_util.as_local(dt_util.utc_from_timestamp(ts))
+    now_m = local.hour * 60 + local.minute
+    start = _minutes(leaf["from"])
+    end = _minutes(leaf["to"]) if leaf.get("to") else 1440
+    days = leaf.get("days") or []
+
+    def on(day: int) -> bool:
+        return not days or day in days
+
+    today = local.weekday()
+    if end > start:
+        return on(today) and start <= now_m < end
+    return (on(today) and now_m >= start) or (on((today - 1) % 7) and now_m < end)
+
+
+def time_edges(rule: dict[str, Any]) -> list[str]:
+    """Uhrzeiten (HH:MM), zu denen sich eine Zeit-Bedingung der Regel ändern kann."""
+    edges: list[str] = []
+    for leaf in tree_leaves(rule_tree(rule)):
+        if leaf["kind"] == "time":
+            edges += [leaf["from"], leaf.get("to") or "00:00"]
+    return edges
+
+
 def _clock_text(value: Any) -> str:
     text = str(value or "").strip()[:5] if isinstance(value, str) else ""
     if not _CLOCK_RE.match(text):
@@ -491,7 +554,8 @@ RULE_SCHEMA = vol.Schema(
     {
         vol.Optional("id"): vol.All(str, vol.Match(_ID_RE)),
         vol.Required("device_id"): vol.All(str, vol.Match(_DEVICE_RE)),
-        vol.Required("entity_id"): vol.All(str, vol.Match(_ENTITY_RE)),
+        # Leer nur bei einer Regel, die allein aus Zeit-Bedingungen besteht (seit 2.193.0)
+        vol.Required("entity_id"): vol.Any("", vol.All(str, vol.Match(_ENTITY_RE))),
         vol.Required("name"): _text(NAME_MAX, 1),
         vol.Required("kind"): vol.In(KINDS),
         vol.Optional("value"): vol.Any(None, _threshold),
@@ -544,20 +608,27 @@ def clean_rule(hass: HomeAssistant, raw: dict[str, Any]) -> dict[str, Any]:
     raw_tree = rule.get("conditions")
     raw_leaves = _raw_leaves(raw_tree) if raw_tree else []
     if raw_leaves:
-        first = raw_leaves[0]
-        if not isinstance(first, dict):
+        if any(not isinstance(x, dict) for x in raw_leaves):
             raise vol.Invalid("Bedingung erwartet")
+        # Die alten Felder gehören der ersten Bedingung mit Entität, ohne eine der Zeit
+        first = next((x for x in raw_leaves if x.get("kind") != "time"), raw_leaves[0])
         for key in ("entity_id", "kind", "value", "reset_value"):
             rule[key] = first.get(key)
-        if not isinstance(rule["entity_id"], str) or not _ENTITY_RE.match(rule["entity_id"]) or rule["kind"] not in KINDS:
+        if first.get("kind") == "time":
+            rule.update(entity_id="", kind="time", value=None, reset_value=None)
+        elif not isinstance(rule["entity_id"], str) or not _ENTITY_RE.match(rule["entity_id"]) or rule["kind"] not in KINDS:
             raise vol.Invalid("Bedingung unvollständig")
+    if rule["kind"] == "time" and not any(isinstance(x, dict) and x.get("kind") == "time" for x in raw_leaves):
+        raise vol.Invalid("Uhrzeit fehlt")
     device = dr.async_get(hass).async_get(rule["device_id"])
     if device is None:
         raise vol.Invalid("Gerät nicht gefunden")
     # Freie Entität (seit 2.10.0): jede Entität von Home Assistant ist erlaubt, auch von einem anderen Gerät oder ohne
     # Gerät; die Meldung bleibt an dieses Gerät gebunden.
-    if er.async_get(hass).async_get(rule["entity_id"]) is None and hass.states.get(rule["entity_id"]) is None:
+    if rule["entity_id"] and er.async_get(hass).async_get(rule["entity_id"]) is None and hass.states.get(rule["entity_id"]) is None:
         raise vol.Invalid("Die Entität gibt es nicht")
+    if not rule["entity_id"] and rule["kind"] != "time":
+        raise vol.Invalid("Entität erwartet")
     kind = rule["kind"]
     if kind in NUMERIC_KINDS:
         if _float(rule.get("value")) is None:
@@ -568,6 +639,9 @@ def clean_rule(hass: HomeAssistant, raw: dict[str, Any]) -> dict[str, Any]:
         if rule.get("value") in (None, ""):
             raise vol.Invalid("Für ist wird ein Zustand gebraucht")
         rule["reset_value"] = _clean_reset(rule.get("reset_value"), kind, rule.get("value"))
+    elif kind == "time":
+        rule["value"] = None
+        rule["reset_value"] = None
     else:
         # "ändert sich": kein Wert, kein Normalzustand, keine Wiederholung
         rule["value"] = None
@@ -583,9 +657,10 @@ def clean_rule(hass: HomeAssistant, raw: dict[str, Any]) -> dict[str, Any]:
     if rule["recover"] and not rule["recover_message"]:
         raise vol.Invalid("Für die Meldung bei wieder normal fehlt der Text")
     rule["target"] = rule.get("target") or None
-    if len(raw_leaves) > 1:
+    # Eine Zeit-Bedingung bleibt immer im Baum (die alten Felder können Zeiten nicht halten)
+    if len(raw_leaves) > 1 or any(x.get("kind") == "time" for x in raw_leaves):
         tree = clean_conditions(hass, raw_tree)
-        first = tree_leaves(tree)[0]
+        first = primary_of(tree_leaves(tree))
         rule.update(entity_id=first["entity_id"], kind=first["kind"], value=first["value"], reset_value=first["reset_value"])
         rule["conditions"] = tree
     else:
@@ -627,7 +702,7 @@ def context(
     """Werte für die Variablen, passend zur Art der Entität."""
     dev_reg = dr.async_get(hass)
     device = dev_reg.async_get(rule["device_id"])
-    entry = er.async_get(hass).async_get(rule["entity_id"])
+    entry = er.async_get(hass).async_get(rule["entity_id"]) if rule["entity_id"] else None
     area = ar.async_get(hass).async_get_area(device.area_id) if device is not None and device.area_id else None
     domain = rule["entity_id"].split(".", 1)[0]
     cls = device_class(state, entry)
@@ -650,7 +725,9 @@ def context(
         "device": (device.name_by_user or device.name or "") if device is not None else "",
         "area": area.name if area else "",
         # Bei einer freien Entität (anderes Gerät) heisst sie nach ihrem eigenen Gerät, "device" bleibt das der Meldung
-        "entity": entity_label(rule["entity_id"], entry, dev_reg.async_get(entry.device_id) if entry is not None and entry.device_id else device, state),
+        "entity": entity_label(rule["entity_id"], entry, dev_reg.async_get(entry.device_id) if entry is not None and entry.device_id else device, state)
+        if rule["entity_id"]
+        else ((device.name_by_user or device.name or "") if device is not None else ""),
         "integration": rule.get("_integration", ""),
         "rule": rule.get("name", ""),
         "value": show(raw),
@@ -697,6 +774,8 @@ class MagicPush:
         self._runtime: dict[str, dict[str, Any]] = {}
         self._by_entity: dict[str, list[dict[str, Any]]] = {}
         self._timers: dict[str, CALLBACK_TYPE] = {}
+        # Zeitgeber an den Grenzen der Zeit-Bedingungen (seit 2.193.0)
+        self._clocks: dict[str, CALLBACK_TYPE] = {}
         # Wartezeit bis zum Zurücksetzen (reset_for_s), getrennt von Dauer/Wiederholung
         self._rtimers: dict[str, CALLBACK_TYPE] = {}
         # "Ändert sich" mit Dauer: der neue Wert muss bis "due" bleiben; wird mitgespeichert (seit 2.17.1)
@@ -747,12 +826,22 @@ class MagicPush:
         if self._unsub_track is not None:
             self._unsub_track()
             self._unsub_track = None
-        for cancel in (*self._timers.values(), *self._rtimers.values()):
+        for cancel in (*self._timers.values(), *self._rtimers.values(), *self._clocks.values()):
             cancel()
         self._timers = {}
         self._rtimers = {}
+        self._clocks = {}
         # Ausstehendes sofort schreiben (die Dauer überlebt so den Neustart)
         await self._store.async_save(self._data())
+
+    def _state_of(self, rule: dict[str, Any]) -> State | None:
+        """Zustand der Entität der Regel; None bei einer Regel nur aus Zeit-Bedingungen."""
+        return self.hass.states.get(rule["entity_id"]) if rule["entity_id"] else None
+
+    @staticmethod
+    def _lost(rule: dict[str, Any], state: State | None) -> bool:
+        """Fehlt die Entität (nicht erreichbar, nicht da)? Nie bei einer Regel nur aus Zeit-Bedingungen."""
+        return state is None and bool(rule["entity_id"])
 
     def _data(self) -> dict[str, Any]:
         return {"rules": self._rules, "runtime": self._runtime, "pending": self._pending}
@@ -811,8 +900,8 @@ class MagicPush:
             self._reset(rule["id"])
         self._retrack()
         await self._store.async_save(self._data())
-        state = self.hass.states.get(rule["entity_id"])
-        if state is not None:
+        state = self._state_of(rule)
+        if state is not None or not rule["entity_id"]:
             self._evaluate(rule, state, None)
         return rule
 
@@ -834,7 +923,7 @@ class MagicPush:
         self._reset(rule_id)
         self._retrack()
         await self._store.async_save(self._data())
-        if enabled and (state := self.hass.states.get(rule["entity_id"])) is not None:
+        if enabled and ((state := self._state_of(rule)) is not None or not rule["entity_id"]):
             self._evaluate(rule, state, None)
         return rule
 
@@ -863,6 +952,36 @@ class MagicPush:
                     self._by_entity.setdefault(entity_id, []).append(rule)
         if self._by_entity:
             self._unsub_track = async_track_state_change_event(self.hass, list(self._by_entity), self._on_state)
+        for cancel in self._clocks.values():
+            cancel()
+        self._clocks = {}
+        for rule in self._rules.values():
+            if rule["enabled"] and time_edges(rule):
+                self._arm_clock(rule["id"])
+
+    def _arm_clock(self, rule_id: str) -> None:
+        """Zeitgeber zur nächsten Grenze einer Zeit-Bedingung der Regel (Beginn oder Ende eines Fensters)."""
+        rule = self._rules.get(rule_id)
+        if (cancel := self._clocks.pop(rule_id, None)) is not None:
+            cancel()
+        if rule is None or not rule["enabled"]:
+            return
+        edges = time_edges(rule)
+        if not edges:
+            return
+        now = time.time()
+        due = min(next_send(clock, now + 1) for clock in edges)
+        self._clocks[rule_id] = async_call_later(self.hass, max(due - now, 1.0), partial(self._on_clock, rule_id))
+
+    @callback
+    def _on_clock(self, rule_id: str, _now: Any) -> None:
+        """Eine Grenze einer Zeit-Bedingung ist erreicht: Regel neu prüfen und den nächsten Zeitgeber stellen."""
+        self._clocks.pop(rule_id, None)
+        rule = self._rules.get(rule_id)
+        if rule is None or not rule["enabled"]:
+            return
+        self._evaluate(rule, self._state_of(rule), None)
+        self._arm_clock(rule_id)
 
     # -- Auswerten ----------------------------------------------------------------
 
@@ -870,8 +989,8 @@ class MagicPush:
     def _resync(self) -> None:
         self._restore_pending()
         for rule in list(self._rules.values()):
-            state = self.hass.states.get(rule["entity_id"])
-            if state is not None:
+            state = self._state_of(rule)
+            if state is not None or not rule["entity_id"]:
                 self._evaluate(rule, state, None)
 
     def _restore_pending(self) -> None:
@@ -913,7 +1032,7 @@ class MagicPush:
         """Gilt die ganze Bedingung jetzt? None: nicht beurteilbar (Entität nicht erreichbar)."""
 
         def leaf(item: dict[str, Any]) -> bool | None:
-            state = self.hass.states.get(item["entity_id"])
+            state = self.hass.states.get(item["entity_id"]) if item["entity_id"] else None
             return leaf_met(item, state.state if state is not None else None)
 
         return eval_tree(rule_tree(rule), leaf)
@@ -922,7 +1041,7 @@ class MagicPush:
         """Wie _met, aber im Zwischenbereich eines eigenen Rücksetzwerts gilt die Bedingung noch (nach der Meldung)."""
 
         def leaf(item: dict[str, Any]) -> bool | None:
-            state = self.hass.states.get(item["entity_id"])
+            state = self.hass.states.get(item["entity_id"]) if item["entity_id"] else None
             return leaf_hold(item, state.state if state is not None else None)
 
         return eval_tree(rule_tree(rule), leaf)
@@ -949,9 +1068,9 @@ class MagicPush:
                 self._timers[rule_id] = async_call_later(self.hass, due - now, partial(self._on_timer, rule_id))
             return
         # Mit mehreren Bedingungen kann sich eine andere Entität geändert haben: Stand der ersten für Variablen und Meldung
-        state = self.hass.states.get(rule["entity_id"])
+        state = self._state_of(rule)
         met = self._met(rule)
-        if state is None or met is None:
+        if self._lost(rule, state) or met is None:
             return
         if met:
             # Die Bedingung gilt wieder, bevor die Wartezeit zum Zurücksetzen um war: gleiche Episode, nichts wird gemeldet
@@ -987,8 +1106,8 @@ class MagicPush:
         if rule is None or not rule["enabled"] or rule["kind"] == "change":
             return
         rt = self.runtime(rule_id)
-        state = self.hass.states.get(rule["entity_id"])
-        if rt["since"] is None or not rt["fired"] or state is None:
+        state = self._state_of(rule)
+        if rt["since"] is None or not rt["fired"] or self._lost(rule, state):
             return
         # None (nicht erreichbar) setzt nichts zurück; die nächste Änderung stösst die Wartezeit neu an
         if self._met(rule) is not False or (has_reset(rule) and self._held(rule) is True):
@@ -1006,7 +1125,7 @@ class MagicPush:
         due = next_send(rule["send_at"], last + 60) if rule.get("send_at") else last + rule["repeat_s"]
         return max(0.0, due - now)
 
-    def _arm(self, rule: dict[str, Any], state: State, now: float) -> None:
+    def _arm(self, rule: dict[str, Any], state: State | None, now: float) -> None:
         rt = self.runtime(rule["id"])
         delay = self._due(rule, (rt["since"] or now) + rule["for_s"]) - now
         if delay <= 0:
@@ -1021,8 +1140,8 @@ class MagicPush:
         rule = self._rules.get(rule_id)
         if rule is None or not rule["enabled"]:
             return
-        state = self.hass.states.get(rule["entity_id"])
-        if state is None or (rule["kind"] == "change" and state.state in IGNORED):
+        state = self._state_of(rule)
+        if self._lost(rule, state) or (rule["kind"] == "change" and state is not None and state.state in IGNORED):
             if rule["kind"] == "change" and self._pending.pop(rule_id, None) is not None:
                 self._save()
             return
@@ -1038,7 +1157,7 @@ class MagicPush:
             return
         self._fire(rule, state, now, repeat=rt["fired"])
 
-    def _fire(self, rule: dict[str, Any], state: State, now: float, *, old: str | None = None, repeat: bool = False) -> None:
+    def _fire(self, rule: dict[str, Any], state: State | None, now: float, *, old: str | None = None, repeat: bool = False) -> None:
         rule_id = rule["id"]
         rt = self.runtime(rule_id)
         if rule["kind"] != "change":
@@ -1053,7 +1172,7 @@ class MagicPush:
         if rule["repeat_s"] > 0 and rule["kind"] != "change":
             self._timers[rule_id] = async_call_later(self.hass, self._repeat_delay(rule, now, now), partial(self._on_timer, rule_id))
 
-    def _resolve(self, rule: dict[str, Any], state: State, now: float) -> None:
+    def _resolve(self, rule: dict[str, Any], state: State | None, now: float) -> None:
         rule_id = rule["id"]
         rt = self.runtime(rule_id)
         since, fired = rt["since"] or now, rt["fired"]
@@ -1134,7 +1253,7 @@ class MagicPush:
 
     def preview(self, rule: dict[str, Any], which: str = "main") -> tuple[str, str, dict[str, str]]:
         """Titel und Zeile der Meldung mit dem jetzigen Wert; Dauer als Beispiel (Wartezeit der Regel)."""
-        state = self.hass.states.get(rule["entity_id"])
+        state = self._state_of(rule)
         now = time.time()
         example = max(float(rule["for_s"]), 60.0) if which == "recover" else float(rule["for_s"])
         old = None
@@ -1159,7 +1278,7 @@ def clean_stored(raw: Any) -> dict[str, Any]:
     if rule.get("conditions"):
         # Form prüfen (die Register-Prüfung läuft nur beim Anlegen); Fehler = Regel wird ignoriert
         leaves = _raw_leaves(rule["conditions"])
-        if len(leaves) < 2 or any(not isinstance(x, dict) or x.get("kind") not in LEAF_KINDS or not isinstance(x.get("entity_id"), str) for x in leaves):
+        if (len(leaves) < 2 and not any(isinstance(x, dict) and x.get("kind") == "time" for x in leaves)) or any(not isinstance(x, dict) or x.get("kind") not in LEAF_KINDS or not isinstance(x.get("entity_id"), str) for x in leaves):
             raise vol.Invalid("Bedingungen ungültig")
         if rule["conditions"].get("op", "and") not in OPS:
             raise vol.Invalid("Bedingungen ungültig")
@@ -1259,8 +1378,8 @@ def search_entities(hass: HomeAssistant, query: str, limit: int = 40) -> list[di
 def rule_payload(hass: HomeAssistant, magic: MagicPush, rule: dict[str, Any]) -> dict[str, Any]:
     """Regel mit Stand für das Panel: aktiv (Bedingung gilt gerade), zuletzt gemeldet, Entität fehlt."""
     rt = magic.runtime(rule["id"])
-    state = hass.states.get(rule["entity_id"])
-    entry = er.async_get(hass).async_get(rule["entity_id"])
+    state = hass.states.get(rule["entity_id"]) if rule["entity_id"] else None
+    entry = er.async_get(hass).async_get(rule["entity_id"]) if rule["entity_id"] else None
     registry = er.async_get(hass)
     exists = all(registry.async_get(eid) is not None or hass.states.get(eid) is not None for eid in rule_entities(rule))
     return {
@@ -1274,6 +1393,6 @@ def rule_payload(hass: HomeAssistant, magic: MagicPush, rule: dict[str, Any]) ->
         "last_fired": rt["last_fired"],
         "entity_missing": not exists,
         # Entität eines anderen Geräts oder ohne Gerät (freie Entität, seit 2.10.0)
-        "entity_free": entry is None or entry.device_id != rule["device_id"],
+        "entity_free": bool(rule["entity_id"]) and (entry is None or entry.device_id != rule["device_id"]),
         "available": magic._met(rule) is not None if rule["kind"] != "change" else state is not None and state.state not in IGNORED,
     }

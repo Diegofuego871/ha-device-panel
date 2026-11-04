@@ -657,7 +657,7 @@ def _ws_magic_list(hass: HomeAssistant, connection: websocket_api.ActiveConnecti
                     if hass.states.get(entity_id) is not None or er.async_get(hass).async_get(entity_id) is not None
                     else None
                 )
-        found = entities[rule["entity_id"]]
+        found = entities.get(rule["entity_id"])
         payload = magic.rule_payload(hass, push_rules, rule)
         payload["device_name"] = device.name_by_user or device.name or ""
         brief = ("name", "domain", "device_class", "kind", "unit", "options")
@@ -761,7 +761,7 @@ async def _ws_magic_test(hass: HomeAssistant, connection: websocket_api.ActiveCo
 @websocket_api.websocket_command(
     {
         vol.Required("type"): f"{DOMAIN}/magic_history",
-        vol.Required("entity_id"): vol.All(str, vol.Match(magic._ENTITY_RE)),
+        vol.Required("entity_id"): vol.Any("", vol.All(str, vol.Match(magic._ENTITY_RE))),
         vol.Required("kind"): vol.In(magic.KINDS),
         vol.Optional("value"): vol.Any(None, str, int, float),
         vol.Optional("for_s", default=0): vol.All(int, vol.Range(min=0, max=magic.FOR_MAX)),

@@ -234,6 +234,7 @@ Eigene Meldungen pro Gerät ohne Automation, im Reiter "Magic Push" des Geräts.
 - **Jeder Wert:** einen Wert des Geräts wählen oder eine beliebige Entität von Home Assistant, die dem Gerät zugeordnet bleibt
 - **Wann:** über, unter, ist oder ändert sich; mehrere Bedingungen mit Und/Oder und Gruppen verknüpft; wie lange sie gelten muss; wie lange der Wert normal bleiben muss, bevor zurückgesetzt wird, und bei welchem Wert
 - **Empfänger:** jedes Notify-Ziel, auf Wunsch als kritische Mitteilung mit einer Lautstärke von 1 bis 10, und wie oft wiederholt wird
+- **Uhrzeit als Bedingung:** eine Uhrzeit ("ab 10:00") oder ein Zeitfenster (auch über Mitternacht), an gewählten Wochentagen; allein (eine Erinnerung ohne Gerätezustand, zum Beispiel jeden Montag um 10:00) oder mit dem Zustand von Geräten durch "und" / "oder" verknüpft
 - **Senden zu einer Uhrzeit:** statt "sofort" kann eine Meldung bis zu einer Uhrzeit zurückgehalten werden (zum Beispiel "Filter tauschen" um 10:00); sie kommt zur nächsten Uhrzeit, wenn die Bedingung dann noch gilt, entfällt, wenn der Wert vorher wieder normal ist, und kann täglich zu dieser Uhrzeit wiederholt werden
 - **Vorschau:** zeigt das Logo der Integration des Geräts, wie es die echte Meldung trägt
 - **Text:** Titel und Inhalt mit Variablen, die zum Wert passen (Name, Wert, Einheit, Schwelle, Bereich und mehr), mit Vorschau und einem Rückblick auf die letzten 24 Stunden vor dem Speichern

@@ -448,7 +448,7 @@ async def _devices_part(hass: HomeAssistant, body: dict[str, Any], dry_run: bool
 
 def _item_what(kind: str, item: dict[str, Any]) -> str:
     """Was ein Eintrag tut, aus der geprüften Fassung: Routine = Entität und Aktion, Magic Push = Entität, Bedingung, Push-Ziel."""
-    entity = str(item.get("entity_id") or "?")
+    entity = str(item.get("entity_id") or ("–" if kind == "magic" and item.get("kind") == "time" else "?"))
     if kind == "routines":
         # Mit weiteren Zielen (seit 2.181.0) "+N" dahinter
         more = f" +{len(item['more'])}" if item.get("more") else ""

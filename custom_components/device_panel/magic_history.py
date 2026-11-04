@@ -12,7 +12,7 @@ from __future__ import annotations
 import logging
 import time
 from bisect import bisect_right
-from datetime import datetime
+from datetime import datetime, timedelta
 from typing import Any
 
 from homeassistant.core import HomeAssistant
@@ -30,7 +30,9 @@ from .magic import (
     has_reset,
     leaf_hold,
     leaf_met,
+    primary_of,
     reset_met,
+    time_edges,
     tree_leaves,
 )
 
@@ -57,6 +59,22 @@ def _states_many(hass: HomeAssistant, entity_ids: list[str], start: datetime, en
     return {entity_id: _states(hass, entity_id, start, end) for entity_id in entity_ids}
 
 
+def _edge_stamps(tree: dict[str, Any], start: float, now: float) -> set[float]:
+    """Zeitpunkte zwischen start und now, an denen eine Zeit-Bedingung wechseln kann (Beginn und Ende der Fenster, jeden Tag)."""
+    clocks = time_edges({"conditions": tree})
+    out: set[float] = set()
+    if not clocks:
+        return out
+    first = dt_util.as_local(dt_util.utc_from_timestamp(start)).replace(hour=0, minute=0, second=0, microsecond=0)
+    for day in range(int((now - start) // 86400) + 2):
+        base = dt_util.as_local(first + timedelta(days=day))
+        for clock in clocks:
+            ts = dt_util.as_local(base.replace(hour=int(clock[:2]), minute=int(clock[3:5]))).timestamp()
+            if start < ts < now:
+                out.add(ts)
+    return out
+
+
 def evaluate_tree(
     rows_by: dict[str, list[tuple[float, str]]], tree: dict[str, Any], for_s: int, now: float, start: float, reset_for_s: int = 0
 ) -> tuple[list[list[Any]], list[dict[str, Any]], int, list[list[list[Any]]]]:
@@ -66,9 +84,9 @@ def evaluate_tree(
     Bedingung zurück (in der Reihenfolge der Bedingungen), in denen sie allein galt.
     """
     leaves = tree_leaves(tree)
-    kind = leaves[0]["kind"]
-    primary = leaves[0]["entity_id"]
-    stamps = {r[0] for rows in rows_by.values() for r in rows} | {start}
+    kind = primary_of(leaves)["kind"]
+    primary = primary_of(leaves)["entity_id"]
+    stamps = {r[0] for rows in rows_by.values() for r in rows} | {start} | _edge_stamps(tree, start, now)
     times = sorted(stamps)
 
     def state_at(entity_id: str, ts: float) -> str | None:
@@ -87,13 +105,13 @@ def evaluate_tree(
         if end <= ts:
             continue
         for index, leaf in enumerate(leaves):
-            if leaf_met(leaf, state_at(leaf["entity_id"], ts)):
+            if leaf_met(leaf, state_at(leaf["entity_id"], ts), ts):
                 spans = per_leaf[index]
                 if spans and spans[-1][1] == ts:
                     spans[-1][1] = end
                 else:
                     spans.append([ts, end])
-        met = eval_tree(tree, lambda lf, ts=ts: leaf_met(lf, state_at(lf["entity_id"], ts)))
+        met = eval_tree(tree, lambda lf, ts=ts: leaf_met(lf, state_at(lf["entity_id"], ts), ts))
         if met is None:
             if current is not None:
                 current[1] = end
@@ -107,7 +125,7 @@ def evaluate_tree(
                 values.append(number)
         elif current is not None:
             held = ts - current[0]
-            if reset and held >= for_s and eval_tree(tree, lambda lf, ts=ts: leaf_hold(lf, state_at(lf["entity_id"], ts))) is True:
+            if reset and held >= for_s and eval_tree(tree, lambda lf, ts=ts: leaf_hold(lf, state_at(lf["entity_id"], ts), ts)) is True:
                 current[1] = end
                 continue
             # Zurücksetzen erst nach Dauer: ein kürzerer Unterbruch gehört noch zur selben Episode (current[1] bleibt)
@@ -222,7 +240,8 @@ async def async_history(
     reset_for_s: int = 0,
 ) -> dict[str, Any]:
     """Rückblick der letzten 24 Stunden für eine Regel (noch nicht gespeichert); mit mehreren Bedingungen über alle."""
-    tree = clean_conditions(hass, conditions) if conditions and len(tree_leaves_raw(conditions)) > 1 else None
+    raw_leaves = tree_leaves_raw(conditions)
+    tree = clean_conditions(hass, conditions) if conditions and (len(raw_leaves) > 1 or any(isinstance(x, dict) and x.get("kind") == "time" for x in raw_leaves)) else None
     now = now if now is not None else time.time()
     start = now - SPAN
     result: dict[str, Any] = {
@@ -237,9 +256,9 @@ async def async_history(
         "count": 0,
     }
     if tree is not None:
-        first = tree_leaves(tree)[0]
+        first = primary_of(tree_leaves(tree))
         entity_id, kind = first["entity_id"], first["kind"]
-        result["kind"] = entity_kind(hass.states.get(entity_id), er.async_get(hass).async_get(entity_id))
+        result["kind"] = entity_kind(hass.states.get(entity_id), er.async_get(hass).async_get(entity_id)) if entity_id else "state"
     if "recorder" not in hass.config.components:
         result["available"] = False
         return result
@@ -283,7 +302,7 @@ async def _async_history_tree(
 ) -> dict[str, Any]:
     """Rückblick für verknüpfte Bedingungen: Verläufe aller beteiligten Entitäten, ausgewertet mit evaluate_tree."""
     leaves = tree_leaves(tree)
-    entity_ids = list(dict.fromkeys(leaf["entity_id"] for leaf in leaves))
+    entity_ids = list(dict.fromkeys(leaf["entity_id"] for leaf in leaves if leaf["entity_id"]))
     try:
         from homeassistant.components.recorder import get_instance  # noqa: PLC0415
 
@@ -295,10 +314,11 @@ async def _async_history_tree(
         result["available"] = False
         return result
     rows_by = {eid: sorted(rows) for eid, rows in rows_by.items()}
-    if not any(r[1] not in IGNORED for rows in rows_by.values() for r in rows):
+    # Nur Zeit-Bedingungen: ohne Verlauf einer Entität, der Rückblick rechnet allein mit der Uhr
+    if entity_ids and not any(r[1] not in IGNORED for rows in rows_by.values() for r in rows):
         return result
     result["empty"] = False
-    result["points"] = points(rows_by.get(entity_ids[0], []), start, now)
+    result["points"] = points(rows_by.get(entity_ids[0], []), start, now) if entity_ids else []
     result["intervals"], result["fires"], result["count"], spans = evaluate_tree(rows_by, tree, for_s, now, start, reset_for_s)
     result["leaves"] = [{"entity_id": leaf["entity_id"], "kind": leaf["kind"], "intervals": spans[i]} for i, leaf in enumerate(leaves)]
     return result

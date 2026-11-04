@@ -1763,7 +1763,7 @@
         // Bedingungen (2.15.0): immer ein Baum; die erste steht zusätzlich in den alten Feldern
         const treeOf = (r) => r.conditions?.items?.length ? r.conditions : { op: "and", items: [{ entity_id: r.entity_id, kind: r.kind, value: r.value ?? null, reset_value: r.reset_value ?? null }] };
         const leavesOf = (r) => treeOf(r).items.flatMap((it) => it.items ? it.items : [it]);
-        const payload = (r) => ({ ...r, conditions: treeOf(r), active: Boolean(r.__active), since: null, fired: false, last_fired: r.__last || null, entity_missing: !leavesOf(r).every((l) => known(l.entity_id)), entity_free: !ents.some((e) => e.entity_id === r.entity_id), available: true });
+        const payload = (r) => ({ ...r, conditions: treeOf(r), active: Boolean(r.__active), since: null, fired: false, last_fired: r.__last || null, entity_missing: !leavesOf(r).every((l) => l.kind === "time" || known(l.entity_id)), entity_free: !ents.some((e) => e.entity_id === r.entity_id), available: true });
         const strip = (r) => Object.fromEntries(Object.entries(r).filter(([k]) => !k.startsWith("__")));
         if (msg.type.endsWith("magic_get")) {
           const dev = window.__devices.find((d) => d.id === msg.device_id);
@@ -1789,10 +1789,11 @@
           if (!r.name || !String(r.name).trim()) fail("Name fehlt");
           if (String(r.name).length > 60) fail("Name zu lang");
           if (!r.message || !String(r.message).trim()) fail("Text fehlt");
-          if (!["above", "below", "is", "change"].includes(r.kind)) fail("Art ungültig");
+          if (!["above", "below", "is", "change", "time"].includes(r.kind)) fail("Art ungültig");
           if ((r.kind === "above" || r.kind === "below") && !Number.isFinite(Number(r.value))) fail("Für über und unter wird eine Zahl gebraucht");
           if (r.kind === "is" && (r.value == null || r.value === "")) fail("Für ist wird ein Zustand gebraucht");
-          if (!known(r.entity_id)) fail("Die Entität gibt es nicht");
+          if (r.kind !== "time" && !known(r.entity_id)) fail("Die Entität gibt es nicht");
+          if (r.kind === "time" && !leavesOf(r).some((l) => l.kind === "time")) fail("Uhrzeit fehlt");
           if (r.recover && r.kind !== "change" && !String(r.recover_message || "").trim()) fail("Für die Meldung bei wieder normal fehlt der Text");
           if (r.for_s < 0 || r.for_s > 7 * 86400) fail("Dauer ungültig");
           // Mehrere Bedingungen: jede Entität gibt es, über/unter mit Zahl, "ändert sich" nur allein
@@ -1800,6 +1801,12 @@
             const ls = leavesOf(r);
             if (ls.length > 10) fail("Höchstens 10 Bedingungen");
             for (const l of ls) {
+              if (l.kind === "time") {
+                const ok = (x) => /^([01]\d|2[0-3]):[0-5]\d$/.test(String(x || ""));
+                if (!ok(l.from) || (l.to && (!ok(l.to) || l.to === l.from))) fail("Uhrzeit HH:MM erwartet");
+                if (!Array.isArray(l.days || []) || (l.days || []).some((d) => !Number.isInteger(d) || d < 0 || d > 6)) fail("Wochentage 0 bis 6 erwartet");
+                continue;
+              }
               if (!known(l.entity_id)) fail("Die Entität gibt es nicht");
               if (ls.length > 1 && l.kind === "change") fail("\"ändert sich\" gibt es nur als einzige Bedingung");
               if ((l.kind === "above" || l.kind === "below") && !Number.isFinite(Number(l.value))) fail("Für über und unter wird eine Zahl gebraucht");
@@ -1830,11 +1837,12 @@
           if (window.__magicSaveFails) throw new Error(window.__magicSaveFails);
           const r = { ...msg.rule };
           if (r.conditions?.items?.length) {
-            const first = leavesOf(r)[0];
+            const ls0 = leavesOf(r);
+            const first = ls0.find((l) => l.entity_id) || ls0[0];
             Object.assign(r, { entity_id: first.entity_id, kind: first.kind, value: first.value ?? null, reset_value: first.reset_value ?? null });
           }
           check(r);
-          if (r.conditions && leavesOf(r).length < 2) r.conditions = null;
+          if (r.conditions && leavesOf(r).length < 2 && !leavesOf(r).some((l) => l.kind === "time")) r.conditions = null;
           if (r.kind === "change") { r.value = null; r.recover = false; r.repeat_s = 0; r.reset_for_s = 0; }
           r.send_at = /^([01]\d|2[0-3]):[0-5]\d$/.test(r.send_at || "") ? r.send_at : "";
           if (r.send_at && r.repeat_s > 0) r.repeat_s = 86400;
@@ -1869,7 +1877,7 @@
         }
         if (msg.type.endsWith("magic_preview")) {
           const r = msg.rule;
-          if (!known(r.entity_id)) fail("Die Entität gibt es nicht");
+          if (r.kind !== "time" && !known(r.entity_id)) fail("Die Entität gibt es nicht");
           if ((r.kind === "above" || r.kind === "below") && !Number.isFinite(Number(r.value))) fail("Für über und unter wird eine Zahl gebraucht");
           const text = msg.which === "recover" ? r.recover_message : r.message;
           const title = fill(text, r);

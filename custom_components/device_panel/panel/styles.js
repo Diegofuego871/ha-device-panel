@@ -1863,6 +1863,9 @@ button.mg-stp::after { content: ""; position: absolute; inset: -14px 0; }
 .mg-pill { display: inline-flex; align-items: center; justify-content: center; box-sizing: border-box; height: 38px; padding: 0 13px; border: none; border-radius: 11px; background: color-mix(in srgb, var(--dp-text) 7%, var(--dp-card)); color: var(--dp-text); font: inherit; font-size: 14px; cursor: pointer; }
 .mg-pill.num { min-width: 56px; font-variant-numeric: tabular-nums; font-weight: 600; text-align: center; }
 input.mg-pill { cursor: text; }
+/* Wochentage der Zeit-Bedingung (seit 2.193.0): sieben Chips wie in der Ansicht, auf dem Handy in einer Reihe */
+.mg-days { display: flex; flex-wrap: wrap; gap: 6px; margin-top: 6px; }
+.mg-days .mg-day { justify-content: center; min-width: 44px; padding: 0 8px; }
 .mg-own { display: flex; align-items: center; flex-wrap: wrap; gap: 8px; margin-top: 8px; color: var(--dp-text2); font-size: 13px; }
 .mg-own .mg-pill { height: 34px; }
 .mg-ownin { width: 70px; min-width: 0; }

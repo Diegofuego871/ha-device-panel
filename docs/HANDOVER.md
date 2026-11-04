@@ -3,6 +3,12 @@
 Einstieg für jede neue Claude-Code-Session. Zuerst diese Datei lesen, dann
 `CLAUDE.md`, `docs/CONCEPT.md`, `docs/LEARNINGS.md`, `docs/DESIGN.md`.
 
+## Stand (2.193.0, Zeit-Bedingung in Magic Push)
+
+- Blatt der Bedingungen `{entity_id: "", kind: "time", from, to, days}` (`to` leer = bis Mitternacht, `days` 0 = Montag, leer = jeden Tag; `_clean_time`). `time_met(leaf, ts)` rechnet in der Ortszeit (Fenster über Mitternacht gehört zum Starttag); `leaf_met/leaf_hold(leaf, state, ts)`. Eine Zeit-Bedingung bleibt immer im Baum `conditions`; die alten Felder gehören der ersten Bedingung mit Entität (`primary_of`), bei nur Zeit ist `entity_id == ""` und `kind == "time"`.
+- Auswertung: `_state_of`/`_lost` (Regel ohne Entität wird nie "nicht erreichbar"); Zeitgeber `_clocks` an den Grenzen (`time_edges`, `_arm_clock`, `_on_clock`, nach jedem `_retrack`). Rückblick: `magic_history._edge_stamps`, Zeit-Regeln ohne Entität rechnen allein mit der Uhr.
+- Panel (`magic-push.js`): Karte `pick-time`, `newTimeLeaf`, `timeEditorHtml` (`tmode`, `tfrom`, `tto`, `tday`), `timeText`, `primaryLeaf`; Textschlüssel `mgTime*`, `mgPickTime*`, `mgDefaultMsg_time`; push.py `magic_time*`/`magic_days`. Tests: `test_magic_time`, Suite `magictime`; Simulator prüft Zeit-Blätter.
+
 ## Stand (2.192.0, Markierungen für eigene Einstellungen aus der Liste nehmen)
 
 - Ansicht-Feld `marks` (Standard `false`, `sanitizeView` nur bei `=== true`); `_overrideHtml` liefert ohne `marks` nichts. Schalter `data-vmarks` im Block `groups` von `_viewControlsHtml` (Desktop und Handy), "Standard wiederherstellen" setzt es zurück. Pro Benutzer und Gerät gespeichert wie die übrige Ansicht (Benutzerdaten, nicht in der Sicherung).

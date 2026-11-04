@@ -376,6 +376,7 @@ export class MagicPush {
 
   // Bedingung als Satzteil ("unter 12 °C", "ist offen", "ändert sich").
   condText(rule, e = this.entityOf(rule)) {
+    if (rule.kind === "time") return this.timeText(rule);
     const unit = e?.kind === "number" && e.unit ? ` ${e.unit}` : "";
     if (rule.kind === "change") return this.t("mgSentenceChange");
     if (rule.kind === "is" && e?.kind === "state") {
@@ -410,7 +411,8 @@ export class MagicPush {
 
   // "Temperatur unter 12 °C · für 10 Min. · einmal · mit "wieder normal""
   sentence(rule) {
-    const many = rule.conditions?.items && this.leavesOf({ conds: rule.conditions }).length > 1;
+    const leaves = rule.conditions?.items ? this.leavesOf({ conds: rule.conditions }) : [];
+    const many = leaves.length > 1 || leaves.some((l) => l.kind === "time");
     const parts = [many ? this.treeText(rule.conditions, (id) => this.entityByIdOf(rule, id)) : `${this.entityName(rule)} ${this.condText(rule)}`];
     parts.push(rule.for_s ? this.t("mgSentenceFor", this.fmtDur(rule.for_s)) : this.t("mgSentenceNow"));
     if (rule.send_at) parts.push(this.t("mgSentenceAt", rule.send_at));
@@ -438,6 +440,7 @@ export class MagicPush {
         const text = item.items.map((x) => part(x, true)).join(` ${this.t(item.op === "or" ? "mgOrWord" : "mgAndWord")} `);
         return nested && item.items.length > 1 ? `(${text})` : text;
       }
+      if (item.kind === "time") return this.timeText(item);
       const e = resolve(item.entity_id);
       return `${e?.name || item.entity_id} ${this.condText(item, e)}`;
     };
@@ -448,6 +451,24 @@ export class MagicPush {
 
   newLeaf(entityId = "") {
     return { uid: leafId(), entity_id: entityId, kind: "below", value: "", reset_value: "", resetOwn: false };
+  }
+
+  // Zeit-Bedingung (seit 2.193.0): Fenster von "from" bis "to" (leer = bis Mitternacht) an den Wochentagen "days" (0 = Montag; leer = jeden Tag)
+  newTimeLeaf() {
+    return { uid: leafId(), entity_id: "", kind: "time", value: "", reset_value: "", resetOwn: false, from: "10:00", to: "", days: [] };
+  }
+
+  // Die Bedingung der alten Felder: die erste mit Entität, bei einer Regel nur aus Zeit die erste
+  primaryLeaf(leaves = this.leavesOf()) {
+    return leaves.find((l) => l.entity_id) || leaves[0];
+  }
+
+  // "ab 10:00", "von 22:00 bis 06:00", dazu die Tage: "ab 10:00, Mo, Mi"
+  timeText(lf) {
+    const t = (k, ...a) => this.t(k, ...a);
+    const range = lf.to ? t("mgTimeBetweenText", lf.from, lf.to) : t("mgTimeFromText", lf.from);
+    const days = (lf.days || []).slice().sort((a, b) => a - b);
+    return `${t("mgTimeWord")} ${range}${days.length && days.length < 7 ? `, ${days.map((d) => t(`mgTimeDay_${d}`)).join(", ")}` : ""}`;
   }
 
   // Alle Bedingungen der Reihe nach (Gruppen aufgelöst). Die erste gilt für Name, Variablen und Standardtexte.
@@ -470,7 +491,7 @@ export class MagicPush {
 
   // Die erste Bedingung steht zusätzlich in den alten Feldern des Entwurfs (Namen, Texte und Variablen bauen darauf)
   syncPrimary(d = this.wiz.draft) {
-    const first = this.leavesOf(d)[0];
+    const first = this.primaryLeaf(this.leavesOf(d));
     d.entity_id = first?.entity_id || "";
     d.kind = first?.kind || "below";
     d.value = first?.value ?? "";
@@ -500,6 +521,10 @@ export class MagicPush {
   }
 
   leafValid(lf) {
+    if (lf.kind === "time") {
+      const ok = (x) => /^([01]\d|2[0-3]):[0-5]\d$/.test(String(x || ""));
+      return ok(lf.from) && (lf.to === "" || (ok(lf.to) && lf.to !== lf.from));
+    }
     const e = this.entity(lf.entity_id);
     if (!e) return false;
     if (lf.kind === "above" || lf.kind === "below") return parseNumber(lf.value) != null && !this.resetError(lf);
@@ -509,6 +534,7 @@ export class MagicPush {
 
   // Bedingung für den Server: Zahl bei Zahlen, Zustand bei Zuständen
   leafPayload(lf) {
+    if (lf.kind === "time") return { entity_id: "", kind: "time", value: null, reset_value: null, from: lf.from, to: lf.to || "", days: [...new Set(lf.days || [])].sort((a, b) => a - b) };
     const e = this.entity(lf.entity_id);
     let value = null;
     if (lf.kind === "above" || lf.kind === "below") value = parseNumber(lf.value);
@@ -551,6 +577,44 @@ export class MagicPush {
     this.paint();
     this.syncNav();
     this.requestLeafHistory();
+  }
+
+  // Zeit statt Entität gewählt (Schritt 1): eine Zeit-Bedingung an der Stelle, wo die Auswahl gestartet wurde
+  onPickTime() {
+    const w = this.wiz;
+    if (!w) return;
+    const d = w.draft;
+    const add = w.adding;
+    const lf = this.newTimeLeaf();
+    if (add?.replace) {
+      const old = this.findLeaf(add.replace);
+      if (old) {
+        Object.assign(old, lf, { uid: old.uid });
+        w.cur = old.uid;
+      }
+    } else {
+      if (add?.group === "new") d.conds.items.push({ uid: leafId(), op: "or", items: [lf] });
+      else if (add?.group) d.conds.items.find((g) => g.uid === add.group)?.items.push(lf);
+      else d.conds.items.push(lf);
+      w.cur = lf.uid;
+    }
+    w.adding = null;
+    w.free.open = false;
+    this.syncPrimary();
+    this.syncDefaults();
+    this.paint();
+    this.syncNav();
+    this.requestLeafHistory();
+  }
+
+  // Nach einer Änderung der Zeit-Bedingung: Namen und Texte, Knöpfe und Rückblick nachziehen (neu zeichnen nur bei Wahl, nicht beim Tippen)
+  afterTimeChange(repaint) {
+    this.syncPrimary();
+    this.syncDefaults();
+    if (repaint) this.paint();
+    else this.paintZones(["pv", "pvr"]);
+    this.syncNav();
+    this.requestHistory?.();
   }
 
   startAdd(adding) {
@@ -597,6 +661,7 @@ export class MagicPush {
   }
 
   suggestName(draft) {
+    if (draft.kind === "time") return this.timeText(this.leavesOf(draft)[0]).slice(0, this.limit("name", 60));
     const e = this.entity(draft.entity_id);
     if (!e) return "";
     const rule = { entity_id: draft.entity_id, kind: draft.kind, value: draft.kind === "change" ? null : (parseNumber(draft.value) ?? draft.value) };
@@ -606,6 +671,7 @@ export class MagicPush {
 
   defaultMessage(draft) {
     const e = this.entity(draft.entity_id);
+    if (draft.kind === "time") return this.t("mgDefaultMsg_time");
     if (draft.kind === "change") return this.t("mgDefaultMsg_change");
     if (draft.kind === "is") return this.t(e?.kind === "number" ? "mgDefaultMsg_isNumber" : "mgDefaultMsg_isState").trim();
     return this.t(draft.kind === "above" ? "mgDefaultMsg_above" : "mgDefaultMsg_below").trim();
@@ -648,7 +714,7 @@ export class MagicPush {
   draftPayload() {
     const d = this.wiz.draft;
     const leaves = this.leavesOf();
-    const first = leaves.length ? this.leafPayload(leaves[0]) : { entity_id: d.entity_id, kind: d.kind, value: null, reset_value: null };
+    const first = leaves.length ? this.leafPayload(this.primaryLeaf(leaves)) : { entity_id: d.entity_id, kind: d.kind, value: null, reset_value: null };
     const out = {
       device_id: this.deviceId,
       entity_id: first.entity_id,
@@ -671,7 +737,7 @@ export class MagicPush {
       critical_volume: d.critical_volume,
     };
     // Mehrere Bedingungen (seit 2.15.0): der Baum; die erste steht zusätzlich in den alten Feldern
-    if (leaves.length > 1) out.conditions = this.treePayload(d);
+    if (leaves.length > 1 || leaves.some((l) => l.kind === "time")) out.conditions = this.treePayload(d);
     if (d.id) out.id = d.id;
     return out;
   }
@@ -1020,6 +1086,7 @@ export class MagicPush {
       : { op: "and", items: [{ entity_id: rule.entity_id, kind: rule.kind, value: rule.value, reset_value: rule.reset_value }] };
     const leaf = (x) => ({
       uid: leafId(),
+      ...(x.kind === "time" ? { from: x.from, to: x.to || "", days: [...(x.days || [])] } : {}),
       entity_id: x.entity_id,
       kind: x.kind,
       value: x.value == null ? "" : String(x.value),
@@ -1465,7 +1532,7 @@ export class MagicPush {
     if (!w || w.step !== 1) return;
     window.clearTimeout(this._leafTimer);
     const lf = this.curLeaf();
-    if (!lf || !this.leafValid(lf)) {
+    if (!lf || lf.kind === "time" || !this.leafValid(lf)) {
       w.leafHist = null;
       this.paintZones(["chart"]);
       return;
@@ -1499,13 +1566,13 @@ export class MagicPush {
     if (!w) return;
     const d = w.draft;
     const seq = (this._seq += 1);
-    const first = this.leafPayload(this.leavesOf()[0]);
+    const first = this.leafPayload(this.primaryLeaf());
     const msg = { type: "device_panel/magic_history", entity_id: first.entity_id, kind: first.kind, for_s: d.for_s };
     if (first.kind !== "change" && d.reset_for_s > 0) msg.reset_for_s = d.reset_for_s;
     if (first.value != null) msg.value = first.value;
     if (first.reset_value != null) msg.reset_value = first.reset_value;
     // Mehrere Bedingungen: der Rückblick rechnet über alle (seit 2.15.0)
-    if (this.leavesOf().length > 1) msg.conditions = this.treePayload();
+    if (this.leavesOf().length > 1 || this.leavesOf().some((l) => l.kind === "time")) msg.conditions = this.treePayload();
     try {
       const result = await this.call(msg);
       if (seq !== this._seq || this.wiz !== w) return;
@@ -1705,6 +1772,7 @@ export class MagicPush {
     const entities = this.data?.entities || [];
     const picked = w.adding?.replace ? this.findLeaf(w.adding.replace)?.entity_id || "" : "";
     let html = `<p class="mg-note">${esc(this.t(this.leavesOf().length ? "mgAddIntro" : "mgFirstIntro"))}</p>`;
+    html += `<button type="button" class="mg-card mg-pick" data-mg="pick-time"><span class="mg-row"><span class="mg-ic" aria-hidden="true">🕙</span><span class="mg-t"><b>${esc(this.t("mgPickTime"))}</b><small>${esc(this.t("mgPickTimeSub"))}</small></span></span></button>`;
     html += entities.length
       ? entities.map((e) => this.pickCardHtml(e, e.entity_id === picked, this.tt(`mgCat_${e.category}`))).join("")
       : `<p class="mg-note">${esc(this.t("mgNoEntities"))}</p>`;
@@ -1777,13 +1845,33 @@ export class MagicPush {
     const t = (k, ...a) => this.t(k, ...a);
     const e = this.entity(lf.entity_id);
     const open = this.wiz.cur === lf.uid;
+    const time = lf.kind === "time";
     const now = e ? this.entityValue(e) : "";
-    const sub = [this.leafValid(lf) || lf.kind === "change" ? this.condText(lf, e) : t("mgCondIncomplete"), now ? t("mgNowValue", now) : ""].filter(Boolean).join(" · ");
+    const sub = [this.leafValid(lf) || lf.kind === "change" ? (time ? this.timeText(lf).replace(/^[^ ]+ /, "") : this.condText(lf, e)) : t("mgCondIncomplete"), now ? t("mgNowValue", now) : ""].filter(Boolean).join(" · ");
     return `<div class="mg-lcard${open ? " open" : ""}"><div class="mg-lhead">
-      <button type="button" class="mg-lmain" data-mg="leaf-open" data-uid="${esc(lf.uid)}" aria-expanded="${open}"><span class="mg-ic" aria-hidden="true">${emojiFor(e)}</span>
-        <span class="mg-t"><b>${esc(e?.name || lf.entity_id)}</b><small>${esc(sub)}</small></span>${this.chevHtml(open)}</button>
+      <button type="button" class="mg-lmain" data-mg="leaf-open" data-uid="${esc(lf.uid)}" aria-expanded="${open}"><span class="mg-ic" aria-hidden="true">${time ? "🕙" : emojiFor(e)}</span>
+        <span class="mg-t"><b>${esc(time ? t("mgTimeWord") : e?.name || lf.entity_id)}</b><small>${esc(sub)}</small></span>${this.chevHtml(open)}</button>
       <button type="button" class="mg-xbtn" data-mg="leaf-del" data-uid="${esc(lf.uid)}" title="${esc(t("mgRemoveCond"))}" aria-label="${esc(t("mgRemoveCond"))}">${this.h.mdi("close", 22)}</button></div>
-      ${open ? this.leafEditorHtml(lf, e) : ""}</div>`;
+      ${open ? (time ? this.timeEditorHtml(lf) : this.leafEditorHtml(lf, e)) : ""}</div>`;
+  }
+
+  // Editor einer Zeit-Bedingung: "Ab" oder "Von bis", die Uhrzeiten und die Wochentage
+  timeEditorHtml(lf) {
+    const esc = (v) => this.esc(v);
+    const t = (k, ...a) => this.t(k, ...a);
+    const between = lf.to !== "";
+    const days = (lf.days || []).map(Number);
+    let html = `<div class="mg-ledit">${this.tabsHtml([
+      { on: !between, attrs: 'data-mg="tmode" data-v="from"', label: t("mgTimeModeFrom") },
+      { on: between, attrs: 'data-mg="tmode" data-v="between"', label: t("mgTimeModeBetween") },
+    ])}`;
+    html += `<div class="mg-own"><span>${esc(t(between ? "mgTimeStartLabel" : "mgTimeFromLabel"))}</span><input class="mg-pill num mg-ownin" type="time" data-mg="tfrom" value="${esc(lf.from)}" aria-label="${esc(t("mgTimeStartLabel"))}">`;
+    if (between) html += `<span>${esc(t("mgTimeEndLabel"))}</span><input class="mg-pill num mg-ownin" type="time" data-mg="tto" value="${esc(lf.to)}" aria-label="${esc(t("mgTimeEndLabel"))}">`;
+    html += `</div><p class="mg-hint">${esc(t(between ? "mgTimeHintBetween" : "mgTimeHintFrom"))}</p>`;
+    html += `<div class="mg-k">${esc(t("mgTimeDays"))}</div><div class="mg-days" role="group" aria-label="${esc(t("mgTimeDays"))}">${[0, 1, 2, 3, 4, 5, 6]
+      .map((d) => `<button type="button" class="vpill mg-day${days.includes(d) ? " on" : ""}" data-mg="tday" data-d="${d}" aria-pressed="${days.includes(d)}">${esc(t(`mgTimeDay_${d}`))}</button>`)
+      .join("")}</div><p class="mg-hint">${esc(t("mgTimeHintDays"))}</p></div>`;
+    return html;
   }
 
   // Editor der offenen Bedingung: Art, Diagramm, Wert, Zurücksetzen (bisher "Wann")
@@ -1896,7 +1984,7 @@ export class MagicPush {
       .map((row, i) => {
         const lf = leaves[i];
         const e = lf ? this.entity(lf.entity_id) : null;
-        const label = lf ? `${emojiFor(e)} ${e?.name || lf.entity_id} ${this.condText(lf, e)}` : row.entity_id;
+        const label = lf?.kind === "time" ? `🕙 ${this.timeText(lf)}` : lf ? `${emojiFor(e)} ${e?.name || lf.entity_id} ${this.condText(lf, e)}` : row.entity_id;
         return `<div class="mg-tlr"><span>${esc(label)}</span><div class="mg-tl">${bars(row.intervals)}</div></div>`;
       })
       .join("");
@@ -2338,6 +2426,28 @@ export class MagicPush {
       case "pick":
         this.onPick(id);
         break;
+      case "pick-time":
+        this.onPickTime();
+        break;
+      case "tmode": {
+        const lf = this.curLeaf();
+        if (!lf || lf.kind !== "time") break;
+        // "Von bis" beginnt eine Stunde nach dem Beginn; "Ab" lässt das Ende weg
+        if (el.dataset.v === "between" && !lf.to) {
+          const [h, m] = (lf.from || "10:00").split(":").map(Number);
+          lf.to = `${String((h + 1) % 24).padStart(2, "0")}:${String(m).padStart(2, "0")}`;
+        } else if (el.dataset.v === "from") lf.to = "";
+        this.afterTimeChange(true);
+        break;
+      }
+      case "tday": {
+        const lf = this.curLeaf();
+        if (!lf || lf.kind !== "time") break;
+        const day = Number(el.dataset.d);
+        lf.days = lf.days.includes(day) ? lf.days.filter((x) => x !== day) : [...lf.days, day].sort((a, b) => a - b);
+        this.afterTimeChange(true);
+        break;
+      }
       case "add-cond":
         this.startAdd({ group: null });
         break;
@@ -2491,7 +2601,13 @@ export class MagicPush {
     }
     if (!this.wiz || !this.inScope(el)) return;
     if (el.dataset.mgText) this.onText(el);
-    else if (action === "value") this.setValue(el.value, true);
+    else if (action === "tfrom" || action === "tto") {
+      const lf = this.curLeaf();
+      if (lf?.kind === "time") {
+        lf[action === "tfrom" ? "from" : "to"] = el.value;
+        this.afterTimeChange(false);
+      }
+    } else if (action === "value") this.setValue(el.value, true);
     else if (action === "reset-value") this.setReset(el.value, true);
     else if (action === "dev-search") {
       this.wiz.devQuery = el.value;
@@ -2541,6 +2657,13 @@ export class MagicPush {
     if (action === "for-unit") {
       d.forOwn.unit = Number(el.value);
       this.applyOwnFor();
+    } else if (action === "tfrom" || action === "tto") {
+      // Uhrzeit übernommen (Feld verlassen): jetzt neu zeichnen, damit der Kopf der Karte stimmt
+      const lf = this.curLeaf();
+      if (lf?.kind === "time") {
+        lf[action === "tfrom" ? "from" : "to"] = el.value;
+        this.afterTimeChange(true);
+      }
     } else if (action === "rfor-unit") {
       d.resetForOwn.unit = Number(el.value);
       this.applyOwnResetFor();

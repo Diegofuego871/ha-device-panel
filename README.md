@@ -234,6 +234,7 @@ Your own notifications per device without an automation, in the tab "Magic Push"
 - **Any value:** pick a value of the device, or any entity of Home Assistant that stays tied to the device
 - **When:** above, below, is, or changes; several conditions linked with And/Or and groups; for how long it must hold; how long it must stay normal before it resets, and at which value
 - **Recipient:** any notify target, optionally as a critical notification with a volume from 1 to 10, and how often to repeat
+- **Time of day as a condition:** a time ("from 10:00") or a time window (also past midnight), on chosen weekdays; alone (a reminder without a device state, for example every Monday at 10:00) or combined with the state of devices by "and" / "or"
 - **Send at a time of day:** instead of "immediately", a message can be held back until a time of day (for example "change the filter" at 10:00); it arrives at the next occurrence of that time if the condition still holds, is dropped if the value is back to normal before, and can repeat daily at that time
 - **Preview:** shows the logo of the integration of the device, as the real message carries it
 - **Text:** title and content with variables that fit the value (name, value, unit, threshold, area and more), a preview and a look back at the last 24 hours before you save
