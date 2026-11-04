@@ -89,8 +89,9 @@ export class UpdApp {
         this.ui.step = "list";
         this.render();
       } else if (act === "info") {
-        // Einzelnes Update mit Release Notes im bekannten Fenster (2.161.0), darüber gelegt; ohne Gerät (Apps, HACS, Home Assistant) der Dialog von Home Assistant
-        if (el.dataset.device) this.host._openUpdate(el.dataset.entity, el.dataset.device);
+        // Einzelnes Update mit Release Notes im bekannten Fenster (2.161.0), darüber gelegt; ohne Gerät im Panel (Apps, HACS, Home Assistant) der Dialog von Home Assistant
+        // Auch mit Gerät, das das Panel nicht zeigt (zum Beispiel das Dienst-Gerät von HACS): _openUpdate fände es nicht und täte nichts
+        if (el.dataset.device && this.host._devices.some((d) => d.id === el.dataset.device)) this.host._openUpdate(el.dataset.entity, el.dataset.device);
         else this.host._openMoreInfo(el.dataset.entity);
       }
     });

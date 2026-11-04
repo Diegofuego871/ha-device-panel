@@ -15,7 +15,7 @@ const dev = (id, platform, device, title) => ({ entity_id: `update.${id}`, devic
 const LIST = [
   dev("s1", "shelly", "s1", "Licht Bad/Dusche"), dev("s2", "shelly", "s2", "Wandschalter Flur"),
   { entity_id: "update.esphome_device_builder_update", device_id: null, platform: "hassio", kind: "addons", restart: false, features: 29, installed: "2026.10.1", latest: "2026.10.2", title: "ESPHome Device Builder" },
-  { entity_id: "update.beispiel_karte_update", device_id: null, platform: "hacs", kind: "hacs", restart: false, features: 17, installed: "2.0", latest: "2.1", title: "Beispiel-Karte" },
+  { entity_id: "update.beispiel_karte_update", device_id: "hacs-dienst", platform: "hacs", kind: "hacs", restart: false, features: 17, installed: "2.0", latest: "2.1", title: "Beispiel-Karte" },
   { entity_id: "update.home_assistant_supervisor_update", device_id: null, platform: "hassio", kind: "core", restart: false, features: 29, installed: "2026.10.0", latest: "2026.10.1", title: "Supervisor" },
   { entity_id: "update.home_assistant_core_update", device_id: null, platform: "hassio", kind: "core", restart: true, features: 29, installed: "2026.10.3", latest: "2026.11.0", title: "Home Assistant Core" },
   { entity_id: "update.home_assistant_operating_system_update", device_id: null, platform: "hassio", kind: "core", restart: true, features: 29, installed: "16.2", latest: "16.3", title: "Home Assistant Betriebssystem" },
@@ -69,10 +69,10 @@ for (const lang of ["de", "en"]) {
     await tap(`${D} [data-ua="next"]`);
     check(`[${tag}] Rückfrage: Hinweis "${L.cCore}" und Hinweis zu App-Updates`, await wait(`const t = r.querySelector("${D} .nf-note")?.innerText || ""; return t.includes(${JSON.stringify(L.cCore)}) && t.includes(${JSON.stringify(L.cApps)})`));
     await tap(`${D} [data-ua="back"]`);
-    // Zeile ohne Gerät: Dialog von Home Assistant, nicht das Geräte-Popup
+    // Zeile ohne Gerät im Panel (HACS: Dienst-Gerät, das das Panel nicht zeigt): Dialog von Home Assistant, nicht das Geräte-Popup
     await p.evaluate(() => { window.__moreInfo.length = 0; });
     await tap(`${D} [data-ua="info"][data-entity="update.beispiel_karte_update"]`);
-    check(`[${tag}] Zeile ohne Gerät öffnet den Dialog von Home Assistant (more-info)`, await p.evaluate(() => window.__moreInfo.includes("update.beispiel_karte_update")) && await ev(`return !r.querySelector("dialog.upd-dlg")?.open`));
+    check(`[${tag}] Pfeil einer Zeile ohne Gerät im Panel öffnet den Dialog von Home Assistant (more-info) statt nichts zu tun`, await p.evaluate(() => window.__moreInfo.includes("update.beispiel_karte_update")) && await ev(`return !r.querySelector("dialog.upd-dlg")?.open`));
     // Start: alle gewählten gehen an den Server
     await p.evaluate(() => { window.__uqCalls = []; });
     await tap(`${D} [data-ua="next"]`);

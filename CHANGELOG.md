@@ -13,6 +13,10 @@ The app "Updates" shows an icon in front of every row.
 
 Includes the changes from 2.188.1.
 
+### Fixed
+
+- **App "Updates", arrow of a row:** the arrow at the right of a row opens the details of that update (release notes, versions). For an entry whose device the panel does not show (for example the service device of HACS) it did nothing. It now opens the dialog of Home Assistant for the update.
+
 ### Changed
 
 - **App "Updates", icons:** every row, in the list and in the progress view, now starts with the logo of its integration, as in the device list: the integration for devices, HACS for HACS, the Supervisor for apps, Home Assistant for Core, operating system and Supervisor. The logos come from the brand service of your own Home Assistant (nothing goes to the internet); without a logo the initials of the integration or kind stand there.

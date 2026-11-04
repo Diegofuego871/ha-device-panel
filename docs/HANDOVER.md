@@ -5,6 +5,7 @@ Einstieg für jede neue Claude-Code-Session. Zuerst diese Datei lesen, dann
 
 ## Stand (2.189.0, Symbole in der App "Updates")
 
+- Der Pfeil einer Zeile (`data-ua="info"`) öffnet für Geräte, die das Panel zeigt, `_openUpdate` (Release Notes), sonst den Dialog von Home Assistant (`_openMoreInfo`); vorher tat er bei einem Gerät, das das Panel nicht zeigt (HACS-Dienst-Gerät), nichts.
 - `UpdApp.badge(u)` setzt vor jede Zeile (Liste und Fortschritt) das Logo der Integration über `host._ibadge` (Geräte: Plattform, HACS: `hacs`, Apps: `hassio`, Core/Betriebssystem/Supervisor: `homeassistant`); ohne Logo die Anfangsbuchstaben von `info(u).integ`. Logos vom Brand-Dienst der eigenen Instanz, nichts geht ins Internet (daher kein `entity_picture` der Update-Entität: es zeigt oft auf das Internet oder braucht Anmeldung). Bild `updates.png` neu.
 
 ## Stand (2.188.1, Popup auf dem Handy)

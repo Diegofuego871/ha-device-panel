@@ -13,6 +13,10 @@ Die App "Updates" zeigt vor jeder Zeile ein Symbol.
 
 Enthält die Änderungen von 2.188.1.
 
+### Behoben
+
+- **App "Updates", Pfeil einer Zeile:** Der Pfeil am rechten Rand einer Zeile öffnet die Einzelheiten dieses Updates (Release Notes, Versionen). Bei einem Eintrag, dessen Gerät das Panel nicht zeigt (zum Beispiel das Dienst-Gerät von HACS), tat er nichts. Er öffnet jetzt den Dialog von Home Assistant für das Update.
+
 ### Geändert
 
 - **App "Updates", Symbole:** Jede Zeile, in der Liste und in der Ansicht des Fortschritts, beginnt jetzt mit dem Logo ihrer Integration, wie in der Geräteliste: bei Geräten die Integration, bei HACS HACS, bei Apps der Supervisor, bei Core, Betriebssystem und Supervisor Home Assistant. Die Logos kommen vom Brand-Dienst deiner eigenen Home-Assistant-Instanz (nichts geht ins Internet); ohne Logo stehen die Anfangsbuchstaben der Integration oder Art da.
