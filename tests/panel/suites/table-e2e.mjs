@@ -74,6 +74,7 @@ for (const lang of ["de", "en"]) {
     check(`[${tag}] Tooltip mit Beginn`, tips.length === 4 && tips[0].startsWith(T.atLeast) && tips[0].includes("Home Assistant") && tips.slice(1).every((x) => x.startsWith(T.since) && /\d/.test(x)), JSON.stringify(tips));
     const pulse = await ev(`return r.querySelector(".kt.pul")?.textContent.replace(/\\s+/g," ") || ""`);
     check(`[${tag}] Ausfall-Puls mit Sammelausfall`, pulse.includes(T.pulse) && pulse.includes(T.incident) && pulse.includes(T.incidentText), pulse);
+    check(`[${tag}] Sammelausfall-Linie: ${mobile ? "auf dem Handy ausgeblendet" : "am Desktop sichtbar"}`, await ev(`const m=r.querySelector(".pchart .imark"); return !!m && (getComputedStyle(m).display === "none") === ${mobile}`));
     check(`[${tag}] Puls-Kurve und Marke`, await ev(`return !!r.querySelector(".pchart path.line") && r.querySelectorAll(".pchart .imark").length === 1`));
 
     // Hinweise als Chips

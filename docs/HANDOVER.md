@@ -3,6 +3,10 @@
 Einstieg für jede neue Claude-Code-Session. Zuerst diese Datei lesen, dann
 `CLAUDE.md`, `docs/CONCEPT.md`, `docs/LEARNINGS.md`, `docs/DESIGN.md`.
 
+## Stand (2.190.1, Sammelausfall-Linie auf dem Handy)
+
+- `.pchart .imark` ist bis 600 px Breite ausgeblendet (`display: none`, die Marke bleibt im DOM); Test in `table-e2e`.
+
 ## Stand (2.190.0, Magic Push zu einer Uhrzeit)
 
 - Regelfeld `send_at` ("HH:MM" oder ""; `_clock_text`-Prüfung in `RULE_SCHEMA`). `magic.next_send(clock, after)` rechnet in der Ortszeit; `_due(rule, ready)` und `_repeat_delay(rule, last, now)` ersetzen in `_arm`, `_evaluate` (Art "ändert sich": `_pending[...]["due"]`) und `_fire` die Zeitrechnung: bis zur Uhrzeit zurückhalten, nur senden, wenn die Bedingung noch gilt (sonst fällt die Meldung weg), mit `send_at` ist eine Wiederholung immer täglich (`clean_rule` setzt `repeat_s = 86400`). "Wieder normal" kommt sofort. `send_at` gehört zu `async_save_rule`-Schlüsseln, die die Laufzeit zurücksetzen; die Sicherung nimmt es über die Regel mit.

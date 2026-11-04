@@ -7,6 +7,14 @@ All notable changes to this integration are documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/).
 
+## [2.190.1] - 2026-11-04
+
+The dashed line of a collective outage is left out on phones.
+
+### Changed
+
+- **Outage pulse, collective outage on the phone:** The dashed line of a collective outage is left out on small screens (up to 600 px), where it was hard to see; the note below the chart stays.
+
 ## [2.190.0] - 2026-11-04
 
 Magic Push can hold a message back until a time of day, and the preview shows the icon of the integration.
@@ -5548,6 +5556,7 @@ First pre-release.
   GitHub Actions for HACS/hassfest validation and tests.
 
 [2.6.0]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v2.6.0
+[2.190.1]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v2.190.1
 [2.190.0]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v2.190.0
 [2.188.0]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v2.188.0
 [2.187.0]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v2.187.0

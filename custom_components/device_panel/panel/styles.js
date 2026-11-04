@@ -223,6 +223,8 @@ button.kwarn:focus-visible { outline: 2px solid var(--dp-primary); outline-offse
 @media (prefers-reduced-motion: reduce) { .tb-main > svg.ee-heart { animation-name: ee-beat-soft; } .kt.ee .k svg { animation: none; } }
 /* Sammelausfall (seit 2.188.1 ohne Punkt am Kopf): nur die gestrichelte senkrechte Linie, in neutraler Farbe, damit sie neben der roten Kurve (oft genau am steilen Anstieg) sichtbar bleibt */
 .pchart .imark { position: absolute; top: 0; bottom: 0; width: 0; border-left: 1.5px dashed color-mix(in srgb, var(--dp-text) 55%, transparent); }
+/* Auf dem Handy (bis 600 px) entfällt die Linie: sie ist dort zu schwer zu erkennen; der Hinweis "Sammelausfall" darunter bleibt */
+@media (max-width: 600px) { .pchart .imark { display: none; } }
 .pticks { position: relative; height: 16px; margin-top: 4px; color: var(--dp-text3); font-size: 11px; font-variant-numeric: tabular-nums; white-space: nowrap; }
 .pticks span { position: absolute; transform: translateX(-50%); }
 .pticks .now-label { right: 0; transform: none; }

@@ -7,6 +7,14 @@ Alle nennenswerten Änderungen an dieser Integration stehen in dieser Datei.
 Das Format folgt [Keep a Changelog](https://keepachangelog.com/de/1.1.0/),
 die Versionsnummern folgen [Semantic Versioning](https://semver.org/lang/de/).
 
+## [2.190.1] - 2026-11-04
+
+Die gestrichelte Linie eines Sammelausfalls entfällt auf dem Handy.
+
+### Geändert
+
+- **Ausfall-Puls, Sammelausfall auf dem Handy:** Die gestrichelte Linie eines Sammelausfalls entfällt auf kleinen Bildschirmen (bis 600 px), wo sie schlecht zu sehen war; der Hinweis unter dem Diagramm bleibt.
+
 ## [2.190.0] - 2026-11-04
 
 Magic Push kann eine Meldung bis zu einer Uhrzeit zurückhalten, und die Vorschau zeigt das Symbol der Integration.
@@ -5649,6 +5657,7 @@ Erste Vorabversion.
   GitHub Actions für die Prüfungen von HACS und hassfest sowie die Tests.
 
 [2.6.0]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v2.6.0
+[2.190.1]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v2.190.1
 [2.190.0]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v2.190.0
 [2.188.0]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v2.188.0
 [2.187.0]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v2.187.0
