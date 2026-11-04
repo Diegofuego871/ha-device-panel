@@ -9,12 +9,13 @@ die Versionsnummern folgen [Semantic Versioning](https://semver.org/lang/de/).
 
 ## [2.188.1] - 2026-11-03
 
-Das Geräte-Popup sieht auf einem schmalen Handy richtig aus, und die README-Bilder des Popups sind neu.
+Das Geräte-Popup sieht auf einem schmalen Handy richtig aus, die Markierung des Sammelausfalls im Ausfall-Puls ist ruhiger, und die README-Bilder des Popups sind neu.
 
 ### Behoben
 
 - **Popup, Kopf auf dem Handy:** Die Warnmarke ("Instabil 5× in 24 Std.", "Empfang schwach", "Batterie niedrig") stand in der schmalen Spalte neben dem Namen und den drei Knöpfen und brach zu einer hohen, aufgeblähten Kapsel um. Sie steht jetzt unter dem Kopf über die ganze Breite, klein und in einer Zeile, mit dem Wert in gedämpfter Farbe (der Punkt dazwischen entfällt).
 - **Popup, Kacheln der Statistik mit Pfeil:** Die Zeile unter dem Wert (zum Beispiel "5 Unterbrüche · längster 9 Min.") läuft nicht mehr unter den Pfeil unten rechts, sondern bricht in die nächste Zeile um.
+- **Ausfall-Puls, Sammelausfall:** Die Markierung eines Sammelausfalls im Diagramm ist jetzt nur noch eine dünne, gestrichelte senkrechte Linie in neutraler Farbe; der Punkt an ihrem oberen Ende entfällt. Der Punkt wirkte, als schwebe er über der Kurve, und die rote Linie verschwand oft hinter dem steilen Anstieg der Kurve. Ein Tipp auf die Linie zeigt weiter die Uhrzeit; der rote Kasten unter dem Diagramm erklärt den Sammelausfall weiter.
 - **README:** Der Abschnitt "Updates" beschreibt jetzt die ganze neue App, und die Bilder des Popups (Desktop und Handy, Deutsch und Englisch) sind neu. Das Handybild entsteht in einem höheren Fenster, die ganze Übersicht liegt also über der festen Leiste "Gerät ausblenden / Schliessen", und kein Abschnitt wirkt abgeschnitten.
 
 ## [2.188.0] - 2026-11-03

@@ -5,7 +5,7 @@ Einstieg für jede neue Claude-Code-Session. Zuerst diese Datei lesen, dann
 
 ## Stand (2.188.1, Popup auf dem Handy)
 
-- Die Warnmarken (`.why-tags.dlg-why`, Wert in `<span class="wv">`, ohne Punkt) stehen unter dem Popup-Kopf über die ganze Breite, klein und in einer Zeile (nicht mehr in der schmalen Spalte neben dem Namen); Kacheln mit Pfeil (`.st-tile:has(> .chev) .st-sub`) lassen Platz für den Pfeil. Test: Suite `warnwhy`. README-Bilder `popup.png` und `popup-mobile.png` neu (`readme-shots.mjs`: für das Handybild ein Fenster mit 1070 px Höhe, damit keine Abschnitte hinter der festen Leiste verschwinden).
+- Die Warnmarken (`.why-tags.dlg-why`, Wert in `<span class="wv">`, ohne Punkt) stehen unter dem Popup-Kopf über die ganze Breite, klein und in einer Zeile (nicht mehr in der schmalen Spalte neben dem Namen); Kacheln mit Pfeil (`.st-tile:has(> .chev) .st-sub`) lassen Platz für den Pfeil. Sammelausfall im Ausfall-Puls: `.imark` ist nur noch die gestrichelte senkrechte Linie in neutraler Farbe, ohne Punkt. Test: Suite `warnwhy`. README-Bilder `popup.png` und `popup-mobile.png` neu (`readme-shots.mjs`: für das Handybild ein Fenster mit 1070 px Höhe, damit keine Abschnitte hinter der festen Leiste verschwinden).
 
 ## Stand (2.188.0, App "Updates" für alle Updates)
 

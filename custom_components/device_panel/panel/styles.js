@@ -221,9 +221,8 @@ button.kwarn:focus-visible { outline: 2px solid var(--dp-primary); outline-offse
    mit fünf Klicks aus, es dauert wenige Sekunden. Vorher stand es dort still und die Linie wurde nicht aufgedeckt. */
 @keyframes ee-beat-soft { 0%, 14% { transform: scale(1); } 20% { transform: scale(1.12); } 26% { transform: scale(1); } 30% { transform: scale(1.06); } 36%, 47% { transform: scale(1); } 53% { transform: scale(1.12); } 59% { transform: scale(1); } 63% { transform: scale(1.06); } 69%, 80% { transform: scale(1); } 86% { transform: scale(1.12); } 92% { transform: scale(1); } 96% { transform: scale(1.06); } 100% { transform: scale(1); } }
 @media (prefers-reduced-motion: reduce) { .tb-main > svg.ee-heart { animation-name: ee-beat-soft; } .kt.ee .k svg { animation: none; } }
-.pchart .imark { position: absolute; top: -4px; bottom: 0; width: 0; border-left: 1.5px dashed var(--dp-error); }
-.pchart .imark::before { content: ""; position: absolute; top: -3px; left: -5px; width: 8px; height: 8px; border-radius: 50%;
-  background: var(--dp-error); box-shadow: 0 0 0 3px var(--dp-error-soft); }
+/* Sammelausfall (seit 2.188.1 ohne Punkt am Kopf): nur die gestrichelte senkrechte Linie, in neutraler Farbe, damit sie neben der roten Kurve (oft genau am steilen Anstieg) sichtbar bleibt */
+.pchart .imark { position: absolute; top: 0; bottom: 0; width: 0; border-left: 1.5px dashed color-mix(in srgb, var(--dp-text) 55%, transparent); }
 .pticks { position: relative; height: 16px; margin-top: 4px; color: var(--dp-text3); font-size: 11px; font-variant-numeric: tabular-nums; white-space: nowrap; }
 .pticks span { position: absolute; transform: translateX(-50%); }
 .pticks .now-label { right: 0; transform: none; }

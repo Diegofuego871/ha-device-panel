@@ -9,12 +9,13 @@ and this project adheres to [Semantic Versioning](https://semver.org/).
 
 ## [2.188.1] - 2026-11-03
 
-The device pop-up looks right on a narrow phone, and the README pop-up images are renewed.
+The device pop-up looks right on a narrow phone, the group-outage mark in the outage pulse is calmer, and the README pop-up images are renewed.
 
 ### Fixed
 
 - **Pop-up, header on a phone:** the warning tag ("Unstable 5× in 24 h", "Weak signal", "Battery low") sat in the narrow column next to the name and the three buttons and broke into a tall, bloated capsule. It now sits below the header across the full width, small and in one line, with the value in a muted color (the dot between them is gone).
 - **Pop-up, statistics tiles with an arrow:** the line under the value (for example "5 outages · longest 9 min") no longer runs under the arrow at the bottom right; it breaks to the next line instead.
+- **Outage pulse, group outage:** the mark of a group outage in the chart is now only a thin dashed vertical line in a neutral color; the dot at its top end is gone. The dot looked like it floated above the curve, and the red line often hid behind the steep rise of the curve. Tapping the line still shows the time; the red box below the chart still explains the group outage.
 - **README:** the section "Updates" now describes the whole new app, and the pop-up images (desktop and phone, German and English) are renewed. The phone image is taken in a taller window, so the whole overview sits above the fixed bar "Hide device / Close" and no section looks cut off.
 
 ## [2.188.0] - 2026-11-03
