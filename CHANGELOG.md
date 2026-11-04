@@ -7,9 +7,21 @@ All notable changes to this integration are documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/).
 
+## [2.189.0] - 2026-11-04
+
+The app "Updates" shows an icon in front of every row.
+
+Includes the changes from 2.188.1.
+
+### Changed
+
+- **App "Updates", icons:** every row, in the list and in the progress view, now starts with the logo of its integration, as in the device list: the integration for devices, HACS for HACS, the Supervisor for apps, Home Assistant for Core, operating system and Supervisor. The logos come from the brand service of your own Home Assistant (nothing goes to the internet); without a logo the initials of the integration or kind stand there.
+
 ## [2.188.1] - 2026-11-03
 
 The device pop-up looks right on a narrow phone, the group-outage mark in the outage pulse is calmer, and the README pop-up images are renewed.
+
+Not released; included in 2.189.0.
 
 ### Fixed
 
@@ -5515,7 +5527,7 @@ First pre-release.
   GitHub Actions for HACS/hassfest validation and tests.
 
 [2.6.0]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v2.6.0
-[2.188.1]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v2.188.1
+[2.189.0]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v2.189.0
 [2.188.0]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v2.188.0
 [2.187.0]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v2.187.0
 [2.186.1]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v2.186.1

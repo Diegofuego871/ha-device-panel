@@ -3,6 +3,10 @@
 Einstieg für jede neue Claude-Code-Session. Zuerst diese Datei lesen, dann
 `CLAUDE.md`, `docs/CONCEPT.md`, `docs/LEARNINGS.md`, `docs/DESIGN.md`.
 
+## Stand (2.189.0, Symbole in der App "Updates")
+
+- `UpdApp.badge(u)` setzt vor jede Zeile (Liste und Fortschritt) das Logo der Integration über `host._ibadge` (Geräte: Plattform, HACS: `hacs`, Apps: `hassio`, Core/Betriebssystem/Supervisor: `homeassistant`); ohne Logo die Anfangsbuchstaben von `info(u).integ`. Logos vom Brand-Dienst der eigenen Instanz, nichts geht ins Internet (daher kein `entity_picture` der Update-Entität: es zeigt oft auf das Internet oder braucht Anmeldung). Bild `updates.png` neu.
+
 ## Stand (2.188.1, Popup auf dem Handy)
 
 - Die Warnmarken (`.why-tags.dlg-why`, Wert in `<span class="wv">`, ohne Punkt) stehen unter dem Popup-Kopf über die ganze Breite, klein und in einer Zeile (nicht mehr in der schmalen Spalte neben dem Namen); Kacheln mit Pfeil (`.st-tile:has(> .chev) .st-sub`) lassen Platz für den Pfeil. Sammelausfall im Ausfall-Puls: `.imark` ist nur noch die gestrichelte senkrechte Linie in neutraler Farbe, ohne Punkt. Test: Suite `warnwhy`. README-Bilder `popup.png` und `popup-mobile.png` neu (`readme-shots.mjs`: für das Handybild ein Fenster mit 1070 px Höhe, damit keine Abschnitte hinter der festen Leiste verschwinden).

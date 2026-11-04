@@ -266,7 +266,7 @@ Switches an entity of a device once or on a schedule, without an automation.
 
 ## Updates
 
-The app "Updates" (administrators) lists every open update Home Assistant knows in one window and starts them from there.
+The app "Updates" (administrators) lists every open update Home Assistant knows in one window and starts them from there. Every row carries the logo of its integration.
 
 - **What it lists:** devices (firmware), apps (add-ons), HACS / Marketplace, Home Assistant Core, operating system and Supervisor. A row without a device (app, HACS, Home Assistant) opens the dialog of Home Assistant with the release notes.
 - **Choose:** chips by kind (Home Assistant, Apps, HACS) and by integration of the devices preselect, checkboxes refine, one button starts the selection after a confirmation, optionally with a backup first where the update supports it.

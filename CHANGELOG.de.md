@@ -7,9 +7,21 @@ Alle nennenswerten Änderungen an dieser Integration stehen in dieser Datei.
 Das Format folgt [Keep a Changelog](https://keepachangelog.com/de/1.1.0/),
 die Versionsnummern folgen [Semantic Versioning](https://semver.org/lang/de/).
 
+## [2.189.0] - 2026-11-04
+
+Die App "Updates" zeigt vor jeder Zeile ein Symbol.
+
+Enthält die Änderungen von 2.188.1.
+
+### Geändert
+
+- **App "Updates", Symbole:** Jede Zeile, in der Liste und in der Ansicht des Fortschritts, beginnt jetzt mit dem Logo ihrer Integration, wie in der Geräteliste: bei Geräten die Integration, bei HACS HACS, bei Apps der Supervisor, bei Core, Betriebssystem und Supervisor Home Assistant. Die Logos kommen vom Brand-Dienst deiner eigenen Home-Assistant-Instanz (nichts geht ins Internet); ohne Logo stehen die Anfangsbuchstaben der Integration oder Art da.
+
 ## [2.188.1] - 2026-11-03
 
 Das Geräte-Popup sieht auf einem schmalen Handy richtig aus, die Markierung des Sammelausfalls im Ausfall-Puls ist ruhiger, und die README-Bilder des Popups sind neu.
+
+Nicht veröffentlicht; enthalten in 2.189.0.
 
 ### Behoben
 
@@ -5616,7 +5628,7 @@ Erste Vorabversion.
   GitHub Actions für die Prüfungen von HACS und hassfest sowie die Tests.
 
 [2.6.0]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v2.6.0
-[2.188.1]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v2.188.1
+[2.189.0]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v2.189.0
 [2.188.0]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v2.188.0
 [2.187.0]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v2.187.0
 [2.186.1]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v2.186.1

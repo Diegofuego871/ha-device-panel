@@ -154,6 +154,14 @@ export class UpdApp {
     return { name: d?.name || u.title, integ: kind === "devices" ? this.host._scopeName(u.platform) : this.t(`appupKind_${kind}`) };
   }
 
+  // Symbol der Zeile (seit 2.188.2): das Logo der Integration wie in der Geräteliste (Geräte: ihre Integration, HACS: HACS, Apps: Supervisor,
+  // Home Assistant: Home Assistant); Logos kommen vom Brand-Dienst der eigenen Instanz, ohne Logo stehen die Anfangsbuchstaben der Integration oder Art
+  badge(u) {
+    const kind = u.kind || "devices";
+    const domain = kind === "devices" ? u.platform : kind === "hacs" ? "hacs" : kind === "addons" ? "hassio" : "homeassistant";
+    return this.host._ibadge(domain, this.info(u).integ);
+  }
+
   // Chip einer Zeile: Geräte nach Integration, alles andere nach Art
   groupKey(u) {
     return !u.kind || u.kind === "devices" ? u.platform : `kind:${u.kind}`;
@@ -280,7 +288,7 @@ export class UpdApp {
     const { name, integ } = this.info(u);
     const on = this.ui.sel.has(u.entity_id);
     return `<div class="ua-row"><label class="ua-cb"><input type="checkbox" data-ua-sel="${escape(u.entity_id)}" ${on ? "checked" : ""} aria-label="${escape(name)}"><span>${mdi("check", 14)}</span></label>
-      <button type="button" class="ua-main" data-ua="info" data-entity="${escape(u.entity_id)}" data-device="${escape(u.device_id || "")}"><span class="ua-t"><b>${escape(name)}</b><small>${escape(integ)} · ${escape(u.installed ?? "?")} → ${escape(u.latest ?? "?")}</small>${this.restartKind(u) ? `<small class="ua-restart">${escape(this.t(this.restartKind(u) === "os" ? "appupRestartOs" : "appupRestartCore"))}</small>` : ""}</span><span class="cbtn" aria-hidden="true">${mdi("chevronRight", 16)}</span></button></div>`;
+      <button type="button" class="ua-main" data-ua="info" data-entity="${escape(u.entity_id)}" data-device="${escape(u.device_id || "")}">${this.badge(u)}<span class="ua-t"><b>${escape(name)}</b><small>${escape(integ)} · ${escape(u.installed ?? "?")} → ${escape(u.latest ?? "?")}</small>${this.restartKind(u) ? `<small class="ua-restart">${escape(this.t(this.restartKind(u) === "os" ? "appupRestartOs" : "appupRestartCore"))}</small>` : ""}</span><span class="cbtn" aria-hidden="true">${mdi("chevronRight", 16)}</span></button></div>`;
   }
 
   // Zustand einer gestarteten Zeile: Warteschlange des Servers, Fortschritt aus dem Zustand der Entität
@@ -325,6 +333,6 @@ export class UpdApp {
       line = s.gone ? t(x.kind === "addons" ? "updRebootingApp" : x.kind === "core" || x.kind === "hacs" ? "updRebootingOther" : "updRebooting") : finishing ? t("updFinishing") : s.percent != null ? t("updPercent", Math.round(s.percent)) : t("updRunning");
       extra = s.gone ? `<div class="upd-bar"><i style="width:100%"></i></div>` : s.percent != null ? `<div class="upd-bar" role="progressbar" aria-valuenow="${Math.round(s.percent)}" aria-valuemin="0" aria-valuemax="100"><i style="width:${Math.max(2, Math.min(100, s.percent))}%"></i></div>` : `<div class="ver-prog"><i></i></div>`;
     }
-    return `<div class="ua-row run ${s.kind}">${lead}<div class="ua-t"><b>${escape(name)}</b><small class="ua-st${cls}">${escape(line)}</small>${why ? `<small class="ua-why">${escape(why)}</small>` : ""}${s.kind === "running" ? extra : ""}</div>${s.kind === "failed" ? extra : ""}</div>`;
+    return `<div class="ua-row run ${s.kind}">${this.badge(x)}${lead}<div class="ua-t"><b>${escape(name)}</b><small class="ua-st${cls}">${escape(line)}</small>${why ? `<small class="ua-why">${escape(why)}</small>` : ""}${s.kind === "running" ? extra : ""}</div>${s.kind === "failed" ? extra : ""}</div>`;
   }
 }

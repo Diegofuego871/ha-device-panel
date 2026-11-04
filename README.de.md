@@ -266,7 +266,7 @@ Schaltet eine Entität eines Geräts einmalig oder nach Zeitplan, ohne Automatio
 
 ## Updates
 
-Die App "Updates" (Administratoren) listet jedes offene Update, das Home Assistant kennt, in einem Fenster und startet sie von dort.
+Die App "Updates" (Administratoren) listet jedes offene Update, das Home Assistant kennt, in einem Fenster und startet sie von dort. Jede Zeile trägt das Logo ihrer Integration.
 
 - **Was sie listet:** Geräte (Firmware), Apps (Add-ons), HACS / Marketplace, Home Assistant Core, Betriebssystem und Supervisor. Eine Zeile ohne Gerät (App, HACS, Home Assistant) öffnet den Dialog von Home Assistant mit den Release Notes.
 - **Wählen:** Chips nach Art (Home Assistant, Apps, HACS) und nach Integration der Geräte wählen vor, Häkchen verfeinern, ein Knopf startet die Auswahl nach einer Bestätigung, auf Wunsch mit vorheriger Sicherung, wo das Update sie kann.
