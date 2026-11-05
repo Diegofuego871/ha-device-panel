@@ -7,9 +7,29 @@ Alle nennenswerten Änderungen an dieser Integration stehen in dieser Datei.
 Das Format folgt [Keep a Changelog](https://keepachangelog.com/de/1.1.0/),
 die Versionsnummern folgen [Semantic Versioning](https://semver.org/lang/de/).
 
+## [2.197.0] - 2026-11-05
+
+Die Sicherung deckt nun auch die letzten fehlenden Einstellungen ab, und die persönlichen Einstellungen der Benutzer lassen sich ebenfalls sichern.
+
+Enthält die Änderungen von 2.196.0.
+
+### Hinzugefügt
+
+- **Sicherung, Teil "Persönliche Einstellungen der Benutzer":** optional (standardmässig aus, weil die Datei dann die Daten aller Benutzer enthält). Gesichert werden für jeden Benutzer von Home Assistant die Ansicht (Filter, Spalten, Farbe, Sprache), der App-Launcher, die Favoriten und die Routinen-Sterne. Das Wiederherstellen ordnet die Benutzer über ihre ID zu: Ein Benutzer, den es in diesem Home Assistant nicht gibt, wird übersprungen und im Bericht genannt; Benutzer, die nicht in der Datei stehen, bleiben unverändert. Wiederhergestellte Einträge bekommen einen frischen Zeitstempel, so übernimmt auch ein Browser mit älterer lokaler Kopie sie. Die eigenen Daten von Home Assistant (Startseite, Seitenleiste) gehören nicht dazu. "Rückgängig" holt den Zustand vorher zurück, auch für diese Einträge.
+
+### Geändert
+
+- **Kopfzeile des Panels, Strich vor dem Launcher:** Wie in den Köpfen der Fenster trennt nun ein dünner Strich die angehefteten Apps (zum Beispiel die Einstellungen) vom Launcher-Knopf, der ganz rechts bleibt. Der Abstand beträgt auf beiden Seiten des Strichs 16 px, am Desktop und am Handy; ohne angeheftete Apps gibt es keinen Strich.
+
+### Behoben
+
+- **Sicherung, Panel-Einstellungen:** "Vorabversionen anzeigen" und "Updates automatisch installieren" (Einstellungen › Panel › Updates) fehlten in der Sicherung. Sie gehören jetzt zum Teil "Meldungen und Überwachung" und werden beim Wiederherstellen wie alle anderen Werte geprüft. Ein Test stellt nun sicher, dass jede Ablage der Integration entweder in der Sicherung steht oder auf der Liste der bewusst ausgelassenen Laufzeitdaten.
+
 ## [2.196.0] - 2026-11-05
 
 Die Kopfzeile des Launchers sieht aus wie die Köpfe der anderen Fenster.
+
+Nicht veröffentlicht; enthalten in 2.197.0.
 
 ### Geändert
 
@@ -5732,7 +5752,7 @@ Erste Vorabversion.
   GitHub Actions für die Prüfungen von HACS und hassfest sowie die Tests.
 
 [2.6.0]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v2.6.0
-[2.196.0]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v2.196.0
+[2.197.0]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v2.197.0
 [2.195.0]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v2.195.0
 [2.194.0]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v2.194.0
 [2.190.1]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v2.190.1

@@ -3,6 +3,12 @@
 Einstieg für jede neue Claude-Code-Session. Zuerst diese Datei lesen, dann
 `CLAUDE.md`, `docs/CONCEPT.md`, `docs/LEARNINGS.md`, `docs/DESIGN.md`.
 
+## Stand (2.197.0, Sicherung: Panel-Einstellungen und Benutzer)
+
+- `backup.py`: `_PANEL_SETTINGS` (`panel_prerelease`, `panel_auto_update`, Ablage `device_panel.panel`) im Teil "monitor" (`_panel_part`); neuer Teil `users` (nicht in `DEFAULT_SECTIONS`): `_users_export`/`_users_part` lesen und schreiben `async_user_store(hass, user_id)` für `_USER_KEYS` (view, apps, favorites, routine_stars), Zuordnung über Benutzer-ID, unbekannt = Übersprungen (`user_unknown`), beim Schreiben frisches `updated` (Panel-Lader: der neuere Stand gewinnt). Nicht dabei: HA-eigenes `core`, `device_panel_start`.
+- `tests/test_backup.py::test_every_store_is_classified` zwingt jede neue Ablage `.storage/device_panel.*` in die Liste "gesichert" oder "Laufzeit". Neue Ablage mit Einstellungen: in die Sicherung aufnehmen.
+- Offen bei Ausfall: Sicherung deckt nicht ab: Verläufe, Protokolle, Zähler, Zustände (Laufzeit).
+
 ## Stand (2.196.0, Kopfzeile des Launchers)
 
 - `apps.js` (`_render`, Kopf ausserhalb des Bearbeiten-Modus): `.ap-pw.ap-act` (Neustart), `.ap-act[data-ap="edit"]` (Bleistift, Text nur als `title`/`aria-label`), `.dlg-sep`, `.ap-x.show` (Kreuz, jetzt auch am Desktop). CSS in `styles.js` unter `.ap-head .ap-act`; alles grau, 42 px (Handy 38 px), Strich mit `margin: 0 8px` (je 16 px bei Lücke 8). Mockup `docs/mockups/launcher-head-v1` (Variante A, alles grau auf Wunsch). Test in `launcher-e2e` (Reihenfolge, Strich mittig, gleich gross, grau).

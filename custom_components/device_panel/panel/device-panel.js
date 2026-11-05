@@ -470,7 +470,7 @@ const MARKET_PLATFORMS = ["hacs", "marketplace"];
 // Ruhezeit (seit 2.95.0): Meldungsarten, die sich zurückhalten lassen (wie im Backend, quiet.py), und die Vorgabe je Wochentag
 const QUIET_TOPICS = ["outage", "online", "battery", "charge", "new", "updates", "panelupdate", "routines", "status", "magic"];
 // Sichern und wiederherstellen (seit 2.98.0): Bereiche der Sicherung wie im Backend (backup.py); Routinen und Magic Push standardmässig aus
-const BACKUP_SECTIONS = ["monitor", "display", "devices", "ai", "routines", "magic"];
+const BACKUP_SECTIONS = ["monitor", "display", "devices", "ai", "routines", "magic", "users"];
 const BACKUP_DEFAULT = ["monitor", "display", "devices", "ai"];
 const QUIET_DAY_DEFAULT = { on: true, from: "22:00", to: "07:00" };
 // Abschnitt "Überwachung und Meldungen" (seit 0.34.0): Optionen je Reiter,
@@ -7054,6 +7054,7 @@ class DevicePanel extends HTMLElement {
     const t = (k, ...a) => this._t(k, ...a);
     if (sk.reason === "unknown") return [t("bkSkUnknown", sk.what), t("bkSkUnknownHint")];
     if (sk.reason === "device_unknown") return [t("bkSkDevices", sk.count || 1), t("bkSkDevicesHint")];
+    if (sk.reason === "user_unknown") return [t("bkSkUser", sk.name || sk.id), t("bkSkUserHint")];
     if (sk.reason === "invalid") return [t("bkSkInvalid", sk.device ? `${sk.device}: ${sk.what}` : sk.what), t("bkSkInvalidHint")];
     void sectionRep;
     return [String(sk.what), String(sk.reason)];

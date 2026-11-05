@@ -9,10 +9,13 @@ nur mit "replace" (Rückgängig: Zustand vor der Wiederherstellung) wird auch en
 
 from __future__ import annotations
 
+import json
+import time
 from datetime import UTC, datetime
 from typing import Any
 
 import voluptuous as vol
+from homeassistant.components.frontend.storage import async_user_store
 from homeassistant.core import HomeAssistant
 from homeassistant.helpers import device_registry as dr
 from homeassistant.helpers import entity_registry as er
@@ -61,14 +64,23 @@ from .devices import (
     valid_signal_setting,
 )
 from .magic import clean_rule
+from . import update_check
 from .update_check import async_installed_version
 
 FORMAT = "device_panel_backup"
 FORMAT_VERSION = 1
 
-SECTIONS = ("monitor", "display", "devices", "ai", "routines", "magic")
-# Standard beim Sichern: Routinen und Magic Push verweisen auf Entitäten und Geräte, die fehlen können (Wunsch des Nutzers: aus)
+SECTIONS = ("monitor", "display", "devices", "ai", "routines", "magic", "users")
+# Standard beim Sichern: Routinen und Magic Push verweisen auf Entitäten und Geräte, die fehlen können (Wunsch des Nutzers: aus);
+# "users" (seit 2.197.0) enthält persönliche Einstellungen aller Benutzer und ist deshalb nur auf Wunsch dabei
 DEFAULT_SECTIONS = ("monitor", "display", "devices", "ai")
+
+# Persönliche Daten pro Benutzer in Home Assistant (frontend.user_data_<id>). Nicht dabei: "core" (Startseite, Seitenleiste:
+# gehört Home Assistant) und "device_panel_start" (Zustand der Startseiten-Umschaltung, nicht der Wunsch des Nutzers)
+_USER_KEYS = ("device_panel_view", "device_panel_apps", "device_panel_favorites", "device_panel_routine_stars")
+# Diese Einträge tragen einen Zeitstempel "updated"; das Panel übernimmt beim Laden den neueren Stand (Browser oder Server)
+_USER_STAMPED = _USER_KEYS
+_USER_MAX_BYTES = 200_000
 
 _AI_KEYS = {CONF_AI_ASSESSMENT, CONF_AI_PROMPT, CONF_AI_TASK}
 _DISPLAY_KEYS = {
@@ -88,6 +100,10 @@ _ROUTINE_KEYS = {"routines_catch_up", "routines_notify_error", "routines_pause",
 # Der Zustand des Einrichtungsassistenten gehört zur Installation, nicht zu den Einstellungen: er steht nicht in der Sicherung
 _WIZARD_KEYS = {"wizard_state", "wizard_done_at", "wizard_draft"}
 _SCHEMA_KEYS = {str(k.schema) for k in options_api.PANEL_SCHEMA.schema} - _WIZARD_KEYS
+
+# Panel-Einstellungen der Instanz (seit 2.197.0; Einstellungen › Panel › Updates): liegen nicht in den Optionen der Integration, sondern in einer eigenen Datei
+# (update_check.panel_settings). In der Sicherung stehen sie im Bereich "monitor" neben den Optionen, unter diesen Namen.
+_PANEL_SETTINGS = {"panel_prerelease": "prerelease", "panel_auto_update": "auto_update"}
 
 # Die vier Werte, die sich gegenseitig prüfen ("Erst melden nach" nie kürzer als "Ausgefallen nach")
 _DELAY_KEYS = {CONF_NOTIFY_DELAY, CONF_NOTIFY_DELAY_INTEGRATIONS, CONF_OFFLINE_AFTER, CONF_OFFLINE_INTEGRATIONS}
@@ -167,6 +183,9 @@ async def async_export(hass: HomeAssistant, sections: list[str]) -> dict[str, An
         body: dict[str, Any] = {}
         if keys:
             body["options"] = {k: values[k] for k in sorted(keys) if k in values}
+        if section == "monitor":
+            panel = update_check.panel_settings(hass)
+            body["options"].update({key: bool(panel.get(name)) for key, name in _PANEL_SETTINGS.items()})
         if section == "devices":
             await async_load_type_overrides(hass)
             registry = dr.async_get(hass)
@@ -203,6 +222,8 @@ async def async_export(hass: HomeAssistant, sections: list[str]) -> dict[str, An
         elif section == "magic":
             manager = hass.data.get(DATA_MAGIC)
             body["items"] = [_strip(r) for r in manager.rules()] if manager else []
+        elif section == "users":
+            body["items"] = await _users_export(hass)
         out[section] = body
     return {
         "format": FORMAT,
@@ -211,6 +232,19 @@ async def async_export(hass: HomeAssistant, sections: list[str]) -> dict[str, An
         "exported_at": datetime.now(UTC).isoformat(timespec="seconds"),
         "sections": out,
     }
+
+
+async def _users_export(hass: HomeAssistant) -> dict[str, Any]:
+    """Persönliche Panel-Einstellungen jedes aktiven Benutzers (ohne Systembenutzer); Schlüssel: Benutzer-ID."""
+    out: dict[str, Any] = {}
+    for user in sorted(await hass.auth.async_get_users(), key=lambda u: (u.name or "", u.id)):
+        if user.system_generated or not user.is_active:
+            continue
+        store = await async_user_store(hass, user.id)
+        keys = {k: store.data[k] for k in _USER_KEYS if store.data.get(k)}
+        if keys:
+            out[user.id] = {"name": user.name, "keys": keys}
+    return out
 
 
 # -- Wiederherstellen ----------------------------------------------------------------------------------------------
@@ -309,6 +343,8 @@ def _options_part(hass: HomeAssistant, entry: Any, section: str, file_options: A
     current = options_api.current_values(entry)
     valid: dict[str, Any] = {}
     for key, value in file_options.items():
+        if key in _PANEL_SETTINGS:
+            continue  # gehört zu _panel_part
         if key not in _SCHEMA_KEYS:
             rep["skipped"].append({"what": key, "reason": "unknown"})
             continue
@@ -334,6 +370,28 @@ def _options_part(hass: HomeAssistant, entry: Any, section: str, file_options: A
     rep["changed"] += len(applied)
     for key, value in applied.items():
         _example(rep, key, current.get(key), value)
+
+
+async def _panel_part(hass: HomeAssistant, file_options: Any, dry_run: bool, rep: dict[str, Any]) -> None:
+    """Panel-Einstellungen der Instanz (Vorabversionen anzeigen, Updates automatisch installieren) prüfen und speichern."""
+    if not isinstance(file_options, dict):
+        return
+    current = update_check.panel_settings(hass)
+    changed: dict[str, bool] = {}
+    for key, name in _PANEL_SETTINGS.items():
+        if key not in file_options:
+            continue
+        value = file_options[key]
+        if not isinstance(value, bool):
+            rep["skipped"].append({"what": key, "reason": "invalid"})
+        elif value == bool(current.get(name)):
+            _same(rep, key)
+        else:
+            changed[name] = value
+            rep["changed"] += 1
+            _example(rep, key, bool(current.get(name)), value)
+    if changed and not dry_run:
+        await update_check.async_set_panel_settings(hass, changed)
 
 
 def _valid_device_setting(key: str, value: Any) -> bool:
@@ -510,6 +568,62 @@ async def _items_part(hass: HomeAssistant, kind: str, items: Any, dry_run: bool,
                     await manager.async_delete_rule(item_id)
 
 
+def _valid_user_value(value: Any) -> bool:
+    """Ein Eintrag eines Benutzers: ein Wörterbuch in vernünftiger Grösse (der Inhalt wird vom Panel beim Laden geprüft)."""
+    if not isinstance(value, dict):
+        return False
+    try:
+        return len(json.dumps(value)) <= _USER_MAX_BYTES
+    except (TypeError, ValueError):
+        return False
+
+
+def _without_stamp(value: Any) -> Any:
+    return {k: v for k, v in value.items() if k != "updated"} if isinstance(value, dict) else value
+
+
+async def _users_part(hass: HomeAssistant, items: Any, dry_run: bool, replace: bool, rep: dict[str, Any]) -> None:
+    """
+    Persönliche Einstellungen je Benutzer. Zugeordnet wird über die Benutzer-ID; gibt es den Benutzer nicht, wird er übersprungen.
+    Geschrieben wird mit frischem Zeitstempel "updated", sonst behielte ein Browser seine lokale Kopie ("der neuere Stand gewinnt").
+    """
+    if not isinstance(items, dict):
+        return
+    users = {u.id: u for u in await hass.auth.async_get_users() if not u.system_generated and u.is_active}
+    now = int(time.time() * 1000)
+    for user_id, raw in list(items.items())[:_ITEMS_MAX]:
+        keys = raw.get("keys") if isinstance(raw, dict) else None
+        name = str(raw.get("name") or user_id) if isinstance(raw, dict) else str(user_id)
+        if user_id not in users:
+            rep["skipped"].append({"what": "user", "reason": "user_unknown", "id": str(user_id), "name": name})
+            continue
+        if not isinstance(keys, dict):
+            continue
+        store = await async_user_store(hass, user_id)
+        label = users[user_id].name or name
+        wanted = {k: v for k, v in keys.items() if k in _USER_KEYS}
+        for key in _USER_KEYS:
+            if key not in wanted:
+                # Nur mit "replace" (Rückgängig) wird entfernt, was die Datei für diesen Benutzer nicht kennt
+                if replace and store.data.get(key):
+                    rep["changed"] += 1
+                    _example(rep, key, "gesetzt", "–", device=label)
+                    if not dry_run:
+                        await store.async_set_item(key, None)
+                continue
+            value = wanted[key]
+            if not _valid_user_value(value):
+                rep["skipped"].append({"what": key, "reason": "invalid", "device": label})
+                continue
+            if _without_stamp(store.data.get(key)) == _without_stamp(value):
+                _same(rep, key, device=label)
+                continue
+            rep["changed"] += 1
+            _example(rep, key, "gesetzt" if store.data.get(key) else "–", "wiederhergestellt", device=label)
+            if not dry_run:
+                await store.async_set_item(key, {**value, "updated": now} if key in _USER_STAMPED else value)
+
+
 def check_file(data: Any) -> dict[str, Any]:
     """Die Datei prüfen (Format und Version); gibt die Bereiche zurück oder löst vol.Invalid aus."""
     if not isinstance(data, dict) or data.get("format") != FORMAT or not isinstance(data.get("sections"), dict):
@@ -531,10 +645,14 @@ async def async_import(hass: HomeAssistant, data: Any, sections: list[str] | Non
         body = file_sections[section] if isinstance(file_sections[section], dict) else {}
         rep = _empty()
         _options_part(hass, entry, section, body.get("options"), dry_run, rep, body.get("names") if isinstance(body.get("names"), dict) else None)
+        if section == "monitor":
+            await _panel_part(hass, body.get("options"), dry_run, rep)
         if section == "devices":
             await _devices_part(hass, body, dry_run, replace, rep)
         elif section in ("routines", "magic"):
             await _items_part(hass, section, body.get("items"), dry_run, replace, rep)
+        elif section == "users":
+            await _users_part(hass, body.get("items"), dry_run, replace, rep)
         report[section] = rep
     totals = {
         "changed": sum(r["changed"] for r in report.values()),

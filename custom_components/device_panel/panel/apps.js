@@ -592,6 +592,7 @@ export class AppLauncher {
     this._paintLauncherDot();
     const { escape } = this.h;
     const pins = this.favs().slice(0, this._pinCount());
+    // Strich zwischen den angehefteten Apps und dem Launcher-Knopf (seit 2.198.0, wie in den Köpfen der Fenster); ohne Pins kein Strich
     const html = pins
       .map((a) => {
         const dot = this.dotLevels().pins[a.id] || "";
@@ -604,7 +605,7 @@ export class AppLauncher {
           ? `<a class="${cls}" href="${escape(a.url)}" target="_blank" rel="noopener noreferrer" data-app-pin="${escape(a.id)}" title="${label}" aria-label="${label}">${icon}</a>`
           : `<button type="button" class="${cls}" data-app-pin="${escape(a.id)}" title="${label}" aria-label="${label}">${icon}</button>`;
       })
-      .join("");
+      .join("") + (pins.length ? '<span class="dlg-sep tb-sep" aria-hidden="true"></span>' : "");
     if (this._barHtml !== html) {
       this._barHtml = html;
       box.innerHTML = html;

@@ -895,8 +895,8 @@
         const DISPLAY = ["chip_order", "connection_integrations", "connection_order", "exclude_integrations", "exclude_types", "hide_chips", "hide_connections", "show_disabled_devices", "show_service_devices", "type_integrations"];
         const ROUT = ["routines_catch_up", "routines_notify_error", "routines_pause", "routines_pause_until", "notify_service_routines"];
         const DEV = ["exclude_devices"];
-        const keysOf = (sec) => sec === "ai" ? AI : sec === "display" ? DISPLAY : sec === "devices" ? DEV : sec === "routines" ? ROUT : sec === "magic" ? [] : Object.keys(window.__opts).filter((k) => ![...AI, ...DISPLAY, ...DEV, ...ROUT].includes(k));
-        const SECS = ["monitor", "display", "devices", "ai", "routines", "magic"];
+        const keysOf = (sec) => sec === "ai" ? AI : sec === "display" ? DISPLAY : sec === "devices" ? DEV : sec === "routines" ? ROUT : sec === "magic" || sec === "users" ? [] : Object.keys(window.__opts).filter((k) => ![...AI, ...DISPLAY, ...DEV, ...ROUT].includes(k));
+        const SECS = ["monitor", "display", "devices", "ai", "routines", "magic", "users"];
         if (msg.type === "device_panel/backup_export") {
           if (window.__backupFails) throw new Error(window.__backupFails);
           const sections = {};
@@ -905,6 +905,7 @@
             if (keysOf(sec).length) body.options = Object.fromEntries(keysOf(sec).filter((k) => k in window.__opts).map((k) => [k, JSON.parse(JSON.stringify(window.__opts[k]))]));
             if (sec === "devices") Object.assign(body, { settings: JSON.parse(JSON.stringify(window.__bkDevices || {})), types: {}, connections: {}, names: {} });
             if (sec === "routines" || sec === "magic") body.items = [];
+            if (sec === "users") body.items = { "user-1": { name: "Anna", keys: { device_panel_favorites: { ids: ["dev-a"], updated: 1 } } } };
             sections[sec] = body;
           }
           return { file: { format: "device_panel_backup", format_version: 1, integration_version: "2.98.0", exported_at: new Date().toISOString(), sections } };
@@ -939,6 +940,12 @@
               rep.changed++;
               if (rep.examples.length < 3) rep.examples.push({ what: it.name, old: "–", new: "neu", detail });
               rep.changes.push({ what: it.name, old: "–", new: "neu", detail });
+            }
+          }
+          if (sec === "users") {
+            for (const [id, u] of Object.entries(body.items || {})) {
+              if (id !== "user-1") { rep.skipped.push({ what: "user", reason: "user_unknown", id, name: u.name || null }); continue; }
+              for (const k of Object.keys(u.keys || {})) { rep.changed++; rep.changes.push({ what: k, old: "–", new: "wiederhergestellt", device: u.name }); if (rep.examples.length < 3) rep.examples.push({ what: `${u.name}: ${k}`, old: "–", new: "wiederhergestellt" }); }
             }
           }
           if (sec === "devices") {

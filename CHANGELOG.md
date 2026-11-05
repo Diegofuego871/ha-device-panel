@@ -7,9 +7,29 @@ All notable changes to this integration are documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/).
 
+## [2.197.0] - 2026-11-05
+
+The backup now covers the last missing settings, and the personal settings of the users can be saved too.
+
+Includes the changes from 2.196.0.
+
+### Added
+
+- **Backup, part "Personal settings of the users":** optional (off by default, because the file then holds the data of all users). It saves, for every user of Home Assistant, the view (filters, columns, colour, language), the app launcher, the favourites and the routine stars. Restore matches users by their ID: a user that does not exist in this Home Assistant is skipped and named in the report; users that are not in the file stay as they are. Restored entries get a fresh timestamp, so a browser with an older local copy takes them over. Home Assistant's own data of a user (start page, sidebar) is not part of it. "Undo" brings the state before back, including these entries.
+
+### Changed
+
+- **Panel header, divider before the launcher:** like in the headers of the windows, a thin line now separates the pinned apps (for example the settings) from the launcher button, which stays on the far right. The distance is 16 px on both sides of the line, on the desktop and on the phone; without pinned apps there is no line.
+
+### Fixed
+
+- **Backup, panel settings:** "Show pre-releases" and "Install updates automatically" (Settings › Panel › Updates) were missing from the backup. They are now part of the part "Notifications and monitoring" and are checked on restore like all other values. A test now makes sure that every store of the integration is either in the backup or on the list of runtime data that is deliberately left out.
+
 ## [2.196.0] - 2026-11-05
 
 The header of the launcher looks like the headers of the other windows.
+
+Not released; included in 2.197.0.
 
 ### Changed
 
@@ -5631,7 +5651,7 @@ First pre-release.
   GitHub Actions for HACS/hassfest validation and tests.
 
 [2.6.0]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v2.6.0
-[2.196.0]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v2.196.0
+[2.197.0]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v2.197.0
 [2.195.0]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v2.195.0
 [2.194.0]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v2.194.0
 [2.190.1]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v2.190.1

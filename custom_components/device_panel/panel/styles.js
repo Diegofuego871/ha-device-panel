@@ -82,6 +82,8 @@ button { font: inherit; color: inherit; }
   background: var(--dp-card); color: var(--dp-text2); cursor: pointer; }
 .rtall-btn, .apps-btn { margin: 0 -2px; text-decoration: none; } /* Favoriten und Launcher-Knopf rücken enger zusammen (8 px), links vom ersten und rechts vom letzten 10 px */
 .app-pins { display: contents; }
+/* Strich vor dem Launcher-Knopf: je 16 px bis zu den Knöpfen (Lücke 12 px minus 2 px Knopfrand plus 6 px), wie in den Köpfen der Fenster */
+.toolbar .tb-sep { margin: 0 6px; }
 .gear-btn { position: relative; }
 .toolbar .apps-btn:last-child { margin-right: 0; } /* seit 2.88.0 steht der Launcher-Knopf ganz rechts (das Zahnrad ist ein Favorit): bündig mit dem Rand wie vorher das Zahnrad, auch am Handy */
 /* Roter Punkt: Update installiert, Neustart steht aus (seit 2.25.0) */
@@ -1515,6 +1517,7 @@ button.pill.live.off:hover { background: var(--dp-hover); }
   .opt.sig-row .bat-ctl { flex: 1 1 100%; margin-left: 0; }
   .opt.bat-row.sig-row .bat-ctl .opt-select { flex: 1 1 auto; }
   .toolbar { padding: 10px 12px 8px; gap: 8px; }
+  .toolbar .tb-sep { margin: 0 5px; } /* Handy: Lücke 8 px plus Knopfrand 3 px plus 5 px = 16 px */
   .toolbar h1 { font-size: 18px; }
   .content { padding: 0 12px 12px; }
   /* Kopf auf dem Handy (seit 1.26.0, docs/mockups/hero-mobile-v1, V2): "Verfügbarkeit" und

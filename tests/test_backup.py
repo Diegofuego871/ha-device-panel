@@ -266,3 +266,98 @@ async def test_flaky_roundtrip_all_levels(hass: HomeAssistant, setup) -> None:  
     file["sections"]["devices"]["settings"][device.id] = {"flaky": 99}
     rep = await backup.async_import(hass, file, ["devices"], dry_run=True)
     assert any(s["what"] == "flaky" and s["reason"] == "invalid" for s in rep["sections"]["devices"]["skipped"])
+
+
+async def test_panel_settings_roundtrip(hass: HomeAssistant, setup) -> None:  # noqa: F811
+    """Vorabversionen anzeigen und Updates automatisch installieren (Einstellungen › Panel › Updates) stehen in der Sicherung (2.197.0)."""
+    from custom_components.device_panel import update_check
+
+    await update_check.async_set_panel_settings(hass, {"prerelease": True, "auto_update": True})
+    file = await backup.async_export(hass, ["monitor"])
+    options = file["sections"]["monitor"]["options"]
+    assert options["panel_prerelease"] is True and options["panel_auto_update"] is True
+    await update_check.async_set_panel_settings(hass, {"prerelease": False, "auto_update": False})
+    # Vorschau ändert nichts und nennt beide Werte
+    preview = await backup.async_import(hass, file, ["monitor"], dry_run=True)
+    assert update_check.panel_settings(hass)["prerelease"] is False
+    assert {c["what"] for c in preview["sections"]["monitor"]["changes"]} == {"panel_prerelease", "panel_auto_update"}
+    report = await backup.async_import(hass, file, ["monitor"], dry_run=False)
+    assert report["sections"]["monitor"]["skipped"] == []
+    assert update_check.panel_settings(hass)["prerelease"] is True and update_check.panel_settings(hass)["auto_update"] is True
+    # ein zweites Mal: nichts mehr zu tun
+    again = await backup.async_import(hass, file, ["monitor"], dry_run=True)
+    assert again["totals"]["changed"] == 0
+    # ungültiger Wert wird übersprungen, der Rest bleibt
+    bad = {**file, "sections": {"monitor": {"options": {"panel_prerelease": "ja", "panel_auto_update": False}}}}
+    report = await backup.async_import(hass, bad, ["monitor"], dry_run=False)
+    assert [s["what"] for s in report["sections"]["monitor"]["skipped"]] == ["panel_prerelease"]
+    assert update_check.panel_settings(hass)["auto_update"] is False and update_check.panel_settings(hass)["prerelease"] is True
+
+
+async def test_users_roundtrip(hass: HomeAssistant, setup) -> None:  # noqa: F811
+    """Persönliche Einstellungen je Benutzer (2.197.0): sichern, ändern, wiederherstellen; unbekannter Benutzer wird übersprungen."""
+    from homeassistant.components.frontend.storage import async_user_store
+
+    anna = await hass.auth.async_create_user("Anna", group_ids=["system-users"])
+    ben = await hass.auth.async_create_user("Ben", group_ids=["system-users"])
+    store = await async_user_store(hass, anna.id)
+    await store.async_set_item("device_panel_favorites", {"ids": ["d1", "d2"], "updated": 5})
+    await store.async_set_item("device_panel_view", {"desktop": {"filter": "all"}, "updated": 5})
+    await store.async_set_item("core", {"default_panel": "device-panel"})  # gehört Home Assistant
+    await store.async_set_item("device_panel_start", {"prev": "lovelace"})  # Zustand, keine Einstellung
+
+    assert "users" not in backup.DEFAULT_SECTIONS
+    file = await backup.async_export(hass, ["users"])
+    items = file["sections"]["users"]["items"]
+    assert list(items) == [anna.id]  # Ben hat nichts; Systembenutzer fehlen
+    assert set(items[anna.id]["keys"]) == {"device_panel_favorites", "device_panel_view"}
+    assert items[anna.id]["name"] == "Anna"
+
+    # Erster Lauf: Datei und Zustand gleich -> nichts zu tun (der Zeitstempel zählt nicht)
+    assert (await backup.async_import(hass, file, ["users"], dry_run=True))["totals"]["changed"] == 0
+
+    await store.async_set_item("device_panel_favorites", {"ids": ["x"], "updated": 9})
+    preview = await backup.async_import(hass, file, ["users"], dry_run=True)
+    assert preview["totals"]["changed"] == 1
+    assert store.data["device_panel_favorites"]["ids"] == ["x"]  # Vorschau schreibt nichts
+
+    report = await backup.async_import(hass, file, ["users"], dry_run=False)
+    assert report["sections"]["users"]["changed"] == 1
+    assert store.data["device_panel_favorites"]["ids"] == ["d1", "d2"]
+    # frischer Zeitstempel: ein Browser mit älterer lokaler Kopie übernimmt den Stand
+    assert store.data["device_panel_favorites"]["updated"] > 9
+    assert store.data["core"] == {"default_panel": "device-panel"}
+    assert store.data["device_panel_start"] == {"prev": "lovelace"}
+
+    # unbekannter Benutzer, ungültiger Wert
+    bad = {"format": backup.FORMAT, "format_version": 1, "sections": {"users": {"items": {
+        "gibt-es-nicht": {"name": "Cora", "keys": {"device_panel_favorites": {"ids": []}}},
+        ben.id: {"name": "Ben", "keys": {"device_panel_favorites": "kein Wörterbuch", "andere_app": {"x": 1}}},
+    }}}}
+    report = await backup.async_import(hass, bad, ["users"], dry_run=False)
+    skipped = report["sections"]["users"]["skipped"]
+    assert {(x["reason"], x.get("name") or x.get("device")) for x in skipped} == {("user_unknown", "Cora"), ("invalid", "Ben")}
+    ben_store = await async_user_store(hass, ben.id)
+    assert "andere_app" not in ben_store.data and "device_panel_favorites" not in ben_store.data
+
+    # Rückgängig (replace): was die Datei für den Benutzer nicht kennt, wird entfernt
+    only_view = {**file, "sections": {"users": {"items": {anna.id: {"name": "Anna", "keys": {"device_panel_view": items[anna.id]["keys"]["device_panel_view"]}}}}}}
+    await backup.async_import(hass, only_view, ["users"], dry_run=False, replace=True)
+    assert not store.data.get("device_panel_favorites")
+
+
+def test_every_store_is_classified() -> None:
+    """Jede Datei unter .storage, die die Integration anlegt, ist entweder in der Sicherung oder bewusst nicht (Laufzeit, Verlauf, Zwischenstand)."""
+    import re
+    from pathlib import Path
+
+    backed_up = {"devices", "magic", "routines", "panel"}
+    runtime = {
+        "ai", "availability", "backup_alert", "battery", "charge", "debug", "new", "notify", "protocol_index", "push_log", "quiet", "signal",
+        "summary", "timers", "updates",
+    }
+    found: set[str] = set()
+    for path in Path(backup.__file__).parent.glob("*.py"):
+        found |= set(re.findall(r'f"\{DOMAIN\}\.([a-z_]+)"', path.read_text()))
+    unknown = found - backed_up - runtime
+    assert not unknown, f"neue Ablage ohne Entscheidung (Sicherung oder Laufzeit?): {sorted(unknown)}"

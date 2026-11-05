@@ -53,15 +53,18 @@ for (const lang of ["de", "en"]) {
 
     // Sichern: sechs Bereiche, vier an
     await tap('[data-set="bk-export"]');
-    await wait(`return r.querySelector("dialog.backup-dlg")?.open && r.querySelectorAll("dialog.backup-dlg [data-bk-sec]").length === 6`);
-    check(`[${tag}] Fenster "${L.exportTitle}", Standard: Routinen und Magic Push aus`, (await text("dialog.backup-dlg h2")) === L.exportTitle && (await ev(`return [...r.querySelectorAll("dialog.backup-dlg [data-bk-sec]")].map((x) => x.dataset.bkSec + ":" + x.checked).join()`)) === "monitor:true,display:true,devices:true,ai:true,routines:false,magic:false");
+    await wait(`return r.querySelector("dialog.backup-dlg")?.open && r.querySelectorAll("dialog.backup-dlg [data-bk-sec]").length === 7`);
+    check(`[${tag}] Fenster "${L.exportTitle}", Standard: Routinen und Magic Push aus`, (await text("dialog.backup-dlg h2")) === L.exportTitle && (await ev(`return [...r.querySelectorAll("dialog.backup-dlg [data-bk-sec]")].map((x) => x.dataset.bkSec + ":" + x.checked).join()`)) === "monitor:true,display:true,devices:true,ai:true,routines:false,magic:false,users:false");
     let dl = await download(() => tap('dialog.backup-dlg [data-bk="save"]'));
     check(`[${tag}] Datei device-panel-JJJJ-MM-TT.json, vier Bereiche, Format`, /^device-panel-\d{4}-\d{2}-\d{2}\.json$/.test(dl.name) && dl.json.format === "device_panel_backup" && Object.keys(dl.json.sections).join() === "monitor,display,devices,ai", dl.name);
     check(`[${tag}] keine Zugangsdaten in der Datei`, !/token|password|secret/i.test(JSON.stringify(dl.json)));
     await tap('dialog.backup-dlg [data-bk-sec="routines"]');
     dl = await download(() => tap('dialog.backup-dlg [data-bk="save"]'));
     check(`[${tag}] mit Routinen: fünf Bereiche`, Object.keys(dl.json.sections).includes("routines"));
-    for (const s of ["monitor", "display", "devices", "ai", "routines"]) await tap(`dialog.backup-dlg [data-bk-sec="${s}"]`);
+    await tap('dialog.backup-dlg [data-bk-sec="users"]');
+    const dlUsers = await download(() => tap('dialog.backup-dlg [data-bk="save"]'));
+    check(`[${tag}] mit Benutzern: Bereich "users" mit Benutzer-ID, Namen und Schlüsseln`, dlUsers.json.sections.users?.items?.["user-1"]?.keys?.device_panel_favorites != null, JSON.stringify(dlUsers.json.sections.users));
+    for (const s of ["monitor", "display", "devices", "ai", "routines", "users"]) await tap(`dialog.backup-dlg [data-bk-sec="${s}"]`);
     check(`[${tag}] kein Bereich: Knöpfe gesperrt`, await ev(`return r.querySelector('dialog.backup-dlg [data-bk="save"]').disabled && r.querySelector('dialog.backup-dlg [data-bk="copy"]').disabled`));
     await tap('dialog.backup-dlg [data-bk="close"]');
     check(`[${tag}] Fenster zu`, await wait(`return !r.querySelector("dialog.backup-dlg").open`));
