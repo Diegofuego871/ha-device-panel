@@ -2213,6 +2213,13 @@ dialog.app-dlg::backdrop { background: rgba(0,0,0,0.5); }
 .ap-done { display: inline-flex; align-items: center; gap: 6px; height: 34px; padding: 0 16px; border: 0; border-radius: 999px; background: var(--dp-primary); color: var(--dp-on-primary, #fff); font: inherit; font-size: 13.5px; font-weight: 500; cursor: pointer; }
 .ap-x { display: none; place-items: center; flex: none; width: 36px; height: 36px; border: 1px solid var(--dp-divider); border-radius: 50%; background: var(--dp-card); color: var(--dp-text2); cursor: pointer; }
 .ap-x.show { display: grid; }
+/* Kopf des Launchers wie in den anderen Fenstern (seit 2.196.0): Neustart und Bearbeiten als runde Knöpfe (42 px, Handy 38 px), alles grau,
+   dann der Strich (je 16 px Abstand) und das Kreuz */
+.ap-head .ap-act, .ap-head .ap-x.show { width: 42px; height: 42px; border: 1px solid var(--dp-divider); border-radius: 50%; background: var(--dp-card); color: var(--dp-text2); }
+.ap-head .ap-act { display: grid; place-items: center; flex: none; padding: 0; cursor: pointer; }
+.ap-head .ap-act:hover, .ap-head .ap-x.show:hover { background: var(--dp-hover); color: var(--dp-text); }
+.ap-head .ap-pw:hover { color: var(--dp-error); }
+.ap-head .dlg-sep { margin: 0 8px; }
 .ap-body { padding: 0 14px 14px; }
 .ap-search { display: flex; align-items: center; gap: 8px; height: 40px; padding: 0 12px; border: 1px solid var(--dp-divider); border-radius: 999px; background: var(--dp-input); color: var(--dp-text2); }
 .ap-q { flex: 1; min-width: 0; height: 100%; border: 0; outline: 0; background: transparent; color: var(--dp-text); font: inherit; font-size: 14px; }
@@ -2391,6 +2398,7 @@ dialog.app-dlg::backdrop { background: rgba(0,0,0,0.5); }
   .ap-head { padding: 12px 12px 8px 16px; }
   .ap-x { display: grid; width: 38px; height: 38px; }
   .ap-pw { width: 38px; height: 38px; }
+  .ap-head .ap-act, .ap-head .ap-x.show { width: 38px; height: 38px; }
   .ap-grid { grid-template-columns: repeat(3, minmax(0, 1fr)); }
   .ap-view .sub-tabs { width: 170px; }
   .ap-ic { height: 44px; }

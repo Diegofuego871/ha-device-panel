@@ -3,6 +3,10 @@
 Einstieg für jede neue Claude-Code-Session. Zuerst diese Datei lesen, dann
 `CLAUDE.md`, `docs/CONCEPT.md`, `docs/LEARNINGS.md`, `docs/DESIGN.md`.
 
+## Stand (2.196.0, Kopfzeile des Launchers)
+
+- `apps.js` (`_render`, Kopf ausserhalb des Bearbeiten-Modus): `.ap-pw.ap-act` (Neustart), `.ap-act[data-ap="edit"]` (Bleistift, Text nur als `title`/`aria-label`), `.dlg-sep`, `.ap-x.show` (Kreuz, jetzt auch am Desktop). CSS in `styles.js` unter `.ap-head .ap-act`; alles grau, 42 px (Handy 38 px), Strich mit `margin: 0 8px` (je 16 px bei Lücke 8). Mockup `docs/mockups/launcher-head-v1` (Variante A, alles grau auf Wunsch). Test in `launcher-e2e` (Reihenfolge, Strich mittig, gleich gross, grau).
+
 ## Stand (2.195.0, Warnung bei Zeitfenster ohne Gerätebedingung)
 
 - `magic-push.js`: `canNext` sperrt "Weiter"/"Speichern" für diesen Fall nicht mehr; `goto` (vorwärts) und `save` rufen bei `timeNeedsDevice()` `warnTime()` auf: zurück zu Schritt 1, das Fenster aufgeklappt, `w.warnTime` zeigt `.mg-timewarn` (verschwindet von selbst). Greift auch bei früher gespeicherten Regeln (vor 2.194.0 ohne Prüfung speicherbar; der Server lehnt sie beim Speichern ab). Test: `magictime-e2e`.

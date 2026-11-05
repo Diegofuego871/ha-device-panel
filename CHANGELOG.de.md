@@ -7,6 +7,14 @@ Alle nennenswerten Änderungen an dieser Integration stehen in dieser Datei.
 Das Format folgt [Keep a Changelog](https://keepachangelog.com/de/1.1.0/),
 die Versionsnummern folgen [Semantic Versioning](https://semver.org/lang/de/).
 
+## [2.196.0] - 2026-11-05
+
+Die Kopfzeile des Launchers sieht aus wie die Köpfe der anderen Fenster.
+
+### Geändert
+
+- **Launcher, Kopfzeile:** Die Knöpfe "Home Assistant neu starten" und "Bearbeiten" sind jetzt runde Symbolknöpfe (42 px, auf dem Handy 38 px) wie in den Einstellungen, alle grau. Von rechts nach links: das Kreuz, ein dünner Strich (je 16 px Abstand) und die beiden Symbolknöpfe; der Text "Bearbeiten" bleibt als Tooltip und für Screenreader. Das Kreuz ist jetzt auch am Desktop sichtbar. Der Bearbeiten-Modus mit dem Knopf "Fertig" bleibt unverändert.
+
 ## [2.195.0] - 2026-11-05
 
 Magic Push warnt, wenn ein Zeitfenster keine Gerätebedingung hat, statt nur "Weiter" zu sperren.
@@ -5724,6 +5732,7 @@ Erste Vorabversion.
   GitHub Actions für die Prüfungen von HACS und hassfest sowie die Tests.
 
 [2.6.0]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v2.6.0
+[2.196.0]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v2.196.0
 [2.195.0]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v2.195.0
 [2.194.0]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v2.194.0
 [2.190.1]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v2.190.1

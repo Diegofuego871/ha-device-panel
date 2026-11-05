@@ -7,6 +7,14 @@ All notable changes to this integration are documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/).
 
+## [2.196.0] - 2026-11-05
+
+The header of the launcher looks like the headers of the other windows.
+
+### Changed
+
+- **Launcher, header:** The buttons "Restart Home Assistant" and "Edit" are now round icon buttons (42 px, 38 px on the phone) like in the settings, all in grey. From right to left: the close button, a thin line (16 px on both sides) and the two icon buttons; the text "Edit" stays as a tooltip and for screen readers. The close button is now also visible on the desktop. The edit mode with its button "Done" is unchanged.
+
 ## [2.195.0] - 2026-11-05
 
 Magic Push warns when a time window has no device condition, instead of only blocking "Next".
@@ -5623,6 +5631,7 @@ First pre-release.
   GitHub Actions for HACS/hassfest validation and tests.
 
 [2.6.0]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v2.6.0
+[2.196.0]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v2.196.0
 [2.195.0]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v2.195.0
 [2.194.0]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v2.194.0
 [2.190.1]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v2.190.1
