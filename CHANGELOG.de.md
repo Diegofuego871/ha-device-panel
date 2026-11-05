@@ -13,6 +13,7 @@ Magic Push warnt, wenn ein Zeitfenster keine Gerätebedingung hat, statt nur "We
 
 ### Geändert
 
+- **App der Art "Aktion", Befehl für den Marketplace:** Das Beispiel im Feld "Dienst oder Befehl" heisst jetzt `marketplace/repository/refresh` (vorher `hacs/repository/refresh`), und das README beschreibt, wie der Marketplace sofort nach einer neuen Version von Device Panel sucht: eine App der Art "Aktion" mit diesem Befehl und den Daten `{"repository": "<ID>"}`. Der Dienst `homeassistant.update_entity` reicht nicht, er liest nur neu, was der Marketplace schon weiss.
 - **Magic Push, Zeitfenster ohne Gerätebedingung:** "Weiter", ein Klick auf einen Schrittbalken und "Speichern" bleiben bedienbar. Hat ein Zeitfenster ("Von bis") keine Gerätebedingung, gehen sie nicht weiter, sondern springen zurück zu den Bedingungen und zeigen eine Warnung ("Zeitfenster ohne Gerätebedingung: Es gilt den ganzen Zeitraum ..."); die Warnung verschwindet, sobald eine Gerätebedingung dabei ist oder das Fenster auf "Uhrzeit" gestellt wird. Das gilt auch für eine früher gespeicherte Meldung mit so einem Fenster (vor 2.194.0 war das möglich): Sie läuft weiter, lässt sich aber ohne Gerätebedingung nicht mehr speichern.
 
 ## [2.194.0] - 2026-11-05

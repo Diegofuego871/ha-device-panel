@@ -926,7 +926,7 @@ export class AppLauncher {
         <div data-f-sec="url"><label class="ap-f"><span data-f-label>${escape(tx.label)}</span><input class="ap-in" data-f="url" type="text" inputmode="url" autocapitalize="off" autocomplete="off" autocorrect="off" spellcheck="false" maxlength="${URL_MAX}" placeholder="${escape(tx.ph)}" value="${escape(f.url)}"></label>
           <div class="ap-hint" data-f-hint>${escape(tx.hint)}</div></div>
         <div data-f-sec="act" hidden>
-          <label class="ap-f"><span>${escape(this.t("appsFSvc"))}</span><input class="ap-in" data-f="svc" type="text" autocapitalize="off" autocomplete="off" autocorrect="off" spellcheck="false" maxlength="64" placeholder="homeassistant.update_entity  /  hacs/repository/refresh" value="${escape(f.svc)}"></label>
+          <label class="ap-f"><span>${escape(this.t("appsFSvc"))}</span><input class="ap-in" data-f="svc" type="text" autocapitalize="off" autocomplete="off" autocorrect="off" spellcheck="false" maxlength="64" placeholder="homeassistant.update_entity  /  marketplace/repository/refresh" value="${escape(f.svc)}"></label>
           <label class="ap-f"><span>${escape(this.t("appsFData"))}</span><textarea class="ap-in ap-ta" data-f="data" rows="4" autocapitalize="off" autocomplete="off" autocorrect="off" spellcheck="false" maxlength="${DATA_MAX}" placeholder='{"entity_id": "update.device_panel_update"}'>${escape(f.data)}</textarea></label>
           <div class="ap-hint">${escape(this.t("appsFActHint"))}</div>
           <label class="ap-chk"><input type="checkbox" data-f="confirm"${f.confirm ? " checked" : ""}><span>${escape(this.t("appsFConfirm"))}<small>${escape(this.t("appsFConfirmSub"))}</small></span></label>

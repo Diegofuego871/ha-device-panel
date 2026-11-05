@@ -13,6 +13,7 @@ Magic Push warns when a time window has no device condition, instead of only blo
 
 ### Changed
 
+- **Action app, command for the Marketplace:** The example in the field "Service or command" is now `marketplace/repository/refresh` (before `hacs/repository/refresh`), and the README describes how to make the Marketplace look for a new version of Device Panel right away: an app of the kind "Action" with this command and the data `{"repository": "<ID>"}`. The service `homeassistant.update_entity` is not enough, it only re-reads what the Marketplace already knows.
 - **Magic Push, time window without a device condition:** "Next", a click on a step bar and "Save" stay usable. If a time window ("From to") has no device condition, they do not continue but jump back to the conditions and show a warning ("Time window without a device condition: it applies the whole period ..."); the warning disappears as soon as a device condition is added or the window is changed to "Time". This also covers a message saved earlier with such a window (before 2.194.0 this was possible): it keeps running, but cannot be saved again without a device condition.
 
 ## [2.194.0] - 2026-11-05
