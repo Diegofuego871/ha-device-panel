@@ -7,6 +7,15 @@ Alle nennenswerten Änderungen an dieser Integration stehen in dieser Datei.
 Das Format folgt [Keep a Changelog](https://keepachangelog.com/de/1.1.0/),
 die Versionsnummern folgen [Semantic Versioning](https://semver.org/lang/de/).
 
+## [2.198.1] - 2026-11-05
+
+Das Fenster zum Wiederherstellen fragt nach, bevor es während der Prüfung geschlossen wird, und die Update-Meldungen öffnen die App "Updates".
+
+### Behoben
+
+- **Meldung über Updates, Ziel beim Tippen:** Ein Tipp auf die Meldung "Update verfügbar" öffnet nun immer die App "Updates" des Panels, für jede Art (Geräte, Apps, Integrationen, Home Assistant Core, Betriebssystem, Supervisor). Vorher klappte das nur, wenn ein Geräte-Update dabei war; sonst öffnete sich die Seite von Home Assistant. Dasselbe gilt für die Meldung über eine neue Version von Device Panel selbst (vorher: nur das Panel). Der Hinweis unter der Option sagt es jetzt auch.
+- **Sicherung, Wiederherstellen:** Sobald eine Sicherung gewählt ist und in der Prüfung steht (Vorschau oder die Listen dahinter), schliessen das Kreuz oben, ein Tipp neben das Fenster und die Escape-Taste das Fenster nicht mehr sofort. Ein Fenster fragt "Wiederherstellen abbrechen?" mit "Weiter prüfen" und "Abbrechen"; bis dahin ist nichts geschrieben. Der Knopf "Abbrechen" unten schliesst weiterhin sofort, ebenso das Kreuz in allen anderen Schritten (Wählen, Sichern, Fertig).
+
 ## [2.198.0] - 2026-11-05
 
 Am Handy liegen die Symbole im Kopf des Launchers genau über denen der Kopfzeile des Panels.
@@ -5760,6 +5769,7 @@ Erste Vorabversion.
   GitHub Actions für die Prüfungen von HACS und hassfest sowie die Tests.
 
 [2.6.0]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v2.6.0
+[2.198.1]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v2.198.1
 [2.198.0]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v2.198.0
 [2.197.0]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v2.197.0
 [2.195.0]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v2.195.0

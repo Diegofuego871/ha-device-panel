@@ -49,7 +49,6 @@ _LOGGER = logging.getLogger(__name__)
 
 STORE_KEY = f"{DOMAIN}.updates"
 # Klickziel der Meldung: die Update-Seite von Home Assistant.
-UPDATES_URL = "/config/updates"
 # Entitäten von Home Assistant selbst (Core, Betriebssystem, Supervisor); übrige Hassio-Updates sind Add-ons.
 _CORE_IDS = {
     "update.home_assistant_core_update",
@@ -247,8 +246,9 @@ class UpdateNotifier:
         if items and notify_target(opts, "updates") != NOTIFY_NONE:
             await push.async_push(
                 hass, notify_target(opts, "updates"), push.title(hass, opts, "updates", "update_title"), self.message(items),
-                # Mit Geräte-Updates öffnet ein Tipp die App "Geräte-Updates" im Panel (seit 2.164.0), sonst die Update-Seite von Home Assistant
-                push.notification_data(hass, f"{DOMAIN}_updates", push.panel_url(app="updates") if any(i["kind"] == "devices" for i in items) else UPDATES_URL),
+                # Ein Tipp öffnet immer die App "Updates" des Panels, für jede Art (Geräte, Apps, Integrationen, Core, OS ...). Bis 2.198.0 galt das
+                # nur mit Geräte-Updates, sonst die Update-Seite von Home Assistant (Fehler, seit 2.198.1 behoben).
+                push.notification_data(hass, f"{DOMAIN}_updates", push.panel_url(app="updates")),
                 topic="updates",
             )
         for item in items:

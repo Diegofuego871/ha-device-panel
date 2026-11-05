@@ -739,7 +739,7 @@ async def test_push_when_update_found_once_per_version(hass: HomeAssistant, entr
     await hass.async_block_till_done()
     await update_check.async_refresh_issue(hass)
     assert len(handy) == 1
-    assert "99.0.0" in handy[0].data["title"] and handy[0].data["data"]["url"] == "/device-panel"
+    assert "99.0.0" in handy[0].data["title"] and handy[0].data["data"]["url"] == "/device-panel?app=updates"
     # Neue Version: wieder eine Meldung
     await update_check.async_refresh_issue(hass, {"latest": "99.1.0"})
     assert len(handy) == 2 and "99.1.0" in handy[1].data["title"]
@@ -764,6 +764,8 @@ async def test_push_goes_to_own_recipient(hass: HomeAssistant, entry, github_off
     await hass.async_block_till_done()
     await update_check.async_refresh_issue(hass)
     assert handy == [] and len(familie) == 1
+    # Ein Tipp öffnet die App "Updates" des Panels (2.198.1), nicht nur das Panel
+    assert familie[0].data["data"]["url"] == "/device-panel?app=updates" and familie[0].data["data"]["clickAction"] == "/device-panel?app=updates"
 
 
 async def test_push_after_automatic_installation_instead_of_found(hass: HomeAssistant, entry, github_offline) -> None:

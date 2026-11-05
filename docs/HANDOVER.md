@@ -3,6 +3,12 @@
 Einstieg für jede neue Claude-Code-Session. Zuerst diese Datei lesen, dann
 `CLAUDE.md`, `docs/CONCEPT.md`, `docs/LEARNINGS.md`, `docs/DESIGN.md`.
 
+## Stand (2.198.1, Rückfrage beim Schliessen des Wiederherstellens)
+
+- `device-panel.js`: `_bkAskClose` (Kreuz `.dlg-close`, Tipp daneben, Escape per `cancel`-Ereignis) fragt in den Modi `preview` und `detail` über `_askConfirm` nach; "Abbrechen" unten und alle anderen Modi schliessen sofort. Texte `bkAbort*`. Tests in `backup-e2e`.
+- Update-Meldungen (`updates.py`, `update_check.async_notify`) öffnen immer `/device-panel?app=updates` (vorher nur mit Geräte-Updates, sonst `/config/updates`).
+- Dieses Release soll offiziell werden (keine Vorabversion), Notes fassen alles seit 2.190.0 zusammen.
+
 ## Stand (2.198.0, Launcher-Kopf am Handy)
 
 - `styles.js`: `.ap-head .ap-pw { margin-right: 6px }` (nur Handy): Abstand Neustart/Bearbeiten 14 px wie in der Kopfzeile des Panels (`.toolbar .rtall-btn` 3 + 8 + 3). Suite `toolbarsep-e2e` legt beide Köpfe übereinander (Mittelpunkte auf 0,6 px).

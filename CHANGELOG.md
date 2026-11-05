@@ -7,6 +7,15 @@ All notable changes to this integration are documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/).
 
+## [2.198.1] - 2026-11-05
+
+The restore window asks before it is closed during the check, and the update notifications open the app "Updates".
+
+### Fixed
+
+- **Notification about updates, tap target:** A tap on the notification "update available" now always opens the app "Updates" of the panel, for every kind (devices, apps, integrations, Home Assistant Core, operating system, Supervisor). Before, this only worked if a device update was among them; otherwise the page of Home Assistant opened. The same holds for the notification about a new version of Device Panel itself (before: only the panel). The hint under the option now says so.
+- **Backup, restore:** Once a backup is chosen and shown in the check (preview or the lists behind it), the cross at the top, a tap next to the window and the Escape key no longer close the window right away. A window asks "Cancel the restore?" with "Keep checking" and "Cancel"; nothing has been written at that point. The button "Cancel" at the bottom still closes at once, as does the cross in all other steps (choose, save, done).
+
 ## [2.198.0] - 2026-11-05
 
 On the phone, the header icons of the launcher lie exactly over those of the panel header.
@@ -5659,6 +5668,7 @@ First pre-release.
   GitHub Actions for HACS/hassfest validation and tests.
 
 [2.6.0]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v2.6.0
+[2.198.1]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v2.198.1
 [2.198.0]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v2.198.0
 [2.197.0]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v2.197.0
 [2.195.0]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v2.195.0

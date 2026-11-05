@@ -6905,6 +6905,17 @@ class DevicePanel extends HTMLElement {
     dlg.scrollTop = 0;
   }
 
+  // Kreuz, Tipp daneben und Escape: Ist eine Datei gewählt und in der Prüfung (Vorschau, Detail), fragt das Panel vorher nach (seit 2.198.1);
+  // "Abbrechen" unten bleibt eine bewusste Handlung und schliesst sofort
+  _bkAskClose() {
+    const b = this._bk;
+    if (!b || b.busy || !["preview", "detail"].includes(b.mode)) {
+      this._closeBackup();
+      return;
+    }
+    this._askConfirm({ title: "bkAbortTitle", note: "bkAbortNote", no: "bkAbortNo", yes: "bkAbortYes", noIcon: "arrowLeft", yesIcon: "close" }, () => this._closeBackup());
+  }
+
   _closeBackup() {
     const dlg = this.shadowRoot.querySelector("dialog.backup-dlg");
     this._bk = null;
@@ -7235,15 +7246,17 @@ class DevicePanel extends HTMLElement {
     dlg.addEventListener("click", (ev) => {
       if (ev.target === dlg) {
         const r = dlg.getBoundingClientRect();
-        if (ev.clientY < r.top || ev.clientY > r.bottom || ev.clientX < r.left || ev.clientX > r.right) this._closeBackup();
+        if (ev.clientY < r.top || ev.clientY > r.bottom || ev.clientX < r.left || ev.clientX > r.right) this._bkAskClose();
         return;
       }
       const btn = ev.target.closest("[data-bk]");
       const b = this._bk;
       if (!btn || !b) return;
       const act = btn.dataset.bk;
-      if (act === "close") this._closeBackup();
-      else if (act === "save") this._bkExport("file");
+      if (act === "close") {
+        if (btn.classList.contains("dlg-close")) this._bkAskClose();
+        else this._closeBackup();
+      } else if (act === "save") this._bkExport("file");
       else if (act === "copy") this._bkExport("copy");
       else if (act === "paste") {
         b.paste = !b.paste;
@@ -7269,6 +7282,13 @@ class DevicePanel extends HTMLElement {
       } else if (act === "report") this._bkCopyReport();
       else if (act === "apply") this._bkApply();
       else if (act === "undo") this._bkUndo();
+    });
+    dlg.addEventListener("cancel", (ev) => {
+      // Escape: in der Prüfung erst nachfragen, sonst wie bisher schliessen
+      if (this._bk && !this._bk.busy && ["preview", "detail"].includes(this._bk.mode)) {
+        ev.preventDefault();
+        this._bkAskClose();
+      }
     });
     dlg.addEventListener("keydown", (ev) => {
       const el = ev.target;

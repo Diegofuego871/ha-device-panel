@@ -11,8 +11,8 @@ let ok = true;
 const check = (l, c, i = "") => { ok &&= !!c; console.log(`${c ? "PASS" : "FAIL"} ${l}${i ? " - " + i : ""}`); };
 const R = `document.querySelector("device-panel").shadowRoot`;
 const T = {
-  de: { ttl: "Sichern und wiederherstellen", exportTitle: "Einstellungen sichern", importTitle: "Wiederherstellen", done: "Wiederhergestellt", undone: "Rückgängig gemacht", bad: "keine sicherung", devs2: "2 Geräte unbekannt", partBattery: "Batterie", partNotify: "Meldungen", noName: "Name unbekannt", detSkipped: "Nicht übernommen", detChanged: "Werden geändert", detSame: "Unverändert", keyBattery: "Batterie-Schwelle" },
-  en: { ttl: "Back up and restore", exportTitle: "Back up settings", importTitle: "Restore", done: "Restored", undone: "Undone", bad: "not a device panel backup", devs2: "2 devices unknown", partBattery: "Battery", partNotify: "Notifications", noName: "Name unknown", detSkipped: "Not applied", detChanged: "Will change", detSame: "Unchanged", keyBattery: "Battery threshold" },
+  de: { ttl: "Sichern und wiederherstellen", exportTitle: "Einstellungen sichern", importTitle: "Wiederherstellen", done: "Wiederhergestellt", undone: "Rückgängig gemacht", bad: "keine sicherung", devs2: "2 Geräte unbekannt", partBattery: "Batterie", partNotify: "Meldungen", noName: "Name unbekannt", detSkipped: "Nicht übernommen", detChanged: "Werden geändert", detSame: "Unverändert", keyBattery: "Batterie-Schwelle", abortTitle: "Wiederherstellen abbrechen?", abortYes: "Abbrechen" },
+  en: { ttl: "Back up and restore", exportTitle: "Back up settings", importTitle: "Restore", done: "Restored", undone: "Undone", bad: "not a device panel backup", devs2: "2 devices unknown", partBattery: "Battery", partNotify: "Notifications", noName: "Name unknown", detSkipped: "Not applied", detChanged: "Will change", detSame: "Unchanged", keyBattery: "Battery threshold", abortTitle: "Cancel the restore?", abortYes: "Cancel" },
 };
 const dir = mkdtempSync(join(tmpdir(), "dp-backup-"));
 
@@ -138,7 +138,17 @@ for (const lang of ["de", "en"]) {
     await tap('dialog.backup-dlg button.bk-tile[data-kind="changed"]');
     check(`[${tag}] Routinen-Detailfenster: Name und darunter Entität · Aktion`, await wait(`const d = r.querySelector("dialog.backup-dlg .bk-dv"); return !!d && d.innerText.includes("Harmlos") && !!d.querySelector(".bk-ent") && d.querySelector(".bk-ent").textContent === "lock.haustuer · unlock"`));
     await tap('dialog.backup-dlg [data-bk="back"]');
-    await tap('dialog.backup-dlg [data-bk="close"]');
+    // Kreuz in der Prüfung (Datei gewählt, Vorschau): erst nachfragen (2.198.1)
+    await tap('dialog.backup-dlg .dlg-close[data-bk="close"]');
+    check(`[${tag}] Kreuz in der Vorschau: Rückfrage "${L.abortTitle}", Fenster bleibt offen`, await wait(`return r.querySelector("dialog.discard-dlg:not(.pause-dlg)").open && r.querySelector("dialog.discard-dlg:not(.pause-dlg) b")?.textContent === ${JSON.stringify(L.abortTitle)} && r.querySelector("dialog.backup-dlg").open`));
+    await tap('dialog.discard-dlg:not(.pause-dlg) [data-dd="no"]');
+    check(`[${tag}] "Weiter prüfen": Vorschau bleibt`, await wait(`return !r.querySelector("dialog.discard-dlg:not(.pause-dlg)").open && r.querySelector("dialog.backup-dlg").open && r.querySelectorAll("dialog.backup-dlg .bk-rw").length > 0`));
+    await p.keyboard.press("Escape");
+    check(`[${tag}] Escape in der Vorschau fragt ebenfalls nach`, await wait(`return r.querySelector("dialog.discard-dlg:not(.pause-dlg)").open && r.querySelector("dialog.backup-dlg").open`));
+    await tap('dialog.discard-dlg:not(.pause-dlg) [data-dd="no"]');
+    await tap('dialog.backup-dlg .dlg-close[data-bk="close"]');
+    await tap('dialog.discard-dlg:not(.pause-dlg) [data-dd="yes"]');
+    check(`[${tag}] "${L.abortYes}": Fenster zu, nichts geschrieben`, await wait(`return !r.querySelector("dialog.backup-dlg").open && !r.querySelector("dialog.discard-dlg:not(.pause-dlg)").open`));
     check(`[${tag}] keine Seitenfehler`, errors.length === 0, errors.join("; "));
     await ctx.close();
   }

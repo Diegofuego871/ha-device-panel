@@ -41,7 +41,6 @@ from .const import (
     DOMAIN,
     GITHUB_REPO,
     NOTIFY_NONE,
-    PANEL_URL_PATH,
     STORAGE_VERSION,
 )
 
@@ -345,7 +344,8 @@ async def async_notify(hass: HomeAssistant, kind: str, latest: str, installed: s
         return False
     title = push.text(hass, f"panelupdate_{kind}_title", latest=latest, installed=installed or "?")
     message = push.text(hass, f"panelupdate_{kind}_text", latest=latest, installed=installed or "?")
-    data = push.notification_data(hass, f"{DOMAIN}_panelupdate", f"/{PANEL_URL_PATH}")
+    # Das Update von Device Panel steht in der App "Updates" (Art Marketplace): ein Tipp öffnet sie, nicht nur das Panel (seit 2.198.1)
+    data = push.notification_data(hass, f"{DOMAIN}_panelupdate", push.panel_url(app="updates"))
     if not await push.async_push(hass, target, title, message, data, topic="panelupdate"):
         return False
     notified[kind] = latest

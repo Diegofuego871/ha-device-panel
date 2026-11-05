@@ -51,7 +51,8 @@ async def test_instant_collects_in_one_message(hass: HomeAssistant, freezer) -> 
     data = calls[0].data
     assert data["title"] == "⬆️ Home Assistant update"
     assert data["message"] == "2 available:\n• Home Assistant Core 2026.10.2 → 2026.10.3\n• Mosquitto broker 6.5.0 → 6.5.1"
-    assert data["data"]["url"] == "/config/updates"
+    # Kein Geräte-Update dabei (Core, App): trotzdem die App "Updates" des Panels, nicht die Seite von Home Assistant (2.198.1)
+    assert data["data"]["url"] == "/device-panel?app=updates" and data["data"]["clickAction"] == "/device-panel?app=updates"
     # Dasselbe Update nicht noch einmal
     hass.states.async_set("update.home_assistant_core_update", "on", {"title": "Home Assistant Core", "installed_version": "2026.10.2", "latest_version": "2026.10.3", "x": 1})
     await hass.async_block_till_done()
