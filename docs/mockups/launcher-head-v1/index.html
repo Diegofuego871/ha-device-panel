@@ -1,0 +1,44 @@
+<!doctype html><meta charset="utf-8"><title>App-Launcher: Kopfzeile wie in allen Fenstern</title><style>
+:root{--p:#43a047;--bg:#1c1c1c;--card:#262626;--ln:#3a3a3a;--t2:#a9a9a9;--tx:#eee}
+*{box-sizing:border-box}
+body{margin:0;background:#e9ecef;font:14px/1.4 Roboto,Arial,sans-serif;color:#1d1d1d;padding:26px;width:1330px}
+h1{margin:0 0 4px;font-size:22px}.rec{color:#2e8b57}
+.sub{color:#555;font-size:13px;margin:0 0 14px;max-width:1250px}
+.row{display:flex;gap:26px;align-items:flex-start}
+.cap{color:#555;font-size:12px;letter-spacing:.04em;text-transform:uppercase;margin-bottom:6px;font-weight:700}
+.ph{width:390px;height:330px;background:var(--bg);color:var(--tx);border-radius:26px;position:relative;overflow:hidden;box-shadow:0 2px 14px #0004}
+.head{display:flex;align-items:center;gap:8px;padding:14px 12px 8px 18px}
+.head b{flex:1;font-size:19px;font-weight:600}
+.rb{display:grid;place-items:center;flex:none;width:42px;height:42px;border:1px solid var(--ln);border-radius:50%;background:var(--card);color:var(--p)}
+.rb.x{color:#c9c9c9}
+.rb.pw{color:var(--t2)}
+.rb svg{width:20px;height:20px;fill:currentColor}
+.sep{flex:none;width:1px;height:26px;background:var(--ln);margin:0 8px}
+.old .pw2{display:grid;place-items:center;width:38px;height:38px;color:var(--t2)}
+.old .pw2 svg{width:18px;height:18px;fill:currentColor}
+.old .lnk{display:flex;align-items:center;gap:6px;color:var(--p);font-size:14px}
+.old .lnk svg{width:16px;height:16px;fill:currentColor}
+.old .xx{display:grid;place-items:center;width:38px;height:38px;border:1px solid var(--ln);border-radius:50%;color:#c9c9c9}
+.old .xx svg{width:18px;height:18px;fill:currentColor}
+.pill{display:inline-flex;align-items:center;gap:6px;height:42px;padding:0 16px;border:1px solid var(--ln);border-radius:999px;background:var(--card);color:var(--p);font-size:14px}
+.pill svg{width:16px;height:16px;fill:currentColor}
+.search{margin:6px 16px 10px;border:1px solid var(--ln);border-radius:999px;padding:10px 14px;color:var(--t2);font-size:14px}
+.sec{margin:6px 18px 6px;color:var(--t2);font-size:12px;letter-spacing:.06em}
+.tiles{display:flex;gap:10px;padding:0 16px}.tiles i{flex:1;height:70px;border-radius:14px;background:var(--card)}
+.done{margin-left:auto}
+.btn{display:inline-flex;align-items:center;gap:6px;height:34px;padding:0 16px;border-radius:999px;background:var(--p);color:#fff;font-size:13.5px}
+.btn svg{width:16px;height:16px;fill:currentColor}
+.note{margin:8px 0 0;max-width:390px;color:#444;font-size:13px}
+.mark{position:absolute;border:2px dashed #ff6f00;border-radius:12px}
+</style>
+<h1>App-Launcher: Kopfzeile wie in allen Fenstern</h1>
+<p class="sub">Wunsch: rechts das X, links davon ein Strich, links davon mit gleichem Abstand der Bleistift, daneben der Neustart. Alle Knöpfe rund und gleich gross (42 px, auf dem Handy 38 px) wie im Kopf der Einstellungen. Der Strich steht mittig zwischen Bleistift und X (je 16 px). Hier die Handy-Ansicht, auf dem Desktop gilt dasselbe.</p>
+<div class="row">
+<div><div class="cap">Jetzt</div><div class="ph old"><div class="head"><b>Apps</b><span class="pw2"><svg viewBox="0 0 24 24"><path d="M16.56,5.44L15.11,6.89C16.84,7.94 18,9.83 18,12A6,6 0 0,1 12,18A6,6 0 0,1 6,12C6,9.83 7.16,7.94 8.88,6.88L7.44,5.44C5.36,6.88 4,9.28 4,12A8,8 0 0,0 12,20A8,8 0 0,0 20,12C20,9.28 18.64,6.88 16.56,5.44M13,3H11V13H13"/></svg></span><span class="lnk"><svg viewBox="0 0 24 24"><path d="M20.71,7.04C21.1,6.65 21.1,6 20.71,5.63L18.37,3.29C18,2.9 17.35,2.9 16.96,3.29L15.13,5.12L18.88,8.87M3,17.25V21H6.75L17.81,9.93L14.06,6.18L3,17.25Z"/></svg>Bearbeiten</span><span class="xx"><svg viewBox="0 0 24 24"><path d="M19,6.41L17.59,5L12,10.59L6.41,5L5,6.41L10.59,12L5,17.59L6.41,19L12,13.41L17.59,19L19,17.59L13.41,12L19,6.41Z"/></svg></span></div><div class="search">Seite suchen …</div><div class="sec">FAVORITEN</div><div class="tiles"><i></i><i></i><i></i></div></div><p class="note">Neustart ohne Rand, "Bearbeiten" als Text, X am Rand: sieht anders aus als alle anderen Fenster.</p></div>
+
+<div><div class="cap rec">Variante A (Empfehlung): nur Symbole</div><div class="ph"><div class="head"><b>Apps</b><span class="rb pw"><svg viewBox="0 0 24 24"><path d="M16.56,5.44L15.11,6.89C16.84,7.94 18,9.83 18,12A6,6 0 0,1 12,18A6,6 0 0,1 6,12C6,9.83 7.16,7.94 8.88,6.88L7.44,5.44C5.36,6.88 4,9.28 4,12A8,8 0 0,0 12,20A8,8 0 0,0 20,12C20,9.28 18.64,6.88 16.56,5.44M13,3H11V13H13"/></svg></span><span class="rb"><svg viewBox="0 0 24 24"><path d="M20.71,7.04C21.1,6.65 21.1,6 20.71,5.63L18.37,3.29C18,2.9 17.35,2.9 16.96,3.29L15.13,5.12L18.88,8.87M3,17.25V21H6.75L17.81,9.93L14.06,6.18L3,17.25Z"/></svg></span><span class="sep"></span><span class="rb x"><svg viewBox="0 0 24 24"><path d="M19,6.41L17.59,5L12,10.59L6.41,5L5,6.41L10.59,12L5,17.59L6.41,19L12,13.41L17.59,19L19,17.59L13.41,12L19,6.41Z"/></svg></span></div><div class="search">Seite suchen …</div><div class="sec">FAVORITEN</div><div class="tiles"><i></i><i></i><i></i></div></div><p class="note">Von rechts: X, Strich, Bleistift (Bearbeiten), Neustart. Die Beschriftung "Bearbeiten" und der Neustart stehen als Tooltip und für Screenreader am Knopf. Der Neustart bleibt neutral grau (nicht grün), weil er den ganzen Home Assistant betrifft; er fragt wie bisher nach.</p></div>
+
+<div><div class="cap">Variante B: Bearbeiten mit Text</div><div class="ph"><div class="head"><b>Apps</b><span class="rb pw"><svg viewBox="0 0 24 24"><path d="M16.56,5.44L15.11,6.89C16.84,7.94 18,9.83 18,12A6,6 0 0,1 12,18A6,6 0 0,1 6,12C6,9.83 7.16,7.94 8.88,6.88L7.44,5.44C5.36,6.88 4,9.28 4,12A8,8 0 0,0 12,20A8,8 0 0,0 20,12C20,9.28 18.64,6.88 16.56,5.44M13,3H11V13H13"/></svg></span><span class="pill"><svg viewBox="0 0 24 24"><path d="M20.71,7.04C21.1,6.65 21.1,6 20.71,5.63L18.37,3.29C18,2.9 17.35,2.9 16.96,3.29L15.13,5.12L18.88,8.87M3,17.25V21H6.75L17.81,9.93L14.06,6.18L3,17.25Z"/></svg>Bearbeiten</span><span class="sep"></span><span class="rb x"><svg viewBox="0 0 24 24"><path d="M19,6.41L17.59,5L12,10.59L6.41,5L5,6.41L10.59,12L5,17.59L6.41,19L12,13.41L17.59,19L19,17.59L13.41,12L19,6.41Z"/></svg></span></div><div class="search">Seite suchen …</div><div class="sec">FAVORITEN</div><div class="tiles"><i></i><i></i><i></i></div></div><p class="note">Wie Variante A, aber "Bearbeiten" bleibt als beschrifteter Knopf. Mehr Platz im Kopf, auf schmalen Handys (360 px) wird es eng neben dem Titel "Apps".</p></div>
+</div>
+<h2 style="margin:24px 0 4px;font-size:18px">Bearbeiten-Modus (bleibt wie bisher)</h2>
+<div class="row"><div><div class="ph" style="height:150px"><div class="head"><b>Apps bearbeiten</b><span class="btn"><svg viewBox="0 0 24 24"><path d="M21,7L9,19L3.5,13.5L4.91,12.09L9,16.17L19.59,5.59L21,7Z"/></svg>Fertig</span></div><div class="search" style="margin-top:0">…</div></div><p class="note">Im Bearbeiten-Modus bleibt "Fertig" allein, wie jetzt; Neustart, Bleistift und X gibt es dort nicht.</p></div></div>
