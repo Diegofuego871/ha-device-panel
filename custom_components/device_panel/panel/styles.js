@@ -579,7 +579,10 @@ dialog.status-dlg .dlg-title h2 { margin: 0; }
 .dlg-acts:empty { display: none; }
 .dlg-act { flex: none; display: grid; place-items: center; width: 42px; height: 42px; padding: 0; border: 1px solid var(--dp-divider); border-radius: 50%; background: var(--dp-card); color: var(--dp-primary); cursor: pointer; }
 .dlg-act:hover { background: var(--dp-hover); }
-.dlg-head-log { margin-right: 8px; }
+/* Kopf des Geräte-Popups wie die Kopfzeile des Panels (seit 2.200.0): Protokoll und Herz 8 px auseinander (Lücke 14 px, minus 6), dann Strich mit je 16 px
+   (Lücke 14 px plus 2 px) und das Kreuz; der Strich sitzt mittig zu den Knöpfen (42 px hoch, Strich 26 px) */
+.dlg-head-log { margin-right: -6px; }
+dialog.device .dlg-head > .dlg-sep { margin: 8px 2px 0; }
 .dlg-act.run-ok { background: var(--dp-success); border-color: var(--dp-success); color: #fff; }
 .dlg-act.run-err { background: var(--dp-error); border-color: var(--dp-error); color: #fff; }
 /* Grüner und roter Zustand: eigene Zeichenebene, damit der Glas-Effekt des Kopfes (zwei verschachtelte backdrop-filter) in WebKit (iPhone)
@@ -590,7 +593,7 @@ dialog.status-dlg .dlg-title h2 { margin: 0; }
 /* Der Strich steht mittig zwischen dem Aktionsknopf und dem Schliessen-Knopf (links 8 + 8, rechts 2 + 14 = je 16 px; seit 2.192.0) */
 .dlg-sep { flex: none; width: 1px; height: 26px; margin: 0 2px 0 8px; background: var(--dp-divider); }
 /* Herz im Kopf des Geräte-Popups (seit 2.22.0): wie das Kreuz ein runder Knopf, rot sobald Favorit */
-.dlg-fav { flex: none; display: grid; place-items: center; width: 42px; height: 42px; margin-right: 8px; border: 1px solid var(--dp-divider); border-radius: 50%;
+.dlg-fav { flex: none; display: grid; place-items: center; width: 42px; height: 42px; border: 1px solid var(--dp-divider); border-radius: 50%;
   background: var(--dp-card); color: var(--dp-text2); cursor: pointer; transition: color .2s ease, background .2s ease; }
 /* Knopf "Neue Routine"/"Neue Meldung" unten im Fenster aller Einträge: klebt am unteren Rand, auch bei langer Liste */
 .dlg-addbar { position: sticky; bottom: -24px; z-index: 2; margin: 8px 0 -24px; padding: 10px 0 20px; background: var(--dp-card); background: color-mix(in srgb, var(--dp-card) 78%, transparent); -webkit-backdrop-filter: blur(10px); backdrop-filter: blur(10px); }
@@ -1594,6 +1597,9 @@ button.pill.live.off:hover { background: var(--dp-hover); }
   dialog.settings[open] > * { flex-shrink: 0; }
   dialog.settings[open] > .dlg-body { flex-grow: 1; }
   .toolbar .gear-btn, .toolbar .rtall-btn, .toolbar .apps-btn, .dlg-close, .dlg-act, .dlg-fav { width: 38px; height: 38px; }
+  /* Handy: Protokoll und Herz 14 px auseinander wie die angehefteten Apps der Kopfzeile; Strich mittig zu 38-px-Knöpfen */
+  .dlg-head-log { margin-right: 0; }
+  dialog.device .dlg-head > .dlg-sep { margin-top: 6px; }
   /* Handy: der Platz zwischen Suchfeld und Zahnrad bleibt wie vorher (Suchfeld nicht schmaler), nur gleichmässig geteilt: 8 + 7 px auf beiden Seiten */
   .toolbar .rtall-btn, .toolbar .apps-btn { margin: 0 3px; } /* Abstand zwischen den Knöpfen 14 px (Wunsch des Nutzers: war zu eng), das Suchfeld wird dafür schmaler */
   dialog.stat-dlg { height: 86%; max-height: 86%; }

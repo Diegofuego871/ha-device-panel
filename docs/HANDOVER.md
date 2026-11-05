@@ -5,6 +5,7 @@ Einstieg für jede neue Claude-Code-Session. Zuerst diese Datei lesen, dann
 
 ## Stand (2.200.0, Knopf "Nach Updates suchen" in der App Updates)
 
+- Kopf des Geräte-Popups: `${logBtn}${heart}<span class="dlg-sep">${close}` in `_renderDevice`, Abstände in `styles.js` (`.dlg-head-log`, `dialog.device .dlg-head > .dlg-sep`); `toolbarsep-e2e` legt ihn am Handy über die Kopfzeile des Panels, `fav-e2e` prüft 33 px Herz–Kreuz.
 - `routines.js` `isOpen`: im Reiter "fav" immer zu, auch bei einer einzelnen Routine (Test in `routineall-e2e`).
 - `updapp.js` `check()`: `host._callService("homeassistant", "update_entity", {entity_id: alle update.*})` (wie die Einstellungen von HA; der Supervisor wird dabei neu gefragt, siehe hassio/coordinator `_async_refresh`), Knopf `.dlg-act[data-ua-check]` im Kopf (`.dlg-acts` + `.dlg-sep`), dreht, dann grün/rot und Hinweis 6 s. Marketplace wird dadurch nicht neu gefragt. Test in `updapp-e2e`.
 

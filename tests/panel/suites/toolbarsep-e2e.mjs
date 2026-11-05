@@ -42,6 +42,15 @@ for (const lang of ["de", "en"]) {
       const pos = { tb, hd };
       check(`[${tag}] Launcher-Kopf: Symbole genau über denen der Kopfzeile`, pos.hd.pw && Math.abs(pos.hd.pw[0] - pos.tb.a[0]) < 0.6 && Math.abs(pos.hd.ed[0] - pos.tb.b[0]) < 0.6 && Math.abs(pos.hd.sep[0] - pos.tb.sep[0]) < 0.6 && Math.abs(pos.hd.x[0] - pos.tb.apps[0]) < 0.6, JSON.stringify(pos));
     }
+    if (mobile) {
+      // Geräte-Popup (2.200.0): Protokoll, Herz, Strich und Kreuz liegen über den zwei angehefteten Apps, dem Strich und dem Launcher-Knopf
+      await ev(`r.querySelector("dialog.apps-dlg")?.close?.()`);
+      const tb2 = JSON.parse(await ev(`const c = (e) => { const x = e.getBoundingClientRect(); return [Math.round((x.left + x.width / 2) * 10) / 10, Math.round((x.top + x.height / 2) * 10) / 10]; }; const pins = [...r.querySelectorAll(".toolbar .app-pin")]; return JSON.stringify({ a: c(pins[0]), b: c(pins[1]), sep: c(r.querySelector(".toolbar .tb-sep")), apps: c(r.querySelector(".toolbar .apps-btn")) })`));
+      await ev(`r.host._openDevice("b")`);
+      await p.waitForTimeout(700);
+      const dv = JSON.parse(await ev(`const c = (e) => { const x = e.getBoundingClientRect(); return [Math.round((x.left + x.width / 2) * 10) / 10, Math.round((x.top + x.height / 2) * 10) / 10]; }; const h = r.querySelector("dialog.device .dlg-head"); return JSON.stringify({ log: c(h.querySelector(".dlg-head-log")), fav: c(h.querySelector(".dlg-fav")), sep: c(h.querySelector(":scope > .dlg-sep")), x: c(h.querySelector(".dlg-close")), close: c(h.querySelector(".dlg-close")), favTop: h.querySelector(".dlg-fav").getBoundingClientRect().top, sepMid: Math.abs(c(h.querySelector(":scope > .dlg-sep"))[1] - c(h.querySelector(".dlg-close"))[1]) })`));
+      check(`[${tag}] Geräte-Popup: Protokoll, Herz, Strich und Kreuz genau über den Symbolen der Kopfzeile`, Math.abs(dv.log[0] - tb2.a[0]) < 0.6 && Math.abs(dv.fav[0] - tb2.b[0]) < 0.6 && Math.abs(dv.sep[0] - tb2.sep[0]) < 0.6 && Math.abs(dv.x[0] - tb2.apps[0]) < 0.6 && dv.sepMid < 1, JSON.stringify({ tb2, dv }));
+    }
     check(`[${tag}] keine Fehler`, errors.length === 0, errors.join("|"));
     await ctx.close();
   }

@@ -5362,7 +5362,7 @@ class DevicePanel extends HTMLElement {
     const heart = d
       ? `<button type="button" class="dlg-fav${d.fav ? " on" : ""}" data-dlg="fav" aria-pressed="${Boolean(d.fav)}" title="${escape(favLabel)}" aria-label="${escape(favLabel)}">${mdi(d.fav ? "heart" : "heartOutline", 18)}</button>`
       : "";
-    // Protokoll des Geräts (seit 2.121.0): dasselbe Symbol wie in den Übersichten, links vom Herz; Links aus dem Panel stehen unten, Fenster öffnen oben
+    // Kopf wie in der Übersicht (seit 2.200.0): Protokoll, Herz, Strich, Kreuz an denselben Stellen wie die zwei angehefteten Apps, der Strich und der Launcher-Knopf. Protokoll des Geräts (seit 2.121.0): dasselbe Symbol wie in den Übersichten, links vom Herz; Links aus dem Panel stehen unten, Fenster öffnen oben
     const logBtn = d && this._viewAdmin()
       ? `<button type="button" class="dlg-act dlg-head-log${this._rtFailFor(d.id) ? " has-dot dot-bad" : ""}" data-proto="all" data-device="${escape(d.id)}" data-name="${escape(d.name)}" title="${escape(this._rtFailTitle(this._rtFailFor(d.id)))}" aria-label="${escape(this._rtFailTitle(this._rtFailFor(d.id)))}">${mdi("log", 18)}</button>`
       : "";
@@ -5455,7 +5455,7 @@ class DevicePanel extends HTMLElement {
       html = `<div class="dlg-head"><span class="dlg-avatar ${avatar}">${typeIcon(d.type, 28)}</span>
           <div class="dlg-title">${this._nameHtml(d)}
             <div class="dlg-sub">${status}<span>${[this._t(typeKey(d.type)), d.area].filter(Boolean).map(escape).join(" · ")}</span></div></div>
-          ${logBtn}${heart}${close}</div>${whyHtml}
+          ${logBtn}${heart}<span class="dlg-sep" aria-hidden="true"></span>${close}</div>${whyHtml}
         <div class="dlg-quick"><button type="button" class="qbtn" data-dlg="open-device">${mdi("open", 17)}<span class="q-t">${escape(this._t("openDevicePage"))}</span></button>${d.integration?.domain ? `<button type="button" class="qbtn" data-dlg="open-integration" data-domain="${escape(d.integration.domain)}">${mdi("open", 17)}<span class="q-t">${escape(this._t("openIntegPage"))}</span></button>` : ""}</div>
         <div class="dev-tabs">${tabs}</div>
         <div class="dlg-body" role="tabpanel">${body}
