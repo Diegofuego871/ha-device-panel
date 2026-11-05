@@ -5,6 +5,7 @@ Einstieg für jede neue Claude-Code-Session. Zuerst diese Datei lesen, dann
 
 ## Stand (2.199.1, Rückfrage beim Löschen einer eigenen App)
 
+- `styles.js` `.searchbox` gap 4 px + `.search` padding 0 2 px: Text 6 px hinter der Lupe (vorher 10 + 2 px).
 - `apps.js` Fall `del`: `host._askConfirm` (Texte `appsDel*`), erst "Löschen" ruft `removeCustom`; "Rückgängig" danach bleibt. Test in `launcher-e2e`.
 
 ## Stand (2.199.0, Farbe eigener Apps, zehn Symbole)

@@ -9,11 +9,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/).
 
 ## [2.199.1] - 2026-11-05
 
-Deleting an own app of the launcher asks first.
+Deleting an own app of the launcher asks first, and the main search field has more room for text.
 
 ### Changed
 
 - **Launcher, delete an own app:** The cross behind an own app in the edit mode no longer deletes it at once. A window asks `Delete "Name"?` with "Keep" and "Delete"; only "Delete" removes the app (and its entry in the favourites and the order). The note with "Undo" afterwards stays.
+- **Main search field, distance to the magnifier:** The text and the cursor now start 6 px behind the magnifier (before about 12 px), like in the search field of the pages of Home Assistant, which leaves more room for the text, especially on the phone.
 
 ## [2.199.0] - 2026-11-05
 

@@ -69,9 +69,10 @@ button { font: inherit; color: inherit; }
   .tb-main { display: flex; align-items: center; gap: 12px; flex: 0 1 calc((min(100%, 2 * var(--hero-c1) + 2 * var(--hero-c2) + 36px) - 36px) / 2 + 12px); min-width: 0; }
   .tb-main + .view-btn { margin-left: auto; }
 }
-.searchbox { flex: 1; display: flex; align-items: center; gap: 10px; height: 42px; padding: 0 14px; border-radius: 14px;
+/* Abstand Lupe zum Text 6 px (seit 2.199.1; vorher 10 + 2 px), wie im Suchfeld der Seiten von Home Assistant: mehr Platz für den Text */
+.searchbox { flex: 1; display: flex; align-items: center; gap: 4px; height: 42px; padding: 0 14px; border-radius: 14px;
   background: var(--dp-input); border: 1px solid var(--dp-divider); color: var(--dp-text2); min-width: 0; }
-.search { flex: 1; min-width: 0; border: 0; outline: 0; background: transparent; color: var(--dp-text); font: inherit; height: 100%; }
+.search { flex: 1; min-width: 0; padding: 0 2px; border: 0; outline: 0; background: transparent; color: var(--dp-text); font: inherit; height: 100%; }
 /* Eigenes X statt des Browser-Knopfs: den zeigt nicht jeder Browser (iOS). */
 .search::-webkit-search-cancel-button { -webkit-appearance: none; appearance: none; display: none; }
 .search-clear { flex: none; display: grid; place-items: center; width: 32px; height: 32px; margin-right: -8px; padding: 0; border: 0; border-radius: 50%;

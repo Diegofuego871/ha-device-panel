@@ -9,11 +9,12 @@ die Versionsnummern folgen [Semantic Versioning](https://semver.org/lang/de/).
 
 ## [2.199.1] - 2026-11-05
 
-Das Löschen einer eigenen App im Launcher fragt vorher nach.
+Das Löschen einer eigenen App im Launcher fragt vorher nach, und das Hauptsuchfeld hat mehr Platz für Text.
 
 ### Geändert
 
 - **Launcher, eigene App löschen:** Das Kreuz hinter einer eigenen App im Bearbeiten-Modus löscht sie nicht mehr sofort. Ein Fenster fragt `"Name" löschen?` mit "Behalten" und "Löschen"; erst "Löschen" entfernt die App (und ihren Eintrag in den Favoriten und der Reihenfolge). Der Hinweis mit "Rückgängig" danach bleibt.
+- **Hauptsuchfeld, Abstand zur Lupe:** Text und Cursor beginnen nun 6 px hinter der Lupe (vorher etwa 12 px), wie im Suchfeld der Seiten von Home Assistant; das lässt mehr Platz für den Text, vor allem am Handy.
 
 ## [2.199.0] - 2026-11-05
 
