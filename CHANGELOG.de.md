@@ -7,7 +7,19 @@ Alle nennenswerten Änderungen an dieser Integration stehen in dieser Datei.
 Das Format folgt [Keep a Changelog](https://keepachangelog.com/de/1.1.0/),
 die Versionsnummern folgen [Semantic Versioning](https://semver.org/lang/de/).
 
+## [2.201.0] - 2026-11-05
+
+Die App "Updates" ist ein Vollbild-Fenster wie "Status" und "Magic Push".
+
+Enthält die Änderungen von 2.200.1.
+
+### Geändert
+
+- **App "Updates", Aussehen:** Das Fenster sieht jetzt genau aus wie die Fenster von "Status", "Magic Push" und "Routinen": am Desktop ein grosses Fenster (880 px breit), am Handy die ganze Fläche des Panels ohne runde Ecken, der Kopf mit Symbol, Titel und den Knöpfen (Suche, Strich, Kreuz) an denselben Stellen, der Inhalt füllt das Fenster und der Knopf "Schliessen" steht ganz unten. Vorher war es ein kleineres Blatt, das nur mit dem Inhalt wuchs. Die Funktion ist unverändert.
+
 ## [2.200.1] - 2026-11-05
+
+Nicht veröffentlicht; enthalten in 2.201.0.
 
 Die Knöpfe im Kopf des Geräte-Popups sitzen genau dort, wo die der Kopfzeile des Panels sind, auch senkrecht.
 
@@ -5814,7 +5826,7 @@ Erste Vorabversion.
   GitHub Actions für die Prüfungen von HACS und hassfest sowie die Tests.
 
 [2.6.0]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v2.6.0
-[2.200.1]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v2.200.1
+[2.201.0]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v2.201.0
 [2.200.0]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v2.200.0
 [2.199.0]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v2.199.0
 [2.198.1]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v2.198.1

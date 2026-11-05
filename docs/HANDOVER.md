@@ -3,6 +3,10 @@
 Einstieg für jede neue Claude-Code-Session. Zuerst diese Datei lesen, dann
 `CLAUDE.md`, `docs/CONCEPT.md`, `docs/LEARNINGS.md`, `docs/DESIGN.md`.
 
+## Stand (2.201.0, App Updates als Vollbild)
+
+- `dialog.updapp-dlg` (ohne Klasse `notes-dlg`) steht in allen Regeln von `status-dlg` (Grösse, Handy-Vollbild, Glas, hell, `[open]` flex, Kopf, Körper, Titel, Kreuz und `.dlg-acts` -6 px); Suite `updappfull-e2e` vergleicht Updates mit Status.
+
 ## Stand (2.200.1, Kopf des Geräte-Popups senkrecht)
 
 - `styles.js` (Handy): `dialog.device .dlg-head .dlg-close/.dlg-fav/.dlg-head-log { margin-top: -6px }`, Strich `margin-top: 0`; `toolbarsep-e2e` prüft jetzt auch die Höhe (Mittelpunkte auf 0,6 px).
