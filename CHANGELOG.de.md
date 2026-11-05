@@ -11,6 +11,10 @@ die Versionsnummern folgen [Semantic Versioning](https://semver.org/lang/de/).
 
 Magic Push warnt, wenn ein Zeitfenster keine Gerätebedingung hat, statt nur "Weiter" zu sperren.
 
+### Behoben
+
+- **Aktionsknopf im Kopf der Einstellungen, grüner Zustand:** Auf dem iPhone konnten nach einer gelungenen Aktion zwei dünne Linien durch den grünen Kreis laufen. Der Knopf (grüner und roter Zustand) hat jetzt eine eigene Zeichenebene, das übliche Mittel gegen Darstellungsfehler des Glas-Effekts in WebKit. Auf dem iPhone ist das ungeprüft, bitte dort ansehen.
+
 ### Geändert
 
 - **App der Art "Aktion", Befehl für den Marketplace:** Das Beispiel im Feld "Dienst oder Befehl" heisst jetzt `marketplace/repository/refresh` (vorher `hacs/repository/refresh`), und das README beschreibt, wie der Marketplace sofort nach einer neuen Version von Device Panel sucht: eine App der Art "Aktion" mit diesem Befehl und den Daten `{"repository": "<ID>"}`. Der Dienst `homeassistant.update_entity` reicht nicht, er liest nur neu, was der Marketplace schon weiss.

@@ -11,6 +11,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/).
 
 Magic Push warns when a time window has no device condition, instead of only blocking "Next".
 
+### Fixed
+
+- **Action button in the settings header, green state:** On the iPhone two thin lines could cross the green circle after a successful action. The button (green and red state) now has its own drawing layer, which is the usual remedy for artefacts of the glass effect in WebKit. This is untested on the iPhone, please check it there.
+
 ### Changed
 
 - **Action app, command for the Marketplace:** The example in the field "Service or command" is now `marketplace/repository/refresh` (before `hacs/repository/refresh`), and the README describes how to make the Marketplace look for a new version of Device Panel right away: an app of the kind "Action" with this command and the data `{"repository": "<ID>"}`. The service `homeassistant.update_entity` is not enough, it only re-reads what the Marketplace already knows.

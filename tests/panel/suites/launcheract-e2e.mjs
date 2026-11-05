@@ -224,6 +224,8 @@ for (const lang of ["de", "en"]) {
     await tap(`dialog.discard-dlg [data-dd="yes"]`);
     await wait(`return !!r.querySelector("${SD} .dlg-act.run-running .ap-spin")`, 1000);
     check(`[${tag}] Einstellungen: läuft, Pfeile drehen sich, Knopf gesperrt`, (await ev(`const b = r.querySelector("${SD} .dlg-act"); return b.disabled && !!b.querySelector(".ap-spin")`)));
+    await wait(`return !!r.querySelector("${SD} .dlg-act.run-ok svg")`, 4000);
+    check(`[${tag}] Einstellungen: grüner Knopf hat eine eigene Zeichenebene (gegen Striche im Glas-Effekt auf dem iPhone)`, await ev(`const c = getComputedStyle(r.querySelector("${SD} .dlg-act.run-ok")); return c.isolation === "isolate" && c.overflow === "hidden"`));
     check(`[${tag}] Einstellungen: nach dem Lauf grüner Knopf mit Haken`, await wait(`return !!r.querySelector("${SD} .dlg-act.run-ok svg")`, 4000));
     check(`[${tag}] Einstellungen: der Dienst wurde aufgerufen, das Ergebnis steht im Log`, (await services()).length === 1 && (await p.evaluate(() => window.__launcherLog)).length === 1);
     await p.evaluate(() => { window.__serviceDelay = 0; });

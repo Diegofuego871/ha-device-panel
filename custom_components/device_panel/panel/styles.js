@@ -579,6 +579,10 @@ dialog.status-dlg .dlg-title h2 { margin: 0; }
 .dlg-head-log { margin-right: 8px; }
 .dlg-act.run-ok { background: var(--dp-success); border-color: var(--dp-success); color: #fff; }
 .dlg-act.run-err { background: var(--dp-error); border-color: var(--dp-error); color: #fff; }
+/* Grüner und roter Zustand: eigene Zeichenebene, damit der Glas-Effekt des Kopfes (zwei verschachtelte backdrop-filter) in WebKit (iPhone)
+   keine Striche durch die volle Farbfläche legt (seit 2.195.0) */
+.dlg-act.run-ok, .dlg-act.run-err { isolation: isolate; transform: translateZ(0); overflow: hidden; }
+.dlg-act.run-ok svg, .dlg-act.run-err svg { display: block; }
 .dlg-act:disabled { cursor: progress; }
 /* Der Strich steht mittig zwischen dem Aktionsknopf und dem Schliessen-Knopf (links 8 + 8, rechts 2 + 14 = je 16 px; seit 2.192.0) */
 .dlg-sep { flex: none; width: 1px; height: 26px; margin: 0 2px 0 8px; background: var(--dp-divider); }
