@@ -1354,7 +1354,7 @@ button.pill.live.off:hover { background: var(--dp-hover); }
 
 /* Statistik-Fenster */
 .stat-head { align-items: center; }
-.stat-head .dlg-avatar { width: 44px; height: 44px; border-radius: 13px; }
+/* Symbol und Titel der Unterseiten (Verfügbarkeit, Batterie, Empfang) so gross wie im Kopf des Geräte-Popups (seit 2.200.0): Symbol 52 px, Titel am Handy 21 px */
 /* Sechs Zeiträume (Batterie, seit 0.29.0) passen auf dem Handy nicht nebeneinander:
    die Auswahl scrollt seitlich, der gewählte Zeitraum wird ins Bild geholt. */
 .stat-range { display: flex; margin: 0 0 12px; max-width: 100%; overflow-x: auto; scrollbar-width: none; }
@@ -1604,7 +1604,7 @@ button.pill.live.off:hover { background: var(--dp-hover); }
   dialog.stat-dlg { height: 86%; max-height: 86%; }
   .dlg-head { padding: 18px 12px 12px 16px; }
   /* Geräte-Popup am Handy: Name eine Stufe kleiner (24 → 21 px), damit neben Protokoll, Herz und Kreuz mehr Platz bleibt (seit 2.121.0) */
-  dialog.device .dlg-title h2 { font-size: 21px; }
+  dialog.device .dlg-title h2, .stat-head .dlg-title h2 { font-size: 21px; }
   /* Vollbild-Fenster (Einstellungen, Protokoll, Routinen): das Kreuz sitzt auf gleicher Höhe wie der Zahnrad-Knopf der Übersicht (12 px vom oberen Rand) */
   dialog.settings .dlg-head .dlg-close, dialog.log-dlg .dlg-head .dlg-close, dialog.rtall-dlg .dlg-head .dlg-close, dialog.mgall-dlg .dlg-head .dlg-close, dialog.status-dlg .dlg-head .dlg-close,
   dialog.settings .dlg-head .dlg-acts, dialog.rtall-dlg .dlg-head .dlg-acts, dialog.mgall-dlg .dlg-head .dlg-acts { margin-top: -6px; }
