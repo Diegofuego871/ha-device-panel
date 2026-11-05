@@ -7,6 +7,14 @@ All notable changes to this integration are documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/).
 
+## [2.195.0] - 2026-11-05
+
+Magic Push warns when a time window has no device condition, instead of only blocking "Next".
+
+### Changed
+
+- **Magic Push, time window without a device condition:** "Next", a click on a step bar and "Save" stay usable. If a time window ("From to") has no device condition, they do not continue but jump back to the conditions and show a warning ("Time window without a device condition: it applies the whole period ..."); the warning disappears as soon as a device condition is added or the window is changed to "Time". This also covers a message saved earlier with such a window (before 2.194.0 this was possible): it keeps running, but cannot be saved again without a device condition.
+
 ## [2.194.0] - 2026-11-05
 
 The launcher has a link to the Marketplace, and the panel speaks only of the Marketplace instead of HACS.
@@ -5610,6 +5618,7 @@ First pre-release.
   GitHub Actions for HACS/hassfest validation and tests.
 
 [2.6.0]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v2.6.0
+[2.195.0]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v2.195.0
 [2.194.0]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v2.194.0
 [2.190.1]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v2.190.1
 [2.190.0]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v2.190.0

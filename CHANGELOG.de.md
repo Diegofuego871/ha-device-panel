@@ -7,6 +7,14 @@ Alle nennenswerten Änderungen an dieser Integration stehen in dieser Datei.
 Das Format folgt [Keep a Changelog](https://keepachangelog.com/de/1.1.0/),
 die Versionsnummern folgen [Semantic Versioning](https://semver.org/lang/de/).
 
+## [2.195.0] - 2026-11-05
+
+Magic Push warnt, wenn ein Zeitfenster keine Gerätebedingung hat, statt nur "Weiter" zu sperren.
+
+### Geändert
+
+- **Magic Push, Zeitfenster ohne Gerätebedingung:** "Weiter", ein Klick auf einen Schrittbalken und "Speichern" bleiben bedienbar. Hat ein Zeitfenster ("Von bis") keine Gerätebedingung, gehen sie nicht weiter, sondern springen zurück zu den Bedingungen und zeigen eine Warnung ("Zeitfenster ohne Gerätebedingung: Es gilt den ganzen Zeitraum ..."); die Warnung verschwindet, sobald eine Gerätebedingung dabei ist oder das Fenster auf "Uhrzeit" gestellt wird. Das gilt auch für eine früher gespeicherte Meldung mit so einem Fenster (vor 2.194.0 war das möglich): Sie läuft weiter, lässt sich aber ohne Gerätebedingung nicht mehr speichern.
+
 ## [2.194.0] - 2026-11-05
 
 Der Launcher hat einen Link zum Marketplace, und das Panel spricht nur noch vom Marketplace statt von HACS.
@@ -5711,6 +5719,7 @@ Erste Vorabversion.
   GitHub Actions für die Prüfungen von HACS und hassfest sowie die Tests.
 
 [2.6.0]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v2.6.0
+[2.195.0]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v2.195.0
 [2.194.0]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v2.194.0
 [2.190.1]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v2.190.1
 [2.190.0]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v2.190.0

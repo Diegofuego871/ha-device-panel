@@ -1484,7 +1484,7 @@ export class MagicPush {
     if (step === 0) return Boolean(this.wiz.pickId) && !this.wiz.loadingDev;
     if (step === 1) {
       const leaves = this.leavesOf();
-      return leaves.length > 0 && !this.wiz.adding && leaves.every((l) => this.leafValid(l)) && !this.timeNeedsDevice(leaves);
+      return leaves.length > 0 && !this.wiz.adding && leaves.every((l) => this.leafValid(l));
     }
     if (step === 2) return !this.forError() && !this.resetForError();
     if (step === 3) return !this.repeatError() && (!d.sendAt || /^([01]\d|2[0-3]):[0-5]\d$/.test(d.send_at));
@@ -1498,9 +1498,29 @@ export class MagicPush {
     for (const btn of this.qa('[data-mg="next"], [data-mg="save"]')) btn.disabled = !ok || this.wiz.saving;
   }
 
+  // Zeitfenster ohne Gerätebedingung: weder weiter noch speichern, stattdessen zurück zu den Bedingungen mit einem Warnhinweis (Wunsch des Nutzers);
+  // der Hinweis verschwindet von selbst, sobald eine Gerätebedingung dabei ist oder das Fenster keines mehr ist
+  warnTime() {
+    const w = this.wiz;
+    w.warnTime = true;
+    if (w.step !== 1) {
+      w.step = 1;
+      w.adding = null;
+      const lf = this.leavesOf().find((l) => l.kind === "time" && l.to);
+      if (lf) w.cur = lf.uid;
+    }
+    this.paint();
+    this.scrollTop();
+    window.requestAnimationFrame?.(() => this.q(".mg-timewarn")?.scrollIntoView?.({ block: "center", behavior: "smooth" }));
+  }
+
   goto(step) {
     const w = this.wiz;
     if (step < (w.pick ? 0 : 1) || step > STEPS || step === w.step) return;
+    if (step > w.step && w.step >= 1 && this.timeNeedsDevice()) {
+      this.warnTime();
+      return;
+    }
     // Vorwärts nur, wenn die Schritte davor vollständig sind.
     for (let s = w.step; s < step; s += 1) if (!this.canNext(s)) return;
     w.step = step;
@@ -1634,7 +1654,12 @@ export class MagicPush {
 
   async save() {
     const w = this.wiz;
-    if (!w || w.saving || !this.canNext(5)) return;
+    if (!w || w.saving) return;
+    if (this.timeNeedsDevice()) {
+      this.warnTime();
+      return;
+    }
+    if (!this.canNext(5)) return;
     w.saving = true;
     w.error = "";
     this.syncNav();
@@ -1761,7 +1786,8 @@ export class MagicPush {
         <div class="mg-steps">${bars}</div></div>
       <div class="mgw-body"${lock}><div class="mgw-main"><div class="mg-big">${esc(t(step === 1 && !w.adding && this.leavesOf().length ? "mgQ_1b" : `mgQ_${step}`))}</div>
         ${body}
-        ${w.error ? `<div class="dlg-error" role="alert">${esc(w.error)}</div>` : ""}</div></div>
+        ${w.error ? `<div class="dlg-error" role="alert">${esc(w.error)}</div>` : ""}
+        ${w.warnTime && this.timeNeedsDevice() ? `<div class="dlg-error mg-timewarn" role="alert">${esc(t("mgTimeWarn"))}</div>` : ""}</div></div>
       <div class="mgw-foot"${lock}>${nav}</div>${discard}`;
   }
 

@@ -3,6 +3,10 @@
 Einstieg für jede neue Claude-Code-Session. Zuerst diese Datei lesen, dann
 `CLAUDE.md`, `docs/CONCEPT.md`, `docs/LEARNINGS.md`, `docs/DESIGN.md`.
 
+## Stand (2.195.0, Warnung bei Zeitfenster ohne Gerätebedingung)
+
+- `magic-push.js`: `canNext` sperrt "Weiter"/"Speichern" für diesen Fall nicht mehr; `goto` (vorwärts) und `save` rufen bei `timeNeedsDevice()` `warnTime()` auf: zurück zu Schritt 1, das Fenster aufgeklappt, `w.warnTime` zeigt `.mg-timewarn` (verschwindet von selbst). Greift auch bei früher gespeicherten Regeln (vor 2.194.0 ohne Prüfung speicherbar; der Server lehnt sie beim Speichern ab). Test: `magictime-e2e`.
+
 ## Stand (2.194.0, Marketplace statt HACS)
 
 - Sichtbar heisst es nur noch "Marketplace" (Panel-Texte, Push, Protokoll, strings.json/translations, README). Technisch bleibt der Schlüssel `hacs` der Update-Art (steht in gespeicherten Optionen, `UPDATE_KINDS`), ebenso `hacs.json` und die Namen interner Funktionen. `const.MARKET_PLATFORMS = ("hacs", "marketplace")` (Plattform der Update-Entitäten bis und ab Home Assistant 2026.11) gilt in `updates.update_kind`, `devices._update_install`, `update_check._hacs_update_entity` und im Panel (`MARKET_PLATFORMS`).

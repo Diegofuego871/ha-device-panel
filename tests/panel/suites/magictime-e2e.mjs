@@ -9,8 +9,8 @@ let ok = true;
 const check = (l, c, i = "") => { ok &&= !!c; console.log(`${c ? "PASS" : "FAIL"} ${l}${i ? " - " + i : ""}`); };
 const R = `document.querySelector("device-panel").shadowRoot`;
 const TEXT = {
-  de: { card: "Uhrzeit", sub: "12:30", sat: "Sa", needs: "Gerätebedingung", name: "Uhrzeit 12:30, Sa, So" },
-  en: { card: "Time of day", sub: "12:30", sat: "Sat", needs: "device condition", name: "Time 12:30, Sat, Sun" },
+  de: { card: "Uhrzeit", sub: "12:30", sat: "Sa", needs: "Gerätebedingung", q1: "Welche Bedingungen", name: "Uhrzeit 12:30, Sa, So" },
+  en: { card: "Time of day", sub: "12:30", sat: "Sat", needs: "device condition", q1: "Which conditions", name: "Time 12:30, Sat, Sun" },
 };
 
 for (const lang of ["de", "en"]) {
@@ -48,11 +48,15 @@ for (const lang of ["de", "en"]) {
     check(`[${tag}] Wochentage Sa und So gewählt, Kopf nennt "${T.sat}"`, await wait(`return r.querySelectorAll('${W} .mg-day.on').length === 2 && r.querySelector('${W} .mg-lhead small').textContent.includes(${JSON.stringify(T.sat)})`));
     await tap(`${W} [data-mg="tmode"][data-v="between"]`);
     check(`[${tag}] "Von bis": zweites Zeitfeld mit Ende eine Stunde später`, await wait(`return r.querySelector('${W} input[data-mg="tto"]')?.value === "13:30"`));
-    check(`[${tag}] "Von bis" allein: Hinweis "Gerätebedingung" und "Weiter" gesperrt`, await wait(`return !!r.querySelector('${W} .opt-error') && r.querySelector('${W} .opt-error').textContent.includes(${JSON.stringify(T.needs)}) && r.querySelector('${W} [data-mg="next"]').disabled === true`));
+    check(`[${tag}] "Von bis" allein: Hinweis "${T.needs}" steht schon da, "Weiter" bleibt anklickbar`, await wait(`return !!r.querySelector('${W} .opt-error') && r.querySelector('${W} .opt-error').textContent.includes(${JSON.stringify(T.needs)}) && r.querySelector('${W} [data-mg="next"]').disabled === false && !r.querySelector('${W} .mg-timewarn')`));
+    await tap(`${W} [data-mg="next"]`);
+    check(`[${tag}] "Weiter" mit Zeitfenster allein: bleibt in Schritt 1 und zeigt die Warnung`, await wait(`return !!r.querySelector('${W} .mg-timewarn') && r.querySelector('${W} .mg-big').textContent.includes(${JSON.stringify(T.q1)}) && !!r.querySelector('${W} input[data-mg="tto"]')`));
+    await f.evaluate(() => document.querySelector("device-panel")._magic.save());
+    check(`[${tag}] Speichern mit Zeitfenster allein: kein magic_save, die Warnung bleibt`, (await p.evaluate(() => window.__wsCalls.filter((m) => m.type.endsWith("magic_save")).length)) === 0 && (await wait(`return !!r.querySelector('${W} .mg-timewarn')`)));
     await ev(`const i = r.querySelector('${W} input[data-mg="tto"]'); i.value = "12:30"; i.dispatchEvent(new Event("input", { bubbles: true }))`);
     check(`[${tag}] Ende gleich Beginn: "Weiter" gesperrt`, await wait(`return r.querySelector('${W} [data-mg="next"]').disabled === true`));
     await tap(`${W} [data-mg="tmode"][data-v="from"]`);
-    check(`[${tag}] zurück auf "Uhrzeit": Ende weg, "Weiter" frei`, await wait(`return !r.querySelector('${W} input[data-mg="tto"]') && r.querySelector('${W} [data-mg="next"]').disabled === false`));
+    check(`[${tag}] zurück auf "Uhrzeit": Warnung weg, Ende weg, "Weiter" frei`, await wait(`return !r.querySelector('${W} input[data-mg="tto"]') && r.querySelector('${W} [data-mg="next"]').disabled === false`));
 
     // durch alle Schritte bis Speichern
     for (let i = 0; i < 5; i++) {
