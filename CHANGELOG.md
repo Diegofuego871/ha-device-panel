@@ -7,6 +7,14 @@ All notable changes to this integration are documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/).
 
+## [2.199.1] - 2026-11-05
+
+Deleting an own app of the launcher asks first.
+
+### Changed
+
+- **Launcher, delete an own app:** The cross behind an own app in the edit mode no longer deletes it at once. A window asks `Delete "Name"?` with "Keep" and "Delete"; only "Delete" removes the app (and its entry in the favourites and the order). The note with "Undo" afterwards stays.
+
 ## [2.199.0] - 2026-11-05
 
 Own apps in the launcher get a colour of their own, and the choice of images grows by ten.
@@ -5677,6 +5685,7 @@ First pre-release.
   GitHub Actions for HACS/hassfest validation and tests.
 
 [2.6.0]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v2.6.0
+[2.199.1]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v2.199.1
 [2.199.0]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v2.199.0
 [2.198.1]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v2.198.1
 [2.198.0]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v2.198.0

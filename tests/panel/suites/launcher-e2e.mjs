@@ -271,6 +271,12 @@ for (const lang of ["de", "en"]) {
     check(`[${tag}] Name geändert`, (await data()).custom.find((c) => c.id === camId)?.name === "Kamera Garten");
     // Löschen mit Rückgängig
     await tap(`${D} [data-ap-box="own"] [data-ap="del"][data-id="${camId}"]`);
+    // Rückfrage (2.199.1): erst "Behalten" lässt die App stehen, "Löschen" entfernt sie
+    check(`[${tag}] Löschen: Rückfrage vor dem Löschen, App noch da`, await wait(`return r.querySelector("dialog.discard-dlg:not(.pause-dlg)").open && r.querySelector("dialog.discard-dlg:not(.pause-dlg) b").textContent === ${JSON.stringify(lang === "de" ? '"Kamera Garten" löschen?' : 'Delete "Kamera Garten"?')}`) && (await data()).custom.length === 2);
+    await tap('dialog.discard-dlg:not(.pause-dlg) [data-dd="no"]');
+    check(`[${tag}] "Behalten": App bleibt, kein Hinweis zum Rückgängig`, (await data()).custom.length === 2 && !(await ev(`return !!r.querySelector("${D} .ap-snack")?.textContent.trim()`)));
+    await tap(`${D} [data-ap-box="own"] [data-ap="del"][data-id="${camId}"]`);
+    await tap('dialog.discard-dlg:not(.pause-dlg) [data-dd="yes"]');
     check(`[${tag}] Löschen: App weg, Hinweis mit "${T.undo}"`, (await data()).custom.length === 1 && (await text(`${D} .ap-snack`)).includes(lang === "de" ? "Kamera Garten gelöscht." : "Kamera Garten deleted."));
     await tap(`${D} .ap-snack [data-ap="snack"]`);
     check(`[${tag}] Rückgängig: App wieder da`, (await data()).custom.length === 2);

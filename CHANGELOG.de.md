@@ -7,6 +7,14 @@ Alle nennenswerten Änderungen an dieser Integration stehen in dieser Datei.
 Das Format folgt [Keep a Changelog](https://keepachangelog.com/de/1.1.0/),
 die Versionsnummern folgen [Semantic Versioning](https://semver.org/lang/de/).
 
+## [2.199.1] - 2026-11-05
+
+Das Löschen einer eigenen App im Launcher fragt vorher nach.
+
+### Geändert
+
+- **Launcher, eigene App löschen:** Das Kreuz hinter einer eigenen App im Bearbeiten-Modus löscht sie nicht mehr sofort. Ein Fenster fragt `"Name" löschen?` mit "Behalten" und "Löschen"; erst "Löschen" entfernt die App (und ihren Eintrag in den Favoriten und der Reihenfolge). Der Hinweis mit "Rückgängig" danach bleibt.
+
 ## [2.199.0] - 2026-11-05
 
 Eigene Apps im Launcher bekommen eine eigene Farbe, und die Auswahl an Bildern wächst um zehn.
@@ -5778,6 +5786,7 @@ Erste Vorabversion.
   GitHub Actions für die Prüfungen von HACS und hassfest sowie die Tests.
 
 [2.6.0]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v2.6.0
+[2.199.1]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v2.199.1
 [2.199.0]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v2.199.0
 [2.198.1]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v2.198.1
 [2.198.0]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v2.198.0

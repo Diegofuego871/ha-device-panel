@@ -1230,8 +1230,12 @@ export class AppLauncher {
         return this.openForm();
       case "edit-app":
         return this.openForm(id);
-      case "del":
-        return this.removeCustom(id);
+      case "del": {
+        // Rückfrage vor dem Löschen einer eigenen App (seit 2.199.1); danach bleibt "Rückgängig" für kurze Zeit
+        const own = this.data.custom.find((c) => c.id === id);
+        if (!own) return;
+        return this.host._askConfirm({ title: "appsDelTitle", note: "appsDelNote", no: "appsDelNo", yes: "appsDelYes", args: [own.name], noIcon: "close", yesIcon: "trash" }, () => this.removeCustom(id));
+      }
       case "reset":
         return this.reset();
       case "snack": {

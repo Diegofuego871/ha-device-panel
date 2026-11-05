@@ -3,6 +3,10 @@
 Einstieg für jede neue Claude-Code-Session. Zuerst diese Datei lesen, dann
 `CLAUDE.md`, `docs/CONCEPT.md`, `docs/LEARNINGS.md`, `docs/DESIGN.md`.
 
+## Stand (2.199.1, Rückfrage beim Löschen einer eigenen App)
+
+- `apps.js` Fall `del`: `host._askConfirm` (Texte `appsDel*`), erst "Löschen" ruft `removeCustom`; "Rückgängig" danach bleibt. Test in `launcher-e2e`.
+
 ## Stand (2.199.0, Farbe eigener Apps, zehn Symbole)
 
 - `apps.js`: eigene Apps tragen `accent` (Kennung einer Akzentfarbe, `isAccentId`; nie ein Farbwert; bei Favicon entfällt sie). `_ico` löst sie über `this.h.accents` (= `ACCENTS` aus `device-panel.js`, als Abhängigkeit übergeben) auf, mit `on`-Schriftfarbe. Formular: Zeile `.ap-colrow` (`.ap-cols`, `.ap-col`, "Standard" als Ring) über den Symbolen, folgt dem Reiter Symbol/Favicon. `APP_ICONS` 50 (zehn neue Pfade in `MDI` von `device-panel.js`, Material Design Icons 7.4.47). Suite `launchercolor-e2e`. Gehört zu `device_panel_apps`, also zur Sicherung "users".
