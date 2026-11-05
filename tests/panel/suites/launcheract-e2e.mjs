@@ -244,7 +244,7 @@ for (const lang of ["de", "en"]) {
     await wait(`return r.querySelector("${D}")?.open`);
     await ev(`r.host._apps.openForm()`);
     await wait(`return r.querySelector("${F}")?.open`);
-    check(`[${tag}] Formular: 40 Symbole, darunter Update, Glühbirne und Garage, alle mit Zeichnung`, await ev(`const b = [...r.querySelectorAll('${F} [data-ap="ficon"]')]; return b.length === 40 && ["update", "lightbulb", "garage"].every((k) => b.some((x) => x.dataset.icon === k)) && b.every((x) => (x.querySelector("svg path")?.getAttribute("d") || "").length > 20)`));
+    check(`[${tag}] Formular: 50 Symbole, darunter Update, Glühbirne, Garage und die zehn neuen (Einhorn bis Leuchtturm), alle mit Zeichnung`, await ev(`const b = [...r.querySelectorAll('${F} [data-ap="ficon"]')]; return b.length === 50 && ["update", "lightbulb", "garage", "unicorn", "castle", "crown", "wizard", "crystal", "ghost", "owl", "telescope", "flower", "lighthouse"].every((k) => b.some((x) => x.dataset.icon === k)) && b.every((x) => (x.querySelector("svg path")?.getAttribute("d") || "").length > 20)`));
     await tap(`${F} [data-ap="ficon"][data-icon="update"]`);
     check(`[${tag}] Symbol "Update" gewählt: Vorschau zeigt es, Wahl hervorgehoben`, await ev(`const d = r.querySelector('${F} [data-ap="ficon"][data-icon="update"] svg path').getAttribute("d"); return r.querySelector('${F} [data-ap="ficon"][data-icon="update"]').classList.contains("on") && r.querySelector("${F} [data-f-prev] svg path").getAttribute("d") === d`));
     await tap(`${F} [data-ap="fclose"]`);

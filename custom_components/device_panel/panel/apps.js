@@ -89,7 +89,12 @@ export const APP_ICONS = [
   "web", "home", "camera", "map", "bolt", "calendar", "bar", "wrench", "store", "desktop", "robot", "palette", "script", "devices", "shape", "tools",
   "update", "download", "upload", "play", "power", "lock", "cloud", "wifi", "bell", "gear", "history", "reset", "lightbulb", "thermometer", "fan", "shieldCheck",
   "door", "garage", "water", "fire", "key", "rocket", "volume", "vacuum",
+  // seit 2.199.0: zehn Symbole mit etwas Fantasie
+  "unicorn", "castle", "crown", "wizard", "crystal", "ghost", "owl", "telescope", "flower", "lighthouse",
 ];
+// Farbe einer eigenen App (seit 2.199.0): die Kennung einer Akzentfarbe des Panels (ACCENTS in device-panel.js, kommt über die Abhängigkeiten);
+// ohne Farbe gilt die Akzentfarbe des Benutzers wie bisher. Gespeichert wird nur die Kennung, nie ein Farbwert.
+const isAccentId = (v) => typeof v === "string" && /^[a-z]{2,16}$/.test(v);
 
 // Favicon einer eigenen App mit externem Link (seit 2.33.0): kleines Bild als Data-URI (base64), vom Server geholt (favicon.py).
 // Nur bekannte Bildarten, damit in den Benutzerdaten nie etwas anderes landet; höchstens FAVICON_MAX Zeichen (etwa 100 KB).
@@ -157,13 +162,14 @@ export function sanitizeApps(raw) {
       const id = typeof c.id === "string" && c.id.length > 0 && c.id.length <= 64 ? c.id : null;
       // Aktion (seit 2.113.0): ruft einen Dienst von Home Assistant auf; ohne Ziel (url leer), ohne Favicon
       const svc = c.svc != null ? checkAction(c.svc) : null;
-      if (c.svc != null) return svc && name && id ? { id, name, icon: APP_ICONS.includes(c.icon) ? c.icon : "bolt", url: "", ext: false, svc } : null;
+      if (c.svc != null) return svc && name && id ? { id, name, icon: APP_ICONS.includes(c.icon) ? c.icon : "bolt", url: "", ext: false, svc, ...(isAccentId(c.accent) ? { accent: c.accent } : {}) } : null;
       const ext = c.ext === true;
       const url = checkTarget(c.url, ext);
       if (!url || !name || !id) return null;
       const app = { id, name, icon: APP_ICONS.includes(c.icon) ? c.icon : "web", url, ext };
-      // Das Favicon gibt es nur bei externen Links
+      // Das Favicon gibt es nur bei externen Links; mit Favicon gibt es keine Farbe (das Bild ersetzt den Kreis)
       if (ext && isFavicon(c.favicon)) app.favicon = c.favicon;
+      else if (isAccentId(c.accent)) app.accent = c.accent;
       return app;
     })
     .filter(Boolean)
@@ -240,7 +246,7 @@ export class AppLauncher {
     const admin = this._admin();
     const t = (k) => this.t(k);
     const builtin = BUILTIN.filter((a) => (admin || !a.admin) && (!a.temp || this.host._wizard?.visible())).map((a) => ({ ...a, name: t(`app_${a.id}`), sub: a.path || t(`app_${a.id}_sub`) || "", look: HA_LOOK[a.id] || null, color: HA_LOOK[a.id]?.c || PANEL_COLOR[a.id] || null }));
-    const own = this.data.custom.map((c) => ({ id: c.id, group: "own", icon: c.icon, name: c.name, sub: c.svc ? c.svc.service : c.url, url: c.url, ext: c.ext, svc: c.svc, favicon: c.favicon, custom: true }));
+    const own = this.data.custom.map((c) => ({ id: c.id, group: "own", icon: c.icon, name: c.name, sub: c.svc ? c.svc.service : c.url, url: c.url, ext: c.ext, svc: c.svc, favicon: c.favicon, accent: c.accent, custom: true }));
     return [...builtin, ...own];
   }
 
@@ -635,8 +641,10 @@ export class AppLauncher {
   // Kreis um das Symbol: Apps von HA und des Panels in ihrer Farbe (weisses Symbol), eigene Apps in der Hauptfarbe; ein Favicon
   // bleibt ohne Kreis (eigene Fläche, siehe .ap-fi)
   _ico(a, size, sm = false) {
-    const style = a.color && !a.favicon ? ` style="background:${a.color};color:#fff"` : "";
-    const own = !a.color && !a.favicon ? " own" : "";
+    // Eigene App mit gewählter Farbe (seit 2.199.0): die Farbe der Akzentfarbe gleicher Kennung, mit deren Schriftfarbe; unbekannte Kennung = ohne Farbe
+    const acc = a.accent && !a.favicon ? (this.h.accents || []).find((x) => x.id === a.accent) : null;
+    const style = acc ? ` style="background:${acc.color};color:${acc.on}"` : a.color && !a.favicon ? ` style="background:${a.color};color:#fff"` : "";
+    const own = !a.color && !acc && !a.favicon ? " own" : "";
     const rs = this.runState?.[a.id];
     return `<span class="ap-ico${sm ? " sm" : ""}${own}${rs ? ` run-${rs}` : ""}${a.id === "wizard" ? " wiz" : ""}${a.id === "updates" && this.updCount() ? " upd" : ""}${a.id === "log" && this.host._debugOn ? " dbg" : ""}${a.id === "routine" && this.rtFail() ? " rtf" : ""}"${style}>${this._icon(a, size)}</span>`;
   }
@@ -874,8 +882,8 @@ export class AppLauncher {
     const c = id ? this.data.custom.find((x) => x.id === id) : null;
     // src: welches Bild die App zeigt, "icon" (gewähltes Symbol) oder "favicon" (nur bei externem Link, nach "Favicon laden")
     this.ui.form = c
-      ? { id: c.id, name: c.name, icon: c.icon, kind: c.svc ? "act" : c.ext ? "ext" : "page", ext: c.ext, url: c.url, svc: c.svc?.service || "", data: c.svc && Object.keys(c.svc.data || {}).length ? JSON.stringify(c.svc.data, null, 2) : "", confirm: Boolean(c.svc?.confirm), settings: Boolean(c.svc?.settings), favicon: c.favicon || null, src: c.favicon ? "favicon" : "icon", busy: false, msg: "" }
-      : { id: null, name: "", icon: "web", kind: "page", ext: false, url: "", svc: "", data: "", confirm: false, settings: false, favicon: null, src: "icon", busy: false, msg: "" };
+      ? { id: c.id, name: c.name, icon: c.icon, kind: c.svc ? "act" : c.ext ? "ext" : "page", ext: c.ext, url: c.url, svc: c.svc?.service || "", data: c.svc && Object.keys(c.svc.data || {}).length ? JSON.stringify(c.svc.data, null, 2) : "", confirm: Boolean(c.svc?.confirm), settings: Boolean(c.svc?.settings), favicon: c.favicon || null, accent: c.accent || "", src: c.favicon ? "favicon" : "icon", busy: false, msg: "" }
+      : { id: null, name: "", icon: "web", kind: "page", ext: false, url: "", svc: "", data: "", confirm: false, settings: false, favicon: null, accent: "", src: "icon", busy: false, msg: "" };
     const dlg = this.fdlg;
     if (!dlg) return;
     this._renderForm();
@@ -917,6 +925,9 @@ export class AppLauncher {
     const { escape, mdi } = this.h;
     const tx = this._formTexts();
     const icons = APP_ICONS.map((k) => `<button type="button" class="ap-ic${f.icon === k ? " on" : ""}" data-ap="ficon" data-icon="${k}" aria-pressed="${f.icon === k}">${mdi(k, 20)}</button>`).join("");
+    const cols = [["", "var(--dp-primary)", this.t("appsFColorDef")], ...(this.h.accents || []).map((a) => [a.id, a.color, this.t(`accent_${a.id}`)])]
+      .map(([id, color, label]) => `<button type="button" class="ap-col${f.accent === id ? " on" : ""}" data-ap="fcolor" data-accent="${id}" aria-pressed="${f.accent === id}" aria-label="${escape(label)}" title="${escape(label)}" style="--a:${color}"><i></i></button>`)
+      .join("");
     dlg.innerHTML = `<div class="ap-head"><b class="ap-title">${escape(this.t(f.id ? "appsFEdit" : "appsFNew"))}</b>
         <button type="button" class="ap-x show" data-ap="fclose" title="${escape(this.t("close"))}" aria-label="${escape(this.t("close"))}">${mdi("close", 18)}</button></div>
       <div class="ap-body">
@@ -936,6 +947,7 @@ export class AppLauncher {
           <div class="sub-tabs" role="tablist" data-f-srctabs aria-label="${escape(this.t("appsFIcon"))}">
             <button type="button" role="tab" class="sub-tab" data-set="fsrc" data-v="icon">${escape(this.t("appsFSrcIcon"))}</button>
             <button type="button" role="tab" class="sub-tab" data-set="fsrc" data-v="favicon">${escape(this.t("appsFSrcFav"))}</button></div>
+          <div class="ap-colrow" data-f-pane="icon"><span class="ap-collbl">${escape(this.t("appsFColor"))}<b data-f-colname></b></span><div class="ap-cols" role="group" aria-label="${escape(this.t("appsFColor"))}">${cols}</div></div>
           <div class="ap-icons" data-f-pane="icon">${icons}</div>
           <div class="ap-favpane" data-f-pane="favicon" hidden>
             <div class="ap-favrow"><span class="ap-favbox" data-f-favimg></span>
@@ -953,7 +965,7 @@ export class AppLauncher {
     const f = this.ui.form;
     if (!el || !f) return;
     const { escape, mdi } = this.h;
-    el.innerHTML = `<span class="ap-main">${this._ico({ icon: f.icon, favicon: f.src === "favicon" ? f.favicon : null }, 22)}<span class="ap-nm">${escape(f.name.trim() || this.t("appsFName"))}</span></span>${f.ext ? `<span class="ap-ext">${mdi("link", 12)}</span>` : f.kind === "act" ? `<span class="ap-ext">${mdi("bolt", 12)}</span>` : ""}`;
+    el.innerHTML = `<span class="ap-main">${this._ico({ icon: f.icon, favicon: f.src === "favicon" ? f.favicon : null, accent: f.accent }, 22)}<span class="ap-nm">${escape(f.name.trim() || this.t("appsFName"))}</span></span>${f.ext ? `<span class="ap-ext">${mdi("link", 12)}</span>` : f.kind === "act" ? `<span class="ap-ext">${mdi("bolt", 12)}</span>` : ""}`;
   }
 
   // Beschriftung, Hinweis und Vorschau nachführen, ohne das Fenster neu zu bauen (Fokus und Tastatur bleiben)
@@ -987,7 +999,12 @@ export class AppLauncher {
     });
     // Das Favicon gibt es nur beim externen Link (seit 2.116.0): bei Seite und Aktion fehlt die Wahl "Symbol / Favicon" ganz, es bleiben die Symbole
     dlg.querySelector("[data-f-srctabs]").hidden = !f.ext;
-    dlg.querySelector('[data-f-pane="icon"]').hidden = f.src !== "icon";
+    dlg.querySelectorAll('[data-f-pane="icon"]').forEach((el) => { el.hidden = f.src !== "icon"; });
+    dlg.querySelectorAll(".ap-col").forEach((b) => {
+      b.classList.toggle("on", b.dataset.accent === f.accent);
+      b.setAttribute("aria-pressed", String(b.dataset.accent === f.accent));
+    });
+    dlg.querySelector("[data-f-colname]").textContent = f.accent ? ` · ${this.t(`accent_${f.accent}`)}` : ` · ${this.t("appsFColorDef")}`;
     dlg.querySelector('[data-f-pane="favicon"]').hidden = f.src !== "favicon";
     const { escape } = this.h;
     dlg.querySelector("[data-f-favimg]").innerHTML = f.favicon ? `<img class="ap-fi" src="${escape(f.favicon)}" width="32" height="32" alt="" draggable="false">` : "";
@@ -1054,13 +1071,13 @@ export class AppLauncher {
       if (owner) return this._formError(this.t("appsFSettingsTaken", owner.name));
       const svc = checkAction({ service: f.svc, data, confirm: f.confirm, settings: f.settings });
       if (!svc) return this._formError(this.t(/^([a-z0-9_]+\.[a-z0-9_]+|[a-z0-9_]+(\/[a-z0-9_]+)+)$/.test(f.svc.trim()) ? "appsFErrData" : "appsFErrSvc"));
-      app = { name, icon: f.icon, url: "", ext: false, svc };
+      app = { name, icon: f.icon, url: "", ext: false, svc, ...(f.accent ? { accent: f.accent } : {}) };
     } else {
       const url = checkTarget(f.url, f.ext);
       if (!url) return this._formError(this.t(f.ext ? "appsFErrExt" : "appsFErrPage"));
       const useFav = f.ext && f.src === "favicon";
       if (useFav && !isFavicon(f.favicon)) return this._formError(this.t("appsFErrFavNeed"));
-      app = { name, icon: f.icon, url, ext: f.ext, ...(useFav ? { favicon: f.favicon } : {}) };
+      app = { name, icon: f.icon, url, ext: f.ext, ...(useFav ? { favicon: f.favicon } : f.accent ? { accent: f.accent } : {}) };
     }
     if (f.id) this.data.custom = this.data.custom.map((c) => (c.id === f.id ? { id: c.id, ...app } : c));
     else {
@@ -1121,7 +1138,10 @@ export class AppLauncher {
       if (b.dataset.ap === "ffetch") this.fetchFavicon();
       else if (b.dataset.ap === "fclose") this.closeForm();
       else if (b.dataset.ap === "fsave") this.saveForm();
-      else if (b.dataset.ap === "ficon") {
+      else if (b.dataset.ap === "fcolor") {
+        this.ui.form.accent = b.dataset.accent;
+        this._formSync();
+      } else if (b.dataset.ap === "ficon") {
         this.ui.form.icon = b.dataset.icon;
         this.ui.form.src = "icon";
         this._formSync();

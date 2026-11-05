@@ -7,6 +7,15 @@ Alle nennenswerten Änderungen an dieser Integration stehen in dieser Datei.
 Das Format folgt [Keep a Changelog](https://keepachangelog.com/de/1.1.0/),
 die Versionsnummern folgen [Semantic Versioning](https://semver.org/lang/de/).
 
+## [2.199.0] - 2026-11-05
+
+Eigene Apps im Launcher bekommen eine eigene Farbe, und die Auswahl an Bildern wächst um zehn.
+
+### Hinzugefügt
+
+- **Launcher, Farbe eigener Apps:** Im Formular einer eigenen App (Seite, externer Link oder Aktion) steht oberhalb der Bilder eine neue Zeile "Farbe": "Standard" (die Akzentfarbe des Benutzers, wie bisher) und die neun Akzentfarben des Panels (dieselben wie unter Einstellungen › Panel › Allgemein) als runde Punkte; der Name der gewählten Farbe steht hinter dem Titel. Der Kreis der App im Launcher, in der Liste und in der Vorschau nimmt diese Farbe an, mit der Schriftfarbe der Akzentfarbe. Gespeichert wird nur der Name der Farbe, nie ein Farbwert; er gehört zu den persönlichen Daten des Launchers (und damit zum Sicherungsteil "Persönliche Einstellungen der Benutzer"). Eine App mit Favicon hat keine Farbe, weil das Bild den Kreis ersetzt.
+- **Launcher, zehn weitere Bilder:** Einhorn, Schloss, Krone, Zauberhut, Kristallkugel, Gespenst, Eule, Teleskop, Blume und Leuchtturm (aus Material Design Icons), insgesamt also 50 Bilder.
+
 ## [2.198.1] - 2026-11-05
 
 Das Fenster zum Wiederherstellen fragt nach, bevor es während der Prüfung geschlossen wird, und die Update-Meldungen öffnen die App "Updates".
@@ -5769,6 +5778,7 @@ Erste Vorabversion.
   GitHub Actions für die Prüfungen von HACS und hassfest sowie die Tests.
 
 [2.6.0]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v2.6.0
+[2.199.0]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v2.199.0
 [2.198.1]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v2.198.1
 [2.198.0]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v2.198.0
 [2.197.0]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v2.197.0

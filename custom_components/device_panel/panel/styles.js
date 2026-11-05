@@ -2374,6 +2374,18 @@ dialog.app-dlg::backdrop { background: rgba(0,0,0,0.5); }
 .ap-favctl .dlg-btn { flex: none; min-height: 42px; width: 100%; }
 .ap-favctl .dlg-btn:disabled { opacity: .45; cursor: default; }
 .ap-favctl .ap-hint { margin: 6px 0 0; }
+/* Farbe einer eigenen App (seit 2.199.0): die Akzentfarben des Panels als runde Punkte, fünf pro Reihe; "Standard" folgt der Akzentfarbe */
+.ap-colrow { display: grid; gap: 8px; margin-bottom: 10px; }
+.ap-colrow[hidden] { display: none; }
+.ap-collbl { font-size: 13px; color: var(--dp-text2); }
+.ap-collbl b { font-weight: 500; color: var(--dp-text); }
+.ap-cols { display: grid; grid-template-columns: repeat(5, minmax(0, 1fr)); gap: 6px; }
+.ap-col { display: grid; place-items: center; height: 40px; padding: 0; border: 0; border-radius: 12px; background: var(--dp-subtle); cursor: pointer; }
+.ap-col i { width: 22px; height: 22px; border-radius: 50%; background: var(--a); }
+/* "Standard" als Ring: sieht sonst wie die Akzentfarbe gleicher Farbe aus (Himmelblau) */
+.ap-col[data-accent=""] i { background: none; box-shadow: inset 0 0 0 3px var(--a); }
+.ap-col.on { background: var(--dp-primary-soft); box-shadow: inset 0 0 0 1.5px var(--dp-primary); }
+.ap-col:focus-visible { outline: 2px solid var(--dp-primary); outline-offset: -2px; }
 .ap-ic { display: grid; place-items: center; height: 40px; padding: 0; border: 0; border-radius: 12px; background: var(--dp-subtle); color: var(--dp-text2); cursor: pointer; }
 .ap-ic.on { background: var(--dp-primary-soft); color: var(--dp-primary); box-shadow: inset 0 0 0 1.5px var(--dp-primary); }
 .ap-chk { display: flex; align-items: center; gap: 12px; min-height: 48px; margin-top: 10px; cursor: pointer; font-size: 14.5px; }
@@ -2405,7 +2417,7 @@ dialog.app-dlg::backdrop { background: rgba(0,0,0,0.5); }
   .ap-head .ap-pw { margin-right: 6px; } /* Handy: Abstand der Symbole 14 px wie in der Kopfzeile des Panels (Knöpfe dort 3 + 8 + 3 px), damit sie übereinander liegen */
   .ap-grid { grid-template-columns: repeat(3, minmax(0, 1fr)); }
   .ap-view .sub-tabs { width: 170px; }
-  .ap-ic { height: 44px; }
+  .ap-ic, .ap-col { height: 44px; }
   .ap-a { width: 38px; height: 44px; }
 }
 @media (prefers-reduced-motion: no-preference) { .ap-tile, .ap-erow { transition: background .15s ease; } }
