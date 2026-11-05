@@ -9,8 +9,8 @@ let ok = true;
 const check = (l, c, i = "") => { ok &&= !!c; console.log(`${c ? "PASS" : "FAIL"} ${l}${i ? " - " + i : ""}`); };
 const R = `document.querySelector("device-panel").shadowRoot`;
 const T = {
-  de: { title: "Updates", all: "Alle", start: (n) => `${n} Updates starten`, yes: (n) => `Ja, ${n} Updates starten`, wait: "Wartet", pct: /Update läuft: 40 %/, done: /Fertig: Version/, failed: "Fehlgeschlagen", finishing: "Update wird abgeschlossen", empty: "Alles ist auf dem neuesten Stand.", dot: /Updates verfügbar/ },
-  en: { title: "Updates", all: "All", start: (n) => `Start ${n} updates`, yes: (n) => `Yes, start ${n} updates`, wait: "Waiting", pct: /Update running: 40 %/, done: /Done: version/, failed: "Failed", finishing: "Finishing the update", empty: "Everything is up to date.", dot: /updates available/ },
+  de: { checkBtn: "Nach Updates suchen", checked0: "Suche abgeschlossen: nichts Neues.", checkFail: "Suche fehlgeschlagen: kaputt", title: "Updates", all: "Alle", start: (n) => `${n} Updates starten`, yes: (n) => `Ja, ${n} Updates starten`, wait: "Wartet", pct: /Update läuft: 40 %/, done: /Fertig: Version/, failed: "Fehlgeschlagen", finishing: "Update wird abgeschlossen", empty: "Alles ist auf dem neuesten Stand.", dot: /Updates verfügbar/ },
+  en: { checkBtn: "Check for updates", checked0: "Check finished: nothing new.", checkFail: "Check failed: kaputt", title: "Updates", all: "All", start: (n) => `Start ${n} updates`, yes: (n) => `Yes, start ${n} updates`, wait: "Waiting", pct: /Update running: 40 %/, done: /Done: version/, failed: "Failed", finishing: "Finishing the update", empty: "Everything is up to date.", dot: /updates available/ },
 };
 const mk = (id, platform, device, title, from, to) => ({ entity_id: `update.${id}`, device_id: device, platform, features: 13, installed: from, latest: to, title });
 const LIST = [
@@ -123,6 +123,25 @@ for (const lang of ["de", "en"]) {
     await p.evaluate(() => { window.__appUpdates = []; window.__uq = []; });
     await ev(`r.host._updApp.open()`);
     check(`[${tag}] nichts offen: "${L.empty}"`, await wait(`return r.querySelector("dialog.updapp-dlg .ua-empty")?.innerText.includes(${JSON.stringify(L.empty)})`));
+    // --- Nach Updates suchen (2.200.0): Knopf im Kopf, ruft homeassistant.update_entity für alle Update-Entitäten, dreht sich, zeigt das Ergebnis
+    await p.evaluate(() => {
+      const ha = document.querySelector("home-assistant").hass;
+      ha.states["update.core_x"] = { entity_id: "update.core_x", state: "off", attributes: { title: "Core", installed_version: "1", latest_version: "1" } };
+      ha.states["update.shelly_y"] = { entity_id: "update.shelly_y", state: "off", attributes: { title: "Shelly", installed_version: "1", latest_version: "1" } };
+      window.__pushHass(); window.__services = []; window.__serviceDelay = 600;
+    });
+    await ev(`r.host._updApp.open()`);
+    await wait(`return r.querySelector("dialog.updapp-dlg")?.open && !!r.querySelector("dialog.updapp-dlg .ua-empty")`);
+    check(`[${tag}] Kopf: Knopf "${L.checkBtn}" und Strich vor dem Kreuz`, await ev(`const a = r.querySelector('dialog.updapp-dlg .dlg-acts [data-ua="check"]'); const x = r.querySelector('dialog.updapp-dlg .dlg-close'); return !!a && a.title === ${JSON.stringify(L.checkBtn)} && !!r.querySelector("dialog.updapp-dlg .dlg-acts .dlg-sep") && a.getBoundingClientRect().right < x.getBoundingClientRect().left`));
+    await tap('dialog.updapp-dlg [data-ua="check"]');
+    check(`[${tag}] Suche läuft: Knopf gesperrt, Pfeile drehen sich`, await wait(`const a = r.querySelector('dialog.updapp-dlg [data-ua="check"]'); return a.disabled && !!a.querySelector(".ap-spin")`));
+    check(`[${tag}] Ergebnis: Hinweis "${L.checked0}", Knopf grün`, await wait(`const d = r.querySelector("dialog.updapp-dlg"); return d.textContent.includes(${JSON.stringify(L.checked0)}) && d.querySelector('[data-ua="check"]').classList.contains("run-ok")`));
+    const upd = await p.evaluate(() => window.__services.filter((c) => c.domain === "homeassistant" && c.service === "update_entity"));
+    check(`[${tag}] ein Aufruf homeassistant.update_entity mit allen Update-Entitäten`, upd.length === 1 && Array.isArray(upd[0].data.entity_id) && upd[0].data.entity_id.includes("update.core_x") && upd[0].data.entity_id.includes("update.shelly_y") && upd[0].data.entity_id.every((x) => x.startsWith("update.")), JSON.stringify(upd));
+    await p.evaluate(() => { window.__serviceDelay = 0; window.__serviceFails = "kaputt"; });
+    await tap('dialog.updapp-dlg [data-ua="check"]');
+    check(`[${tag}] Fehler: Hinweis "${L.checkFail}", Knopf rot`, await wait(`const d = r.querySelector("dialog.updapp-dlg"); return d.querySelector(".dlg-error")?.textContent.includes(${JSON.stringify(L.checkFail)}) && d.querySelector('[data-ua="check"]').classList.contains("run-err")`));
+    await p.evaluate(() => { window.__serviceFails = null; });
     await tap('dialog.updapp-dlg [data-ua="close"]');
 
     // --- Nur für Administratoren

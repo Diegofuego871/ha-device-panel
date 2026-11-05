@@ -75,6 +75,7 @@ export class UpdApp {
       if (!el) return;
       const act = el.dataset.ua;
       if (act === "close") this.close();
+      else if (act === "check") this.check();
       else if (act === "filter") this.setFilter(el.dataset.key);
       else if (act === "next") {
         this.ui.step = "confirm";
@@ -131,6 +132,36 @@ export class UpdApp {
       this.error = this.h.errText(err);
     }
     this.render();
+  }
+
+  // Nach neuen Updates suchen (seit 2.200.0): wie "Nach Updates suchen" in den Einstellungen von Home Assistant ruft das Panel
+  // homeassistant.update_entity für alle Update-Entitäten auf. Das lässt Home Assistant (über den Supervisor), Apps und Geräte neu fragen. Der Marketplace
+  // fragt seine Quellen damit nicht neu (er prüft selbst nur alle paar Stunden, siehe README: eigene App "Aktion").
+  async check() {
+    if (this.ui.checking) return;
+    this.ui.checking = true;
+    this.ui.checkMsg = null;
+    window.clearTimeout(this._checkTimer);
+    this.render();
+    const hass = this.host._hass;
+    const ids = Object.keys(hass?.states || {}).filter((k) => k.startsWith("update."));
+    let failed = "";
+    try {
+      if (ids.length) await this.host._callService("homeassistant", "update_entity", { entity_id: ids });
+    } catch (err) {
+      failed = this.h.errText(err);
+    }
+    await this.load();
+    this.ui.checking = false;
+    this.ui.checkState = failed ? "err" : "ok";
+    this.ui.checkMsg = failed ? { kind: "err", text: this.t("appupCheckFail", failed) } : { kind: "ok", text: this.t("appupChecked", this.data.available.length) };
+    this.render();
+    // Grüner bzw. roter Knopf und Hinweis bleiben kurz stehen
+    this._checkTimer = window.setTimeout(() => {
+      this.ui.checkState = "";
+      this.ui.checkMsg = null;
+      this.render();
+    }, 6000);
   }
 
   byId(id) {
@@ -213,6 +244,7 @@ export class UpdApp {
     const { escape, mdi } = this.h;
     this.dlg.innerHTML = `<div class="dlg-head"><span class="dlg-avatar app app-updates">${mdi("verUp", 28)}</span>
         <div class="dlg-title"><h2>${escape(this.t("appupTitle"))}</h2><div class="dlg-sub" data-ua-sub></div></div>
+        <span class="dlg-acts"><button type="button" class="dlg-act" data-ua="check" data-ua-check title="${escape(this.t("appupCheck"))}" aria-label="${escape(this.t("appupCheck"))}">${mdi("reset", 18)}</button><span class="dlg-sep" aria-hidden="true"></span></span>
         <button type="button" class="dlg-close" data-ua="close" title="${escape(this.t("close"))}" aria-label="${escape(this.t("close"))}">${mdi("close", 18)}</button></div>
       <div class="dlg-body" data-ua-body></div><div class="dlg-actions" data-ua-foot></div>`;
     this.render();
@@ -229,6 +261,14 @@ export class UpdApp {
     const avail = this.data.available;
     const sub = dlg.querySelector("[data-ua-sub]");
     const foot = dlg.querySelector("[data-ua-foot]");
+    // Knopf "Nach Updates suchen": dreht sich während der Suche, danach kurz grün (Erfolg) oder rot (Fehler)
+    const cb = dlg.querySelector("[data-ua-check]");
+    if (cb) {
+      cb.disabled = Boolean(this.ui.checking);
+      cb.classList.toggle("run-ok", this.ui.checkState === "ok");
+      cb.classList.toggle("run-err", this.ui.checkState === "err");
+      cb.innerHTML = this.ui.checking ? `<span class="ap-spin">${this.h.mdi("reset", 18)}</span>` : this.h.mdi(this.ui.checkState === "ok" ? "check" : this.ui.checkState === "err" ? "close" : "reset", 18);
+    }
     const closeBtn = (cls = "") => `<button type="button" class="dlg-btn${cls}" data-ua="close">${this.h.mdi("close", 18)}${escape(t("close"))}</button>`;
     const err = this.error ? `<div class="dlg-error">${escape(this.error)}</div>` : "";
     if (!this.ui.loaded) {
@@ -281,6 +321,8 @@ export class UpdApp {
       const n = this.ui.sel.size;
       foot.innerHTML = `${closeBtn()}<button type="button" class="dlg-btn primary" data-ua="next" ${n ? "" : "disabled"}>${this.h.mdi("verDownload", 18)}${escape(t("appupStart", n))}</button>`;
     }
+    // Ergebnis der Suche (bleibt kurz stehen)
+    if (this.ui.checkMsg) body.insertAdjacentHTML("afterbegin", `<div class="${this.ui.checkMsg.kind === "err" ? "dlg-error" : "dlg-note"}" role="status">${escape(this.ui.checkMsg.text)}</div>`);
     body.scrollTop = scroll;
   }
 

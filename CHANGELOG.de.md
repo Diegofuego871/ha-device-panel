@@ -7,7 +7,19 @@ Alle nennenswerten Änderungen an dieser Integration stehen in dieser Datei.
 Das Format folgt [Keep a Changelog](https://keepachangelog.com/de/1.1.0/),
 die Versionsnummern folgen [Semantic Versioning](https://semver.org/lang/de/).
 
+## [2.200.0] - 2026-11-05
+
+Die App "Updates" hat einen Knopf, der Home Assistant nach neuen Updates suchen lässt.
+
+Enthält die Änderungen von 2.199.1.
+
+### Hinzugefügt
+
+- **App "Updates", Knopf "Nach Updates suchen":** Im Kopf, vor dem Strich und dem Kreuz, startet ein runder Knopf die Suche nach neuen Updates. Wie "Nach Updates suchen" in den Einstellungen von Home Assistant ruft er den Dienst `homeassistant.update_entity` für alle Update-Entitäten auf: Home Assistant Core, Betriebssystem, Supervisor und Apps fragen den Supervisor neu, Integrationen und Geräte ihre Quelle. Die Pfeile drehen sich, solange es läuft, dann ist der Knopf kurz grün (oder rot mit dem Grund, wenn der Aufruf fehlschlug), und ein Hinweis nennt, wie viele Updates offen sind; die Liste aktualisiert sich selbst. Der Marketplace wird dadurch nicht neu gefragt (er prüft nur alle paar Stunden, siehe README zur Aktions-App mit `marketplace/repository/refresh`).
+
 ## [2.199.1] - 2026-11-05
+
+Nicht veröffentlicht; enthalten in 2.200.0.
 
 Das Löschen einer eigenen App im Launcher fragt vorher nach, und das Hauptsuchfeld hat mehr Platz für Text.
 
@@ -5787,7 +5799,7 @@ Erste Vorabversion.
   GitHub Actions für die Prüfungen von HACS und hassfest sowie die Tests.
 
 [2.6.0]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v2.6.0
-[2.199.1]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v2.199.1
+[2.200.0]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v2.200.0
 [2.199.0]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v2.199.0
 [2.198.1]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v2.198.1
 [2.198.0]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v2.198.0

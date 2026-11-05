@@ -3,6 +3,10 @@
 Einstieg für jede neue Claude-Code-Session. Zuerst diese Datei lesen, dann
 `CLAUDE.md`, `docs/CONCEPT.md`, `docs/LEARNINGS.md`, `docs/DESIGN.md`.
 
+## Stand (2.200.0, Knopf "Nach Updates suchen" in der App Updates)
+
+- `updapp.js` `check()`: `host._callService("homeassistant", "update_entity", {entity_id: alle update.*})` (wie die Einstellungen von HA; der Supervisor wird dabei neu gefragt, siehe hassio/coordinator `_async_refresh`), Knopf `.dlg-act[data-ua-check]` im Kopf (`.dlg-acts` + `.dlg-sep`), dreht, dann grün/rot und Hinweis 6 s. Marketplace wird dadurch nicht neu gefragt. Test in `updapp-e2e`.
+
 ## Stand (2.199.1, Rückfrage beim Löschen einer eigenen App)
 
 - `styles.js` `.searchbox` gap 4 px + `.search` padding 0 2 px: Text 6 px hinter der Lupe (vorher 10 + 2 px).
