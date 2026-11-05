@@ -29,6 +29,7 @@ from .device_update import held_until, installable_updates
 from .battery_history import async_last_known, battery_entity
 from .compat import device_entry_ids, device_primary_entry_id, registry_devices
 from .const import (
+    MARKET_PLATFORMS,
     CONF_AI_ASSESSMENT,
     CONF_AI_TASK,
     CONF_BATTERY_LOW,
@@ -730,7 +731,7 @@ def routine_failures(hass: HomeAssistant) -> dict[str, Any]:
 def _update_install(hass: HomeAssistant, entries: list[er.RegistryEntry]) -> bool:
     """Ob ein offenes Update des Geräts sich aus der App "Geräte-Updates" starten lässt (nicht Home Assistant, Apps, HACS)."""
     for entry in entries:
-        if entry.domain != "update" or entry.disabled_by or entry.platform in ("hassio", "homeassistant", "hacs"):
+        if entry.domain != "update" or entry.disabled_by or entry.platform in ("hassio", "homeassistant", *MARKET_PLATFORMS):
             continue
         state = hass.states.get(entry.entity_id)
         if state is not None and state.state == STATE_ON and int(state.attributes.get("supported_features") or 0) & 1:

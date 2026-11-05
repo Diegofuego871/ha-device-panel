@@ -7,15 +7,32 @@ All notable changes to this integration are documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/).
 
+## [2.194.0] - 2026-11-05
+
+The launcher has a link to the Marketplace, and the panel speaks only of the Marketplace instead of HACS.
+
+Includes the changes from 2.193.0.
+
+### Added
+
+- **Launcher, page "Marketplace":** A new page of Home Assistant in the launcher with the same violet shop icon as in the settings of Home Assistant. It opens `/hacs`, which the documentation names as the address that opens the Marketplace (from Home Assistant 2026.11, and with HACS before). Administrators only.
+
+### Changed
+
+- **Name "Marketplace" everywhere:** The panel no longer says "HACS" in any text (settings, version bar, app "Updates", setup wizard, push messages, log, texts of the integration and the whole README). The update kind is called "Marketplace".
+- **Marketplace entities recognised:** The update entities of the Marketplace are recognised under the platform "marketplace" (Home Assistant 2026.11) as well as "hacs" (before). This covers the kind "Marketplace" in the app "Updates", the update of Device Panel itself (version bar, automatic installation) and the rule that a firmware update of a device does not include them.
+
 ## [2.193.0] - 2026-11-04
 
 Magic Push can use a time of day, with weekdays, as a condition, alone or combined with the state of devices.
+
+Not released; included in 2.194.0.
 
 Includes the changes from 2.192.0.
 
 ### Added
 
-- **Magic Push, condition "Time of day":** In step 1 (conditions) the new card "Time of day" stands before the entities. It is either "From time" (from, for example, 10:00 until midnight) or "From to" (a time window, also past midnight, for example 22:00 to 06:00), optionally on chosen weekdays (none chosen means every day; a window past midnight belongs to the day it starts). It can be the only condition of a message (a reminder without a device state, for example "Change the filter" every Monday at 10:00) or be combined with other conditions by "and" / "or", also in groups. The message comes when the condition starts to apply (once per window, "Wait before notifying" and "Repeat" work as usual); "Also notify when back to normal" sends at the end of the window. The look-back shows the windows of the last 24 hours. Message variables: `{device}` and `{time}`; the default text is "{device}: It is {time}". The condition text and the name show for example "time from 10:00, Mon,Wed". The setting is saved, backed up and restored with the message.
+- **Magic Push, condition "Time of day":** In step 1 (conditions) the new card "Time of day" stands before the entities. It is either "Time" (for example 10:00; it applies from then until midnight, the message comes once per day) or "From to" (a time window, also past midnight, for example 22:00 to 06:00), optionally on chosen weekdays (none chosen means every day; a window past midnight belongs to the day it starts). A window ("From to") always needs a device condition in addition, because alone it would apply the whole period; a time alone is allowed. A time can be the only condition of a message (a reminder without a device state, for example "Change the filter" every Monday at 10:00) or be combined with other conditions by "and" / "or", also in groups. The message comes when the condition starts to apply (once per window, "Wait before notifying" and "Repeat" work as usual); "Also notify when back to normal" sends at the end of the window. The look-back shows the windows of the last 24 hours. Message variables: `{device}` and `{time}`; the default text is "{device}: It is {time}". The condition text and the name show for example "time 10:00, Mon,Wed". The setting is saved, backed up and restored with the message.
 
 ## [2.192.0] - 2026-11-04
 
@@ -5593,7 +5610,7 @@ First pre-release.
   GitHub Actions for HACS/hassfest validation and tests.
 
 [2.6.0]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v2.6.0
-[2.193.0]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v2.193.0
+[2.194.0]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v2.194.0
 [2.190.1]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v2.190.1
 [2.190.0]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v2.190.0
 [2.188.0]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v2.188.0

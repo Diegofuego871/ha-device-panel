@@ -8,8 +8,8 @@ let ok = true;
 const check = (l, c, i = "") => { ok &&= !!c; console.log(`${c ? "PASS" : "FAIL"} ${l}${i ? " - " + i : ""}`); };
 const R = `document.querySelector("device-panel").shadowRoot`;
 const T = {
-  de: { all: "Alle", ha: "Home Assistant", apps: "Apps", hacs: "HACS", app: "App", restartCore: "Startet Home Assistant neu", restartOs: "Startet den Rechner neu", cCore: "Home Assistant startet am Schluss neu", cApps: "Während eines App-Updates meldet das Panel keinen Ausfall", start: (n) => `${n} Updates starten` },
-  en: { all: "All", ha: "Home Assistant", apps: "Apps", hacs: "HACS", app: "App", restartCore: "Restarts Home Assistant", restartOs: "Restarts the machine", cCore: "Home Assistant restarts at the end", cApps: "During an app update the panel does not report outages", start: (n) => `Start ${n} updates` },
+  de: { all: "Alle", ha: "Home Assistant", apps: "Apps", hacs: "Marketplace", app: "App", restartCore: "Startet Home Assistant neu", restartOs: "Startet den Rechner neu", cCore: "Home Assistant startet am Schluss neu", cApps: "Während eines App-Updates meldet das Panel keinen Ausfall", start: (n) => `${n} Updates starten` },
+  en: { all: "All", ha: "Home Assistant", apps: "Apps", hacs: "Marketplace", app: "App", restartCore: "Restarts Home Assistant", restartOs: "Restarts the machine", cCore: "Home Assistant restarts at the end", cApps: "During an app update the panel does not report outages", start: (n) => `Start ${n} updates` },
 };
 const dev = (id, platform, device, title) => ({ entity_id: `update.${id}`, device_id: device, platform, kind: "devices", restart: false, features: 13, installed: "1.0", latest: "1.1", title });
 const LIST = [

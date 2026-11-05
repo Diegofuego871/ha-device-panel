@@ -3,6 +3,11 @@
 Einstieg für jede neue Claude-Code-Session. Zuerst diese Datei lesen, dann
 `CLAUDE.md`, `docs/CONCEPT.md`, `docs/LEARNINGS.md`, `docs/DESIGN.md`.
 
+## Stand (2.194.0, Marketplace statt HACS)
+
+- Sichtbar heisst es nur noch "Marketplace" (Panel-Texte, Push, Protokoll, strings.json/translations, README). Technisch bleibt der Schlüssel `hacs` der Update-Art (steht in gespeicherten Optionen, `UPDATE_KINDS`), ebenso `hacs.json` und die Namen interner Funktionen. `const.MARKET_PLATFORMS = ("hacs", "marketplace")` (Plattform der Update-Entitäten bis und ab Home Assistant 2026.11) gilt in `updates.update_kind`, `devices._update_install`, `update_check._hacs_update_entity` und im Panel (`MARKET_PLATFORMS`).
+- Launcher: Seite `market` (`/hacs`, Laden-Symbol `#7C4DFF`, nur Administratoren). Der eigentliche Pfad des Marketplace in Home Assistant 2026.11 ist nicht belegt; `/hacs` öffnet ihn laut Dokumentation.
+
 ## Stand (2.193.0, Zeit-Bedingung in Magic Push)
 
 - Blatt der Bedingungen `{entity_id: "", kind: "time", from, to, days}` (`to` leer = bis Mitternacht, `days` 0 = Montag, leer = jeden Tag; `_clean_time`). `time_met(leaf, ts)` rechnet in der Ortszeit (Fenster über Mitternacht gehört zum Starttag); `leaf_met/leaf_hold(leaf, state, ts)`. Eine Zeit-Bedingung bleibt immer im Baum `conditions`; die alten Felder gehören der ersten Bedingung mit Entität (`primary_of`), bei nur Zeit ist `entity_id == ""` und `kind == "time"`.

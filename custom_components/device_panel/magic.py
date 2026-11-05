@@ -443,9 +443,12 @@ def clean_conditions(hass: HomeAssistant, raw: Any) -> dict[str, Any]:
         else:
             items.append(_clean_leaf(hass, item, alone=False))
     tree = {"op": op, "items": items}
-    count = len(tree_leaves(tree))
-    if count > MAX_LEAVES:
+    leaves = tree_leaves(tree)
+    if len(leaves) > MAX_LEAVES:
         raise vol.Invalid(f"Höchstens {MAX_LEAVES} Bedingungen")
+    # Ein Zeitfenster (von bis) gilt den ganzen Zeitraum: allein würde die Meldung dauernd zutreffen, darum braucht es eine Gerätebedingung
+    if not any(leaf["entity_id"] for leaf in leaves) and any(leaf["kind"] == "time" and leaf.get("to") for leaf in leaves):
+        raise vol.Invalid("Ein Zeitfenster (von bis) braucht zusätzlich eine Gerätebedingung")
     return tree
 
 

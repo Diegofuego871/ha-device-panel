@@ -7,15 +7,32 @@ Alle nennenswerten Änderungen an dieser Integration stehen in dieser Datei.
 Das Format folgt [Keep a Changelog](https://keepachangelog.com/de/1.1.0/),
 die Versionsnummern folgen [Semantic Versioning](https://semver.org/lang/de/).
 
+## [2.194.0] - 2026-11-05
+
+Der Launcher hat einen Link zum Marketplace, und das Panel spricht nur noch vom Marketplace statt von HACS.
+
+Enthält die Änderungen von 2.193.0.
+
+### Hinzugefügt
+
+- **Launcher, Seite "Marketplace":** Eine neue Seite von Home Assistant im Launcher mit demselben violetten Laden-Symbol wie in den Einstellungen von Home Assistant. Sie öffnet `/hacs`, das die Dokumentation als Adresse nennt, die den Marketplace öffnet (ab Home Assistant 2026.11, davor mit HACS). Nur für Administratoren.
+
+### Geändert
+
+- **Name "Marketplace" überall:** Das Panel sagt in keinem Text mehr "HACS" (Einstellungen, Versionsleiste, App "Updates", Einrichtungsassistent, Push-Meldungen, Protokoll, Texte der Integration und das ganze README). Die Art des Updates heisst "Marketplace".
+- **Entitäten des Marketplace erkannt:** Die Update-Entitäten des Marketplace werden unter der Plattform "marketplace" (Home Assistant 2026.11) wie unter "hacs" (davor) erkannt. Das betrifft die Art "Marketplace" in der App "Updates", das Update von Device Panel selbst (Versionsleiste, automatische Installation) und die Regel, dass ein Firmware-Update eines Geräts sie nicht einschliesst.
+
 ## [2.193.0] - 2026-11-04
 
 Magic Push kennt eine Uhrzeit mit Wochentagen als Bedingung, allein oder verknüpft mit dem Zustand von Geräten.
+
+Nicht veröffentlicht; enthalten in 2.194.0.
 
 Enthält die Änderungen von 2.192.0.
 
 ### Hinzugefügt
 
-- **Magic Push, Bedingung "Uhrzeit":** In Schritt 1 (Bedingungen) steht die neue Karte "Uhrzeit" vor den Entitäten. Sie ist entweder "Ab Uhrzeit" (ab zum Beispiel 10:00 bis Mitternacht) oder "Von bis" (ein Zeitfenster, auch über Mitternacht, zum Beispiel 22:00 bis 06:00), auf Wunsch nur an gewählten Wochentagen (keine Wahl heisst jeden Tag; ein Fenster über Mitternacht gehört zum Tag, an dem es beginnt). Sie kann die einzige Bedingung einer Meldung sein (eine Erinnerung ohne Gerätezustand, zum Beispiel "Filter tauschen" jeden Montag um 10:00) oder mit anderen Bedingungen durch "und" / "oder" verknüpft werden, auch in Gruppen. Die Meldung kommt, sobald die Bedingung zu gelten beginnt (einmal pro Fenster; "Erst melden nach" und "Wiederholen" wirken wie gewohnt); "Auch melden, wenn wieder normal" sendet am Ende des Fensters. Der Rückblick zeigt die Fenster der letzten 24 Stunden. Variablen der Meldung: `{device}` und `{time}`; der Standardtext heisst "{device}: Es ist {time}". Der Satz der Bedingung und der Name zeigen zum Beispiel "Uhrzeit ab 10:00, Mo,Mi". Die Einstellung wird mit der Meldung gespeichert, gesichert und wiederhergestellt.
+- **Magic Push, Bedingung "Uhrzeit":** In Schritt 1 (Bedingungen) steht die neue Karte "Uhrzeit" vor den Entitäten. Sie ist entweder "Uhrzeit" (zum Beispiel 10:00; sie gilt ab dann bis Mitternacht, die Meldung kommt einmal pro Tag) oder "Von bis" (ein Zeitfenster, auch über Mitternacht, zum Beispiel 22:00 bis 06:00), auf Wunsch nur an gewählten Wochentagen (keine Wahl heisst jeden Tag; ein Fenster über Mitternacht gehört zum Tag, an dem es beginnt). Ein Zeitfenster ("Von bis") braucht immer zusätzlich eine Gerätebedingung, weil es allein den ganzen Zeitraum gälte; eine Uhrzeit allein ist erlaubt. Eine Uhrzeit kann die einzige Bedingung einer Meldung sein (eine Erinnerung ohne Gerätezustand, zum Beispiel "Filter tauschen" jeden Montag um 10:00) oder mit anderen Bedingungen durch "und" / "oder" verknüpft werden, auch in Gruppen. Die Meldung kommt, sobald die Bedingung zu gelten beginnt (einmal pro Fenster; "Erst melden nach" und "Wiederholen" wirken wie gewohnt); "Auch melden, wenn wieder normal" sendet am Ende des Fensters. Der Rückblick zeigt die Fenster der letzten 24 Stunden. Variablen der Meldung: `{device}` und `{time}`; der Standardtext heisst "{device}: Es ist {time}". Der Satz der Bedingung und der Name zeigen zum Beispiel "Uhrzeit 10:00, Mo,Mi". Die Einstellung wird mit der Meldung gespeichert, gesichert und wiederhergestellt.
 
 ## [2.192.0] - 2026-11-04
 
@@ -5694,7 +5711,7 @@ Erste Vorabversion.
   GitHub Actions für die Prüfungen von HACS und hassfest sowie die Tests.
 
 [2.6.0]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v2.6.0
-[2.193.0]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v2.193.0
+[2.194.0]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v2.194.0
 [2.190.1]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v2.190.1
 [2.190.0]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v2.190.0
 [2.188.0]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v2.188.0

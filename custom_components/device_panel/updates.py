@@ -23,6 +23,7 @@ from homeassistant.util import dt as dt_util
 
 from . import activity, push
 from .const import (
+    MARKET_PLATFORMS,
     CONF_NOTIFY_UPDATES,
     CONF_UPDATES_EXCLUDE,
     CONF_UPDATES_INCLUDE,
@@ -63,7 +64,7 @@ def update_kind(hass: HomeAssistant, entity_id: str) -> str:
     platform = entry.platform if entry else ""
     if platform == "hassio":
         return "core" if entity_id in _CORE_IDS else "addons"
-    if platform == "hacs":
+    if platform in MARKET_PLATFORMS:
         return "hacs"
     return "devices"
 

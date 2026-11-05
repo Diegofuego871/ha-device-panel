@@ -458,6 +458,11 @@ export class MagicPush {
     return { uid: leafId(), entity_id: "", kind: "time", value: "", reset_value: "", resetOwn: false, from: "10:00", to: "", days: [] };
   }
 
+  // Ein Zeitfenster (von bis) gilt den ganzen Zeitraum: allein würde die Meldung dauernd zutreffen, darum braucht es eine Gerätebedingung (wie im Server)
+  timeNeedsDevice(leaves = this.leavesOf()) {
+    return !leaves.some((l) => l.entity_id) && leaves.some((l) => l.kind === "time" && l.to);
+  }
+
   // Die Bedingung der alten Felder: die erste mit Entität, bei einer Regel nur aus Zeit die erste
   primaryLeaf(leaves = this.leavesOf()) {
     return leaves.find((l) => l.entity_id) || leaves[0];
@@ -1479,7 +1484,7 @@ export class MagicPush {
     if (step === 0) return Boolean(this.wiz.pickId) && !this.wiz.loadingDev;
     if (step === 1) {
       const leaves = this.leavesOf();
-      return leaves.length > 0 && !this.wiz.adding && leaves.every((l) => this.leafValid(l));
+      return leaves.length > 0 && !this.wiz.adding && leaves.every((l) => this.leafValid(l)) && !this.timeNeedsDevice(leaves);
     }
     if (step === 2) return !this.forError() && !this.resetForError();
     if (step === 3) return !this.repeatError() && (!d.sendAt || /^([01]\d|2[0-3]):[0-5]\d$/.test(d.send_at));
@@ -1811,6 +1816,7 @@ export class MagicPush {
     });
     const groups = d.conds.items.filter((i) => i.items).length;
     if (sole && leaves[0].kind === "change") return html;
+    if (this.timeNeedsDevice(leaves)) html += `<div class="opt-error" role="alert">${esc(t("mgTimeNeedsDevice"))}</div>`;
     if (leaves.length >= this.limit("leaves", 10)) return `${html}<p class="mg-hint mg-limit">${esc(t("mgLimitConds", this.limit("leaves", 10)))}</p>`;
     html += `<div class="mg-adds"><button type="button" class="mg-add" data-mg="add-cond">${this.h.mdi("plus", 18)}${esc(t("mgAddCond"))}</button>`;
     if (groups < this.limit("groups", 4)) html += `<button type="button" class="mg-add" data-mg="add-group">${this.h.mdi("plus", 18)}${esc(t("mgAddGroup"))}</button>`;

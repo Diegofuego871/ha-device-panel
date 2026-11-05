@@ -465,6 +465,8 @@ const BATTERY_FIELDS = ["battery", "area", "integration", "model"];
 // Inhalt der Meldung bei neuen Geräten (seit 1.24.0, const.NEW_FIELDS).
 const NEW_FIELDS = ["area", "integration", "connection", "model"];
 const UPDATE_KINDS = ["core", "addons", "hacs", "devices"];
+// Plattform der Update-Entitäten des Marketplace: bis Home Assistant 2026.11 "hacs", danach der eingebaute "marketplace"
+const MARKET_PLATFORMS = ["hacs", "marketplace"];
 // Ruhezeit (seit 2.95.0): Meldungsarten, die sich zurückhalten lassen (wie im Backend, quiet.py), und die Vorgabe je Wochentag
 const QUIET_TOPICS = ["outage", "online", "battery", "charge", "new", "updates", "panelupdate", "routines", "status", "magic"];
 // Sichern und wiederherstellen (seit 2.98.0): Bereiche der Sicherung wie im Backend (backup.py); Routinen und Magic Push standardmässig aus
@@ -11032,7 +11034,7 @@ class DevicePanel extends HTMLElement {
     const hass = this._hass;
     if (!hass || !hass.entities || !hass.states) return null;
     for (const e of Object.values(hass.entities)) {
-      if (!e || e.platform !== "hacs" || !String(e.entity_id).startsWith("update.")) continue;
+      if (!e || !MARKET_PLATFORMS.includes(e.platform) || !String(e.entity_id).startsWith("update.")) continue;
       const st = hass.states[e.entity_id];
       if (st && REPO_URL_RE.test(String((st.attributes || {}).release_url || "").trim())) return st;
     }
@@ -11079,7 +11081,7 @@ class DevicePanel extends HTMLElement {
     const deviceId = reg && reg.device_id;
     if (!deviceId) return null;
     const sw = Object.values(hass.entities).find(
-      (e) => e && e.platform === "hacs" && e.device_id === deviceId && String(e.entity_id).startsWith("switch.") && /pre.?release/i.test(`${e.entity_id} ${e.translation_key || ""}`)
+      (e) => e && MARKET_PLATFORMS.includes(e.platform) && e.device_id === deviceId && String(e.entity_id).startsWith("switch.") && /pre.?release/i.test(`${e.entity_id} ${e.translation_key || ""}`)
     );
     // Deaktiviert (Standard bei HACS) fehlt die Entität in hass.entities: dann ist sie aus. Das Panel ändert sie nie (seit 2.99.3):
     // aktivieren und einschalten macht der Benutzer im HACS-Gerät (Link im Hinweis).

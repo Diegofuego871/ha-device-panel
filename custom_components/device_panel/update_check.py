@@ -33,6 +33,7 @@ from homeassistant.loader import async_get_integration
 
 from .http_limit import read_limited
 from .const import (
+    MARKET_PLATFORMS,
     CONF_UPDATE_CHECK,
     CONF_UPDATE_CHECK_TIME,
     CONF_UPDATE_NOTIFY,
@@ -316,7 +317,7 @@ def _hacs_update_entity(hass: HomeAssistant) -> str | None:
     """Update-Entität von HACS für dieses Repository: erkannt am Link des Releases, nie am Titel oder an einer festen ID."""
     registry = er.async_get(hass)
     for entry in registry.entities.values():
-        if entry.platform != "hacs" or entry.domain != "update" or entry.disabled_by is not None:
+        if entry.platform not in MARKET_PLATFORMS or entry.domain != "update" or entry.disabled_by is not None:
             continue
         state = hass.states.get(entry.entity_id)
         if state is not None and is_repo_url(state.attributes.get("release_url")):

@@ -122,12 +122,12 @@
           "update_check": "Reports a new version under Settings → Repairs. Pre-releases are never reported here.",
           "signal_low": "Connection type → threshold, one per line, e.g. \"wifi: -85\", \"zigbee: 40\" or \"ble: off\" (dBm negative, LQI positive). Applies to devices without an own setting; unset = standard (-80 dBm, LQI 60).",
           "signal_low_integrations": "Integration → connection type → threshold, e.g. \"shelly:\" with \"wifi: -88\" and \"ble: off\" below it. Goes before the global value; a device setting goes before both.",
-          "notify_updates": "A push notification when a new update is available in Home Assistant (core, add-ons, HACS, device firmware), to the push target above. Replaces automations with a counter helper.",
+          "notify_updates": "A push notification when a new update is available in Home Assistant (core, add-ons, Marketplace, device firmware), to the push target above. Replaces automations with a counter helper.",
           "updates_mode": "Immediately (after the collect time), once a day or once a week (Monday).",
           "updates_time": "Time for the daily or weekly notification.",
           "updates_window": "Minutes to wait after the first new update (mode immediately), so that several updates arrive in one notification.",
           "updates_repeat": "Report an update that stays open again after 3 or 7 days.",
-          "updates_kinds": "Home Assistant (core, OS, supervisor), add-ons, HACS, device firmware. Skipped versions are never reported.",
+          "updates_kinds": "Home Assistant (core, OS, supervisor), add-ons, Marketplace, device firmware. Skipped versions are never reported.",
           "routines_pause": "While on, no routine switches anything (for example on holiday). They skip their times and carry on afterwards.",
           "routines_catch_up": "If Home Assistant was not running when a routine was due, it still runs when started within this time. Later ones are skipped and noted in the log. 0 = never.",
           "routines_notify_error": "A push notification (not a persistent one, nothing under Repairs) when a routine could not switch even after three attempts (at once and twice more, 5 minutes apart). Goes to the routine's own recipient, otherwise to the push target; if that is \"none\", it only appears in the log. A routine with its own push switched on always sends it.",
@@ -158,7 +158,7 @@
     },
     "update_available": {
       "title": "Device Panel {latest} is available",
-      "description": "Installed is {installed}. Update via HACS or via the gear icon in the Device Panel (Settings). The daily check can be turned off in the options of the integration."
+      "description": "Installed is {installed}. Update via the Marketplace or via the gear icon in the Device Panel (Settings). The daily check can be turned off in the options of the integration."
     }
   },
   "selector": {
@@ -283,7 +283,7 @@
       "options": {
         "core": "Home Assistant (core, OS, supervisor)",
         "addons": "Apps (add-ons)",
-        "hacs": "HACS",
+        "hacs": "Marketplace",
         "devices": "Device firmware"
       }
     }

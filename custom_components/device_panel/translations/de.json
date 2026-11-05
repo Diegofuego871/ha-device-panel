@@ -122,12 +122,12 @@
           "update_check": "Meldet eine neue Version unter Einstellungen → Reparaturen. Vorabversionen werden hier nie gemeldet.",
           "signal_low": "Verbindungsart → Schwelle, eine pro Zeile, z. B. \"wifi: -85\", \"zigbee: 40\" oder \"ble: off\" (dBm negativ, LQI positiv). Gilt für Geräte ohne eigene Einstellung; ohne Eintrag der Standard (-80 dBm, LQI 60).",
           "signal_low_integrations": "Integration → Verbindungsart → Schwelle, z. B. \"shelly:\" mit \"wifi: -88\" und \"ble: off\" darunter. Geht vor dem globalen Wert; eine Einstellung des Geräts geht vor beiden.",
-          "notify_updates": "Eine Push-Meldung, wenn in Home Assistant ein neues Update verfügbar ist (Core, Add-ons, HACS, Geräte-Firmware), an das Push-Ziel oben. Ersetzt Automationen mit Zähler und Hilfsentität.",
+          "notify_updates": "Eine Push-Meldung, wenn in Home Assistant ein neues Update verfügbar ist (Core, Add-ons, Marketplace, Geräte-Firmware), an das Push-Ziel oben. Ersetzt Automationen mit Zähler und Hilfsentität.",
           "updates_mode": "Sofort (nach der Sammelzeit), einmal täglich oder einmal pro Woche (Montag).",
           "updates_time": "Uhrzeit der täglichen oder wöchentlichen Meldung.",
           "updates_window": "Minuten nach dem ersten neuen Update (Zeitpunkt sofort), damit mehrere Updates in einer Meldung ankommen.",
           "updates_repeat": "Ein offen gebliebenes Update nach 3 oder 7 Tagen erneut melden.",
-          "updates_kinds": "Home Assistant (Core, OS, Supervisor), Add-ons, HACS, Geräte-Firmware. Übersprungene Versionen werden nie gemeldet.",
+          "updates_kinds": "Home Assistant (Core, OS, Supervisor), Add-ons, Marketplace, Geräte-Firmware. Übersprungene Versionen werden nie gemeldet.",
           "routines_pause": "Solange das an ist, schaltet keine Routine etwas (zum Beispiel in den Ferien). Sie überspringen ihre Zeiten und laufen danach weiter.",
           "routines_catch_up": "Lief Home Assistant zur Zeit einer Routine nicht, läuft sie trotzdem, wenn der Start innerhalb dieser Zeit kommt. Spätere werden übersprungen und im Protokoll vermerkt. 0 = nie.",
           "routines_notify_error": "Eine Push-Meldung (keine anhaltende, nichts unter Reparaturen), wenn eine Routine auch nach drei Versuchen nicht schalten konnte (sofort und zwei weitere Male im Abstand von 5 Minuten). Sie geht an den eigenen Empfänger der Routine, sonst an das Push-Ziel; ist dort \"keine Meldung\" gewählt, steht es nur im Protokoll. Eine Routine mit eigenem Push sendet sie immer.",
@@ -158,7 +158,7 @@
     },
     "update_available": {
       "title": "Device Panel {latest} ist verfügbar",
-      "description": "Installiert ist {installed}. Aktualisieren über HACS oder über das Zahnrad im Device Panel (Einstellungen). Die tägliche Prüfung lässt sich in den Optionen der Integration ausschalten."
+      "description": "Installiert ist {installed}. Aktualisieren über den Marketplace oder über das Zahnrad im Device Panel (Einstellungen). Die tägliche Prüfung lässt sich in den Optionen der Integration ausschalten."
     }
   },
   "selector": {
@@ -283,7 +283,7 @@
       "options": {
         "core": "Home Assistant (Core, OS, Supervisor)",
         "addons": "Apps (Add-ons)",
-        "hacs": "HACS",
+        "hacs": "Marketplace",
         "devices": "Geräte-Firmware"
       }
     }

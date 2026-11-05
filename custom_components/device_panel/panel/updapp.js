@@ -159,7 +159,7 @@ export class UpdApp {
   // Home Assistant: Home Assistant); Logos kommen vom Brand-Dienst der eigenen Instanz, ohne Logo stehen die Anfangsbuchstaben der Integration oder Art
   badge(u) {
     const kind = u.kind || "devices";
-    const domain = kind === "devices" ? u.platform : kind === "hacs" ? "hacs" : kind === "addons" ? "hassio" : "homeassistant";
+    const domain = kind === "devices" ? u.platform : kind === "hacs" ? (u.platform || "hacs") : kind === "addons" ? "hassio" : "homeassistant";
     return this.host._ibadge(domain, this.info(u).integ);
   }
 

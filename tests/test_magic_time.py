@@ -61,13 +61,14 @@ async def test_clean_time_rule(hass: HomeAssistant, setup) -> None:  # noqa: F81
     saved = await store.async_save_rule({**base, "conditions": _tree("and", _time("10:00", "", [0, 2, 2]))})
     assert saved["entity_id"] == "" and saved["kind"] == "time"
     assert saved["conditions"]["items"] == [{"entity_id": "", "kind": "time", "value": None, "reset_value": None, "from": "10:00", "to": "", "days": [0, 2]}]
-    for bad in (_time("10:00", "10:00"), _time("25:00"), _time("10:00", "", [7]), _time("10:00", "11:00", ["x"])):
+    for bad in (_time("10:00", "10:00"), _time("25:00"), _time("10:00", "", [7]), _time("10:00", "11:00", ["x"]), _time("10:00", "11:00")):
+        # das letzte: ein Zeitfenster allein gilt den ganzen Zeitraum und braucht eine Gerätebedingung
         with pytest.raises(vol.Invalid):
             await store.async_save_rule({**base, "name": "Kaputt", "conditions": _tree("and", bad)})
     # ohne Baum gibt es keine Zeit
     with pytest.raises(vol.Invalid):
         await store.async_save_rule({**base, "name": "Leer"})
-    assert magic.condition_text(hass, saved) == "time from 10:00, Mon,Wed"
+    assert magic.condition_text(hass, saved) == "time 10:00, Mon,Wed"
 
 
 async def test_time_only_rule_fires_once_per_window(hass: HomeAssistant, setup, freezer) -> None:  # noqa: F811
@@ -78,7 +79,7 @@ async def test_time_only_rule_fires_once_per_window(hass: HomeAssistant, setup, 
     store = hass.data[DATA_MAGIC]
     await store.async_save_rule(
         {"device_id": device.id, "entity_id": "", "kind": "time", "name": "Filter", "for_s": 0, "message": "Filter tauschen: {entity}", "recover": True, "recover_message": "Fenster zu",
-         "conditions": _tree("and", _time("10:00", "11:00"))}
+         "conditions": _tree("and", _time("10:00"))}
     )
     await _tick(hass, freezer, 1800)
     assert calls == []
@@ -86,9 +87,9 @@ async def test_time_only_rule_fires_once_per_window(hass: HomeAssistant, setup, 
     assert [c.data["title"] for c in calls] == ["Filter tauschen: Lüftung"]
     await _tick(hass, freezer, 1200)  # 10:20: nicht noch einmal
     assert len(calls) == 1
-    await _tick(hass, freezer, 3600)  # 11:20: Fenster vorbei, "wieder normal"
+    await _tick(hass, freezer, 14 * 3600)  # nach Mitternacht: der Tag ist um, "wieder normal"
     assert [c.data["title"] for c in calls][-1] == "Fenster zu" and len(calls) == 2
-    await _tick(hass, freezer, 86400 - 3600 - 1200 - 1800 + 3600)  # am nächsten Tag 10:00 wieder
+    await _tick(hass, freezer, 10 * 3600)  # am nächsten Tag 10:00 wieder
     assert len(calls) == 3 and calls[-1].data["title"].startswith("Filter tauschen")
 
 
@@ -98,7 +99,7 @@ async def test_time_only_rule_respects_weekdays(hass: HomeAssistant, setup, free
     await _options(hass, notify_service="notify.handy")
     device = _device(hass, "Lüftung")
     await hass.data[DATA_MAGIC].async_save_rule(
-        {"device_id": device.id, "entity_id": "", "kind": "time", "name": "Mittwoch", "for_s": 0, "message": "Mittwochs", "conditions": _tree("and", _time("10:00", "11:00", [2]))}
+        {"device_id": device.id, "entity_id": "", "kind": "time", "name": "Mittwoch", "for_s": 0, "message": "Mittwochs", "conditions": _tree("and", _time("10:00", "", [2]))}
     )
     await _tick(hass, freezer, 3700)  # Dienstag 10:01: nichts
     assert calls == []
@@ -125,8 +126,8 @@ async def test_time_combined_with_entity(hass: HomeAssistant, setup, freezer) ->
 
 
 async def test_time_history_without_entities(hass: HomeAssistant) -> None:
-    tree = _tree("and", _time("10:00", "11:00"))
-    tree = magic.clean_conditions(hass, tree)
+    # Die Regel selbst verlangt für ein Zeitfenster eine Gerätebedingung; die Rechnung des Rückblicks geht auch allein
+    tree = _tree("and", magic._clean_time(_time("10:00", "11:00")))
     start, now = _ts(10, 0), _ts(11, 0)
     intervals, fires, count, spans = magic_history.evaluate_tree({}, tree, 0, now, start)
     assert count == 1 and intervals == [[_ts(10, 10), _ts(10, 11), True]] and fires[0]["start"] == _ts(10, 10)

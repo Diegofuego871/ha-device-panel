@@ -85,7 +85,7 @@ for (const mobile of [false, true]) {
   check(`[${tag}] Dialog und Zeile springen nicht`, before.top === during.top && before.h === during.h && before.verH === during.verH && Math.abs(before.btnW - during.btnW) < 1, JSON.stringify([before, during]));
   await f.waitForFunction(new Function(`return ${R}.querySelector("dialog.settings .ver-slot")?.innerText.includes("0.5.0")`), null, { timeout: 15000 }).catch(() => {});
   t = await verText();
-  check(`[${tag}] ohne HACS Update gefunden: Hinweis, Release Notes, kein Knopf`, t.includes("Version 0.5.0 verfügbar") && t.includes("Installation über HACS oder manuell") && t.includes("Release Notes") && !(await has('[data-ver="install"]')), t);
+  check(`[${tag}] ohne HACS Update gefunden: Hinweis, Release Notes, kein Knopf`, t.includes("Version 0.5.0 verfügbar") && t.includes("Installation über den Marketplace oder manuell") && t.includes("Release Notes") && !(await has('[data-ver="install"]')), t);
   // Release Notes im Fenster statt Link (seit 2.3.0, Einzelheiten in notes-e2e)
   check(`[${tag}] "Release Notes" ist ein Knopf (kein Link nach aussen)`, await ev(`const b=r.querySelector(".ver-link"); return b.tagName==="BUTTON" && b.dataset.ver==="notes" && !b.getAttribute("href")`));
   await p.evaluate(() => { window.__versionDelay = 20; });
@@ -94,7 +94,7 @@ for (const mobile of [false, true]) {
   await setHacs({ installed_version: "0.4.0", latest_version: "0.5.0" });
   await pushHass();
   t = await verText();
-  check(`[${tag}] mit HACS: Aktualisieren-Knopf`, t.includes("über HACS") && await has('[data-ver="install"]'), t);
+  check(`[${tag}] mit HACS: Aktualisieren-Knopf`, t.includes("über den Marketplace") && await has('[data-ver="install"]'), t);
   await p.screenshot({ path: `${outDir}/version-${tag}-update.png` });
   await p.evaluate(() => { window.__services = []; });
   await tap('[data-ver="install"]');
@@ -166,12 +166,12 @@ for (const mobile of [false, true]) {
   await open();
   await p.waitForTimeout(400);
   t = await verText();
-  check(`[${tag}] während Abgleich: "Wird mit HACS abgeglichen", Knopf gesperrt`, t.includes("Wird mit HACS abgeglichen") && !t.includes("HACS kennt diese Version noch nicht") && await ev(`const b=r.querySelector('[data-ver="check"]'); return !!b && b.disabled && !!b.querySelector(".ver-spin")`), t);
+  check(`[${tag}] während Abgleich: "Wird mit HACS abgeglichen", Knopf gesperrt`, t.includes("Wird mit dem Marketplace abgeglichen") && !t.includes("Der Marketplace kennt diese Version noch nicht") && await ev(`const b=r.querySelector('[data-ver="check"]'); return !!b && b.disabled && !!b.querySelector(".ver-spin")`), t);
   await p.screenshot({ path: `${outDir}/version-${tag}-syncing.png` });
   await p.evaluate(() => { window.__hacsRefreshDelay = 0; });
   await p.waitForTimeout(5500);
   t = await verText();
-  check(`[${tag}] HACS veraltet: kein Aktualisieren, Hinweis und Suchen`, t.includes("Version 0.5.0 verfügbar") && t.includes("HACS kennt diese Version noch nicht") && !(await has('[data-ver="install"]')) && await has('[data-ver="check"]'), t);
+  check(`[${tag}] HACS veraltet: kein Aktualisieren, Hinweis und Suchen`, t.includes("Version 0.5.0 verfügbar") && t.includes("Der Marketplace kennt diese Version noch nicht") && !(await has('[data-ver="install"]')) && await has('[data-ver="check"]'), t);
   // Seit 2.113.0 nur noch der öffentliche Dienst: die Update-Entität wird neu geladen, die internen Befehle von HACS bleiben unberührt
   const hacsCalls = await p.evaluate(() => ({ ws: window.__wsCalls.filter((m) => String(m.type).startsWith("hacs/")).length, update: window.__services.filter((s) => s.domain === "homeassistant" && s.service === "update_entity").length }));
   check(`[${tag}] HACS: Update-Entität neu geladen, keine internen HACS-Befehle`, hacsCalls.ws === 0 && hacsCalls.update >= 1, JSON.stringify(hacsCalls));
@@ -182,7 +182,7 @@ for (const mobile of [false, true]) {
   await p.evaluate(() => { window.__hacsKnowsAfterRefresh = "0.5.0"; window.__hacsRefreshDelay = 800; window.__seenPending = false; });
   await open();
   for (let i = 0; i < 30; i++) {
-    if ((await verText()).includes("HACS kennt diese Version noch nicht")) await p.evaluate(() => { window.__seenPending = true; });
+    if ((await verText()).includes("Der Marketplace kennt diese Version noch nicht")) await p.evaluate(() => { window.__seenPending = true; });
     await p.waitForTimeout(100);
   }
   check(`[${tag}] Abgleich erfolgreich: kein Hinweis, Aktualisieren da`, !(await p.evaluate(() => window.__seenPending)) && await has('[data-ver="install"]'), await verText());
@@ -248,7 +248,7 @@ for (const mobile of [false, true]) {
   await p.waitForTimeout(5000);
   t = await verText();
   check(`[${tag}] Beta angeboten, violett mit Etikett`, t.includes("Version 0.5.0b1 verfügbar") && t.includes("Beta") && await has(".ver.beta .ver-tag"), t);
-  check(`[${tag}] Beta gesperrt, Hinweis mit Link zum HACS-Gerät, kein Knopf "Freischalten"`, await ev(`const b=r.querySelector(".ver.beta .ver-btn.primary"); return !!b && b.disabled`) && t.includes("Pre-release") && t.includes("HACS-Gerät öffnen") && !t.includes("freischalten") && !(await has('[data-ver="hacs-enable"]')), t);
+  check(`[${tag}] Beta gesperrt, Hinweis mit Link zum HACS-Gerät, kein Knopf "Freischalten"`, await ev(`const b=r.querySelector(".ver.beta .ver-btn.primary"); return !!b && b.disabled`) && t.includes("Pre-release") && t.includes("Marketplace-Gerät öffnen") && !t.includes("freischalten") && !(await has('[data-ver="hacs-enable"]')), t);
   await p.screenshot({ path: `${outDir}/version-${tag}-beta.png` });
   await tap('[data-ver="hacs-device"]');
   await p.waitForTimeout(600);

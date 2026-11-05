@@ -9,9 +9,9 @@ let ok = true;
 const check = (l, c, i = "") => { ok &&= !!c; console.log(`${c ? "PASS" : "FAIL"} ${l}${i ? " - " + i : ""}`); };
 const R = `document.querySelector("device-panel").shadowRoot`;
 const TEXT = {
-  de: { errSvc: 'Ein Dienst braucht die Form "bereich.dienst" (homeassistant.update_entity), ein Befehl die Form "bereich/befehl" (hacs/repository/refresh).', errData: 'Die Daten müssen ein JSON-Objekt sein, zum Beispiel {"entity_id": "light.kueche"} (höchstens 2000 Zeichen; bei einem Befehl ohne "type" und "id").',
+  de: { errSvc: 'Ein Dienst braucht die Form "bereich.dienst" (homeassistant.update_entity), ein Befehl die Form "bereich/befehl" (device_panel/version).', errData: 'Die Daten müssen ein JSON-Objekt sein, zum Beispiel {"entity_id": "light.kueche"} (höchstens 2000 Zeichen; bei einem Befehl ohne "type" und "id").',
     done: '"Updates prüfen" ausgeführt', fail: '"Updates prüfen" fehlgeschlagen: Speicher voll', askTitle: '"Updates prüfen" ausführen?', askNote: "Ruft den Dienst homeassistant.update_entity auf.", cmdNote: "Führt den Befehl hacs/repository/refresh aus.", yes: "Ausführen", no: "Abbrechen", tabs: ["Seite", "Externer Link", "Aktion"] },
-  en: { errSvc: 'A service needs the form "domain.service" (homeassistant.update_entity), a command the form "area/command" (hacs/repository/refresh).', errData: 'The data must be a JSON object, for example {"entity_id": "light.kitchen"} (at most 2000 characters; for a command without "type" and "id").',
+  en: { errSvc: 'A service needs the form "domain.service" (homeassistant.update_entity), a command the form "area/command" (device_panel/version).', errData: 'The data must be a JSON object, for example {"entity_id": "light.kitchen"} (at most 2000 characters; for a command without "type" and "id").',
     done: '"Updates prüfen" done', fail: '"Updates prüfen" failed: Speicher voll', askTitle: 'Run "Updates prüfen"?', askNote: "Calls the service homeassistant.update_entity.", cmdNote: "Runs the command hacs/repository/refresh.", yes: "Run", no: "Cancel", tabs: ["Page", "External link", "Action"] },
 };
 

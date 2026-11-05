@@ -13,7 +13,7 @@ PANEL_HTML_FILE = "panel.html"
 STATIC_URL_PATH = f"/{DOMAIN}"
 PANEL_STATIC_URL_PATH = f"{STATIC_URL_PATH}/panel"
 # Cache-Buster: bei jeder Änderung unter panel/ von Hand erhöhen.
-PANEL_VERSION = "440"
+PANEL_VERSION = "441"
 PANEL_PAGE_URL = f"{PANEL_STATIC_URL_PATH}/{PANEL_HTML_FILE}?v={PANEL_VERSION}"
 
 # Mitgeliefertes Bild für Push-Meldungen (Companion-App, "icon_url"), wie in
@@ -151,6 +151,9 @@ CONF_UPDATES_WINDOW = "updates_window"
 DEFAULT_UPDATES_WINDOW = 5
 # Welche Arten gemeldet werden: Home Assistant (Core, OS, Supervisor), Add-ons, HACS, Geräte-Firmware.
 CONF_UPDATES_KINDS = "updates_kinds"
+# Plattform der Update-Entitäten des Marketplace: bis Home Assistant 2026.11 "hacs", danach der eingebaute "marketplace" (seit 2.194.0 gelten beide).
+# Der Schlüssel "hacs" der Update-Arten bleibt, weil er in gespeicherten Einstellungen steht.
+MARKET_PLATFORMS = ("hacs", "marketplace")
 UPDATE_KINDS = ("core", "addons", "hacs", "devices")
 DEFAULT_UPDATES_KINDS = ("core", "addons", "hacs", "devices")
 # Ausnahmen pro Eintrag (seit 1.31.0): ein Eintrag folgt seiner Art, bis er hier steht.

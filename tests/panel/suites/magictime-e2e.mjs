@@ -1,5 +1,5 @@
 // Magic Push, Zeit-Bedingung (2.193.0): Im Schritt "Bedingungen" gibt es neben den Entitäten die Karte "Uhrzeit". Sie öffnet eine
-// Bedingung mit "Ab Uhrzeit" oder "Von bis", den Uhrzeiten und den Wochentagen. Allein ist sie eine ganze Regel (ohne Entität), die
+// Bedingung mit "Uhrzeit" oder "Von bis", den Uhrzeiten und den Wochentagen. Allein ist sie eine ganze Regel (ohne Entität), die
 // Regel wird mit Name, Satz und Standardtext gespeichert. Deutsch und Englisch, Desktop und Handy, echte Klicks und Taps.
 import { chromium } from "playwright-core";
 import { launchOptions } from "../lib.mjs";
@@ -9,8 +9,8 @@ let ok = true;
 const check = (l, c, i = "") => { ok &&= !!c; console.log(`${c ? "PASS" : "FAIL"} ${l}${i ? " - " + i : ""}`); };
 const R = `document.querySelector("device-panel").shadowRoot`;
 const TEXT = {
-  de: { card: "Uhrzeit", sub: "ab 12:30", sat: "Sa", name: "Uhrzeit ab 12:30, Sa, So" },
-  en: { card: "Time of day", sub: "from 12:30", sat: "Sat", name: "Time from 12:30, Sat, Sun" },
+  de: { card: "Uhrzeit", sub: "12:30", sat: "Sa", needs: "Gerätebedingung", name: "Uhrzeit 12:30, Sa, So" },
+  en: { card: "Time of day", sub: "12:30", sat: "Sat", needs: "device condition", name: "Time 12:30, Sat, Sun" },
 };
 
 for (const lang of ["de", "en"]) {
@@ -40,7 +40,7 @@ for (const lang of ["de", "en"]) {
 
     check(`[${tag}] Schritt 1: Karte "${T.card}" vor den Entitäten`, await wait(`const c = r.querySelector('${W} [data-mg="pick-time"]'); return !!c && c.textContent.includes(${JSON.stringify(T.card)}) && !!r.querySelector('${W} [data-mg="pick"]')`));
     await tap(`${W} [data-mg="pick-time"]`);
-    check(`[${tag}] Zeit-Bedingung offen: "Ab Uhrzeit", 10:00, keine Wochentage gewählt, Weiter frei`, await wait(`const i = r.querySelector('${W} input[data-mg="tfrom"]'); return i?.value === "10:00" && !r.querySelector('${W} input[data-mg="tto"]') && r.querySelectorAll('${W} .mg-day').length === 7 && !r.querySelector('${W} .mg-day.on') && r.querySelector('${W} [data-mg="next"]').disabled === false`));
+    check(`[${tag}] Zeit-Bedingung offen: "Uhrzeit", 10:00, keine Wochentage gewählt, Weiter frei`, await wait(`const i = r.querySelector('${W} input[data-mg="tfrom"]'); return i?.value === "10:00" && !r.querySelector('${W} input[data-mg="tto"]') && r.querySelectorAll('${W} .mg-day').length === 7 && !r.querySelector('${W} .mg-day.on') && r.querySelector('${W} [data-mg="next"]').disabled === false`));
     await ev(`const i = r.querySelector('${W} input[data-mg="tfrom"]'); i.value = "12:30"; i.dispatchEvent(new Event("change", { bubbles: true }))`);
     check(`[${tag}] Uhrzeit 12:30: Kopf der Karte nennt "${T.sub}"`, await wait(`return r.querySelector('${W} .mg-lhead small').textContent.includes(${JSON.stringify(T.sub)})`));
     await tap(`${W} [data-mg="tday"][data-d="5"]`);
@@ -48,10 +48,11 @@ for (const lang of ["de", "en"]) {
     check(`[${tag}] Wochentage Sa und So gewählt, Kopf nennt "${T.sat}"`, await wait(`return r.querySelectorAll('${W} .mg-day.on').length === 2 && r.querySelector('${W} .mg-lhead small').textContent.includes(${JSON.stringify(T.sat)})`));
     await tap(`${W} [data-mg="tmode"][data-v="between"]`);
     check(`[${tag}] "Von bis": zweites Zeitfeld mit Ende eine Stunde später`, await wait(`return r.querySelector('${W} input[data-mg="tto"]')?.value === "13:30"`));
+    check(`[${tag}] "Von bis" allein: Hinweis "Gerätebedingung" und "Weiter" gesperrt`, await wait(`return !!r.querySelector('${W} .opt-error') && r.querySelector('${W} .opt-error').textContent.includes(${JSON.stringify(T.needs)}) && r.querySelector('${W} [data-mg="next"]').disabled === true`));
     await ev(`const i = r.querySelector('${W} input[data-mg="tto"]'); i.value = "12:30"; i.dispatchEvent(new Event("input", { bubbles: true }))`);
     check(`[${tag}] Ende gleich Beginn: "Weiter" gesperrt`, await wait(`return r.querySelector('${W} [data-mg="next"]').disabled === true`));
     await tap(`${W} [data-mg="tmode"][data-v="from"]`);
-    check(`[${tag}] zurück auf "Ab Uhrzeit": Ende weg, "Weiter" frei`, await wait(`return !r.querySelector('${W} input[data-mg="tto"]') && r.querySelector('${W} [data-mg="next"]').disabled === false`));
+    check(`[${tag}] zurück auf "Uhrzeit": Ende weg, "Weiter" frei`, await wait(`return !r.querySelector('${W} input[data-mg="tto"]') && r.querySelector('${W} [data-mg="next"]').disabled === false`));
 
     // durch alle Schritte bis Speichern
     for (let i = 0; i < 5; i++) {
