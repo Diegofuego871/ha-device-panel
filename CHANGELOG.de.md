@@ -15,7 +15,7 @@ Enthält die Änderungen von 2.193.0.
 
 ### Hinzugefügt
 
-- **Launcher, Seite "Marketplace":** Eine neue Seite von Home Assistant im Launcher mit demselben violetten Laden-Symbol wie in den Einstellungen von Home Assistant. Sie öffnet `/hacs`, das die Dokumentation als Adresse nennt, die den Marketplace öffnet (ab Home Assistant 2026.11, davor mit HACS). Nur für Administratoren.
+- **Launcher, Seite "Marketplace":** Eine neue Seite von Home Assistant im Launcher mit demselben violetten Laden-Symbol wie in den Einstellungen von Home Assistant. Sie öffnet `/marketplace/browse`. Nur für Administratoren.
 
 ### Geändert
 

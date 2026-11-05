@@ -15,7 +15,7 @@ Includes the changes from 2.193.0.
 
 ### Added
 
-- **Launcher, page "Marketplace":** A new page of Home Assistant in the launcher with the same violet shop icon as in the settings of Home Assistant. It opens `/hacs`, which the documentation names as the address that opens the Marketplace (from Home Assistant 2026.11, and with HACS before). Administrators only.
+- **Launcher, page "Marketplace":** A new page of Home Assistant in the launcher with the same violet shop icon as in the settings of Home Assistant. It opens `/marketplace/browse`. Administrators only.
 
 ### Changed
 

@@ -56,8 +56,8 @@ const BUILTIN = [
   // Apps (vorher Add-ons) und Dashboards (seit 2.107.0): standardmässig ausgeblendet (HIDDEN_BY_DEFAULT), der Benutzer schaltet sie ein
   { id: "apps", group: "ha", icon: "puzzle", path: "/config/apps/installed", admin: true },
   { id: "dash", group: "ha", icon: "apps", path: "/config/lovelace/dashboards", admin: true },
-  // Marketplace (seit 2.194.0, Home Assistant 2026.11): "/hacs" öffnet ihn laut Dokumentation auch dort, und mit HACS davor ebenfalls
-  { id: "market", group: "ha", icon: "store", path: "/hacs", admin: true },
+  // Marketplace (seit 2.194.0, Home Assistant 2026.11): Adresse der Seite laut Nutzer "/marketplace/browse" (mit "?search=" und "&group=" je Ansicht)
+  { id: "market", group: "ha", icon: "store", path: "/marketplace/browse", admin: true },
 ];
 // Apps, die erst der Benutzer einschaltet: für neue Daten und einmal für bestehende (v3) in "hidden" eingetragen
 const HIDDEN_BY_DEFAULT = ["apps", "dash"];
