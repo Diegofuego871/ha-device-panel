@@ -11,8 +11,8 @@ const check = (l, c, i = "") => { ok &&= !!c; console.log(`${c ? "PASS" : "FAIL"
 const R = `document.querySelector("device-panel").shadowRoot`;
 const D = 86400;
 const TEXT = {
-  de: { title: "Prognose", left: /^Reicht noch etwa .+/, target: /^bis 15 % \(Warnschwelle\), um den /, zero: /^bis leer \(0 %\), um den /, basis: /^Gerechnet seit dem Wechsel am .+ \(\d+ Tage\)$/, conf: /^Sicherheit: (hoch|mittel|gering)$/, note: "Näherung aus dem bisherigen Verlauf, ohne KI.", accel: /Verlauf wird steiler/, short: /Noch zu wenig Verlauf seit dem Wechsel \(3 von 7 Tagen\)/, flat: /sinkt kaum/, reached: "Die Warnschwelle von 15 % ist erreicht.", over5: "Reicht noch etwa mehr als 5 Jahre", months: "Reicht noch etwa 6 Monate" },
-  en: { title: "Forecast", left: /^Lasts about .+ more$/, target: /^until 15 % \(warning threshold\), around /, zero: /^until empty \(0 %\), around /, basis: /^Based on the time since the change on .+ \(\d+ days\)$/, conf: /^Confidence: (high|medium|low)$/, note: "Estimate from the history so far, without AI.", accel: /getting steeper/, short: /Not enough history since the change yet \(3 of 7 days\)/, flat: /barely drops/, reached: "The warning threshold of 15 % has been reached.", over5: "Lasts about more than 5 years more", months: "Lasts about 6 months more" },
+  de: { title: "Prognose", left: /^Reicht noch etwa .+/, target: /^bis 15 % \(Warnschwelle\), um den /, zero: /^bis leer \(0 %\), um den /, basis: /^Gerechnet seit dem Wechsel am .+ \(\d+ Tage\)$/, conf: /^(hoch|mittel|gering)$/, note: "Näherung aus dem bisherigen Verlauf, ohne KI.", accel: /Verlauf wird steiler/, short: /Noch zu wenig Verlauf seit dem Wechsel \(3 von 7 Tagen\)/, flat: /sinkt kaum/, reached: "Die Warnschwelle von 15 % ist erreicht.", over5: "Reicht noch etwa mehr als 5 Jahre", months: "Reicht noch etwa 6 Monate" },
+  en: { title: "Forecast", left: /^Lasts about .+ more$/, target: /^until 15 % \(warning threshold\), around /, zero: /^until empty \(0 %\), around /, basis: /^Based on the time since the change on .+ \(\d+ days\)$/, conf: /^(high|medium|low)$/, note: "Estimate from the history so far, without AI.", accel: /getting steeper/, short: /Not enough history since the change yet \(3 of 7 days\)/, flat: /barely drops/, reached: "The warning threshold of 15 % has been reached.", over5: "Lasts about more than 5 years more", months: "Lasts about 6 months more" },
 };
 
 for (const lang of ["de", "en"]) {
@@ -54,6 +54,7 @@ for (const lang of ["de", "en"]) {
     check(`[${tag}] Ziel: Warnschwelle 15 %`, T.target.test(await text("dialog.stat-dlg .bh-fc-sub")), await text("dialog.stat-dlg .bh-fc-sub"));
     check(`[${tag}] Grundlage seit Wechsel`, T.basis.test(await text("dialog.stat-dlg .bh-fc-basis")), await text("dialog.stat-dlg .bh-fc-basis"));
     check(`[${tag}] Sicherheit`, T.conf.test(await text("dialog.stat-dlg .bh-fc-conf")), await text("dialog.stat-dlg .bh-fc-conf"));
+    check(`[${tag}] Spannenbalken mit Marke zwischen den Enden, Achse mit zwei Werten, zwei Kacheln (Sicherheit, Verbrauch)`, await ev(`const d = r.querySelector("dialog.stat-dlg .bh-fc"); const m = d.querySelector(".bh-fc-bar u"); const l = parseFloat(m.style.left); return !!m && l >= 0 && l <= 100 && d.querySelectorAll(".bh-fc-axis span").length === 2 && d.querySelectorAll(".bh-fc-tile").length === 2 && !!d.querySelector(".bh-fc-rate")`));
     check(`[${tag}] kein Hinweis "ohne KI" mehr im Prognose-Block (2.200.0)`, !(await ev(`return !!r.querySelector("dialog.stat-dlg .bh-fc-note")`)) && !(await text("dialog.stat-dlg .bh-fc")).includes(T.note));
     // Unabhängig vom Zeitraum: gleicher Text in allen Tabs
     const main30 = await text("dialog.stat-dlg .bh-fc-main");
@@ -78,7 +79,7 @@ for (const lang of ["de", "en"]) {
     await force({ ...base, status: "ok", days: 183, at: now + 183 * D, days_low: 150, days_high: null, confidence: "medium", r2: 0.7, accelerating: false });
     await open();
     check(`[${tag}] Monate`, (await text("dialog.stat-dlg .bh-fc-main")) === T.months, await text("dialog.stat-dlg .bh-fc-main"));
-    check(`[${tag}] Spanne offen: nur Minimum`, /150|5 /.test(await text("dialog.stat-dlg .bh-fc-meta")) && !/ bis | to /.test((await text("dialog.stat-dlg .bh-fc-meta span")) || ""), await text("dialog.stat-dlg .bh-fc-meta"));
+    check(`[${tag}] Spanne offen: nur "mindestens …", kein Balken`, /150|5 /.test(await text("dialog.stat-dlg .bh-fc-range")) && !(await ev(`return !!r.querySelector("dialog.stat-dlg .bh-fc-bar")`)), await text("dialog.stat-dlg .bh-fc-range"));
     await closeAll();
 
     // Jahre und Monate: 1070 Tage = 35 Monate = 2 Jahre 11 Monate; 730 Tage = 24 Monate = 2 Jahre; 400 Tage = 13 Monate = 1 Jahr 1 Monat

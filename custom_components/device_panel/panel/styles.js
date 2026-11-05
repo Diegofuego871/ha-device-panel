@@ -1458,13 +1458,23 @@ button.pill.live.off:hover { background: var(--dp-hover); }
 .bh-fc-h { font-size: 12px; letter-spacing: 0.04em; text-transform: uppercase; color: var(--dp-text2); }
 .bh-fc-main { font-size: 20px; font-weight: 500; margin-top: 2px; }
 .bh-fc-sub { margin: 2px 0 0; color: var(--dp-text2); font-size: 13px; }
-.bh-fc-meta { display: flex; flex-wrap: wrap; gap: 4px 12px; margin-top: 8px; font-size: 13px; color: var(--dp-text2); align-items: center; }
-.bh-fc-conf { padding: 1px 8px; border-radius: 999px; border: 1px solid currentColor; font-size: 12px; }
+/* Prognose-Block (seit 2.200.0, docs/mockups/battery-forecast-v1, A mit dem Balken von C): Spannenbalken, zwei Kacheln, Warnung mit Symbol, Herkunft leise */
+.bh-fc-range { margin-top: 12px; }
+.bh-fc-range small { display: block; font-size: 11px; color: var(--dp-text3); }
+.bh-fc-bar { position: relative; height: 8px; border-radius: 4px; margin: 8px 0 6px; background: color-mix(in srgb, var(--dp-warning) 35%, var(--dp-subtle)); }
+.bh-fc-bar u { position: absolute; top: -3px; width: 3px; height: 14px; margin-left: -1.5px; border-radius: 2px; background: var(--dp-text); text-decoration: none; }
+.bh-fc-axis { display: flex; justify-content: space-between; gap: 8px; font-size: 12px; color: var(--dp-text2); }
+.bh-fc-axis.one { margin-top: 4px; font-size: 14px; color: var(--dp-text); }
+.bh-fc-tiles { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; margin-top: 12px; }
+.bh-fc-tile { padding: 8px 10px; border-radius: 10px; background: var(--dp-subtle); }
+.bh-fc-tile small { display: block; font-size: 11px; color: var(--dp-text3); }
+.bh-fc-tile b { display: block; margin-top: 2px; font-size: 14px; font-weight: 500; }
 .bh-fc-conf.high { color: var(--dp-success); }
 .bh-fc-conf.medium { color: var(--dp-warning); }
 .bh-fc-conf.low { color: var(--dp-error); }
-.bh-fc-basis { margin: 6px 0 0; font-size: 12px; color: var(--dp-text3); }
-.bh-fc-warn { margin: 6px 0 0; font-size: 13px; color: var(--dp-warning); }
+.bh-fc-basis { margin: 10px 0 0; font-size: 12px; color: var(--dp-text3); }
+.bh-fc-warn { display: flex; gap: 8px; align-items: flex-start; margin: 12px 0 0; font-size: 13px; color: var(--dp-warning); }
+.bh-fc-warn i { flex: none; display: grid; place-items: center; width: 16px; height: 16px; margin-top: 1px; border: 1.5px solid currentColor; border-radius: 50%; font-size: 11px; font-weight: 700; font-style: normal; line-height: 1; }
 .avail-now { position: absolute; top: 0; right: 0; bottom: 0; width: 2px; background: var(--dp-text); }
 .avail-tip { position: absolute; bottom: calc(100% + 8px); z-index: 2; transform: translateX(-50%); padding: 7px 10px; border-radius: 8px;
   background: #323232; color: #fff; font-size: 12px; white-space: nowrap; box-shadow: 0 6px 18px rgba(0,0,0,0.35); pointer-events: none; }

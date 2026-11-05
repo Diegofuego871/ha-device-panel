@@ -2324,16 +2324,24 @@ class DevicePanel extends HTMLElement {
     if (fc.status === "reached") return wrap("warn", `<p class="bh-fc-main">${escape(zero ? t("batFcReachedZero") : t("batFcReached", fc.target))}</p>`);
     const sub = zero ? t("batFcTargetZero", this._fmtDateY(fc.at)) : t("batFcTarget", fc.target, this._fmtDateY(fc.at));
     const lo = this._fmtSpan(fc.days_low);
-    const range = fc.days_high == null ? t("batFcRangeMin", lo) : t("batFcRange", lo, this._fmtSpan(fc.days_high));
+    // Spanne (seit 2.200.0, docs/mockups/battery-forecast-v1, A mit dem Balken von C): Balken von der frühesten bis zur spätesten Schätzung, die Marke ist die
+    // beste Schätzung; ohne obere Grenze (offene Spanne) nur der Text "mindestens …"
+    const hasHigh = fc.days_high != null;
+    const hi = hasHigh ? this._fmtSpan(fc.days_high) : "";
+    const pos = hasHigh && fc.days_high > fc.days_low ? Math.min(100, Math.max(0, ((fc.days - fc.days_low) / (fc.days_high - fc.days_low)) * 100)) : 50;
+    const rangeHtml = hasHigh
+      ? `<div class="bh-fc-range" role="img" aria-label="${escape(t("batFcRange", lo, hi))}"><small>${escape(t("batFcRangeLbl"))}</small><div class="bh-fc-bar"><u style="left:${pos.toFixed(1)}%"></u></div><div class="bh-fc-axis"><span>${escape(lo)}</span><span>${escape(hi)}</span></div></div>`
+      : `<div class="bh-fc-range"><small>${escape(t("batFcRangeLbl"))}</small><div class="bh-fc-axis one">${escape(t("batFcRangeMin", lo))}</div></div>`;
     const basis = fc.after_change ? t("batFcBasisChange", this._fmtDateY(fc.since), fc.days_used) : t("batFcBasisAll", fc.days_used);
     const conf = ["high", "medium", "low"].includes(fc.confidence) ? fc.confidence : "low";
     return wrap(
       fc.accelerating ? "accel" : "",
       `<div class="bh-fc-main">${escape(t("batFcLeft", this._fmtSpan(fc.days)))}</div>
        <p class="bh-fc-sub">${escape(sub)}</p>
-       <div class="bh-fc-meta"><span>${escape(range)}</span><span class="bh-fc-conf ${conf}">${escape(t("batFcConf", conf))}</span><span>${escape(t("batFcRate", this._fmtPct(fc.per_month)))}</span></div>
-       <p class="bh-fc-basis">${escape(basis)}</p>
-       ${fc.accelerating ? `<p class="bh-fc-warn">${escape(t("batFcAccel"))}</p>` : ""}`
+       ${rangeHtml}
+       <div class="bh-fc-tiles"><div class="bh-fc-tile"><small>${escape(t("batFcConfLbl"))}</small><b class="bh-fc-conf ${conf}">${escape(t("batFcConfVal", conf))}</b></div><div class="bh-fc-tile"><small>${escape(t("batFcRateLbl"))}</small><b class="bh-fc-rate">${escape(t("batFcRate", this._fmtPct(fc.per_month)))}</b></div></div>
+       ${fc.accelerating ? `<p class="bh-fc-warn"><i aria-hidden="true">!</i><span>${escape(t("batFcAccel"))}</span></p>` : ""}
+       <p class="bh-fc-basis">${escape(basis)}</p>`
     );
   }
 

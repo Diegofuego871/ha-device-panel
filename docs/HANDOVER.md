@@ -5,6 +5,7 @@ Einstieg für jede neue Claude-Code-Session. Zuerst diese Datei lesen, dann
 
 ## Stand (2.200.0, Knopf "Nach Updates suchen" in der App Updates)
 
+- Prognose-Block (`_batForecastHtml`, Mockup `docs/mockups/battery-forecast-v1`, Variante A mit dem Balken von C): `.bh-fc-range` (Balken + Marke, bei offener Spanne nur Text), `.bh-fc-tiles` (Sicherheit, Verbrauch), `.bh-fc-warn` mit Symbol, `.bh-fc-basis` leise am Ende; Test `forecast-e2e`.
 - Unterseiten (`.stat-head`): Symbol 52 px (Standard von `.dlg-avatar`), Titel am Handy 21 px wie `dialog.device`; Suite `statheadsize-e2e` vergleicht beide Köpfe.
 - Kopf des Geräte-Popups: `${logBtn}${heart}<span class="dlg-sep">${close}` in `_renderDevice`, Abstände in `styles.js` (`.dlg-head-log`, `dialog.device .dlg-head > .dlg-sep`); `toolbarsep-e2e` legt ihn am Handy über die Kopfzeile des Panels, `fav-e2e` prüft 33 px Herz–Kreuz.
 - `routines.js` `isOpen`: im Reiter "fav" immer zu, auch bei einer einzelnen Routine (Test in `routineall-e2e`).
