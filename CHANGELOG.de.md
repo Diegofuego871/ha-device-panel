@@ -19,6 +19,7 @@ Enthält die Änderungen von 2.199.1.
 
 ### Geändert
 
+- **Batterie-Verlauf, Prognose:** Die Zeile "Näherung aus dem bisherigen Verlauf, ohne KI." unter der Prognose entfällt.
 - **Geräte-Popup, Kopf:** Die Knöpfe oben rechts sitzen nun genau wie in der Kopfzeile des Panels: von rechts nach links das Kreuz, ein dünner Strich (je 16 px) und das Herz, davor im Abstand von 14 px (am Handy) der Protokoll-Knopf. Am Handy liegen die vier genau über dem Launcher-Knopf, dem Strich und den zwei angehefteten Apps der Kopfzeile des Panels, wenn man die Bilder übereinanderlegt. Vorher stand der Strich an anderer Stelle, und das Herz hatte 22 px Abstand zum Kreuz.
 - **Routinen, Reiter mit dem Herz:** In der Übersicht aller Routinen sind die Karten im Reiter mit dem Herz (Lieblings-Routinen) immer zugeklappt, auch wenn es nur eine ist. Vorher war eine einzelne dort offen, was als Übersicht weniger klar ist. Ein Tipp auf den Kopf klappt sie wie gewohnt auf; die anderen Reiter behalten "bei genau einer ist sie offen".
 

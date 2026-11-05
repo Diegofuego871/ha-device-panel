@@ -1,0 +1,66 @@
+<!doctype html>
+<html lang="de"><head><meta charset="utf-8"><title>Batterie-Prognose, Varianten</title>
+<style>
+:root{--bg:#121212;--card:#1c1c1c;--card2:#242424;--text:#e6e6e6;--t2:#a8a8a8;--t3:#7d7d7d;--div:#3a3a3a;--ok:#4caf6e;--warn:#f5a623;--err:#e5534b}
+*{box-sizing:border-box}
+body{margin:0;background:#0b0b0b;color:var(--text);font:15px/1.4 -apple-system,Segoe UI,Roboto,sans-serif;padding:24px}
+h1{font-size:18px;font-weight:500;margin:0 0 4px}
+.sub{color:var(--t2);margin:0 0 20px;font-size:13px}
+.row{display:flex;gap:24px;align-items:flex-start}
+.col{width:358px;flex:none}
+.col h2{font-size:14px;margin:0 0 4px;font-weight:600}
+.col .why{font-size:12px;color:var(--t2);margin:0 0 10px;min-height:48px}
+.rec{color:var(--ok)}
+.phone{background:var(--card);border-radius:18px;padding:16px}
+.fc{background:var(--bg);border-radius:12px;padding:14px;border-left:3px solid var(--warn)}
+.h{font-size:12px;letter-spacing:.04em;text-transform:uppercase;color:var(--t2)}
+.main{font-size:20px;font-weight:500;margin-top:2px}
+.s{color:var(--t2);font-size:13px;margin:2px 0 0}
+.pill{display:inline-block;padding:1px 8px;border-radius:999px;border:1px solid currentColor;font-size:12px}
+.low{color:var(--err)}
+.basis{font-size:12px;color:var(--t3)}
+/* A: drei Kacheln */
+.tiles{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-top:12px}
+.tile.wide{grid-column:1/-1}
+.tile{background:var(--card2);border-radius:10px;padding:8px 10px}
+.tile small{display:block;color:var(--t3);font-size:11px}
+.tile b{display:block;font-size:14px;font-weight:500;margin-top:2px}
+.warnrow{display:flex;gap:8px;align-items:flex-start;margin-top:12px;color:var(--warn);font-size:13px}
+.warnrow i{flex:none;width:16px;height:16px;border-radius:50%;border:1.5px solid var(--warn);display:grid;place-items:center;font-style:normal;font-size:11px;line-height:1;font-weight:700}
+.foot{margin-top:10px;font-size:12px;color:var(--t3)}
+/* B: Liste */
+.kv{margin-top:10px;border-top:1px solid var(--div)}
+.kv div{display:flex;justify-content:space-between;gap:12px;padding:7px 0;border-bottom:1px solid var(--div);font-size:13px}
+.kv span{color:var(--t2)}
+.kv b{font-weight:500;text-align:right}
+.banner{background:rgba(245,166,35,.12);color:var(--warn);border-radius:8px;padding:8px 10px;font-size:13px;margin:10px 0 0}
+/* C: Spannenbalken */
+.bar{position:relative;height:8px;border-radius:4px;background:var(--card2);margin:16px 0 6px}
+.bar i{position:absolute;top:0;bottom:0;border-radius:4px;background:var(--warn);opacity:.35}
+.bar u{position:absolute;top:-3px;width:3px;height:14px;border-radius:2px;background:var(--text);text-decoration:none}
+.axis{display:flex;justify-content:space-between;font-size:11px;color:var(--t3)}
+.chips{display:flex;gap:6px;flex-wrap:wrap;margin-top:10px}
+.chips span{background:var(--card2);border-radius:999px;padding:3px 10px;font-size:12px;color:var(--t2)}
+</style></head><body>
+<h1>Batterie-Verlauf: Prognose-Block, drei Varianten</h1>
+<p class="sub">Erfundene Daten. Der Satz "Näherung aus dem bisherigen Verlauf, ohne KI." ist in allen weg. Inhalt gleich, nur die Ordnung ist anders.</p>
+<div class="row">
+
+<div class="col"><h2 class="rec">A · Kacheln (Empfehlung)</h2><p class="why">Die Hauptaussage gross, die drei Zahlen als gleich grosse Kacheln, Warnung mit Symbol, die Herkunft ganz leise unten.</p>
+<div class="phone"><div class="fc"><div class="h">Prognose</div><div class="main">Reicht noch etwa 2 Jahre 11 Monate</div><p class="s">bis 10 % (Warnschwelle), um den 5. Okt. 2029</p>
+<div class="tiles"><div class="tile wide"><small>Spanne (frühestens bis spätestens)</small><b>2 J. 7 M. bis 3 J. 4 M.</b></div><div class="tile"><small>Sicherheit</small><b class="low">gering</b></div><div class="tile"><small>Verbrauch</small><b>−2,3 % / Monat</b></div></div>
+<div class="warnrow"><i>!</i><span>Der Verlauf wird steiler: die Prognose ist eher zu optimistisch.</span></div>
+<div class="foot">Gerechnet über 191 Tage</div></div></div></div>
+
+<div class="col"><h2>B · Liste</h2><p class="why">Beschriftung links, Wert rechts, eine Zeile je Angabe. Sehr ruhig und gut lesbar, braucht aber mehr Höhe.</p>
+<div class="phone"><div class="fc"><div class="h">Prognose</div><div class="main">Reicht noch etwa 2 Jahre 11 Monate</div><p class="s">bis 10 % (Warnschwelle), um den 5. Okt. 2029</p>
+<div class="banner">Der Verlauf wird steiler: die Prognose ist eher zu optimistisch.</div>
+<div class="kv"><div><span>Spanne</span><b>2 J. 7 M. bis 3 J. 4 M.</b></div><div><span>Sicherheit</span><b class="low">gering</b></div><div><span>Verbrauch</span><b>−2,3 % pro Monat</b></div><div><span>Gerechnet über</span><b>191 Tage</b></div></div></div></div></div>
+
+<div class="col"><h2>C · Spannenbalken</h2><p class="why">Die Spanne als Balken mit Marke für die beste Schätzung; Zahlen als kleine Chips. Anschaulich, aber die genauen Werte stehen weniger klar da.</p>
+<div class="phone"><div class="fc"><div class="h">Prognose</div><div class="main">Reicht noch etwa 2 Jahre 11 Monate</div><p class="s">bis 10 % (Warnschwelle), um den 5. Okt. 2029</p>
+<div class="bar"><i style="left:12%;width:62%"></i><u style="left:38%"></u></div><div class="axis"><span>2 J. 7 M.</span><span>3 J. 4 M.</span></div>
+<div class="chips"><span>Sicherheit: <b class="low" style="font-weight:500">gering</b></span><span>−2,3 % pro Monat</span><span>191 Tage Verlauf</span></div>
+<div class="warnrow"><i>!</i><span>Der Verlauf wird steiler: die Prognose ist eher zu optimistisch.</span></div></div></div></div>
+
+</div></body></html>

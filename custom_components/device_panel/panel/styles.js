@@ -1465,7 +1465,6 @@ button.pill.live.off:hover { background: var(--dp-hover); }
 .bh-fc-conf.low { color: var(--dp-error); }
 .bh-fc-basis { margin: 6px 0 0; font-size: 12px; color: var(--dp-text3); }
 .bh-fc-warn { margin: 6px 0 0; font-size: 13px; color: var(--dp-warning); }
-.bh-fc-note { margin: 6px 0 0; font-size: 11px; color: var(--dp-text3); }
 .avail-now { position: absolute; top: 0; right: 0; bottom: 0; width: 2px; background: var(--dp-text); }
 .avail-tip { position: absolute; bottom: calc(100% + 8px); z-index: 2; transform: translateX(-50%); padding: 7px 10px; border-radius: 8px;
   background: #323232; color: #fff; font-size: 12px; white-space: nowrap; box-shadow: 0 6px 18px rgba(0,0,0,0.35); pointer-events: none; }

@@ -19,6 +19,7 @@ Includes the changes from 2.199.1.
 
 ### Changed
 
+- **Battery history, forecast:** The line "Estimate from the history so far, without AI." under the forecast is gone.
 - **Device pop-up, header:** The buttons at the top right now sit exactly like in the header of the panel: from right to left the cross, a thin line (16 px on both sides) and the heart, then the log button 14 px (on the phone) before it. On the phone the four lie exactly over the launcher button, the line and the two pinned apps of the panel header when the pictures are laid over each other. Before, the line stood in a different place and the heart was 22 px from the cross.
 - **Routines, tab with the heart:** In the overview of all routines the cards in the tab with the heart (favourite routines) are always collapsed, also if there is only one. Before, a single routine was open there, which is less clear as an overview. A tap on the head opens it as usual; the other tabs keep "with exactly one it is open".
 

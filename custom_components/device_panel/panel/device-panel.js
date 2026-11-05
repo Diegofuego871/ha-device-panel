@@ -2314,8 +2314,7 @@ class DevicePanel extends HTMLElement {
     const c = charging ? "C" : "";
     const t = (k, ...a) => this._t(k + (k.startsWith("batFc") && k.endsWith("Change") ? c : ""), ...a);
     const zero = !!fc.target_is_zero;
-    const note = `<p class="bh-fc-note">${escape(t("batFcNote"))}</p>`;
-    const wrap = (cls, inner) => `<div class="bh-fc ${cls}"><div class="bh-fc-h">${escape(t("batFcTitle"))}</div>${inner}${note}</div>`;
+    const wrap = (cls, inner) => `<div class="bh-fc ${cls}"><div class="bh-fc-h">${escape(t("batFcTitle"))}</div>${inner}</div>`;
     if (fc.status === "none") return "";
     if (fc.status === "short") {
       const msg = fc.after_change ? t("batFcShortChange", fc.days_used, fc.min_days) : t("batFcShortAll", fc.days_used, fc.min_days);

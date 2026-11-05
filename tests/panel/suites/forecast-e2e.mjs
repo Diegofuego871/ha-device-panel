@@ -54,7 +54,7 @@ for (const lang of ["de", "en"]) {
     check(`[${tag}] Ziel: Warnschwelle 15 %`, T.target.test(await text("dialog.stat-dlg .bh-fc-sub")), await text("dialog.stat-dlg .bh-fc-sub"));
     check(`[${tag}] Grundlage seit Wechsel`, T.basis.test(await text("dialog.stat-dlg .bh-fc-basis")), await text("dialog.stat-dlg .bh-fc-basis"));
     check(`[${tag}] Sicherheit`, T.conf.test(await text("dialog.stat-dlg .bh-fc-conf")), await text("dialog.stat-dlg .bh-fc-conf"));
-    check(`[${tag}] Hinweis ohne KI`, (await text("dialog.stat-dlg .bh-fc-note")) === T.note);
+    check(`[${tag}] kein Hinweis "ohne KI" mehr im Prognose-Block (2.200.0)`, !(await ev(`return !!r.querySelector("dialog.stat-dlg .bh-fc-note")`)) && !(await text("dialog.stat-dlg .bh-fc")).includes(T.note));
     // Unabhängig vom Zeitraum: gleicher Text in allen Tabs
     const main30 = await text("dialog.stat-dlg .bh-fc-main");
     let same = true;
