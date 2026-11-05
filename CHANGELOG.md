@@ -17,6 +17,10 @@ Includes the changes from 2.199.1.
 
 - **App "Updates", button "Check for updates":** In the header, before the line and the cross, a round button starts a search for new updates. Like "Check for updates" in the settings of Home Assistant it calls the service `homeassistant.update_entity` for all update entities: Home Assistant Core, operating system, Supervisor and apps ask the Supervisor again, integrations and devices ask their source again. The arrows turn while it runs, then the button is green for a moment (or red with the reason if the call failed) and a note says how many updates are open; the list updates on its own. The Marketplace is not asked again by this (it checks only every few hours, see the README for the action app with `marketplace/repository/refresh`).
 
+### Changed
+
+- **Routines, tab with the heart:** In the overview of all routines the cards in the tab with the heart (favourite routines) are always collapsed, also if there is only one. Before, a single routine was open there, which is less clear as an overview. A tap on the head opens it as usual; the other tabs keep "with exactly one it is open".
+
 ## [2.199.1] - 2026-11-05
 
 Not released; included in 2.200.0.

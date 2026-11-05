@@ -775,10 +775,11 @@ export class RoutineUi {
 
   // Aufgeklappt (seit 2.171.0, seit 2.183.0 je Routine): in jeder Ansicht und auch bei einer Suche zu, sobald mehr als eine Routine sichtbar ist; bei genau einer offen.
   // Eine eigene Wahl (Tipp auf den Kopf) gilt, bis Filter oder Suche wechseln. nItems = Zahl der sichtbaren Routinen.
+  // Im Reiter mit dem Herz (Lieblings-Routinen) sind alle immer zu, auch eine einzelne (seit 2.200.0): als Übersicht gedacht.
   isOpen(all, id, nItems) {
     const own = this.isFiltering(all) ? all.sopen : all.open;
     if (own && id in own) return own[id] !== false;
-    return nItems === 1;
+    return nItems === 1 && (all.filter || "all") !== "fav";
   }
 
   visibleGroups(all, devices) {

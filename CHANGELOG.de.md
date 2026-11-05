@@ -17,6 +17,10 @@ Enthält die Änderungen von 2.199.1.
 
 - **App "Updates", Knopf "Nach Updates suchen":** Im Kopf, vor dem Strich und dem Kreuz, startet ein runder Knopf die Suche nach neuen Updates. Wie "Nach Updates suchen" in den Einstellungen von Home Assistant ruft er den Dienst `homeassistant.update_entity` für alle Update-Entitäten auf: Home Assistant Core, Betriebssystem, Supervisor und Apps fragen den Supervisor neu, Integrationen und Geräte ihre Quelle. Die Pfeile drehen sich, solange es läuft, dann ist der Knopf kurz grün (oder rot mit dem Grund, wenn der Aufruf fehlschlug), und ein Hinweis nennt, wie viele Updates offen sind; die Liste aktualisiert sich selbst. Der Marketplace wird dadurch nicht neu gefragt (er prüft nur alle paar Stunden, siehe README zur Aktions-App mit `marketplace/repository/refresh`).
 
+### Geändert
+
+- **Routinen, Reiter mit dem Herz:** In der Übersicht aller Routinen sind die Karten im Reiter mit dem Herz (Lieblings-Routinen) immer zugeklappt, auch wenn es nur eine ist. Vorher war eine einzelne dort offen, was als Übersicht weniger klar ist. Ein Tipp auf den Kopf klappt sie wie gewohnt auf; die anderen Reiter behalten "bei genau einer ist sie offen".
+
 ## [2.199.1] - 2026-11-05
 
 Nicht veröffentlicht; enthalten in 2.200.0.

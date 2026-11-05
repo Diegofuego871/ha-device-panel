@@ -158,7 +158,10 @@ for (const lang of ["de", "en"]) {
     await tap("dialog.rtall-dlg [data-rta-close]");
     await wait(`return !r.querySelector("dialog.rtall-dlg").open`);
     await tap(".toolbar .rtall-btn");
-    check(`[${tag}] erneut geöffnet: Reiter mit Herz gewählt, nur der Lieblings-Routine, Gerät aufgeklappt`, await wait(`const d = r.querySelector("dialog.rtall-dlg"); return d.open && d.querySelector('.mg-filter .sub-tab.on')?.dataset.v === "fav" && d.querySelectorAll(".mg-card").length === 1 && !!d.querySelector(".mg-dcard:not(.closed)") && d.querySelector('[data-rta="routine-star"]').dataset.id === ${JSON.stringify(lastId)}`));
+    // Im Reiter mit dem Herz ist auch die einzige Routine zugeklappt (2.200.1); ein Tipp auf den Kopf klappt sie auf
+    check(`[${tag}] erneut geöffnet: Reiter mit Herz gewählt, nur die Lieblings-Routine, zugeklappt`, await wait(`const d = r.querySelector("dialog.rtall-dlg"); return d.open && d.querySelector('.mg-filter .sub-tab.on')?.dataset.v === "fav" && d.querySelectorAll(".mg-dcard").length === 1 && d.querySelectorAll(".mg-dcard:not(.closed)").length === 0 && d.querySelectorAll(".mg-card").length === 0`));
+    await tap('dialog.rtall-dlg .mg-dhead');
+    check(`[${tag}] Tipp auf den Kopf: aufgeklappt, mit dem Stern der Lieblings-Routine`, await wait(`const d = r.querySelector("dialog.rtall-dlg"); return d.querySelectorAll(".mg-card").length === 1 && !!d.querySelector(".mg-dcard:not(.closed)") && d.querySelector('[data-rta="routine-star"]').dataset.id === ${JSON.stringify(lastId)}`));
     await p.waitForTimeout(800);
     await p.screenshot({ path: `${outDir}/routineall-fav-${tag.replace("/", "-")}.png` });
     await tap(`dialog.rtall-dlg [data-rta="routine-star"][data-id="${lastId}"]`);
