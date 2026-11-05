@@ -7,6 +7,14 @@ Alle nennenswerten Änderungen an dieser Integration stehen in dieser Datei.
 Das Format folgt [Keep a Changelog](https://keepachangelog.com/de/1.1.0/),
 die Versionsnummern folgen [Semantic Versioning](https://semver.org/lang/de/).
 
+## [2.200.1] - 2026-11-05
+
+Die Knöpfe im Kopf des Geräte-Popups sitzen genau dort, wo die der Kopfzeile des Panels sind, auch senkrecht.
+
+### Behoben
+
+- **Geräte-Popup, Kopf am Handy:** Die vier Knöpfe (Protokoll, Herz, Strich, Kreuz) lagen seitlich genau über denen der Kopfzeile des Panels, sassen aber etwa 6 px zu tief, sodass sie beim Öffnen eines Geräts zu springen schienen. Sie haben nun dieselbe Höhe wie die Knöpfe der Kopfzeile des Panels, wie in den anderen Vollbild-Fenstern.
+
 ## [2.200.0] - 2026-11-05
 
 Die App "Updates" hat einen Knopf, der Home Assistant nach neuen Updates suchen lässt.
@@ -5806,6 +5814,7 @@ Erste Vorabversion.
   GitHub Actions für die Prüfungen von HACS und hassfest sowie die Tests.
 
 [2.6.0]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v2.6.0
+[2.200.1]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v2.200.1
 [2.200.0]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v2.200.0
 [2.199.0]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v2.199.0
 [2.198.1]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v2.198.1

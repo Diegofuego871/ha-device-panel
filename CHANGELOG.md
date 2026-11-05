@@ -7,6 +7,14 @@ All notable changes to this integration are documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/).
 
+## [2.200.1] - 2026-11-05
+
+The buttons in the header of the device pop-up sit exactly where those of the panel header are, also vertically.
+
+### Fixed
+
+- **Device pop-up, header on the phone:** The four buttons (log, heart, line, cross) lay exactly over the ones of the panel header sideways, but sat about 6 px too low, so they seemed to move when a device was opened. They now have the same height as the buttons of the panel header, like in the other full-screen windows.
+
 ## [2.200.0] - 2026-11-05
 
 The app "Updates" has a button that makes Home Assistant look for new updates.
@@ -5705,6 +5713,7 @@ First pre-release.
   GitHub Actions for HACS/hassfest validation and tests.
 
 [2.6.0]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v2.6.0
+[2.200.1]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v2.200.1
 [2.200.0]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v2.200.0
 [2.199.0]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v2.199.0
 [2.198.1]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v2.198.1

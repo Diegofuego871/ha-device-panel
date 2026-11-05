@@ -1608,7 +1608,9 @@ button.pill.live.off:hover { background: var(--dp-hover); }
   .toolbar .gear-btn, .toolbar .rtall-btn, .toolbar .apps-btn, .dlg-close, .dlg-act, .dlg-fav { width: 38px; height: 38px; }
   /* Handy: Protokoll und Herz 14 px auseinander wie die angehefteten Apps der Kopfzeile; Strich mittig zu 38-px-Knöpfen */
   .dlg-head-log { margin-right: 0; }
-  dialog.device .dlg-head > .dlg-sep { margin-top: 6px; }
+  /* Das Popup ist am Handy Vollbild: die Knöpfe sitzen 6 px höher, auf gleicher Höhe wie die Knöpfe der Kopfzeile des Panels (12 px vom oberen Rand, wie in den anderen Vollbild-Fenstern); der Strich bleibt mittig dazu */
+  dialog.device .dlg-head .dlg-close, dialog.device .dlg-head .dlg-fav, dialog.device .dlg-head .dlg-head-log { margin-top: -6px; }
+  dialog.device .dlg-head > .dlg-sep { margin-top: 0; }
   /* Handy: der Platz zwischen Suchfeld und Zahnrad bleibt wie vorher (Suchfeld nicht schmaler), nur gleichmässig geteilt: 8 + 7 px auf beiden Seiten */
   .toolbar .rtall-btn, .toolbar .apps-btn { margin: 0 3px; } /* Abstand zwischen den Knöpfen 14 px (Wunsch des Nutzers: war zu eng), das Suchfeld wird dafür schmaler */
   dialog.stat-dlg { height: 86%; max-height: 86%; }

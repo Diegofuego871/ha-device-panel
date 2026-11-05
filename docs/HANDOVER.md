@@ -3,6 +3,10 @@
 Einstieg für jede neue Claude-Code-Session. Zuerst diese Datei lesen, dann
 `CLAUDE.md`, `docs/CONCEPT.md`, `docs/LEARNINGS.md`, `docs/DESIGN.md`.
 
+## Stand (2.200.1, Kopf des Geräte-Popups senkrecht)
+
+- `styles.js` (Handy): `dialog.device .dlg-head .dlg-close/.dlg-fav/.dlg-head-log { margin-top: -6px }`, Strich `margin-top: 0`; `toolbarsep-e2e` prüft jetzt auch die Höhe (Mittelpunkte auf 0,6 px).
+
 ## Stand (2.200.0, Knopf "Nach Updates suchen" in der App Updates)
 
 - Prognose-Block (`_batForecastHtml`, Mockup `docs/mockups/battery-forecast-v1`, Variante A mit dem Balken von C): `.bh-fc-range` (Balken + Marke, bei offener Spanne nur Text), `.bh-fc-tiles` (Sicherheit, Verbrauch), `.bh-fc-warn` mit Symbol, `.bh-fc-basis` leise am Ende; Test `forecast-e2e`.
