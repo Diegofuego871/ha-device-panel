@@ -2402,6 +2402,7 @@ dialog.app-dlg::backdrop { background: rgba(0,0,0,0.5); }
   .ap-x { display: grid; width: 38px; height: 38px; }
   .ap-pw { width: 38px; height: 38px; }
   .ap-head .ap-act, .ap-head .ap-x.show { width: 38px; height: 38px; }
+  .ap-head .ap-pw { margin-right: 6px; } /* Handy: Abstand der Symbole 14 px wie in der Kopfzeile des Panels (Knöpfe dort 3 + 8 + 3 px), damit sie übereinander liegen */
   .ap-grid { grid-template-columns: repeat(3, minmax(0, 1fr)); }
   .ap-view .sub-tabs { width: 170px; }
   .ap-ic { height: 44px; }

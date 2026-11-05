@@ -3,6 +3,10 @@
 Einstieg für jede neue Claude-Code-Session. Zuerst diese Datei lesen, dann
 `CLAUDE.md`, `docs/CONCEPT.md`, `docs/LEARNINGS.md`, `docs/DESIGN.md`.
 
+## Stand (2.198.0, Launcher-Kopf am Handy)
+
+- `styles.js`: `.ap-head .ap-pw { margin-right: 6px }` (nur Handy): Abstand Neustart/Bearbeiten 14 px wie in der Kopfzeile des Panels (`.toolbar .rtall-btn` 3 + 8 + 3). Suite `toolbarsep-e2e` legt beide Köpfe übereinander (Mittelpunkte auf 0,6 px).
+
 ## Stand (2.197.0, Sicherung: Panel-Einstellungen und Benutzer)
 
 - `backup.py`: `_PANEL_SETTINGS` (`panel_prerelease`, `panel_auto_update`, Ablage `device_panel.panel`) im Teil "monitor" (`_panel_part`); neuer Teil `users` (nicht in `DEFAULT_SECTIONS`): `_users_export`/`_users_part` lesen und schreiben `async_user_store(hass, user_id)` für `_USER_KEYS` (view, apps, favorites, routine_stars), Zuordnung über Benutzer-ID, unbekannt = Übersprungen (`user_unknown`), beim Schreiben frisches `updated` (Panel-Lader: der neuere Stand gewinnt). Nicht dabei: HA-eigenes `core`, `device_panel_start`.

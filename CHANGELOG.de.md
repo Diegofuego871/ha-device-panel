@@ -7,6 +7,14 @@ Alle nennenswerten Änderungen an dieser Integration stehen in dieser Datei.
 Das Format folgt [Keep a Changelog](https://keepachangelog.com/de/1.1.0/),
 die Versionsnummern folgen [Semantic Versioning](https://semver.org/lang/de/).
 
+## [2.198.0] - 2026-11-05
+
+Am Handy liegen die Symbole im Kopf des Launchers genau über denen der Kopfzeile des Panels.
+
+### Geändert
+
+- **Launcher, Kopf am Handy:** Der Neustart-Knopf stand zu nah am Bearbeiten-Knopf. Der Abstand der beiden Symbole beträgt nun 14 px wie in der Kopfzeile des Panels, sodass Neustart, Bearbeiten, Strich und Schliessen genau über den Symbolen der Kopfzeile des Panels (die zwei angehefteten Apps, der Strich und der Launcher-Knopf) liegen, wenn man die Bilder übereinanderlegt.
+
 ## [2.197.0] - 2026-11-05
 
 Die Sicherung deckt nun auch die letzten fehlenden Einstellungen ab, und die persönlichen Einstellungen der Benutzer lassen sich ebenfalls sichern.
@@ -5752,6 +5760,7 @@ Erste Vorabversion.
   GitHub Actions für die Prüfungen von HACS und hassfest sowie die Tests.
 
 [2.6.0]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v2.6.0
+[2.198.0]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v2.198.0
 [2.197.0]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v2.197.0
 [2.195.0]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v2.195.0
 [2.194.0]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v2.194.0

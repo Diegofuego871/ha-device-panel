@@ -32,6 +32,16 @@ for (const lang of ["de", "en"]) {
     check(`[${tag}] Strich vor dem Launcher-Knopf`, m.sep !== false && m.pins > 0, JSON.stringify(m));
     check(`[${tag}] 16 px links und rechts des Strichs, Strich mittig zu den Knöpfen`, Math.abs(m.left - 16) < 0.6 && Math.abs(m.right - 16) < 0.6 && m.sepMid < 1, JSON.stringify(m));
     check(`[${tag}] Reihenfolge angeheftete Apps, Strich, Launcher`, m.order === true);
+    if (mobile) {
+      // Launcher offen: die Symbole des Kopfes liegen genau über denen der Kopfzeile des Panels (Neustart über dem ersten, Bleistift über dem zweiten, Strich, Kreuz über dem Launcher-Knopf)
+      const C = "const c = (e) => { const x = e.getBoundingClientRect(); return [Math.round((x.left + x.width / 2) * 10) / 10, Math.round((x.top + x.height / 2) * 10) / 10]; };";
+      const tb = JSON.parse(await ev(`${C} const pins = [...r.querySelectorAll(".toolbar .app-pin")]; return JSON.stringify({ a: c(pins[0]), b: c(pins[1]), sep: c(r.querySelector(".toolbar .tb-sep")), apps: c(r.querySelector(".toolbar .apps-btn")) })`));
+      await ev(`r.querySelector(".apps-btn").click()`);
+      await p.waitForTimeout(700);
+      const hd = JSON.parse(await ev(`${C} const h = r.querySelector("dialog.apps-dlg .ap-head"); return JSON.stringify({ pw: h.querySelector(".ap-pw") && c(h.querySelector(".ap-pw")), ed: c(h.querySelector('[data-ap="edit"]')), sep: c(h.querySelector(".dlg-sep")), x: c(h.querySelector(".ap-x")) })`));
+      const pos = { tb, hd };
+      check(`[${tag}] Launcher-Kopf: Symbole genau über denen der Kopfzeile`, pos.hd.pw && Math.abs(pos.hd.pw[0] - pos.tb.a[0]) < 0.6 && Math.abs(pos.hd.ed[0] - pos.tb.b[0]) < 0.6 && Math.abs(pos.hd.sep[0] - pos.tb.sep[0]) < 0.6 && Math.abs(pos.hd.x[0] - pos.tb.apps[0]) < 0.6, JSON.stringify(pos));
+    }
     check(`[${tag}] keine Fehler`, errors.length === 0, errors.join("|"));
     await ctx.close();
   }

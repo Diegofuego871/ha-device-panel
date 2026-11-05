@@ -7,6 +7,14 @@ All notable changes to this integration are documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/).
 
+## [2.198.0] - 2026-11-05
+
+On the phone, the header icons of the launcher lie exactly over those of the panel header.
+
+### Changed
+
+- **Launcher, header on the phone:** The restart button was too close to the edit button. The distance between the two icons is now 14 px, as in the panel header, so restart, edit, line and close lie exactly over the icons of the panel header (the two pinned apps, the line and the launcher button) when the pictures are laid over each other.
+
 ## [2.197.0] - 2026-11-05
 
 The backup now covers the last missing settings, and the personal settings of the users can be saved too.
@@ -5651,6 +5659,7 @@ First pre-release.
   GitHub Actions for HACS/hassfest validation and tests.
 
 [2.6.0]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v2.6.0
+[2.198.0]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v2.198.0
 [2.197.0]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v2.197.0
 [2.195.0]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v2.195.0
 [2.194.0]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v2.194.0
