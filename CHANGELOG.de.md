@@ -17,6 +17,10 @@ Enthält die Änderungen von 2.200.1.
 
 - **App "Updates", Aussehen:** Das Fenster sieht jetzt genau aus wie die Fenster von "Status", "Magic Push" und "Routinen": am Desktop ein grosses Fenster (880 px breit), am Handy die ganze Fläche des Panels ohne runde Ecken, der Kopf mit Symbol, Titel und den Knöpfen (Suche, Strich, Kreuz) an denselben Stellen, der Inhalt füllt das Fenster und der Knopf "Schliessen" steht ganz unten. Vorher war es ein kleineres Blatt, das nur mit dem Inhalt wuchs. Die Funktion ist unverändert.
 
+### Behoben
+
+- **App "Updates", Symbol einer App:** Bei einer App (Add-on) zeigte die Zeile das Logo des Supervisors statt des eigenen Symbols der App, wie es Home Assistant zeigt (zum Beispiel das Terminal bei "Advanced SSH & Web Terminal"). Die Zeile nimmt das Symbol jetzt aus der Update-Entität (`entity_picture`, ein Pfad dieser Instanz, nichts wird aus dem Internet geladen); ohne Symbol bleibt das Logo wie bisher. Home Assistant Core, Betriebssystem, Supervisor, Marketplace und Geräte behalten ihre Logos.
+
 ## [2.200.1] - 2026-11-05
 
 Nicht veröffentlicht; enthalten in 2.201.0.

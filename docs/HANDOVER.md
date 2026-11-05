@@ -5,6 +5,7 @@ Einstieg für jede neue Claude-Code-Session. Zuerst diese Datei lesen, dann
 
 ## Stand (2.201.0, App Updates als Vollbild)
 
+- `updapp.js` `badge()`: bei Apps (`kind` addons) das Symbol aus `states[entity_id].attributes.entity_picture`, nur Pfad mit "/" am Anfang (nie fremde Adresse); Test in `updappall-e2e`.
 - `dialog.updapp-dlg` (ohne Klasse `notes-dlg`) steht in allen Regeln von `status-dlg` (Grösse, Handy-Vollbild, Glas, hell, `[open]` flex, Kopf, Körper, Titel, Kreuz und `.dlg-acts` -6 px); Suite `updappfull-e2e` vergleicht Updates mit Status.
 
 ## Stand (2.200.1, Kopf des Geräte-Popups senkrecht)

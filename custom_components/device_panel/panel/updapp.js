@@ -191,6 +191,15 @@ export class UpdApp {
   badge(u) {
     const kind = u.kind || "devices";
     const domain = kind === "devices" ? u.platform : kind === "hacs" ? (u.platform || "hacs") : kind === "addons" ? "hassio" : "homeassistant";
+    // Apps (seit 2.201.0): das eigene Symbol der App, wie es Home Assistant zeigt (entity_picture der Update-Entität, /api/hassio/addons/<Name>/icon); nur ein
+    // Pfad dieser Instanz, nie eine fremde Adresse (nichts geht ins Internet). Ohne Symbol bleibt das Logo des Supervisors.
+    if (kind === "addons") {
+      const pic = this.host._hass?.states?.[u.entity_id]?.attributes?.entity_picture;
+      if (typeof pic === "string" && /^\/[^/\\]/.test(pic)) {
+        const src = this.host._hass.hassUrl ? this.host._hass.hassUrl(pic) : pic;
+        return `<span class="ibadge has-img"><img src="${this.h.escape(src)}" alt="" width="22" height="22" draggable="false"></span>`;
+      }
+    }
     return this.host._ibadge(domain, this.info(u).integ);
   }
 
