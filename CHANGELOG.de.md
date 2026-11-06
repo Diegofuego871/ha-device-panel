@@ -7,7 +7,19 @@ Alle nennenswerten Änderungen an dieser Integration stehen in dieser Datei.
 Das Format folgt [Keep a Changelog](https://keepachangelog.com/de/1.1.0/),
 die Versionsnummern folgen [Semantic Versioning](https://semver.org/lang/de/).
 
+## [2.204.0] - 2026-11-06
+
+Das Geräte-Popup merkt sich die letzten fünf Ladungen und zeigt sie als Kurve.
+
+Enthält die Änderungen aus 2.203.2.
+
+### Hinzugefügt
+
+- **Geräte-Popup, Kachel "Ladungen" und Fenster "Ladungen":** Für ein Gerät, das geladen werden kann, merkt sich das Panel nun die letzten fünf Ladungen (Beginn, Ende, Stand von und bis und die Messpunkte der Kurve; nur Administratoren sehen sie). Sobald eine aufgezeichnet ist, steht in der Statistik eine Kachel "Ladungen" mit der Anzahl und dem Datum der letzten. Ein Tipp öffnet das Fenster "Ladungen": oben die gewählte Ladung als Kurve (Stand grün; mit eingestellter Akku-Kapazität auch die Leistung in Watt, gestrichelt orange), darunter die Dauer, der Stand (von → bis) und, mit Kapazität, die durchschnittliche und die höchste Leistung, ganz unten die fünf Ladungen nach Datum mit Stand und Leistung; ein Tipp auf eine Zeile zeigt diese Ladung. Eine Ladung wird aufgezeichnet, wenn sie endet (voll, vorzeitig beendet oder das Gerät wird abgesteckt). Sehr kurze (weniger als 3 Punkte oder ein Anstieg von weniger als 2 Punkten) bleiben weg. Die Leistung ist eine Schätzung, über 10 Minuten geglättet, und kommt ohne die Verluste des Ladegeräts im Akku an. Nichts Neues einzustellen: Die fünf Ladungen sind Laufzeitdaten und gehören daher nicht in die Sicherung.
+
 ## [2.203.2] - 2026-11-06
+
+Nicht veröffentlicht; enthalten in 2.204.0.
 
 Die Aktionsknöpfe in den Fensterköpfen sind grau wie das Kreuz und das Herz.
 
@@ -5874,7 +5886,7 @@ Erste Vorabversion.
   GitHub Actions für die Prüfungen von HACS und hassfest sowie die Tests.
 
 [2.6.0]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v2.6.0
-[2.203.2]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v2.203.2
+[2.204.0]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v2.204.0
 [2.203.1]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v2.203.1
 [2.203.0]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v2.203.0
 [2.202.0]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v2.202.0

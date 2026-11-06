@@ -49,6 +49,7 @@ def _bat(hass: HomeAssistant, entity: str, level: int) -> None:
 def test_step_rise_then_full() -> None:
     n = ChargeNotifier.__new__(ChargeNotifier)
     n._state = {}
+    n._charges = {}
     n._save = lambda: None  # type: ignore[method-assign]
     assert n.step("d", 40, 0, OPTS) is None
     assert n.step("d", 30, 100, OPTS) is None
@@ -69,6 +70,7 @@ def test_step_rise_then_full() -> None:
 def test_step_jump_and_fallback() -> None:
     n = ChargeNotifier.__new__(ChargeNotifier)
     n._state = {}
+    n._charges = {}
     n._save = lambda: None  # type: ignore[method-assign]
     assert n.step("d", 38, 0, OPTS) is None
     # Selten gemeldet: ein Sprung 38 -> 100 reicht (Anstieg 62 >= 20, Dauer unbekannt gilt trotzdem als beobachtet)
@@ -77,6 +79,7 @@ def test_step_jump_and_fallback() -> None:
     # Schon voll beim Start: keine Meldung
     n2 = ChargeNotifier.__new__(ChargeNotifier)
     n2._state = {}
+    n2._charges = {}
     n2._save = lambda: None  # type: ignore[method-assign]
     assert n2.step("e", 100, 0, OPTS) is None
     assert n2.step("e", 100, 10, OPTS) is None
@@ -84,6 +87,7 @@ def test_step_jump_and_fallback() -> None:
     opts = {**OPTS, "charge_full": 95}
     n3 = ChargeNotifier.__new__(ChargeNotifier)
     n3._state = {}
+    n3._charges = {}
     n3._save = lambda: None  # type: ignore[method-assign]
     n3.step("f", 50, 0, opts)
     assert n3.step("f", 96, 60, opts) is not None
@@ -147,6 +151,7 @@ async def test_message_texts(hass: HomeAssistant) -> None:
 def _notifier() -> ChargeNotifier:
     n = ChargeNotifier.__new__(ChargeNotifier)
     n._state = {}
+    n._charges = {}
     n._save = lambda: None  # type: ignore[method-assign]
     return n
 
@@ -513,3 +518,90 @@ async def test_rechargeable_by_device_charge_or_live(hass: HomeAssistant) -> Non
     await async_set_device_settings(hass, b.id, charge_live=True)
     listed = {d["name"]: d for d in (await async_list_devices(hass))["devices"]}
     assert listed["Schloss A"]["rechargeable"] is True and listed["Schloss B"]["rechargeable"] is True and listed["Schloss C"]["rechargeable"] is False
+
+
+def _notifier() -> ChargeNotifier:
+    n = ChargeNotifier.__new__(ChargeNotifier)
+    n._state = {}
+    n._charges = {}
+    n._save = lambda: None  # type: ignore[method-assign]
+    return n
+
+
+def test_charge_recorded_when_full() -> None:
+    """Eine Ladung bis "voll" wird mit ihren Messpunkten festgehalten (2.204.0): Start am Tiefpunkt, Ende bei "voll"."""
+    n = _notifier()
+    t = 10_000.0
+    for i, level in enumerate((30, 36, 44, 53, 63, 74, 86, 100)):
+        n.step("d", level, t + i * 300, OPTS)
+    lst = n._charges["d"]
+    assert len(lst) == 1 and lst[0]["from"] == 30 and lst[0]["to"] == 100 and lst[0]["start"] == t and lst[0]["end"] == t + 7 * 300
+    assert [p[1] for p in lst[0]["pts"]] == [30, 36, 44, 53, 63, 74, 86, 100]
+    assert "pts" not in n._state["d"]  # die laufende Sammlung ist leer
+    assert n.charges_info("d") == (1, t + 7 * 300)
+
+
+def test_charge_recorded_on_discharge_and_not_when_tiny() -> None:
+    """Entladen beendet die Ladung (festgehalten); ein kleiner Anstieg oder zu wenige Punkte zählen nicht; dieselbe Ladung ersetzt sich; höchstens 5."""
+    n = _notifier()
+    t = 50_000.0
+    # Anstieg von nur 1 Punkt: keine Ladung
+    for i, level in enumerate((50, 51, 51)):
+        n.step("a", level, t + i * 300, OPTS)
+    n.step("a", 40, t + 2000, OPTS)  # Entladen beendet die kleine Schwankung
+    assert "a" not in n._charges
+    # Fünf echte Ladungen plus eine sechste: nur die letzten fünf bleiben
+    now = t
+    for k in range(6):
+        for i, level in enumerate((20, 28, 37, 47, 58)):
+            n.step("b", level, now + i * 300, OPTS)
+        now += 5 * 300 + 100
+        n.step("b", 10, now, OPTS)  # Entladen beendet diese Ladung
+        now += 300
+    starts = [c["start"] for c in n._charges["b"]]
+    assert len(starts) == 5 and starts == sorted(starts)
+    # derselbe Start ersetzt, statt doppelt zu stehen
+    st = n._state["b"]
+    st["pts"] = [[now, 10], [now + 300, 20], [now + 600, 30]]
+    n._record_charge("b", st, now + 700)
+    n._record_charge("b", st, now + 800)
+    assert len([c for c in n._charges["b"] if c["start"] == now]) == 1
+
+
+def test_charges_view_power_and_storage() -> None:
+    """Fenster "Ladungen": Kurve in Sekunden ab Start, mit Kapazität Leistung (geglättet), Durchschnitt und Spitze; ohne Kapazität keine Watt."""
+    n = _notifier()
+    t = 1000.0
+    n._charges["d"] = [{"start": t, "end": t + 3000, "from": 20, "to": 80, "pts": [[t + i * 300, 20 + i * 6] for i in range(11)]}]
+    ohne = n.charges_view("d", None)[0]
+    assert ohne["watts"] is None and ohne["avg_w"] is None and ohne["minutes"] == 50 and ohne["pts"][0] == [0, 20] and ohne["pts"][-1] == [3000, 80]
+    mit = n.charges_view("d", 60.0)[0]
+    # 60 Punkte in 3000 s bei 60 Wh = 36 Wh in 50 Min. = 43,2 W
+    assert mit["avg_w"] == 43.2 and mit["watts"][0] is None and all(abs(w - 43.2) < 0.2 for w in mit["watts"][1:])
+    assert mit["peak_w"] is not None and mit["peak_w"] >= 43.1
+    assert n.charges_view("unbekannt", 60.0) == []
+
+
+async def test_charges_persist_and_ws(hass: HomeAssistant, hass_ws_client) -> None:
+    """Die Ladungen überstehen einen Neustart (Speicher) und kommen über den Befehl device_panel/charges (nur Administratoren)."""
+    await _setup(hass)
+    device, _entity = _device(hass, "Saugroboter", level=20)
+    await hass.data[DATA_CHARGE].async_rebuild()
+    watcher = hass.data[DATA_CHARGE]
+    t = time.time() - 4000
+    for i, level in enumerate((20, 28, 37, 47, 58, 70, 82, 100)):
+        watcher.step(device.id, level, t + i * 400, values_from({}))
+    assert watcher.charges_info(device.id)[0] == 1
+    await async_set_device_settings(hass, device.id, charge_wh=60)
+    client = await hass_ws_client(hass)
+    await client.send_json({"id": 1, "type": "device_panel/charges", "device_id": device.id})
+    res = (await client.receive_json())["result"]
+    assert res["wh"] == 60 and len(res["charges"]) == 1 and res["charges"][0]["from"] == 20 and res["charges"][0]["to"] == 100 and res["charges"][0]["avg_w"] > 0
+    # Speichern und neu laden
+    await watcher._store.async_save({"state": watcher._state, "live": watcher._live, "charges": watcher._charges})
+    fresh = ChargeNotifier(hass)
+    await fresh.async_start()
+    try:
+        assert fresh.charges_info(device.id)[0] == 1 and fresh._charges[device.id][0]["pts"][-1][1] == 100
+    finally:
+        await fresh.async_stop()

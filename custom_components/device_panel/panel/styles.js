@@ -578,8 +578,8 @@ dialog.rename-dlg .dn-orig { margin: 10px 2px 4px; font-size: 14px; }
 .dlg-title h2 { margin: 2px 0 6px; font-size: 21px; font-weight: 500; overflow-wrap: anywhere; }
 .dlg-sub { display: flex; flex-wrap: wrap; align-items: center; gap: 6px 8px; color: var(--dp-text2); font-size: 13px; }
 /* Status-App (seit 2.73.0): nur der Titel, ohne Zeile darunter; er steht mittig zum Symbol */
-dialog.status-dlg .dlg-title, dialog.updapp-dlg .dlg-title { align-self: center; }
-dialog.status-dlg .dlg-title h2, dialog.updapp-dlg .dlg-title h2 { margin: 0; }
+dialog.status-dlg .dlg-title, dialog.updapp-dlg .dlg-title, dialog.charges-dlg .dlg-title { align-self: center; }
+dialog.status-dlg .dlg-title h2, dialog.updapp-dlg .dlg-title h2, dialog.charges-dlg .dlg-title h2 { margin: 0; }
 /* Kreuz, Plus und Herz im Kopf der Fenster (seit 2.56.0, Wunsch des Nutzers): wie die Knöpfe der Panel-Übersicht (.gear-btn), rund mit grauem Rand,
    gleich gross (42 px, auf dem Handy 38 px) und am rechten Rand an derselben Stelle wie das Zahnrad */
 .dlg-close { flex: none; display: grid; place-items: center; width: 42px; height: 42px; border: 1px solid var(--dp-divider); border-radius: 50%;
@@ -1630,8 +1630,8 @@ button.pill.live.off:hover { background: var(--dp-hover); }
   /* Geräte-Popup am Handy: Name eine Stufe kleiner (24 → 21 px), damit neben Protokoll, Herz und Kreuz mehr Platz bleibt (seit 2.121.0) */
   dialog.device .dlg-title h2, .stat-head .dlg-title h2 { font-size: 21px; }
   /* Vollbild-Fenster (Einstellungen, Protokoll, Routinen): das Kreuz sitzt auf gleicher Höhe wie der Zahnrad-Knopf der Übersicht (12 px vom oberen Rand) */
-  dialog.settings .dlg-head .dlg-close, dialog.log-dlg .dlg-head .dlg-close, dialog.rtall-dlg .dlg-head .dlg-close, dialog.mgall-dlg .dlg-head .dlg-close, dialog.status-dlg .dlg-head .dlg-close, dialog.updapp-dlg .dlg-head .dlg-close,
-  dialog.settings .dlg-head .dlg-acts, dialog.rtall-dlg .dlg-head .dlg-acts, dialog.mgall-dlg .dlg-head .dlg-acts, dialog.updapp-dlg .dlg-head .dlg-acts { margin-top: -6px; }
+  dialog.settings .dlg-head .dlg-close, dialog.log-dlg .dlg-head .dlg-close, dialog.rtall-dlg .dlg-head .dlg-close, dialog.mgall-dlg .dlg-head .dlg-close, dialog.status-dlg .dlg-head .dlg-close, dialog.updapp-dlg .dlg-head .dlg-close, dialog.charges-dlg .dlg-head .dlg-close,
+  dialog.settings .dlg-head .dlg-acts, dialog.rtall-dlg .dlg-head .dlg-acts, dialog.mgall-dlg .dlg-head .dlg-acts, dialog.updapp-dlg .dlg-head .dlg-acts, dialog.charges-dlg .dlg-head .dlg-acts { margin-top: -6px; }
   .dlg-quick { padding: 0 16px 14px; flex-wrap: nowrap; gap: 6px; }
   .why-tags.dlg-why { padding: 0 16px 12px; }
   /* Handy: beide Knöpfe (Gerät, Integration) auf einer Zeile; bei sehr schmalem Fenster kürzt "…" den Text */
@@ -1645,16 +1645,16 @@ button.pill.live.off:hover { background: var(--dp-hover); }
 
 /* Protokoll (seit 1.38.0, docs/mockups/popup-tabs-log-v1, P1): Fenster gross auf dem Desktop, auf dem Handy vollflächig */
 /* Fenster "Alle Routinen": Popup auf dem Desktop, gleich gross wie Einstellungen und Geräte-Popup (seit 2.28.3, Grösse seit 2.28.5 wie die anderen grossen Fenster), auf dem Handy (bis 700 px) vollflächig */
-dialog.rtall-dlg, dialog.mgall-dlg, dialog.status-dlg, dialog.updapp-dlg { padding: 0; border: none; border-radius: 22px; background: var(--dp-card); color: var(--dp-text); box-shadow: var(--dp-shadow); overflow: hidden;
+dialog.rtall-dlg, dialog.mgall-dlg, dialog.status-dlg, dialog.updapp-dlg, dialog.charges-dlg { padding: 0; border: none; border-radius: 22px; background: var(--dp-card); color: var(--dp-text); box-shadow: var(--dp-shadow); overflow: hidden;
   width: min(880px, calc(100vw - 48px)); height: min(1100px, calc(100% - 48px)); max-height: none; overscroll-behavior: contain; }
-dialog.rtall-dlg[open], dialog.mgall-dlg[open], dialog.status-dlg[open], dialog.updapp-dlg[open] { display: flex; flex-direction: column; }
-dialog.rtall-dlg::backdrop, dialog.mgall-dlg::backdrop, dialog.status-dlg::backdrop, dialog.updapp-dlg::backdrop { background: rgba(0,0,0,0.5); }
-.rtall-dlg .dlg-head, .mgall-dlg .dlg-head, .status-dlg .dlg-head, .updapp-dlg .dlg-head { flex: none; position: static; }
-.rtall-dlg .dlg-body, .mgall-dlg .dlg-body, .status-dlg .dlg-body, .updapp-dlg .dlg-body { flex: 1 1 auto; min-height: 0; overflow: auto; padding: 0 22px 24px; }
+dialog.rtall-dlg[open], dialog.mgall-dlg[open], dialog.status-dlg[open], dialog.updapp-dlg[open], dialog.charges-dlg[open] { display: flex; flex-direction: column; }
+dialog.rtall-dlg::backdrop, dialog.mgall-dlg::backdrop, dialog.status-dlg::backdrop, dialog.updapp-dlg::backdrop, dialog.charges-dlg::backdrop { background: rgba(0,0,0,0.5); }
+.rtall-dlg .dlg-head, .mgall-dlg .dlg-head, .status-dlg .dlg-head, .updapp-dlg .dlg-head, .charges-dlg .dlg-head { flex: none; position: static; }
+.rtall-dlg .dlg-body, .mgall-dlg .dlg-body, .status-dlg .dlg-body, .updapp-dlg .dlg-body, .charges-dlg .dlg-body { flex: 1 1 auto; min-height: 0; overflow: auto; padding: 0 22px 24px; }
 .rt-all-wrap { margin: 0 auto; }
 @media (max-width: 700px) {
-  dialog.rtall-dlg, dialog.mgall-dlg, dialog.status-dlg, dialog.updapp-dlg { width: 100%; max-width: 100%; height: 100%; max-height: 100%; margin: 0; border-radius: 0; }
-  .rtall-dlg .dlg-body, .mgall-dlg .dlg-body, .status-dlg .dlg-body, .updapp-dlg .dlg-body { padding: 0 16px 20px; }
+  dialog.rtall-dlg, dialog.mgall-dlg, dialog.status-dlg, dialog.updapp-dlg, dialog.charges-dlg { width: 100%; max-width: 100%; height: 100%; max-height: 100%; margin: 0; border-radius: 0; }
+  .rtall-dlg .dlg-body, .mgall-dlg .dlg-body, .status-dlg .dlg-body, .updapp-dlg .dlg-body, .charges-dlg .dlg-body { padding: 0 16px 20px; }
   .rtall-dlg .dlg-addbar, .mgall-dlg .dlg-addbar { bottom: -20px; margin-bottom: -20px; padding-bottom: 16px; }
 }
 dialog.log-dlg { padding: 0; border: none; border-radius: 22px; background: var(--dp-card); color: var(--dp-text); box-shadow: var(--dp-shadow); overflow: hidden;
@@ -1747,15 +1747,15 @@ dialog.device[open] > .dlg-body, dialog.settings[open] > .dlg-body, dialog.stat-
    "Transparenz reduzieren" bleiben die Blätter deckend wie bisher. */
 @supports ((-webkit-backdrop-filter: blur(1px)) or (backdrop-filter: blur(1px))) {
   @media not (prefers-reduced-transparency: reduce) {
-    dialog.device, dialog.settings, dialog.log-dlg, dialog.rtall-dlg, dialog.mgall-dlg, dialog.status-dlg, dialog.updapp-dlg { background: color-mix(in srgb, var(--dp-card) 64%, transparent);
+    dialog.device, dialog.settings, dialog.log-dlg, dialog.rtall-dlg, dialog.mgall-dlg, dialog.status-dlg, dialog.updapp-dlg, dialog.charges-dlg { background: color-mix(in srgb, var(--dp-card) 64%, transparent);
       -webkit-backdrop-filter: blur(30px) saturate(190%); backdrop-filter: blur(30px) saturate(190%);
       box-shadow: inset 0 1.5px 0 color-mix(in srgb, var(--dp-text) 30%, transparent), inset 0 0 0 1px color-mix(in srgb, var(--dp-text) 8%, transparent), 0 24px 70px rgba(0,0,0,0.55); }
-    dialog.device::backdrop, dialog.settings::backdrop, dialog.log-dlg::backdrop, dialog.rtall-dlg::backdrop, dialog.mgall-dlg::backdrop, dialog.status-dlg::backdrop, dialog.updapp-dlg::backdrop { background: rgba(0,0,0,0.5); -webkit-backdrop-filter: blur(8px); backdrop-filter: blur(8px); }
-    dialog.device .dlg-head, dialog.settings .dlg-head, dialog.log-dlg .dlg-head, dialog.rtall-dlg .dlg-head, dialog.mgall-dlg .dlg-head, dialog.status-dlg .dlg-head, dialog.updapp-dlg .dlg-head { background: color-mix(in srgb, var(--dp-card) 60%, transparent);
+    dialog.device::backdrop, dialog.settings::backdrop, dialog.log-dlg::backdrop, dialog.rtall-dlg::backdrop, dialog.mgall-dlg::backdrop, dialog.status-dlg::backdrop, dialog.updapp-dlg::backdrop, dialog.charges-dlg::backdrop { background: rgba(0,0,0,0.5); -webkit-backdrop-filter: blur(8px); backdrop-filter: blur(8px); }
+    dialog.device .dlg-head, dialog.settings .dlg-head, dialog.log-dlg .dlg-head, dialog.rtall-dlg .dlg-head, dialog.mgall-dlg .dlg-head, dialog.status-dlg .dlg-head, dialog.updapp-dlg .dlg-head, dialog.charges-dlg .dlg-head { background: color-mix(in srgb, var(--dp-card) 60%, transparent);
       -webkit-backdrop-filter: blur(18px); backdrop-filter: blur(18px); }
     dialog.device .dev-tabs { background: color-mix(in srgb, var(--dp-card) 60%, transparent); -webkit-backdrop-filter: blur(18px); backdrop-filter: blur(18px); }
     dialog.device .dev-tabs::after { display: none; }
-    dialog.device .dlg-actions, dialog.settings .dlg-actions, dialog.log-dlg .dlg-actions, dialog.rtall-dlg .dlg-actions, dialog.mgall-dlg .dlg-actions, dialog.status-dlg .dlg-actions, dialog.updapp-dlg .dlg-actions { border-top: none; padding-top: 24px;
+    dialog.device .dlg-actions, dialog.settings .dlg-actions, dialog.log-dlg .dlg-actions, dialog.rtall-dlg .dlg-actions, dialog.mgall-dlg .dlg-actions, dialog.status-dlg .dlg-actions, dialog.updapp-dlg .dlg-actions, dialog.charges-dlg .dlg-actions { border-top: none; padding-top: 24px;
       background: linear-gradient(to bottom, transparent, color-mix(in srgb, var(--dp-card) 85%, transparent) 42%);
       -webkit-backdrop-filter: blur(14px); backdrop-filter: blur(14px); }
     dialog.device .dlg-btn, dialog.settings .dlg-btn { background: color-mix(in srgb, var(--dp-text) 8%, transparent); border-color: color-mix(in srgb, var(--dp-text) 12%, transparent); }
@@ -1767,11 +1767,11 @@ dialog.device[open] > .dlg-body, dialog.settings[open] > .dlg-body, dialog.stat-
 /* Helles Design am Desktop (seit 2.20.0, ab 601 px; das Handy-Blatt bleibt wie es war): Fenster, Kopf, Reiter und Fuss deckend weiss statt durchscheinend (die Unschärfe über dem
    abgedunkelten Hintergrund machte das ganze Blatt grau); Kacheln nur ganz leicht abgesetzt. Grau nur beim Darüberfahren. */
 @media (min-width: 601px) {
-:host([light]) dialog.device, :host([light]) dialog.settings, :host([light]) dialog.log-dlg, :host([light]) dialog.rtall-dlg, :host([light]) dialog.mgall-dlg, :host([light]) dialog.status-dlg, :host([light]) dialog.updapp-dlg { background: var(--dp-card); -webkit-backdrop-filter: none; backdrop-filter: none;
+:host([light]) dialog.device, :host([light]) dialog.settings, :host([light]) dialog.log-dlg, :host([light]) dialog.rtall-dlg, :host([light]) dialog.mgall-dlg, :host([light]) dialog.status-dlg, :host([light]) dialog.updapp-dlg, :host([light]) dialog.charges-dlg { background: var(--dp-card); -webkit-backdrop-filter: none; backdrop-filter: none;
   box-shadow: 0 24px 70px rgba(0,0,0,0.35), 0 0 0 1px color-mix(in srgb, var(--dp-text) 8%, transparent); }
-:host([light]) dialog.device::backdrop, :host([light]) dialog.settings::backdrop, :host([light]) dialog.log-dlg::backdrop, :host([light]) dialog.rtall-dlg::backdrop, :host([light]) dialog.mgall-dlg::backdrop, :host([light]) dialog.status-dlg::backdrop, :host([light]) dialog.updapp-dlg::backdrop { -webkit-backdrop-filter: none; backdrop-filter: none; background: rgba(0,0,0,0.4); }
-:host([light]) dialog.device .dlg-head, :host([light]) dialog.settings .dlg-head, :host([light]) dialog.log-dlg .dlg-head, :host([light]) dialog.rtall-dlg .dlg-head, :host([light]) dialog.mgall-dlg .dlg-head, :host([light]) dialog.status-dlg .dlg-head, :host([light]) dialog.updapp-dlg .dlg-head, :host([light]) dialog.device .dev-tabs { background: var(--dp-card); -webkit-backdrop-filter: none; backdrop-filter: none; }
-:host([light]) dialog.device .dlg-actions, :host([light]) dialog.settings .dlg-actions, :host([light]) dialog.log-dlg .dlg-actions, :host([light]) dialog.rtall-dlg .dlg-actions, :host([light]) dialog.mgall-dlg .dlg-actions, :host([light]) dialog.status-dlg .dlg-actions, :host([light]) dialog.updapp-dlg .dlg-actions { background: var(--dp-card); -webkit-backdrop-filter: none; backdrop-filter: none; border-top: 1px solid var(--dp-divider); padding-top: 14px; }
+:host([light]) dialog.device::backdrop, :host([light]) dialog.settings::backdrop, :host([light]) dialog.log-dlg::backdrop, :host([light]) dialog.rtall-dlg::backdrop, :host([light]) dialog.mgall-dlg::backdrop, :host([light]) dialog.status-dlg::backdrop, :host([light]) dialog.updapp-dlg::backdrop, :host([light]) dialog.charges-dlg::backdrop { -webkit-backdrop-filter: none; backdrop-filter: none; background: rgba(0,0,0,0.4); }
+:host([light]) dialog.device .dlg-head, :host([light]) dialog.settings .dlg-head, :host([light]) dialog.log-dlg .dlg-head, :host([light]) dialog.rtall-dlg .dlg-head, :host([light]) dialog.mgall-dlg .dlg-head, :host([light]) dialog.status-dlg .dlg-head, :host([light]) dialog.updapp-dlg .dlg-head, :host([light]) dialog.charges-dlg .dlg-head, :host([light]) dialog.device .dev-tabs { background: var(--dp-card); -webkit-backdrop-filter: none; backdrop-filter: none; }
+:host([light]) dialog.device .dlg-actions, :host([light]) dialog.settings .dlg-actions, :host([light]) dialog.log-dlg .dlg-actions, :host([light]) dialog.rtall-dlg .dlg-actions, :host([light]) dialog.mgall-dlg .dlg-actions, :host([light]) dialog.status-dlg .dlg-actions, :host([light]) dialog.updapp-dlg .dlg-actions, :host([light]) dialog.charges-dlg .dlg-actions { background: var(--dp-card); -webkit-backdrop-filter: none; backdrop-filter: none; border-top: 1px solid var(--dp-divider); padding-top: 14px; }
 :host([light]) dialog.device .tile, :host([light]) dialog.device .st-tile, :host([light]) dialog.settings .nf-note, :host([light]) dialog.settings .pv { background: color-mix(in srgb, var(--dp-text) 3.5%, var(--dp-card)); border-color: color-mix(in srgb, var(--dp-text) 10%, var(--dp-card)); box-shadow: none; }
 :host([light]) dialog.device .dev-set { background: color-mix(in srgb, var(--dp-text) 2.5%, var(--dp-card)); }
 :host([light]) dialog.device .dlg-btn, :host([light]) dialog.settings .dlg-btn { background: var(--dp-card); border-color: color-mix(in srgb, var(--dp-text) 18%, var(--dp-card)); }
@@ -2732,4 +2732,28 @@ dialog.updapp-dlg .dlg-error { font-size: 15px; }
 .ua-empty svg { color: var(--dp-success); }
 .ua-backup { display: flex; align-items: center; gap: 12px; margin: 14px 0 4px; font-size: 16px; }
 .ua-backup small { display: block; color: var(--dp-text2); font-size: 14px; }
+/* Fenster "Ladungen" (seit 2.204.0, docs/mockups/charges-v1, A): Kurve, vier Kacheln, Liste der letzten fünf Ladungen */
+.dlg-avatar.app-charges { background: var(--dp-success); }
+.cg-card { margin-top: 4px; padding: 10px 8px 4px; border: 1px solid var(--dp-divider); border-radius: 14px; background: var(--dp-bg); }
+.cg-svg { display: block; width: 100%; height: auto; max-height: 230px; }
+.cg-grid { stroke: var(--dp-divider); stroke-width: 1; }
+.cg-ax { fill: var(--dp-text3); font-size: 9px; }
+.cg-ax.w { fill: var(--dp-warning); }
+.cg-l { fill: none; stroke: var(--dp-success); stroke-width: 2.2; stroke-linejoin: round; stroke-linecap: round; }
+.cg-area { fill: color-mix(in srgb, var(--dp-success) 14%, transparent); stroke: none; }
+.cg-wl { fill: none; stroke: var(--dp-warning); stroke-width: 1.8; stroke-dasharray: 4 3; stroke-linejoin: round; }
+.cg-tiles { display: grid; grid-template-columns: repeat(var(--n, 4), minmax(0, 1fr)); gap: 8px; margin-top: 10px; }
+.cg-tile { display: flex; flex-direction: column; gap: 3px; min-width: 0; padding: 10px 11px; border: 1px solid var(--dp-divider); border-radius: 12px; background: var(--dp-bg); }
+.cg-k { font-size: 12px; color: var(--dp-text2); }
+.cg-v { font-size: 20px; font-weight: 500; color: var(--dp-text); white-space: nowrap; }
+.cg-v small { font-size: 12px; font-weight: 400; color: var(--dp-text2); margin: 0 2px; }
+.cg-list { display: flex; flex-direction: column; gap: 6px; margin-top: 14px; }
+.cg-row { display: grid; grid-template-columns: minmax(0, 1.4fr) auto auto; align-items: center; gap: 12px; width: 100%; padding: 11px 14px; border: 1px solid var(--dp-divider); border-radius: 12px;
+  background: var(--dp-card); color: var(--dp-text); font: inherit; font-size: 14px; text-align: left; cursor: pointer; }
+.cg-row:hover { border-color: color-mix(in srgb, var(--dp-success) 50%, transparent); }
+.cg-row.on { border-color: var(--dp-success); background: color-mix(in srgb, var(--dp-success) 10%, var(--dp-card)); }
+.cg-row .cg-p { font-weight: 500; white-space: nowrap; }
+.cg-row .cg-w { color: var(--dp-text2); white-space: nowrap; text-align: right; min-width: 64px; }
+.cg-row .cg-w small { font-size: 11px; margin-left: 2px; }
+@media (max-width: 600px) { .cg-tiles { grid-template-columns: repeat(2, minmax(0, 1fr)); } .cg-row { gap: 8px; padding: 11px 12px; } }
 `;

@@ -2113,6 +2113,9 @@
             // Akku-Kapazität (2.203.0): window.__devSettings.chargeWh; rechargeable: ladendes Gerät oder in window.__rechargeable
             charge_wh_setting: window.__devSettings.chargeWh[d.id] ?? null,
             rechargeable: Boolean(window.__charging?.[d.id]) || (window.__rechargeable || []).includes(d.id),
+            // Ladungen (2.204.0): window.__charges = { Geräte-ID: [ { start (Epoch-Sekunden), minutes, from, to, pts, watts, avg_w, peak_w } ] }, neueste zuerst
+            charges_count: (window.__charges?.[d.id] || []).length,
+            charges_last: window.__charges?.[d.id]?.length ? new Date(window.__charges[d.id][0].end * 1000).toISOString() : null,
             charge_rise_setting: window.__devSettings.chargeRise[d.id] ?? null,
             charge_stall_setting: window.__devSettings.chargeStall[d.id] ?? null,
             charge_stop_setting: window.__devSettings.chargeStop[d.id] ?? null,
@@ -2154,6 +2157,7 @@
         return res;
       }
       if (msg.type === "update/release_notes") return window.__updNotes ?? null;
+      if (msg.type === "device_panel/charges") return { charges: window.__charges?.[msg.device_id] || [], wh: window.__devSettings.chargeWh[msg.device_id] ?? null };
       // App "Geräte-Updates" (2.164.0): window.__appUpdates überschreibt die Liste; window.__uq ist die Warteschlange des Servers
       if (msg.type === "device_panel/updates_list") {
         const list = window.__appUpdates || window.__devices.filter((d) => d.update_install && !d.disabled).map((d) => ({ entity_id: `update.${d.id}_fw`, device_id: d.id, platform: d.integration.domain, features: 13, installed: d.sw_version, latest: d.update, title: d.name }));

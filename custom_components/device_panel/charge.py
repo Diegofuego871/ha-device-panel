@@ -84,7 +84,11 @@ ETA_TAPER_FROM = 80.0
 ETA_TAPER_FACTOR = 2.0
 ETA_MAX = 12 * 3600.0
 ETA_ROUND = 300.0
-ETA_POINTS_MAX = 60
+ETA_POINTS_MAX = 150
+CHARGES_KEEP = 5  # aufgezeichnete Ladungen pro Gerät (seit 2.204.0)
+POWER_WINDOW = 600.0  # Sekunden: Fenster für die Glättung der Leistung
+CHARGE_MIN_POINTS = 3
+CHARGE_MIN_RISE = 2.0
 
 
 def estimate_finish(points: list[list[float]], level: float, full: float, now: float) -> tuple[float, float, float] | None:
@@ -113,6 +117,17 @@ def estimate_finish(points: list[list[float]], level: float, full: float, now: f
     return finish, rate * 60, span / 60
 
 
+def _valid_charge(c: Any) -> bool:
+    """Eine gespeicherte Ladung: Start, Ende, Stand von bis und mindestens zwei Messpunkte [Zeit, Stand]."""
+    return (
+        isinstance(c, dict)
+        and all(isinstance(c.get(k), (int, float)) for k in ("start", "end", "from", "to"))
+        and isinstance(c.get("pts"), list)
+        and len(c["pts"]) >= 2
+        and all(isinstance(p, list) and len(p) == 2 and all(isinstance(x, (int, float)) for x in p) for p in c["pts"])
+    )
+
+
 class ChargeNotifier:
     def __init__(self, hass: HomeAssistant) -> None:
         self.hass = hass
@@ -125,6 +140,8 @@ class ChargeNotifier:
         # Live-Aktivität beim Laden (seit 2.19.0), je Gerät: tag, phase ("active", "done", "dismissed"), at (letztes
         # Senden), level (zuletzt gesendet), done_at. Wird mitgespeichert: nach einem Neustart läuft sie weiter.
         self._live: dict[str, dict[str, Any]] = {}
+        # Abgeschlossene Ladungen je Gerät, die letzten CHARGES_KEEP (seit 2.204.0): {"start", "end", "from", "to", "pts": [[Zeit, Stand], ...]}
+        self._charges: dict[str, list[dict[str, Any]]] = {}
         self._live_warned: set[str] = set()
 
     async def async_start(self) -> None:
@@ -135,6 +152,13 @@ class ChargeNotifier:
                 k: v for k, v in raw.items()
                 if isinstance(k, str) and isinstance(v, dict) and all(isinstance(v.get(f), (int, float)) for f in ("min", "min_at", "last"))
             }
+        charges = stored.get("charges") if isinstance(stored, dict) else None
+        if isinstance(charges, dict):
+            for dev, lst in charges.items():
+                if isinstance(dev, str) and isinstance(lst, list):
+                    ok = [c for c in lst if _valid_charge(c)]
+                    if ok:
+                        self._charges[dev] = ok[-CHARGES_KEEP:]
         live = stored.get("live") if isinstance(stored, dict) else None
         if isinstance(live, dict):
             self._live = {
@@ -285,10 +309,12 @@ class ChargeNotifier:
                 st.update(done=False, min=level, min_at=now)
         else:
             if level < st["min"]:
+                self._record_charge(dev, st, now)
                 st["min"], st["min_at"], st["peak"] = level, now, level
             st["peak"] = max(st.get("peak", st["min"]), level)
             if level <= st["peak"] - CHARGE_DROP:
                 # Entladen: der Tiefpunkt beginnt neu (sonst bliebe "lädt" nach einem Rückgang stehen).
+                self._record_charge(dev, st, now)
                 st.update(min=level, min_at=now, peak=level)
             charging = level - st["min"] >= rise
             # Ersatzregel nur bei einem Sprung von mehr als 10 Punkten (sonst zählte bei "Voll ab" 80 jeder Schritt 79 → 80).
@@ -299,7 +325,13 @@ class ChargeNotifier:
                 else:
                     result = {"level": level, "start": prev, "seconds": None}
         # Messpunkte der laufenden Ladung für die Restzeit im Panel (seit 2.202.0); eine neue Ladung (neuer Tiefpunkt) beginnt neu, nach "voll" entfallen sie
+        # (die Ladung ist dann in self._charges festgehalten, seit 2.204.0)
         if st.get("done"):
+            if result is not None:
+                pts = st.setdefault("pts", [])
+                if not pts or pts[-1][1] != level:
+                    pts.append([now, level])
+                self._record_charge(dev, st, now)
             st.pop("pts", None)
         else:
             pts = st.setdefault("pts", [])
@@ -310,6 +342,71 @@ class ChargeNotifier:
                 del pts[:-ETA_POINTS_MAX]
         self._save()
         return result
+
+    def _record_charge(self, dev: str, st: dict[str, Any], now: float) -> None:
+        """
+        Die laufende Ladung festhalten (seit 2.204.0), wenn sie endet: voll, Stillstand oder Entladen. Gespeichert werden die Messpunkte;
+        zu kurze Ladungen (zu wenige Punkte, kaum Anstieg) zählen nicht. Dieselbe Ladung (gleicher Start) ersetzt ihren früheren Eintrag
+        (zum Beispiel nach "beendet", wenn sie weitergeht).
+        """
+        pts = st.get("pts") or []
+        if len(pts) < CHARGE_MIN_POINTS or max(p[1] for p in pts) - pts[0][1] < CHARGE_MIN_RISE:
+            return
+        rec = {
+            "start": pts[0][0],
+            "end": max(p[0] for p in pts) if st.get("up_at") is None else min(float(st["up_at"]), now),
+            "from": pts[0][1],
+            "to": max(p[1] for p in pts),
+            "pts": [list(p) for p in pts],
+        }
+        lst = self._charges.setdefault(dev, [])
+        lst[:] = [c for c in lst if c["start"] != rec["start"]]
+        lst.append(rec)
+        lst.sort(key=lambda c: c["start"])
+        del lst[:-CHARGES_KEEP]
+
+    def charges_info(self, dev: str) -> tuple[int, float | None]:
+        """Zahl der aufgezeichneten Ladungen und Ende der letzten (für die Kachel "Ladungen")."""
+        lst = self._charges.get(dev) or []
+        return len(lst), (lst[-1]["end"] if lst else None)
+
+    def charges_view(self, dev: str, wh: float | None) -> list[dict[str, Any]]:
+        """
+        Die aufgezeichneten Ladungen des Geräts, neueste zuerst, für das Fenster "Ladungen": Kurve (Sekunden ab Start, Stand), mit Kapazität
+        auch die Leistung ins Akku in Watt (über ein Fenster von POWER_WINDOW Sekunden geglättet, nicht von Punkt zu Punkt), Durchschnitt
+        und Spitze. Alles Schätzungen.
+        """
+        out: list[dict[str, Any]] = []
+        for c in reversed(self._charges.get(dev) or []):
+            pts = c["pts"]
+            t0 = pts[0][0]
+            curve = [[round(p[0] - t0), p[1]] for p in pts]
+            watts: list[float | None] | None = None
+            avg = peak = None
+            if wh:
+                watts = [None]
+                for i in range(1, len(pts)):
+                    j = next((k for k in range(i) if pts[i][0] - pts[k][0] <= POWER_WINDOW), i - 1)
+                    dt = pts[i][0] - pts[j][0]
+                    watts.append(round(max(0.0, (pts[i][1] - pts[j][1]) / 100 * wh * 3600 / dt), 1) if dt > 0 else None)
+                dur = pts[-1][0] - t0
+                avg = round((pts[-1][1] - pts[0][1]) / 100 * wh * 3600 / dur, 1) if dur > 0 else None
+                real = [w for w in watts if w is not None]
+                peak = max(real) if real else None
+            out.append(
+                {
+                    "start": c["start"],
+                    "end": c["end"],
+                    "minutes": max(1, round((pts[-1][0] - t0) / 60)),
+                    "from": round(c["from"]),
+                    "to": round(c["to"]),
+                    "pts": curve,
+                    "watts": watts,
+                    "avg_w": avg,
+                    "peak_w": peak,
+                }
+            )
+        return out
 
     @callback
     def _on_tick(self, _now: Any) -> None:
@@ -346,6 +443,7 @@ class ChargeNotifier:
             if self.charging(dev, now, copts) is None:
                 continue
             st["stopped"] = True
+            self._record_charge(dev, st, now)
             stopped.append(dev)
             if not push_on:
                 continue
@@ -583,7 +681,7 @@ class ChargeNotifier:
             activity.record(self.hass, "info", "charge", "charge_live_dismissed", name, dev, target=notify_target(effective(self.hass), "charge"))
 
     def _save(self) -> None:
-        self._store.async_delay_save(lambda: {"state": self._state, "live": self._live}, 1)
+        self._store.async_delay_save(lambda: {"state": self._state, "live": self._live, "charges": self._charges}, 1)
 
     async def async_stop(self) -> None:
         if self._unsub_track is not None:
@@ -593,7 +691,7 @@ class ChargeNotifier:
             unsub()
         self._unsubs = []
         # Sofort schreiben: ein verzögerter Termin legte die Datei nach dem Entfernen neu an.
-        await self._store.async_save({"state": self._state, "live": self._live})
+        await self._store.async_save({"state": self._state, "live": self._live, "charges": self._charges})
 
     def message(self, done: dict[str, Any], area: str | None) -> str:
         """"100 % · in 1 Std. 40 Min. von 22 % · Büro" (Dauer nur, wenn das Laden beobachtet wurde)."""

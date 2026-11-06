@@ -11,6 +11,11 @@ Einstieg für jede neue Claude-Code-Session. Zuerst diese Datei lesen, dann
 
 - `charge.py` `known_rechargeable`: Lademeldung gilt (global + Gerät/Integration), oder am Gerät ausdrücklich "Ein", oder Live-Aktivität für das Gerät an; `rechargeable()` und `charging_of()` nutzen sie (vorher nur `enabled()` mit globalem Schalter). Test `test_rechargeable_by_device_charge_or_live`.
 
+## Stand (2.204.0, Ladungen: die letzten fünf Ladungen als Kurve)
+
+- `charge.py`: `ChargeNotifier._charges` (Speicher-Schlüssel "charges", je Gerät höchstens `CHARGES_KEEP` = 5), `_record_charge` (an den vier Stellen, an denen eine Ladung endet: neuer Tiefstand, Entladung, voll, `check_stalls`; mindestens `CHARGE_MIN_POINTS`/`CHARGE_MIN_RISE`), `charges_info`, `charges_view` (Kurve, Watt über `POWER_WINDOW` geglättet, nur mit Akku-Grösse). `devices._charges_fields` liefert `charges_count`/`charges_last`; WS `device_panel/charges` (`__init__.py`, nur Administratoren).
+- Panel: `charges.js` (`ChargesUi`, Fenster `dialog.charges-dlg`, Mockup `docs/mockups/charges-v1`, A, bewusst wenig Text), Kachel "Ladungen" in `_statTilesHtml`; die Fenster-CSS-Gruppen von `updapp-dlg` gelten auch für `charges-dlg`. Laufzeitdaten, daher nicht in der Sicherung. Suite `charges-e2e`, Tests in `test_charge.py`; Simulator `window.__charges`.
+
 ## Stand (2.203.0, Akku-Kapazität in Wh pro Gerät)
 
 - Einstellung `charge_wh` nur am Gerät (kein Integrations-/Label-/Global-Wert, Wunsch des Nutzers): `devices.py` (`valid_charge_wh` 0,1 bis 5000, Speicher, `async_set_device_settings`, `CHARGE_SETTING_KEYS` "wh" für Übersicht der eigenen Werte und Zurücksetzen, Payload `charge_wh_setting`, `rechargeable`), `_charging` liefert `power_w` = Tempo × Wh × 60 / 100; WS `charge_wh`; Sicherung (`_DEVICE_SETTING_KEYS`, Prüfung).

@@ -12,7 +12,7 @@
  */
 
 const MODULE_VERSION = new URL(import.meta.url).search;
-const [{ STRINGS, pickLang }, { PANEL_CSS }, { MagicPush }, { RoutineUi, DOMAIN_EMOJI }, { AppLauncher }, { StatusUi }, { ProtocolUi }, { WizardUi }, { UpdApp }] = await Promise.all([
+const [{ STRINGS, pickLang }, { PANEL_CSS }, { MagicPush }, { RoutineUi, DOMAIN_EMOJI }, { AppLauncher }, { StatusUi }, { ProtocolUi }, { WizardUi }, { UpdApp }, { ChargesUi }] = await Promise.all([
   import(`./strings.js${MODULE_VERSION}`),
   import(`./styles.js${MODULE_VERSION}`),
   import(`./magic-push.js${MODULE_VERSION}`),
@@ -22,6 +22,7 @@ const [{ STRINGS, pickLang }, { PANEL_CSS }, { MagicPush }, { RoutineUi, DOMAIN_
   import(`./protocol.js${MODULE_VERSION}`),
   import(`./wizard.js${MODULE_VERSION}`),
   import(`./updapp.js${MODULE_VERSION}`),
+  import(`./charges.js${MODULE_VERSION}`),
 ]);
 
 const POLL_INTERVAL_MS = 10000;
@@ -926,6 +927,7 @@ class DevicePanel extends HTMLElement {
     this._apps = new AppLauncher(this, { escape, mdi, accents: ACCENTS });
     this._status = new StatusUi(this, { escape, mdi, errText });
     this._updApp = new UpdApp(this, { escape, mdi, errText });
+    this._charges = new ChargesUi(this, { escape, mdi, errText });
     // Protokoll einer Meldung oder Routine (seit 2.104.0): eigenes Fenster, geöffnet von den Knöpfen mit data-proto
     this._protocol = new ProtocolUi(this, { escape, mdi, errText });
     // Einrichtungsassistent (seit 2.135.0): poppt nach der Installation einmal auf, Kachel im Launcher bis zum ersten Abschluss (wizard.js)
@@ -1636,7 +1638,7 @@ class DevicePanel extends HTMLElement {
       </div>
       <div class="area-pop" role="dialog" aria-label="${escape(this._t("areaTitle"))}" hidden></div>
       <div class="content"><div class="hstrip"></div><div class="hero"></div><div class="chips"></div><div class="viewline"></div><div class="list"></div><div class="foot"></div></div>
-      <dialog class="device"></dialog><dialog class="magic-dlg"></dialog><dialog class="magic-dlg routine-dlg"></dialog><dialog class="stat-dlg"></dialog><dialog class="settings"></dialog><dialog class="area-sheet"></dialog><dialog class="pulse-dlg"></dialog><dialog class="log-dlg proto-dlg"></dialog><dialog class="apps-dlg"></dialog><dialog class="app-dlg"></dialog><dialog class="rtall-dlg"></dialog><dialog class="mgall-dlg"></dialog><dialog class="status-dlg"></dialog><dialog class="prompt-dlg"></dialog><dialog class="notes-dlg"></dialog><dialog class="notes-dlg backup-dlg"></dialog><dialog class="notes-dlg upd-dlg"></dialog><dialog class="updapp-dlg"></dialog><dialog class="rename-dlg"></dialog><dialog class="discard-dlg"></dialog><dialog class="discard-dlg pause-dlg"></dialog><dialog class="wizard-dlg"></dialog>
+      <dialog class="device"></dialog><dialog class="magic-dlg"></dialog><dialog class="magic-dlg routine-dlg"></dialog><dialog class="stat-dlg"></dialog><dialog class="settings"></dialog><dialog class="area-sheet"></dialog><dialog class="pulse-dlg"></dialog><dialog class="log-dlg proto-dlg"></dialog><dialog class="apps-dlg"></dialog><dialog class="app-dlg"></dialog><dialog class="rtall-dlg"></dialog><dialog class="mgall-dlg"></dialog><dialog class="status-dlg"></dialog><dialog class="prompt-dlg"></dialog><dialog class="notes-dlg"></dialog><dialog class="notes-dlg backup-dlg"></dialog><dialog class="notes-dlg upd-dlg"></dialog><dialog class="updapp-dlg"></dialog><dialog class="charges-dlg"></dialog><dialog class="rename-dlg"></dialog><dialog class="discard-dlg"></dialog><dialog class="discard-dlg pause-dlg"></dialog><dialog class="wizard-dlg"></dialog>
       <div class="toast" role="status" aria-live="polite" hidden></div>`;
     const root = this.shadowRoot;
     this._apps.bind(root);
@@ -1774,6 +1776,7 @@ class DevicePanel extends HTMLElement {
     this._bindMagicAll(root.querySelector("dialog.mgall-dlg"));
     this._status.bind(root.querySelector("dialog.status-dlg"));
     this._updApp.bind(root.querySelector("dialog.updapp-dlg"));
+    this._charges.bind(root.querySelector("dialog.charges-dlg"));
     this._protocol.bind(root.querySelector("dialog.proto-dlg"));
     root.addEventListener("click", (ev) => {
       const btn = ev.target.closest?.("[data-proto]");
@@ -4620,6 +4623,10 @@ class DevicePanel extends HTMLElement {
       const l = d.battery_last;
       tiles.push(this._staticTile(this._t("tileBattery"), `${batIcon({ level: l.level, low: false }, 18)}${escape(String(l.level))}<small>%</small>`, this._t("batLastSub", this._batteryLastAge(d))).replace("st-tile static", "st-tile static stale"));
     }
+    // Kachel "Ladungen" (seit 2.204.0): die letzten Ladungen; nur für Administratoren (die Daten liefert ein Befehl nur für sie) und erst, wenn eine aufgezeichnet ist
+    if (d.rechargeable && d.charges_count > 0 && this._hass?.user?.is_admin !== false) {
+      tiles.push(`<button type="button" class="st-tile" data-dlg="charges"><span class="st-k">${escape(this._t("tileCharges"))}</span><span class="st-v">${mdi("batteryCharging", 18)}${escape(String(d.charges_count))}</span><span class="st-sub">${escape(d.charges_last ? this._fmtDate(Date.parse(d.charges_last) / 1000) : this._t("chgWinTitle"))}</span><span class="cbtn chev" aria-hidden="true">${mdi("chevron", 16)}</span></button>`);
+    }
     return `${this._chargeTileHtml(d)}<div class="st-tiles" style="--n:${tiles.length}">${tiles.join("")}</div>`;
   }
 
@@ -5603,6 +5610,7 @@ class DevicePanel extends HTMLElement {
       const id = this._detailId;
       this._requestCloseDevice(() => this._navigate(`/config/devices/device/${id}`));
     } else if (action === "stat") this._openStat(btn.dataset.range, btn.dataset.kind);
+    else if (action === "charges") this._charges.open(this._detailId);
     else if (action === "more-info") this._openMoreInfo(btn.dataset.entity);
     else if (action === "copy-id") this._copyId(btn);
     else if (action === "update-open") this._openUpdate(btn.dataset.entity);

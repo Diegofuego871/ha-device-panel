@@ -7,7 +7,19 @@ All notable changes to this integration are documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/).
 
+## [2.204.0] - 2026-11-06
+
+The device pop-up keeps the last five charges and shows them as a curve.
+
+Includes the changes from 2.203.2.
+
+### Added
+
+- **Device pop-up, tile "Charges" and window "Charges":** For a device that can be charged, the panel now keeps its last five charges (start, end, level from and to, and the measuring points of the curve; only administrators see them). As soon as one is recorded, a tile "Charges" with the number and the date of the last one stands in the statistics. A tap opens the window "Charges": on top the chosen charge as a curve (level green; with a battery capacity set also the power in watts, dashed orange), below it the duration, the level (from → to) and, with a capacity, the average and the peak power, and at the bottom the five charges by date with level and power; a tap on a row shows that charge. A charge is recorded when it ends (full, ended early, or the device is unplugged). Very short ones (less than 3 points or a rise of less than 2 points) are left out. The power is an estimate, smoothed over 10 minutes, and arrives in the battery without the losses of the charger. Nothing new to set: the five charges are runtime data and therefore not part of the backup.
+
 ## [2.203.2] - 2026-11-06
+
+Not released; included in 2.204.0.
 
 The action buttons in the window headers are grey like the cross and the heart.
 
@@ -5773,7 +5785,7 @@ First pre-release.
   GitHub Actions for HACS/hassfest validation and tests.
 
 [2.6.0]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v2.6.0
-[2.203.2]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v2.203.2
+[2.204.0]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v2.204.0
 [2.203.1]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v2.203.1
 [2.203.0]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v2.203.0
 [2.202.0]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v2.202.0

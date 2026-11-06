@@ -703,6 +703,13 @@ def _charging(hass: HomeAssistant, opts: dict[str, Any], device: dr.DeviceEntry,
     return {**info, "level": None if info["level"] is None else round(info["level"]), "from": None if info["from"] is None else round(info["from"]), "since": _iso(info["since"]), "eta": _iso(info["eta"]) if info.get("eta") else None, "rate": None if rate is None else round(rate, 1), "power_w": power}
 
 
+def _charges_fields(hass: HomeAssistant, device_id: str) -> dict[str, Any]:
+    """Zahl der aufgezeichneten Ladungen und Ende der letzten (ISO), seit 2.204.0."""
+    watcher = hass.data.get(DATA_CHARGE)
+    count, last = watcher.charges_info(device_id) if watcher is not None else (0, None)
+    return {"charges_count": count, "charges_last": _iso(last) if last else None}
+
+
 def _rechargeable(hass: HomeAssistant, opts: dict[str, Any], device: dr.DeviceEntry) -> bool:
     """Kann das Gerät geladen werden (Lademeldung an oder eigene Ladeanzeige)? Dann zeigt das Panel das Feld für die Akku-Kapazität (seit 2.203.0)."""
     watcher = hass.data.get(DATA_CHARGE)
@@ -1830,6 +1837,8 @@ async def async_list_devices(hass: HomeAssistant, log: Any = None) -> dict[str, 
                 # Akku-Kapazität in Wh (seit 2.203.0, nur am Gerät) und ob das Gerät geladen werden kann (Feld im Reiter Batterie)
                 "charge_wh_setting": device_settings(hass).get("charge_wh", {}).get(device.id),
                 "rechargeable": _rechargeable(hass, opts, device),
+                # Aufgezeichnete Ladungen (seit 2.204.0): Zahl und Ende der letzten, für die Kachel "Ladungen"
+                **_charges_fields(hass, device.id),
                 "charge_default": {
                     # Ohne Wahl am Gerät: Wert der Integration, sonst global (full_integration/rise_integration nennen sie).
                     **dict(zip(("full", "rise", "full_integration", "rise_integration"), charge_values(opts, scope))),

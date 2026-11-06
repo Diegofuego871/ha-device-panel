@@ -138,6 +138,7 @@ from .devices import (
     device_battery_threshold,
     async_notify_delay_error,
     CHARGE_WH_MAX,
+    device_settings,
     CHARGE_WH_MIN,
     valid_flaky_setting,
     valid_notify_delay_setting,
@@ -918,6 +919,16 @@ async def _ws_backup_export(hass: HomeAssistant, connection: websocket_api.Activ
     connection.send_result(msg["id"], {"file": file})
 
 
+@websocket_api.websocket_command({vol.Required("type"): f"{DOMAIN}/charges", vol.Required("device_id"): str})
+@websocket_api.require_admin
+@callback
+def _ws_charges(hass: HomeAssistant, connection: websocket_api.ActiveConnection, msg: dict[str, Any]) -> None:
+    """Die aufgezeichneten Ladungen eines Geräts (seit 2.204.0): Kurve, mit Akku-Kapazität auch Leistung, Durchschnitt und Spitze."""
+    watcher = hass.data.get(DATA_CHARGE)
+    wh = device_settings(hass).get("charge_wh", {}).get(msg["device_id"])
+    connection.send_result(msg["id"], {"charges": watcher.charges_view(msg["device_id"], wh) if watcher is not None else [], "wh": wh})
+
+
 @websocket_api.websocket_command(
     {
         vol.Required("type"): f"{DOMAIN}/backup_import",
@@ -1410,6 +1421,7 @@ def _async_register_websocket_commands(hass: HomeAssistant) -> None:
     for command in (*ROUTINE_COMMANDS, *PROTOCOL_COMMANDS, *STORAGE_COMMANDS, *STATUS_COMMANDS, *SYSTEM_COMMANDS, *WIZARD_COMMANDS):
         websocket_api.async_register_command(hass, command)
     websocket_api.async_register_command(hass, _ws_get_options)
+    websocket_api.async_register_command(hass, _ws_charges)
     websocket_api.async_register_command(hass, _ws_backup_export)
     websocket_api.async_register_command(hass, _ws_backup_import)
     websocket_api.async_register_command(hass, _ws_set_options)
