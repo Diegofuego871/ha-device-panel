@@ -785,6 +785,10 @@ def clean_tree(hass: HomeAssistant, raw: Any) -> dict[str, Any]:
             return {"op": "and", "items": [magic._clean_leaf(hass, only, alone=True)]}  # noqa: SLF001
     tree = magic.clean_conditions(hass, raw)
     for leaf in magic.tree_leaves(tree):
+        # Zeit-Bedingungen von Magic Push gibt es hier nicht (Routinen haben das Zeitfenster): beim Laden hielte _leaf_shape sie für ungültig,
+        # und die Routine ginge beim nächsten Start verloren (seit 2.204.1 abgelehnt)
+        if leaf["kind"] not in _LEAF_KINDS_ALL:
+            raise vol.Invalid("Diese Art von Bedingung gibt es bei Routinen nicht")
         leaf["reset_value"] = None  # der Rücksetzwert von Magic Push gilt bei Routinen nicht
     return tree
 

@@ -21,6 +21,7 @@ Einstieg für jede neue Claude-Code-Session. Zuerst diese Datei lesen, dann
 - `charge.py` Ladungen: `is_charge()` (Kurvenprüfung, Konstanten `CURVE_*`, Entscheid des Nutzers nach Simulation), Geräte mit Ladeanzeige über `_chg`/`_sessions`/`_on_indicator` (Beginn und Ende nach der Anzeige, Speicher-Schlüssel "sessions"). Tests `test_curve_check_noise_drift_and_short_top_up`, `test_is_charge_rules`, `test_charge_by_indicator`.
 - `routines.py` `occurrence_after`/`first_due`: Vergleich per `timestamp()` (gleiche tzinfo vergleicht Wanduhrzeit, doppelte Stunde der Winterzeit). Test `tests/test_routines_dst.py`.
 - `routines.py` `_prune_targets(routine, existing)`: Stand eines Ziels (Zurückschalten, Szene) folgt der Entität. Test `test_pending_revert_follows_its_entity`.
+- `routines.py` `clean_tree`: nur Arten aus `_LEAF_KINDS_ALL` (keine Zeit-Bedingung, sonst beim Laden verworfen).
 - Review aller Zeilen (Weg A) läuft: Gruppe 1 (Routinen, Magic Push, Updates, Wiederherstellen) begonnen.
 
 ## Stand (2.204.0, Ladungen: die letzten fünf Ladungen als Kurve)

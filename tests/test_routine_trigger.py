@@ -81,6 +81,8 @@ async def test_validation(hass: HomeAssistant, rig) -> None:
         (_trig(device, plug, back_kind="duration"), "Dauer fehlt"),
         (_trig(device, plug, back_kind="trigger", back_conditions=_tree(_is(DOOR)), back_max_s=1), "Spätestens nach"),
         (_trig(device, plug, conditions=_tree({"entity_id": MOTION, "kind": "change"}, _is(DOOR))), "nur als einzige Bedingung"),
+        # 2.204.1: Zeit-Bedingung von Magic Push gibt es bei Routinen nicht (vorher angenommen und beim nächsten Start verloren)
+        (_trig(device, plug, conditions=_tree(_is(MOTION), {"kind": "time", "from": "08:00", "to": "10:00", "days": []})), "gibt es bei Routinen nicht"),
     ):
         with pytest.raises(vol.Invalid) as err:
             await manager.async_save_routine(raw)
