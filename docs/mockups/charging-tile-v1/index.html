@@ -1,0 +1,59 @@
+<!doctype html>
+<html lang="de"><head><meta charset="utf-8"><title>Ladevorgang im Geräte-Popup, Varianten</title>
+<style>
+:root{--bg:#121212;--card:#1c1c1c;--card2:#242424;--text:#e6e6e6;--t2:#a8a8a8;--t3:#7d7d7d;--div:#3a3a3a;--ok:#4caf6e;--warn:#f5a623;--pri:#03a9f4}
+*{box-sizing:border-box}
+body{margin:0;background:#0b0b0b;color:var(--text);font:15px/1.4 -apple-system,Segoe UI,Roboto,sans-serif;padding:24px}
+h1{font-size:18px;font-weight:500;margin:0 0 4px}.sub{color:var(--t2);margin:0 0 20px;font-size:13px}
+.row{display:flex;gap:24px;align-items:flex-start}
+.col{width:358px;flex:none}.col h2{font-size:14px;margin:0 0 4px;font-weight:600}.col .why{font-size:12px;color:var(--t2);margin:0 0 10px;min-height:52px}.rec{color:var(--ok)}
+.phone{background:var(--card);border-radius:18px;padding:14px}
+.sec{font-size:12px;letter-spacing:.06em;text-transform:uppercase;color:var(--t2);margin:0 0 8px}
+.grid{display:grid;grid-template-columns:1fr 1fr;gap:8px}
+.t{background:var(--bg);border:1px solid var(--div);border-radius:14px;padding:10px 12px;position:relative;min-height:82px}
+.t small{display:block;color:var(--t3);font-size:12px}.t .v{font-size:22px;margin:2px 0}.t .v i{font-style:normal;font-size:12px;color:var(--t2)}
+.go{position:absolute;right:8px;bottom:8px;width:24px;height:24px;border-radius:50%;border:1.5px solid var(--ok);color:var(--ok);display:grid;place-items:center;font-size:13px}
+.bolt{color:var(--ok)}
+.bar{position:relative;height:8px;border-radius:4px;background:var(--card2);margin:8px 0 4px}
+.bar b{position:absolute;left:0;top:0;bottom:0;border-radius:4px;background:linear-gradient(90deg,var(--ok),#7bd88f)}
+.bar u{position:absolute;top:-3px;width:2px;height:14px;background:var(--text);text-decoration:none}
+.wide{grid-column:1/-1}
+.chg{background:color-mix(in srgb,var(--ok) 10%,var(--bg));border-color:color-mix(in srgb,var(--ok) 45%,var(--div))}
+.big{display:flex;align-items:baseline;gap:10px}.big .n{font-size:30px;font-weight:500}.big .e{color:var(--ok);font-size:15px;font-weight:500}
+.meta{display:flex;justify-content:space-between;font-size:12px;color:var(--t2)}
+.pill{display:inline-block;font-size:11px;padding:1px 8px;border-radius:999px;background:color-mix(in srgb,var(--ok) 22%,transparent);color:var(--ok)}
+.ring{width:64px;height:64px;border-radius:50%;background:conic-gradient(var(--ok) 0 85%,var(--card2) 85% 100%);display:grid;place-items:center;flex:none}
+.ring span{width:50px;height:50px;border-radius:50%;background:var(--bg);display:grid;place-items:center;font-size:15px;font-weight:600}
+.live{display:flex;gap:12px;align-items:center}
+</style></head><body>
+<h1>Ladevorgang im Geräte-Popup: drei Varianten</h1>
+<p class="sub">Erfundene Daten (Staubsauger-Roboter, 85 %, Ladeziel 100 %). Die Restzeit ist dieselbe Schätzung wie in der Live-Aktivität (erst, wenn sie trägt).</p>
+<div class="row">
+
+<div class="col"><h2 class="rec">A · Eigene Kachel "Lädt" (Empfehlung)</h2><p class="why">Eine breite Kachel über den Statistik-Kacheln, nur während des Ladens: Stand, Balken mit Ziel, Restzeit und Uhrzeit. Die Batterie-Kachel zeigt zusätzlich einen Blitz und "lädt".</p>
+<div class="phone"><div class="sec">Statistik</div>
+<div class="grid">
+<div class="t wide chg"><div class="big"><span class="n">85 %</span><span class="e">noch etwa 25 Min.</span></div><div class="bar"><b style="width:85%"></b><u style="left:100%"></u></div><div class="meta"><span>lädt seit 6 Min. · +1,2 % / Min.</span><span>fertig gegen 14:35</span></div></div>
+<div class="t"><small>Verfügbarkeit 24 Std.</small><div class="v">100 <i>%</i></div><small>keine Unterbrüche</small><span class="go">›</span></div>
+<div class="t"><small>Unterbrüche 7 Tage</small><div class="v">1</div><small>zusammen 9 Std. 29 Min.</small><span class="go">›</span></div>
+<div class="t"><small>Batterie</small><div class="v"><span class="bolt">⚡</span> 85 <i>%</i></div><small class="bolt">lädt · noch 25 Min.</small><span class="go">›</span></div>
+</div></div></div>
+
+<div class="col"><h2>B · Batterie-Kachel wächst</h2><p class="why">Beim Laden wird die Batterie-Kachel selbst breit und nimmt den Balken und die Restzeit auf. Spart Platz, aber die Kachelreihe verschiebt sich.</p>
+<div class="phone"><div class="sec">Statistik</div>
+<div class="grid">
+<div class="t"><small>Verfügbarkeit 24 Std.</small><div class="v">100 <i>%</i></div><small>keine Unterbrüche</small><span class="go">›</span></div>
+<div class="t"><small>Unterbrüche 7 Tage</small><div class="v">1</div><small>zusammen 9 Std. 29 Min.</small><span class="go">›</span></div>
+<div class="t wide chg"><small>Batterie · lädt seit 6 Min.</small><div class="big"><span class="n"><span class="bolt">⚡</span> 85 %</span><span class="e">noch etwa 25 Min.</span></div><div class="bar"><b style="width:85%"></b><u style="left:100%"></u></div><div class="meta"><span>+1,2 % / Min.</span><span>fertig gegen 14:35</span></div><span class="go">›</span></div>
+</div></div></div>
+
+<div class="col"><h2>C · Wie die Live-Aktivität</h2><p class="why">Eine Karte mit Ring wie auf dem Sperrbildschirm: Ring mit Prozent, daneben die Restzeit gross, darunter Uhrzeit und Tempo. Auffälliger, braucht etwas mehr Höhe.</p>
+<div class="phone"><div class="sec">Statistik</div>
+<div class="grid">
+<div class="t wide chg"><div class="live"><div class="ring"><span>85 %</span></div><div><div class="pill">lädt</div><div class="big" style="margin-top:4px"><span class="e" style="font-size:20px">noch etwa 25 Min.</span></div><div class="meta" style="display:block"><div>fertig gegen 14:35</div><div>seit 6 Min. · +1,2 % / Min.</div></div></div></div></div>
+<div class="t"><small>Verfügbarkeit 24 Std.</small><div class="v">100 <i>%</i></div><small>keine Unterbrüche</small><span class="go">›</span></div>
+<div class="t"><small>Unterbrüche 7 Tage</small><div class="v">1</div><small>zusammen 9 Std. 29 Min.</small><span class="go">›</span></div>
+<div class="t"><small>Batterie</small><div class="v"><span class="bolt">⚡</span> 85 <i>%</i></div><small class="bolt">lädt</small><span class="go">›</span></div>
+</div></div></div>
+
+</div></body></html>
