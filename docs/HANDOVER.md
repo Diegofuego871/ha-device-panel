@@ -3,6 +3,10 @@
 Einstieg für jede neue Claude-Code-Session. Zuerst diese Datei lesen, dann
 `CLAUDE.md`, `docs/CONCEPT.md`, `docs/LEARNINGS.md`, `docs/DESIGN.md`.
 
+## Stand (2.203.2, Aktionsknöpfe im Kopf grau)
+
+- `styles.js` `.dlg-act`: `color: var(--dp-text2)` (vorher Akzentfarbe), Hover Textfarbe; Test in `toolbarsep-e2e` (gleiche Farbe wie Kreuz und Herz).
+
 ## Stand (2.203.1, ladefähig auch per Live-Aktivität oder Lademeldung am Gerät)
 
 - `charge.py` `known_rechargeable`: Lademeldung gilt (global + Gerät/Integration), oder am Gerät ausdrücklich "Ein", oder Live-Aktivität für das Gerät an; `rechargeable()` und `charging_of()` nutzen sie (vorher nur `enabled()` mit globalem Schalter). Test `test_rechargeable_by_device_charge_or_live`.

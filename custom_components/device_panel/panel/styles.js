@@ -588,8 +588,9 @@ dialog.status-dlg .dlg-title h2, dialog.updapp-dlg .dlg-title h2 { margin: 0; }
 /* Aktionen im Kopf der Einstellungen (seit 2.116.0): runde Knöpfe wie der Schliessen-Knopf, mit einem Strich vom Schliessen-Knopf getrennt */
 .dlg-acts { flex: none; display: flex; align-items: center; gap: 8px; margin-left: auto; }
 .dlg-acts:empty { display: none; }
-.dlg-act { flex: none; display: grid; place-items: center; width: 42px; height: 42px; padding: 0; border: 1px solid var(--dp-divider); border-radius: 50%; background: var(--dp-card); color: var(--dp-primary); cursor: pointer; }
-.dlg-act:hover { background: var(--dp-hover); }
+.dlg-act { flex: none; display: grid; place-items: center; width: 42px; height: 42px; padding: 0; border: 1px solid var(--dp-divider); border-radius: 50%; background: var(--dp-card); color: var(--dp-text2); cursor: pointer; }
+/* Aktionsknöpfe im Kopf (Protokoll, Suche nach Updates, Aktionen): grau wie das Kreuz und das Herz, nicht in der Akzentfarbe (seit 2.203.2) */
+.dlg-act:hover { background: var(--dp-hover); color: var(--dp-text); }
 /* Kopf des Geräte-Popups wie die Kopfzeile des Panels (seit 2.200.0): Protokoll und Herz 8 px auseinander (Lücke 14 px, minus 6), dann Strich mit je 16 px
    (Lücke 14 px plus 2 px) und das Kreuz; der Strich sitzt mittig zu den Knöpfen (42 px hoch, Strich 26 px) */
 .dlg-head-log { margin-right: -6px; }

@@ -7,6 +7,14 @@ Alle nennenswerten Änderungen an dieser Integration stehen in dieser Datei.
 Das Format folgt [Keep a Changelog](https://keepachangelog.com/de/1.1.0/),
 die Versionsnummern folgen [Semantic Versioning](https://semver.org/lang/de/).
 
+## [2.203.2] - 2026-11-06
+
+Die Aktionsknöpfe in den Fensterköpfen sind grau wie das Kreuz und das Herz.
+
+### Geändert
+
+- **Fensterköpfe, Aktionsknöpfe:** Die runden Knöpfe neben Kreuz und Herz (Protokoll, "Nach Updates suchen" in der App Updates, Aktionen eigener Apps im Kopf der Einstellungen) waren die einzigen Symbole in der Akzentfarbe. Sie sind jetzt grau wie das Kreuz und nehmen beim Darüberfahren die Textfarbe an. Der grüne und rote Zustand nach einer Aktion bleibt.
+
 ## [2.203.1] - 2026-11-06
 
 Ein Gerät mit Live-Aktivität oder am Gerät eingeschalteter Lademeldung gilt nun als ladefähig.
@@ -5866,6 +5874,7 @@ Erste Vorabversion.
   GitHub Actions für die Prüfungen von HACS und hassfest sowie die Tests.
 
 [2.6.0]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v2.6.0
+[2.203.2]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v2.203.2
 [2.203.1]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v2.203.1
 [2.203.0]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v2.203.0
 [2.202.0]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v2.202.0

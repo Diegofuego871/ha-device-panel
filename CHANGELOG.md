@@ -7,6 +7,14 @@ All notable changes to this integration are documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/).
 
+## [2.203.2] - 2026-11-06
+
+The action buttons in the window headers are grey like the cross and the heart.
+
+### Changed
+
+- **Window headers, action buttons:** The round buttons next to the cross and the heart (log, "Check for updates" in the app Updates, actions of own apps in the settings header) were the only icons in the accent colour. They are now grey like the cross, and turn to the text colour when you hover over them. The green and red state after an action stays.
+
 ## [2.203.1] - 2026-11-06
 
 A device with the live activity or the charging notification switched on at the device is now known as rechargeable.
@@ -5765,6 +5773,7 @@ First pre-release.
   GitHub Actions for HACS/hassfest validation and tests.
 
 [2.6.0]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v2.6.0
+[2.203.2]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v2.203.2
 [2.203.1]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v2.203.1
 [2.203.0]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v2.203.0
 [2.202.0]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v2.202.0
