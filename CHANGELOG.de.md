@@ -9,7 +9,7 @@ die Versionsnummern folgen [Semantic Versioning](https://semver.org/lang/de/).
 
 ## [2.204.1] - 2026-11-06
 
-Korrekturen und Beschleunigungen aus einem Code-Review: Die App "Updates" bleibt nach einem fehlgeschlagenen Update nicht mehr hängen, aufgezeichnete Ladungen beginnen beim richtigen Stand, und die Geräteliste kostet Home Assistant deutlich weniger Arbeit.
+Korrekturen und Beschleunigungen aus einem Code-Review: Routinen verhalten sich bei der Umstellung auf Winterzeit und beim Ersetzen eines Ziels richtig, die App "Updates" bleibt nicht mehr hängen, Ladungen werden an ihrer Kurve erkannt, und die Geräteliste kostet Home Assistant und den Browser deutlich weniger Arbeit.
 
 ### Geändert
 

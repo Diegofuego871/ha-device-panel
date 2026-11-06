@@ -9,7 +9,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/).
 
 ## [2.204.1] - 2026-11-06
 
-Fixes and speed-ups from a code review: the app "Updates" no longer gets stuck after a failed update, recorded charges start at the right level, and the device list costs Home Assistant much less work.
+Fixes and speed-ups from a code review: routines behave correctly at the change to winter time and when a target is replaced, the app "Updates" no longer gets stuck, charges are recognised by their curve, and the device list costs Home Assistant and the browser much less work.
 
 ### Changed
 
