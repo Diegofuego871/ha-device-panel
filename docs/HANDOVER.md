@@ -17,7 +17,11 @@ Einstieg für jede neue Claude-Code-Session. Zuerst diese Datei lesen, dann
 - `charge.py`: `_thin()` statt `del pts[:-ETA_POINTS_MAX]` (der Beginn der Ladung bleibt), Spitze beim Wiederscharfmachen neu. Tests in `test_charge.py`.
 - `availability.py`: `segments()` springt per `bisect` zum Zeitraum, `_tail()` begrenzt `bridged()` in `device_summary()`/`incidents()` auf das Ende der Historie (Ereignisse müssen sortiert bleiben: `evaluate` und `_async_close` schreiben nie vor das letzte). Gleichheit mit der alten Fassung: `tests/test_availability_fast.py`.
 - `charge.py`: Neuaufbau bei Register-Änderungen über `Debouncer` (sofort, Rest nach `REBUILD_COOLDOWN`). `battery.py`: `asyncio.Lock` um `async_check` (doppelter Push). Tests `test_registry_bursts_rebuild_once`, `test_concurrent_checks_push_once`.
-- Offen: Panel-Optimierungen (Formatierer zwischenspeichern, Zeichnen bei gleichen Daten auslassen) und genauere Ladeerkennung (Konzept beim Nutzer).
+- Panel: `cachedFmt`/`fmtDate` (Intl-Formatierer je Sprache und Optionen zwischengespeichert, ungültige Zeit wie früher "Invalid Date"), `_fetch` lässt das Zeichnen aus, wenn die Antwort ohne `now` gleich ist (`_dataSig`, nie bei `changed`, Fehler oder Offline). Suite `pollskip-e2e`.
+- `charge.py` Ladungen: `is_charge()` (Kurvenprüfung, Konstanten `CURVE_*`, Entscheid des Nutzers nach Simulation), Geräte mit Ladeanzeige über `_chg`/`_sessions`/`_on_indicator` (Beginn und Ende nach der Anzeige, Speicher-Schlüssel "sessions"). Tests `test_curve_check_noise_drift_and_short_top_up`, `test_is_charge_rules`, `test_charge_by_indicator`.
+- `routines.py` `occurrence_after`/`first_due`: Vergleich per `timestamp()` (gleiche tzinfo vergleicht Wanduhrzeit, doppelte Stunde der Winterzeit). Test `tests/test_routines_dst.py`.
+- `routines.py` `_prune_targets(routine, existing)`: Stand eines Ziels (Zurückschalten, Szene) folgt der Entität. Test `test_pending_revert_follows_its_entity`.
+- Review aller Zeilen (Weg A) läuft: Gruppe 1 (Routinen, Magic Push, Updates, Wiederherstellen) begonnen.
 
 ## Stand (2.204.0, Ladungen: die letzten fünf Ladungen als Kurve)
 

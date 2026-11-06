@@ -587,7 +587,9 @@ def occurrence_after(routine: dict[str, Any], after: datetime, tz: Any) -> datet
             wanted = routine["mday"]
             day = last if wanted == -1 else min(wanted, last)
             candidate = _local(tz, year, month, day, hour, minute)
-            if candidate > after:
+            # Als Zeitstempel vergleichen: bei gleicher Zeitzone vergleicht Python die Wanduhrzeit und übersieht die doppelte Stunde
+            # der Winterzeit (seit 2.204.1; vorher plante die Routine dort ein vergangenes 02:30 und lief jede Sekunde erneut)
+            if candidate.timestamp() > after.timestamp():
                 return candidate
             month += 1
             if month > 12:
@@ -598,7 +600,7 @@ def occurrence_after(routine: dict[str, Any], after: datetime, tz: Any) -> datet
         if routine["repeat"] == "weekly" and day.weekday() not in routine["weekdays"]:
             continue
         candidate = _local(tz, day.year, day.month, day.day, hour, minute)
-        if candidate > after:
+        if candidate.timestamp() > after.timestamp():
             return candidate
     return None
 
@@ -626,7 +628,7 @@ def first_due(routine: dict[str, Any], now: float, tz: Any) -> float | None:
     after = dt_util.utc_from_timestamp(now).astimezone(tz)
     if routine["kind"] == "once":
         at = once_at(routine, tz, after)
-        return at.timestamp() if at is not None and at > after else None
+        return at.timestamp() if at is not None and at.timestamp() > now else None
     nxt = occurrence_after(routine, after, tz)
     return nxt.timestamp() if nxt else None
 
@@ -1369,7 +1371,7 @@ class RoutineManager:
         routine["created"] = existing["created"] if existing and "created" in existing else time.time()
         self._routines[routine["id"]] = routine
         rt = self.runtime(routine["id"])
-        self._prune_targets(routine)
+        self._prune_targets(routine, existing)
         # Neu oder anderer Zeitpunkt: neu planen; sonst bleibt der laufende Stand (zum Beispiel der Countdown)
         if existing is None or not self._same_when(existing, routine) or (routine["enabled"] and not existing["enabled"]):
             self._rearm_runtime(routine, rt)
@@ -1382,11 +1384,23 @@ class RoutineManager:
         self.changed(routine["id"])
         return routine
 
-    def _prune_targets(self, routine: dict[str, Any]) -> None:
-        """Laufzeitdaten der Ziele aufräumen: was zu keinem Ziel mehr gehört, entfällt (Ziel entfernt oder ersetzt)."""
+    def _prune_targets(self, routine: dict[str, Any], existing: dict[str, Any] | None = None) -> None:
+        """
+        Laufzeitdaten der Ziele aufräumen: was zu keinem Ziel mehr gehört, entfällt (Ziel entfernt oder ersetzt). Der Stand eines Ziels
+        (ausstehendes Zurückschalten, gemerkte Szene) folgt seiner Entität, nicht seinem Platz (seit 2.204.1): Vorher übernahm ein neues erstes
+        Ziel das Zurückschalten des alten und schaltete ein Gerät aus, das die Routine nie eingeschaltet hatte.
+        """
         rt = self.runtime(routine["id"])
+        blank = {"revert_action": None, "snapshot": None, "rretry": 0}
+        old: dict[str, dict[str, Any]] = {}
+        if existing is not None:
+            for i, t in enumerate(routine_targets(existing)):
+                tr = rt if i == 0 else rt["tgt"].get(t["entity_id"])
+                if tr is not None:
+                    old[t["entity_id"]] = {k: tr.get(k, v) for k, v in blank.items()}
+            rt.update(old.get(routine["entity_id"], blank))
         keep = {t["entity_id"] for t in routine["more"]}
-        rt["tgt"] = {k: v for k, v in rt["tgt"].items() if k in keep}
+        rt["tgt"] = {k: old.get(k, v) for k, v in rt["tgt"].items() if k in keep} if existing is None else {k: v for k, v in old.items() if k in keep}
         rt["retry_ids"] = [i for i in rt["retry_ids"] if i in {t["entity_id"] for t in routine_targets(routine)}]
 
     @staticmethod

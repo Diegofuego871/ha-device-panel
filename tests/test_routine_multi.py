@@ -189,3 +189,30 @@ async def test_push_text_names_all_targets(hass: HomeAssistant, setup) -> None: 
     assert "Abendlicht" in title and "lamp" in message and "plug" in message and message.count(",") == 1
     title, message = manager.texts(saved, action="on", ok=False, reason="unavailable", failed=[1], done=1)
     assert "1 von 2" in message and "plug" in message
+
+
+async def test_pending_revert_follows_its_entity(hass: HomeAssistant, setup, freezer) -> None:  # noqa: F811
+    """
+    2.204.1: Ein ausstehendes Zurückschalten gehört zur Entität, nicht zum Platz. Wird das erste Ziel ersetzt, schaltet die Routine das neue
+    Ziel nicht aus (vorher: "aus" für ein Gerät, das sie nie eingeschaltet hatte); wandert ein Ziel an einen anderen Platz, bleibt sein Zurückschalten.
+    """
+    async_mock_service(hass, "switch", "turn_on")
+    off = async_mock_service(hass, "switch", "turn_off")
+    manager = hass.data[DATA_ROUTINES]
+    kitchen = _device(hass, "Shelly")
+    a = _switch(hass, kitchen, "a")
+    b = _switch(hass, kitchen, "b")
+    c = _switch(hass, kitchen, "c")
+    base = {"kind": "repeat", "repeat": "daily", "time": "23:00", "delay_s": None, "back_s": 600}
+    saved = await manager.async_save_routine(_raw(kitchen, a, **base))
+    assert await manager.async_run_now(saved["id"]) == (True, None)
+    # Erstes Ziel a durch b ersetzen: b wird nicht ausgeschaltet, a (nicht mehr Ziel) auch nicht
+    await manager.async_save_routine(_raw(kitchen, b, id=saved["id"], **base))
+    await _tick(hass, freezer, 601)
+    assert off == []
+    # b und c einschalten, dann b an den zweiten Platz: b wird trotzdem zurückgeschaltet
+    two = await manager.async_save_routine(_raw(kitchen, b, id=saved["id"], more=[{"device_id": kitchen.id, "entity_id": c, "action": "on"}], **base))
+    assert await manager.async_run_now(two["id"]) == (True, None)
+    await manager.async_save_routine(_raw(kitchen, c, id=saved["id"], more=[{"device_id": kitchen.id, "entity_id": b, "action": "on"}], **base))
+    await _tick(hass, freezer, 601)
+    assert sorted(x.data["entity_id"] for x in off) == sorted([b, c])

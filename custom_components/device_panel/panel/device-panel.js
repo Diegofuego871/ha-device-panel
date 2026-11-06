@@ -117,6 +117,23 @@ const REPO_URL_RE = /^https:\/\/github\.com\/diegofuego871\/ha-device-panel(?:[/
 
 // innerHTML nur bei echter Änderung ersetzen; Vergleich mit dem zuletzt
 // gesetzten String, nie mit el.innerHTML (siehe LEARNINGS).
+// Formatierer je Sprache und Optionen zwischenspeichern (seit 2.204.1): Number/Date.toLocale…String mit Optionen baut bei jedem Aufruf einen neuen
+// Intl-Formatierer; die Liste rief das je Zeichnen einige hundert Mal auf. Das Ergebnis ist dasselbe (gleiche Sprache, gleiche Optionen).
+const FMT_CACHE = new Map();
+// Ungültige Zeit: Intl wirft dort, toLocale…String gab "Invalid Date" zurück; dieses Verhalten bleibt
+function fmtDate(locale, key, opts, sec) {
+  const date = new Date(sec * 1000);
+  return Number.isNaN(date.getTime()) ? String(date) : cachedFmt("d", locale, key, opts).format(date);
+}
+function cachedFmt(kind, locale, key, opts) {
+  const id = `${kind}|${locale || ""}|${key}`;
+  let f = FMT_CACHE.get(id);
+  if (!f) {
+    f = kind === "n" ? new Intl.NumberFormat(locale, opts) : new Intl.DateTimeFormat(locale, opts);
+    FMT_CACHE.set(id, f);
+  }
+  return f;
+}
 const lastHtml = new WeakMap();
 function setHtml(el, html) {
   if (!el || lastHtml.get(el) === html) return false;
@@ -2088,9 +2105,17 @@ class DevicePanel extends HTMLElement {
     try {
       const result = await this._callWithTimeout({ type: "device_panel/list_devices" });
       if (stale()) return;
+      // Gleiche Daten wie bei der letzten Abfrage (nur die Serverzeit ist neu): das Zeichnen danach entfällt (seit 2.204.1). Die Liste zeichnet sich
+      // ohnehin alle 30 s für die Dauern neu; eine Änderung durch den Benutzer (changed) oder ein Wechsel aus Fehler oder Offline zeichnet immer.
+      const data = { ...result };
+      delete data.now;
+      const sig = JSON.stringify(data);
       // Logos vorab laden, damit die erste Darstellung schon vollständig ist.
       await this._brandPreload(result.devices || []);
       if (stale()) return;
+      // Erst hier, wo die Daten übernommen werden, sonst gälte ein verworfener Stand als gezeichnet
+      this._skipRender = !changed && sig === this._dataSig && !this._error && !this._offline && Boolean(this._fetchedAt);
+      this._dataSig = sig;
       // Welche Geräte gezeigt werden (Dienst-Geräte, deaktivierte, Ausschlüsse),
       // entscheidet das Backend nach den Einstellungen.
       this._devices = result.devices || [];
@@ -2136,6 +2161,7 @@ class DevicePanel extends HTMLElement {
       // HA ist nach dem Neustart wieder da: laufende Version neu lesen.
       if (this._version?.restarting) this._loadVersion(false);
     } catch (err) {
+      this._skipRender = false;
       if (!stale()) {
         if (isConnectionError(err)) {
           // Verbindung weg: Daten behalten, Hinweis zeigen, bald neu versuchen.
@@ -2183,7 +2209,8 @@ class DevicePanel extends HTMLElement {
   _fetched() {
     // Offline und noch nie Daten gehabt: weiter "wird geladen" (mit Hinweis), kein Fehlerbild.
     this._loading = !!this._offline && !this._fetchedAt;
-    this._render(true);
+    if (this._skipRender) this._skipRender = false;
+    else this._render(true);
     if (this._deepPending) {
       this._deepPending = false;
       this._deepLink();
@@ -2286,7 +2313,8 @@ class DevicePanel extends HTMLElement {
   }
 
   _fmtPct(v) {
-    return Number(v).toLocaleString(this._locale(), { minimumFractionDigits: v >= 100 ? 0 : 1, maximumFractionDigits: 1 });
+    const digits = v >= 100 ? 0 : 1;
+    return cachedFmt("n", this._locale(), `pct${digits}`, { minimumFractionDigits: digits, maximumFractionDigits: 1 }).format(Number(v));
   }
 
   // Uhrzeit (Epoch-Sekunden), bei längeren Zeiträumen mit Wochentag und Datum.
@@ -2296,7 +2324,7 @@ class DevicePanel extends HTMLElement {
       ? { weekday: "short", day: "numeric", month: "numeric", ...(withYear ? { year: "numeric" } : {}), hour: "2-digit", minute: "2-digit" }
       : { hour: "2-digit", minute: "2-digit" };
     try {
-      return new Date(sec * 1000).toLocaleString(this._locale(), opts);
+      return fmtDate(this._locale(), `time${withDate ? 1 : 0}${withYear ? 1 : 0}`, opts, sec);
     } catch (err) {
       return new Date(sec * 1000).toISOString();
     }
@@ -2312,7 +2340,7 @@ class DevicePanel extends HTMLElement {
 
   _fmtDate(sec) {
     try {
-      return new Date(sec * 1000).toLocaleDateString(this._locale(), { day: "numeric", month: "short" });
+      return fmtDate(this._locale(), "date", { day: "numeric", month: "short" }, sec);
     } catch (err) {
       return new Date(sec * 1000).toISOString().slice(0, 10);
     }
@@ -2320,7 +2348,7 @@ class DevicePanel extends HTMLElement {
 
   _fmtDateY(sec) {
     try {
-      return new Date(sec * 1000).toLocaleDateString(this._locale(), { day: "numeric", month: "short", year: "numeric" });
+      return fmtDate(this._locale(), "dateY", { day: "numeric", month: "short", year: "numeric" }, sec);
     } catch (err) {
       return new Date(sec * 1000).toISOString().slice(0, 10);
     }

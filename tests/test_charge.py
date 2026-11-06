@@ -48,6 +48,7 @@ def _bat(hass: HomeAssistant, entity: str, level: int) -> None:
 
 def test_step_rise_then_full() -> None:
     n = ChargeNotifier.__new__(ChargeNotifier)
+    n._chg, n._sessions = {}, {}
     n._state = {}
     n._charges = {}
     n._save = lambda: None  # type: ignore[method-assign]
@@ -69,6 +70,7 @@ def test_step_rise_then_full() -> None:
 
 def test_step_jump_and_fallback() -> None:
     n = ChargeNotifier.__new__(ChargeNotifier)
+    n._chg, n._sessions = {}, {}
     n._state = {}
     n._charges = {}
     n._save = lambda: None  # type: ignore[method-assign]
@@ -78,6 +80,7 @@ def test_step_jump_and_fallback() -> None:
     assert done is not None and done["level"] == 100 and done["start"] == 38
     # Schon voll beim Start: keine Meldung
     n2 = ChargeNotifier.__new__(ChargeNotifier)
+    n2._chg, n2._sessions = {}, {}
     n2._state = {}
     n2._charges = {}
     n2._save = lambda: None  # type: ignore[method-assign]
@@ -86,6 +89,7 @@ def test_step_jump_and_fallback() -> None:
     # Ziel 95: ab 95 voll
     opts = {**OPTS, "charge_full": 95}
     n3 = ChargeNotifier.__new__(ChargeNotifier)
+    n3._chg, n3._sessions = {}, {}
     n3._state = {}
     n3._charges = {}
     n3._save = lambda: None  # type: ignore[method-assign]
@@ -150,6 +154,7 @@ async def test_message_texts(hass: HomeAssistant) -> None:
 
 def _notifier() -> ChargeNotifier:
     n = ChargeNotifier.__new__(ChargeNotifier)
+    n._chg, n._sessions = {}, {}
     n._state = {}
     n._charges = {}
     n._save = lambda: None  # type: ignore[method-assign]
@@ -522,6 +527,7 @@ async def test_rechargeable_by_device_charge_or_live(hass: HomeAssistant) -> Non
 
 def _notifier() -> ChargeNotifier:
     n = ChargeNotifier.__new__(ChargeNotifier)
+    n._chg, n._sessions = {}, {}
     n._state = {}
     n._charges = {}
     n._save = lambda: None  # type: ignore[method-assign]
@@ -562,9 +568,9 @@ def test_charge_recorded_on_discharge_and_not_when_tiny() -> None:
     assert len(starts) == 5 and starts == sorted(starts)
     # derselbe Start ersetzt, statt doppelt zu stehen
     st = n._state["b"]
-    st["pts"] = [[now, 10], [now + 300, 20], [now + 600, 30]]
-    n._record_charge("b", st, now + 700)
-    n._record_charge("b", st, now + 800)
+    st["pts"] = [[now, 10], [now + 300, 20], [now + 600, 30], [now + 900, 40]]
+    n._record_charge("b", st, now + 1000)
+    n._record_charge("b", st, now + 1100)
     assert len([c for c in n._charges["b"] if c["start"] == now]) == 1
 
 
@@ -684,3 +690,85 @@ async def test_registry_bursts_rebuild_once(hass: HomeAssistant) -> None:
     await cooldown()
     assert len(calls) == 2
     assert watcher._entities.get(entity) == device.id
+
+
+def test_curve_check_noise_drift_and_short_top_up() -> None:
+    """
+    2.204.1, Kurvenprüfung: Rauschen und Temperatur zeichnen keine Ladung auf (vorher genügten 2 Punkte Anstieg), kurzes Nachladen
+    (40 → 52 % in 30 Minuten) schon, auch unter dem "Anstieg" des Geräts (Standard 20); ein Batteriewechsel (Sprung) nie.
+    """
+    n = _notifier()
+    t = 0.0
+    # Rauschen in 2-%-Schritten über einen Tag
+    for i, level in enumerate((60, 62, 60, 62, 64, 62, 60, 62, 60, 58, 60, 62, 60)):
+        n.step("noise", level, t + i * 3600, OPTS)
+    # Langsamer Anstieg durch Wärme: +6 in 10 Stunden, dann zurück
+    for i, level in enumerate((60, 61, 61, 62, 63, 63, 64, 65, 65, 66, 60, 54)):
+        n.step("warm", level, t + i * 3600, OPTS)
+    # Kurz nachladen, danach entladen
+    for i, level in enumerate((40, 42, 44, 46, 48, 50, 52, 52, 50, 47, 45)):
+        n.step("top", level, t + i * 300, OPTS)
+    # Batteriewechsel: Sprung von 20 auf 100
+    for i, level in enumerate((20, 100, 99, 97, 94, 90, 85)):
+        n.step("swap", level, t + i * 3600, OPTS)
+    assert "noise" not in n._charges and "warm" not in n._charges and "swap" not in n._charges
+    rec = n._charges["top"][0]
+    assert rec["from"] == 40 and rec["to"] == 52
+
+
+def test_is_charge_rules() -> None:
+    from custom_components.device_panel.charge import is_charge  # noqa: PLC0415
+
+    hour = 3600.0
+    # Über dem "Anstieg": leichte Rückgänge erlaubt (Wolken), langsam auch
+    assert is_charge([[0, 30], [hour, 36], [2 * hour, 35], [3 * hour, 44], [5 * hour, 52], [8 * hour, 60]], 20)
+    # zu viele Rückgänge über dem "Anstieg"
+    assert not is_charge([[0, 30], [hour, 45], [2 * hour, 35], [3 * hour, 50], [4 * hour, 40], [5 * hour, 55]], 20)
+    # unter dem "Anstieg": nur ohne Rückgang und zügig
+    assert is_charge([[0, 40], [600, 43], [1200, 46], [1800, 50]], 20)
+    assert not is_charge([[0, 40], [600, 43], [1200, 42], [1800, 50]], 20)
+    assert not is_charge([[0, 40], [3 * hour, 43], [6 * hour, 46], [9 * hour, 50]], 20)  # 1,1 Punkte pro Stunde
+    assert not is_charge([[0, 40], [600, 42], [1200, 43], [1800, 44]], 20)  # nur 4 Punkte
+    assert not is_charge([[0, 20], [60, 100]], 20)  # Sprung
+
+
+async def test_charge_by_indicator(hass: HomeAssistant) -> None:
+    """
+    2.204.1: Mit eigener Ladeanzeige (binary_sensor battery_charging) bestimmt die Anzeige Beginn und Ende der Ladung, auch bei kleinem
+    Anstieg; kurzes Einstecken ohne Anstieg zählt nicht; die laufende Ladung übersteht einen Neustart.
+    """
+    await _setup(hass)
+    device, bat = _device(hass, "Handy", level=40)
+    indicator = er.async_get(hass).async_get_or_create("binary_sensor", "test", "Handy-chg", device_id=device.id, original_device_class="battery_charging")
+    hass.states.async_set(indicator.entity_id, "off")
+    watcher = hass.data[DATA_CHARGE]
+    await watcher.async_rebuild()
+    await hass.async_block_till_done()
+    assert watcher._chg == {indicator.entity_id: device.id}
+    # Kurz eingesteckt, kein Anstieg: nichts
+    hass.states.async_set(indicator.entity_id, "on")
+    await hass.async_block_till_done()
+    hass.states.async_set(indicator.entity_id, "off")
+    await hass.async_block_till_done()
+    assert watcher.charges_info(device.id)[0] == 0
+    # Echte Ladung 40 → 46 (unter dem "Anstieg" 20, die Anzeige sagt es)
+    hass.states.async_set(indicator.entity_id, "on")
+    await hass.async_block_till_done()
+    session = watcher._sessions[device.id]
+    for level in (42, 44, 46):
+        _bat(hass, bat, level)
+        await hass.async_block_till_done()
+    # Neustart mitten in der Ladung: die laufende Ladung bleibt
+    await watcher._store.async_save({"state": watcher._state, "live": watcher._live, "charges": watcher._charges, "sessions": watcher._sessions})
+    fresh = ChargeNotifier(hass)
+    await fresh.async_start()
+    try:
+        assert fresh._sessions[device.id]["start"] == session["start"] and [p[1] for p in fresh._sessions[device.id]["pts"]] == [40, 42, 44, 46]
+    finally:
+        await fresh.async_stop()
+    session["start"] -= 3600  # eine Stunde geladen
+    hass.states.async_set(indicator.entity_id, "off")
+    await hass.async_block_till_done()
+    lst = watcher._charges[device.id]
+    assert len(lst) == 1 and lst[0]["from"] == 40 and lst[0]["to"] == 46 and lst[0]["start"] == session["start"]
+    assert device.id not in watcher._sessions
