@@ -18,6 +18,7 @@ ist wählbar (Stand, Bereich, Integration, Hersteller und Modell).
 
 from __future__ import annotations
 
+import asyncio
 import logging
 import time
 from datetime import timedelta
@@ -83,6 +84,8 @@ class BatteryWatch:
         self._push_key: tuple[bool, str] | None = None
         self._unsubs: list[Any] = []
         self._unsub_started: Any = None
+        # Nie zwei Prüfungen zugleich (Takt und geänderte Optionen): beide sahen dasselbe Gerät als neu schwach und meldeten es doppelt (seit 2.204.1)
+        self._check_lock = asyncio.Lock()
         self._unsub_daily: Any = None
         self._daily_key: tuple[Any, ...] | None = None
 
@@ -181,6 +184,10 @@ class BatteryWatch:
         self._store.async_delay_save(self._data, 1)
 
     async def async_check(self) -> None:
+        async with self._check_lock:
+            await self._async_check()
+
+    async def _async_check(self) -> None:
         hass = self.hass
         opts = effective(hass)
         area_reg = ar.async_get(hass)

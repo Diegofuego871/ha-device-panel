@@ -416,3 +416,29 @@ async def test_persistent_escapes_markdown_in_names(hass: HomeAssistant, watch: 
     assert "](https://evil" not in message and "![i]" not in message and "<b>" not in message
     line = next(x for x in message.splitlines() if "zweite Zeile" in x)
     assert line.startswith("- [") and f"(/device-panel?device={dev.id})" in line
+
+
+async def test_concurrent_checks_push_once(hass: HomeAssistant, watch: BatteryWatch) -> None:
+    """2.204.1: Zwei Prüfungen zugleich (Takt und geänderte Optionen) melden ein neu schwaches Gerät nur einmal."""
+    import asyncio  # noqa: PLC0415
+
+    sent: list[ServiceCall] = []
+    gate = asyncio.Event()
+
+    async def slow_notify(call: ServiceCall) -> None:
+        sent.append(call)
+        await gate.wait()
+
+    hass.services.async_register("notify", "handy", slow_notify)
+    dev = _device(hass, "Sensor Garage")
+    bat = _battery(hass, dev, "50")
+    await _options(hass, battery_push=True, notify_service="notify.handy")
+    await watch.async_check()
+    hass.states.async_set(bat, "8")
+    first = hass.async_create_task(watch.async_check())
+    second = hass.async_create_task(watch.async_check())
+    await asyncio.sleep(0)
+    gate.set()
+    await asyncio.gather(first, second)
+    await hass.async_block_till_done()
+    assert len([c for c in sent if "Sensor Garage" in c.data["title"]]) == 1

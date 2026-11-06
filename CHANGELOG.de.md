@@ -9,13 +9,19 @@ die Versionsnummern folgen [Semantic Versioning](https://semver.org/lang/de/).
 
 ## [2.204.1] - 2026-11-06
 
-Korrekturen aus einem Code-Review: Die App "Updates" bleibt nach einem fehlgeschlagenen Update nicht mehr hängen, und aufgezeichnete Ladungen beginnen beim richtigen Stand.
+Korrekturen und Beschleunigungen aus einem Code-Review: Die App "Updates" bleibt nach einem fehlgeschlagenen Update nicht mehr hängen, aufgezeichnete Ladungen beginnen beim richtigen Stand, und die Geräteliste kostet Home Assistant deutlich weniger Arbeit.
+
+### Geändert
+
+- **Geräteliste, weniger Arbeit für Home Assistant:** Bei jeder Abfrage der Liste (alle 10 Sekunden je offenes Panel) ging Home Assistant die ganze Verfügbarkeits-Historie jedes Geräts mehrmals durch, obwohl nur die letzten 24 Stunden gebraucht werden. Bei 300 Geräten und einem Jahr Historie dauerte das jedes Mal etwa 84 ms, in denen Home Assistant nichts anderes tun konnte; jetzt springt es direkt zu den letzten 24 Stunden und braucht etwa 17 ms (gemessen mit 321'000 Einträgen). Die Ergebnisse sind genau gleich.
+- **Ladeerkennung, viele Änderungen im Register auf einmal:** Ändern sich viele Entitäten zugleich (Start von Home Assistant, ein Funknetz wird neu eingebunden), ging die Ladeerkennung für jede einzelne Änderung alle Geräte durch. Jetzt gilt die erste Änderung sofort, die übrigen zusammen einmal nach 2 Sekunden.
 
 ### Behoben
 
 - **App "Updates", nächstes Update hängt auf "läuft":** Zeigte ein Update 10 Minuten lang keinen Fortschritt oder fiel es auf "Update verfügbar" zurück und blieb dort, sollte das nächste wartende Update derselben Integration starten. Es wurde nur als laufend geführt, aber nie gestartet, und blieb für immer auf "läuft". Ursache: Die Termine liefen in einem Arbeits-Thread statt in der Ereignisschleife von Home Assistant, und von dort lehnt Home Assistant den Start einer Aufgabe ab. Sie laufen jetzt in der Ereignisschleife.
 - **Ladungen, Beginn der Ladung:** Ein Batteriesensor mit Nachkommastellen (zum Beispiel 47,3 %) meldet während einer Ladung Hunderte von Ständen. Das Panel behielt höchstens 150 Messpunkte und liess die ältesten weg, so dass eine Ladung ab 20 % als Ladung ab etwa 85 % aufgezeichnet wurde. Jetzt bleibt der Beginn immer stehen, und nur zwischen dem Beginn und den letzten 30 Minuten fällt jeder zweite Punkt weg. Die Schätzung der Restzeit bleibt gleich.
 - **Ladungen, neue Ladung gleich nach "voll":** Nach einer Ladung bis "voll" und einem Rückgang um 10 Punkte darunter blieb die alte Spitze (zum Beispiel 100 %) der Massstab. Eine neue Ladung von dort galt zuerst als Entladen, und ihre ersten Punkte gingen verloren. Die Spitze beginnt jetzt mit dem neuen Tiefpunkt neu.
+- **Batterie-Warnung, doppelte Meldung:** Liefen die regelmässige Prüfung und eine Änderung der Einstellungen gleichzeitig, konnten beide dasselbe Gerät als neu schwach melden, und der Push kam doppelt. Die Prüfungen laufen jetzt nacheinander.
 
 ## [2.204.0] - 2026-11-06
 

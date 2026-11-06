@@ -15,6 +15,9 @@ Einstieg für jede neue Claude-Code-Session. Zuerst diese Datei lesen, dann
 
 - `update_queue.py`: Termine (`_timeout`, `_settled`) als `partial` auf `@callback`-Methoden. Eine lambda an `async_call_later` läuft als Executor-Job im Thread (siehe LEARNINGS); `hass.async_create_task` von dort wirft. Test `test_timeout_and_settle_start_the_next_update`.
 - `charge.py`: `_thin()` statt `del pts[:-ETA_POINTS_MAX]` (der Beginn der Ladung bleibt), Spitze beim Wiederscharfmachen neu. Tests in `test_charge.py`.
+- `availability.py`: `segments()` springt per `bisect` zum Zeitraum, `_tail()` begrenzt `bridged()` in `device_summary()`/`incidents()` auf das Ende der Historie (Ereignisse müssen sortiert bleiben: `evaluate` und `_async_close` schreiben nie vor das letzte). Gleichheit mit der alten Fassung: `tests/test_availability_fast.py`.
+- `charge.py`: Neuaufbau bei Register-Änderungen über `Debouncer` (sofort, Rest nach `REBUILD_COOLDOWN`). `battery.py`: `asyncio.Lock` um `async_check` (doppelter Push). Tests `test_registry_bursts_rebuild_once`, `test_concurrent_checks_push_once`.
+- Offen: Panel-Optimierungen (Formatierer zwischenspeichern, Zeichnen bei gleichen Daten auslassen) und genauere Ladeerkennung (Konzept beim Nutzer).
 
 ## Stand (2.204.0, Ladungen: die letzten fünf Ladungen als Kurve)
 

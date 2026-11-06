@@ -647,3 +647,40 @@ def test_rearm_resets_the_peak() -> None:
     st = n._state["d"]
     assert st["min"] == 89 and st["peak"] == 97
     assert [p[1] for p in st["pts"]] == [89, 91, 94, 97]
+
+
+async def test_registry_bursts_rebuild_once(hass: HomeAssistant) -> None:
+    """
+    2.204.1: Viele Änderungen im Entitäts-Register am Stück (Start, Neueinbindung eines Funknetzes) bauen die beobachteten Sensoren nicht je
+    Ereignis neu auf: die erste sofort, die übrigen zusammen einmal nach REBUILD_COOLDOWN Sekunden. Ein neues Gerät wird danach beobachtet.
+    """
+    from homeassistant.util import dt as dt_util  # noqa: PLC0415
+    from pytest_homeassistant_custom_component.common import async_fire_time_changed  # noqa: PLC0415
+
+    from custom_components.device_panel.charge import REBUILD_COOLDOWN  # noqa: PLC0415
+
+    async def cooldown() -> None:
+        async_fire_time_changed(hass, dt_util.utcnow() + timedelta(seconds=REBUILD_COOLDOWN + 1))
+        await hass.async_block_till_done()
+
+    await _setup(hass)
+    # Die Einrichtung selbst ändert das Register: deren Frist ablaufen lassen (nach dem gesammelten Aufbau beginnt noch eine Frist)
+    await cooldown()
+    await cooldown()
+    watcher = hass.data[DATA_CHARGE]
+    calls: list[float] = []
+    original = watcher._rebuilder.function
+
+    async def counting() -> None:
+        calls.append(time.time())
+        await original()
+
+    watcher._rebuilder.function = counting
+    device, entity = _device(hass, "Roller", level=30)
+    for i in range(20):
+        er.async_get(hass).async_update_entity(entity, name=f"Akku {i}")
+    await hass.async_block_till_done()
+    assert len(calls) == 1
+    await cooldown()
+    assert len(calls) == 2
+    assert watcher._entities.get(entity) == device.id

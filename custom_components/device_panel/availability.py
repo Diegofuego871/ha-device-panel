@@ -28,7 +28,10 @@ import asyncio
 import json
 import logging
 import time
+from bisect import bisect_left, bisect_right
 from collections.abc import Callable
+from itertools import islice
+from operator import itemgetter
 from datetime import datetime, timedelta
 from typing import Any
 
@@ -67,18 +70,21 @@ PCT_MIN_COVERED = 3600
 ONLINE, OFFLINE = 1, 0
 
 
+_AT = itemgetter(0)
+
+
 def segments(events: list[list[Any]], start: float, end: float) -> list[list[Any]]:
     """
     Abschnitte [von, bis, Zustand] im Zeitraum; vor dem ersten Ereignis und
     ohne Ereignisse "keine Daten" (None).
     """
     out: list[list[Any]] = []
-    state: int | None = None
+    # Die Ereignisse sind nach Zeit sortiert (evaluate, _async_close und das Nachfüllen halten das ein): direkt zum Zeitraum springen statt
+    # die ganze Historie zu durchlaufen (seit 2.204.1; die Liste fragt alle 10 s je Gerät mehrmals die letzten 24 Std. ab)
+    first = bisect_right(events, start, key=_AT)
+    state: int | None = events[first - 1][1] if first else None
     cursor = start
-    for at, st in events:
-        if at <= start:
-            state = st
-            continue
+    for at, st in islice(events, first, None):
         if at >= end:
             break
         if at > cursor:
@@ -113,6 +119,17 @@ def bridged(events: list[list[Any]]) -> list[list[Any]]:
             continue
         out.append(event)
     return out
+
+
+def _tail(events: list[list[Any]], start: float) -> list[list[Any]]:
+    """
+    Die Ereignisse ab dem letzten mit Zustand (nicht "keine Daten") vor start. bridged() darauf ergibt ab start dasselbe wie auf der ganzen
+    Historie: ein Ereignis mit Zustand fällt dort nie weg, und alles danach hängt nur von ihm und den folgenden ab (seit 2.204.1).
+    """
+    i = bisect_left(events, start, key=_AT) - 1
+    while i > 0 and events[i][1] is None:
+        i -= 1
+    return events[max(i, 0) :]
 
 
 def summarize(segs: list[list[Any]]) -> dict[str, Any] | None:
@@ -303,7 +320,7 @@ class AvailabilityLog:
         now = time.time()
         for events in self._events.values():
             if events and events[-1][1] is not None:
-                events.append([now, None])
+                events.append([max(now, events[-1][0]), None])
         await self._saver.async_save()
 
     async def async_stop(self) -> None:
@@ -364,11 +381,13 @@ class AvailabilityLog:
                 at = back.timestamp() if back else now
             else:
                 at = now
+            # Nie vor das letzte Ereignis (auch wenn die Uhr zurückgestellt wurde): segments() verlässt sich auf die Sortierung
+            at = min(at, now)
             if last is not None:
                 at = max(at, last[0])
-            events.append([min(at, now), state])
+            events.append([at, state])
             if state is not None:
-                changes.append((device.id, state, min(at, now)))
+                changes.append((device.id, state, at))
             self._saver.schedule()
         # Nicht mehr überwacht (ausgeschlossen, deaktiviert, gelöscht): ab
         # jetzt "keine Daten", damit eine spätere Rückkehr nicht als
@@ -471,7 +490,7 @@ class AvailabilityLog:
 
     def device_summary(self, device_id: str, seconds: float, now: float | None = None) -> dict[str, Any] | None:
         now = now if now is not None else time.time()
-        return summarize(segments(bridged(self.events(device_id)), now - seconds, now))
+        return summarize(segments(bridged(_tail(self.events(device_id), now - seconds)), now - seconds, now))
 
     def device_strip(self, device_id: str, now: float | None = None, buckets: int = 48) -> list[int]:
         now = now if now is not None else time.time()
@@ -586,7 +605,7 @@ class AvailabilityLog:
             prev = None
             # Ein Ausfall, der über einen Neustart läuft, beginnt nicht neu
             # (sonst ein falscher Sammelausfall beim Start).
-            for at, st in bridged(events):
+            for at, st in bridged(_tail(events, start)):
                 if st == OFFLINE and prev != OFFLINE and at >= start:
                     starts.append((at, dev))
                 prev = st

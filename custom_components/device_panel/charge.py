@@ -22,6 +22,7 @@ from homeassistant.core import CALLBACK_TYPE, Event, HomeAssistant, callback
 from homeassistant.helpers import area_registry as ar
 from homeassistant.helpers import device_registry as dr
 from homeassistant.helpers import entity_registry as er
+from homeassistant.helpers.debounce import Debouncer
 from homeassistant.helpers.event import async_track_state_change_event, async_track_time_interval
 from homeassistant.helpers.storage import Store
 from homeassistant.util import dt as dt_util
@@ -89,6 +90,7 @@ CHARGES_KEEP = 5  # aufgezeichnete Ladungen pro Gerät (seit 2.204.0)
 POWER_WINDOW = 600.0  # Sekunden: Fenster für die Glättung der Leistung
 CHARGE_MIN_POINTS = 3
 CHARGE_MIN_RISE = 2.0
+REBUILD_COOLDOWN = 2.0
 
 
 def estimate_finish(points: list[list[float]], level: float, full: float, now: float) -> tuple[float, float, float] | None:
@@ -160,6 +162,9 @@ class ChargeNotifier:
         # Abgeschlossene Ladungen je Gerät, die letzten CHARGES_KEEP (seit 2.204.0): {"start", "end", "from", "to", "pts": [[Zeit, Stand], ...]}
         self._charges: dict[str, list[dict[str, Any]]] = {}
         self._live_warned: set[str] = set()
+        # Änderungen im Entitäts-Register kommen oft gebündelt (Start, Neueinbindung eines Funknetzes): die erste baut sofort neu auf, weitere
+        # innert REBUILD_COOLDOWN Sekunden zusammen einmal am Ende (seit 2.204.1; vorher ein ganzer Durchlauf über alle Geräte je Ereignis)
+        self._rebuilder: Debouncer[Any] = Debouncer(hass, _LOGGER, cooldown=REBUILD_COOLDOWN, immediate=True, function=self.async_rebuild)
 
     async def async_start(self) -> None:
         stored = await self._store.async_load() or {}
@@ -196,7 +201,7 @@ class ChargeNotifier:
 
     @callback
     def _on_registry(self, _event: Event) -> None:
-        self.hass.async_create_task(self.async_rebuild())
+        self._rebuilder.async_schedule_call()
 
     @staticmethod
     def enabled(opts: dict[str, Any], hass: HomeAssistant, device: dr.DeviceEntry) -> bool:
@@ -702,6 +707,7 @@ class ChargeNotifier:
         self._store.async_delay_save(lambda: {"state": self._state, "live": self._live, "charges": self._charges}, 1)
 
     async def async_stop(self) -> None:
+        self._rebuilder.async_cancel()
         if self._unsub_track is not None:
             self._unsub_track()
             self._unsub_track = None

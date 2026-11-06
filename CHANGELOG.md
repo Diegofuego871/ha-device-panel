@@ -9,13 +9,19 @@ and this project adheres to [Semantic Versioning](https://semver.org/).
 
 ## [2.204.1] - 2026-11-06
 
-Fixes from a code review: the app "Updates" no longer gets stuck after a failed update, and recorded charges start at the right level.
+Fixes and speed-ups from a code review: the app "Updates" no longer gets stuck after a failed update, recorded charges start at the right level, and the device list costs Home Assistant much less work.
+
+### Changed
+
+- **Device list, less work for Home Assistant:** For every refresh of the list (every 10 seconds per open panel) Home Assistant went through the whole availability history of every device several times, although only the last 24 hours are needed. With 300 devices and a year of history this took about 84 ms each time, during which Home Assistant could do nothing else; it now jumps straight to the last 24 hours and takes about 17 ms (measured with 321,000 entries). The results are exactly the same.
+- **Charging detection, many registry changes at once:** When many entities change at once (start of Home Assistant, a radio network being set up again), the charging detection went through all devices for every single change. Now the first change applies at once, the others together once after 2 seconds.
 
 ### Fixed
 
 - **App "Updates", next update stuck on "running":** If an update showed no progress for 10 minutes, or fell back to "update available" and stayed there, the next waiting update of the same integration should start. It was only marked as running, but never started, and stayed on "running" for good. Cause: the timers ran in a worker thread instead of the event loop of Home Assistant, which refuses to start a task from there. They now run in the event loop.
 - **Charges, start of the charge:** A battery sensor with decimals (for example 47.3 %) reports hundreds of levels during one charge. The panel kept at most 150 measuring points and dropped the oldest ones, so a charge from 20 % was recorded as starting at about 85 %. Now the start always stays, and only every second point between the start and the last 30 minutes is dropped. The estimate of the time left is unchanged.
 - **Charges, new charge right after "full":** After a charge to "full" and a drop of 10 points below it, the old peak (for example 100 %) stayed as the reference. A new charge from there was first taken as a discharge, and its first points were lost. The peak now starts again with the new low.
+- **Battery warning, double message:** If the regular check and a change of the settings ran at the same time, both could report the same device as newly low, and the push came twice. The checks now run one after the other.
 
 ## [2.204.0] - 2026-11-06
 
