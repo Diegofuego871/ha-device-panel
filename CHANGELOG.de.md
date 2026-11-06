@@ -7,6 +7,14 @@ Alle nennenswerten Änderungen an dieser Integration stehen in dieser Datei.
 Das Format folgt [Keep a Changelog](https://keepachangelog.com/de/1.1.0/),
 die Versionsnummern folgen [Semantic Versioning](https://semver.org/lang/de/).
 
+## [2.203.0] - 2026-11-06
+
+Die Akku-Kapazität eines Geräts lässt sich angeben, und die Kachel "Lädt" schätzt dann die Leistung.
+
+### Hinzugefügt
+
+- **Gerät, Einstellung "Akku-Kapazität" (Wh):** Im Geräte-Popup unter Einstellungen › Batterie erscheint ein Feld für die Kapazität des Akkus in Wattstunden (Punkt oder Komma, 0,1 bis 5000, eine Nachkommastelle), sobald das Gerät geladen werden kann (Lademeldung an oder eigene Ladeanzeige). Sie gilt nur für dieses Gerät; ein leeres Feld heisst nicht angegeben. Mit der Kapazität zeigt die Kachel "Lädt" "≈ 43 W ins Akku (geschätzt)": Tempo in Punkten pro Minute × Kapazität, gemessen über dasselbe Fenster wie die Restzeit. Das ist die Leistung, die im Akku ankommt, ohne die Verluste des Ladegeräts, und eine Schätzung (Stufen des Stands, Alterung des Akkus). Ist der Wert gesetzt, zeigt die Übersicht des Geräts eine kleine Kachel "Akku-Kapazität". Der Wert gehört zu den Geräteeinstellungen: Übersicht der eigenen Werte, Zurücksetzen (zusammen mit den Ladewerten des Geräts), Sicherung und Wiederherstellung. Ohne Kapazität ändert sich nichts.
+
 ## [2.202.0] - 2026-11-06
 
 Das Geräte-Popup zeigt, wie lange eine Ladung noch dauert.
@@ -5850,6 +5858,7 @@ Erste Vorabversion.
   GitHub Actions für die Prüfungen von HACS und hassfest sowie die Tests.
 
 [2.6.0]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v2.6.0
+[2.203.0]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v2.203.0
 [2.202.0]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v2.202.0
 [2.201.0]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v2.201.0
 [2.200.0]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v2.200.0

@@ -58,6 +58,7 @@ from .devices import (
     connection_overrides,
     device_settings,
     type_overrides,
+    valid_charge_wh,
     valid_flaky_setting,
     valid_notify_delay_setting,
     valid_offline_setting,
@@ -123,6 +124,7 @@ _DEVICE_SETTING_KEYS = (
     "charge_stall",
     "charge_stop",
     "charge_live",
+    "charge_wh",
     "liveness_exclude",
 )
 _ITEMS_MAX = 400
@@ -415,6 +417,8 @@ def _valid_device_setting(key: str, value: Any) -> bool:
         return _in_range(value, CONF_CHARGE_RISE)
     if key == "charge_stall":
         return _in_range(value, CONF_CHARGE_STALL)
+    if key == "charge_wh":
+        return valid_charge_wh(value)
     return False
 
 

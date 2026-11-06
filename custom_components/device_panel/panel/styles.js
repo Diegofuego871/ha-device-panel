@@ -463,6 +463,7 @@ tr.dev.flaky td:first-child { box-shadow: inset 4px 0 0 var(--dp-warning); }
 .chg-tile .chg-e { font-size: 15px; font-weight: 500; color: var(--dp-success); }
 .chg-tile .chg-e.wait { font-size: 13px; font-weight: 400; color: var(--dp-text2); }
 .chg-tile .chg-bar { margin-top: 18px; }
+.chg-tile .chg-pow { display: block; margin-top: 6px; font-size: 13px; color: var(--dp-text); }
 .chg-tile .chg-meta { display: flex; justify-content: space-between; gap: 10px; margin-top: 8px; padding-right: 30px; font-size: 12px; color: var(--dp-text2); }
 /* Ziel unter 100 %: Rest schraffiert, Strich und Zahl am Ziel (die Zahl steht über dem Balken, daher Platz oben) */
 .chg-bar.has-goal { overflow: visible; margin-top: 15px; }

@@ -131,6 +131,23 @@ async def test_devices_import_and_replace(hass: HomeAssistant, setup) -> None:  
     assert hass.data[DATA_DEVICE_SETTINGS]["signal"] == {}
 
 
+async def test_capacity_in_backup(hass: HomeAssistant, setup) -> None:  # noqa: F811
+    """Akku-Kapazität (2.203.0) gehört zur Sicherung der Geräteeinstellungen: sichern, zurücksetzen, wiederherstellen, ungültigen Wert überspringen."""
+    from custom_components.device_panel.devices import async_set_device_settings
+
+    a, b = _device(hass, "Saugroboter"), _device(hass, "Zahnbürste")
+    await async_set_device_settings(hass, a.id, charge_wh=59.9)
+    file = await backup.async_export(hass, ["devices"])
+    assert file["sections"]["devices"]["settings"][a.id] == {"charge_wh": 59.9}
+    await async_set_device_settings(hass, a.id, charge_wh=None)
+    file["sections"]["devices"]["settings"][b.id] = {"charge_wh": 99999}  # ausserhalb
+    report = await backup.async_import(hass, file, ["devices"], dry_run=False)
+    assert hass.data[DATA_DEVICE_SETTINGS]["charge_wh"] == {a.id: 59.9}
+    assert any(s["what"] == "charge_wh" and s["reason"] == "invalid" for s in report["sections"]["devices"]["skipped"])
+    again = await backup.async_import(hass, file, ["devices"], dry_run=True)
+    assert not [c for c in again["sections"]["devices"]["changes"] if c["what"] == "charge_wh"]
+
+
 async def test_hidden_devices_must_exist(hass: HomeAssistant, setup) -> None:  # noqa: F811
     device = _device(hass, "Weg")
     file = await backup.async_export(hass, ["devices"])

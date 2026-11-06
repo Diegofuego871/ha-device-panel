@@ -3,6 +3,11 @@
 Einstieg für jede neue Claude-Code-Session. Zuerst diese Datei lesen, dann
 `CLAUDE.md`, `docs/CONCEPT.md`, `docs/LEARNINGS.md`, `docs/DESIGN.md`.
 
+## Stand (2.203.0, Akku-Kapazität in Wh pro Gerät)
+
+- Einstellung `charge_wh` nur am Gerät (kein Integrations-/Label-/Global-Wert, Wunsch des Nutzers): `devices.py` (`valid_charge_wh` 0,1 bis 5000, Speicher, `async_set_device_settings`, `CHARGE_SETTING_KEYS` "wh" für Übersicht der eigenen Werte und Zurücksetzen, Payload `charge_wh_setting`, `rechargeable`), `_charging` liefert `power_w` = Tempo × Wh × 60 / 100; WS `charge_wh`; Sicherung (`_DEVICE_SETTING_KEYS`, Prüfung).
+- Panel: Feld in Einstellungen › Batterie (`parts.bat`, nur bei `d.rechargeable`), kleine Kachel im Abschnitt Gerät, `.chg-pow` in der Ladekachel; Test `chargewh-e2e`, `test_capacity_and_power`, `test_capacity_in_backup`.
+
 ## Stand (2.202.0, Kachel "Lädt" mit Restzeit)
 
 - `charge.py`: `_state[dev]["pts"]` (Messpunkte der laufenden Ladung, höchstens `ETA_POINTS_MAX`, weg nach "voll"), `_eta()` mit `estimate_finish` (gleiche Schätzung wie die Live-Aktivität) in `charging()`/`charging_of()` als `eta`, `rate`; `devices._charging` gibt sie als ISO bzw. Punkte/Min. weiter.

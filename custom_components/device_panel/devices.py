@@ -696,7 +696,17 @@ def _charging(hass: HomeAssistant, opts: dict[str, Any], device: dr.DeviceEntry,
     info = watcher.charging_of(device, entries, now, opts)
     if info is None:
         return None
-    return {**info, "level": None if info["level"] is None else round(info["level"]), "from": None if info["from"] is None else round(info["from"]), "since": _iso(info["since"]), "eta": _iso(info["eta"]) if info.get("eta") else None, "rate": None if info.get("rate") is None else round(info["rate"], 1)}
+    rate = info.get("rate")
+    # Geschätzte Leistung ins Akku (seit 2.203.0): Tempo in Punkten pro Minute × Kapazität; nur mit Kapazität und Tempo
+    wh = device_settings(hass).get("charge_wh", {}).get(device.id)
+    power = round(rate / 100 * wh * 60, 1) if rate and wh else None
+    return {**info, "level": None if info["level"] is None else round(info["level"]), "from": None if info["from"] is None else round(info["from"]), "since": _iso(info["since"]), "eta": _iso(info["eta"]) if info.get("eta") else None, "rate": None if rate is None else round(rate, 1), "power_w": power}
+
+
+def _rechargeable(hass: HomeAssistant, opts: dict[str, Any], device: dr.DeviceEntry) -> bool:
+    """Kann das Gerät geladen werden (Lademeldung an oder eigene Ladeanzeige)? Dann zeigt das Panel das Feld für die Akku-Kapazität (seit 2.203.0)."""
+    watcher = hass.data.get(DATA_CHARGE)
+    return bool(watcher is not None and watcher.rechargeable(opts, hass, device))
 
 
 def has_battery(hass: HomeAssistant, entries: list[er.RegistryEntry]) -> bool:
@@ -1029,6 +1039,8 @@ async def async_load_type_overrides(hass: HomeAssistant) -> None:
             # Eigenes "Voll ab" und eigener Anstieg des Geräts für die Lademeldung (seit 1.35.0).
             "charge_full": {str(k): v for k, v in (stored.get("charge_full") or {}).items() if _in_range(v, CONF_CHARGE_FULL)},
             "charge_rise": {str(k): v for k, v in (stored.get("charge_rise") or {}).items() if _in_range(v, CONF_CHARGE_RISE)},
+            # Akku-Kapazität des Geräts in Wh (seit 2.203.0): für die geschätzte Ladeleistung.
+            "charge_wh": {str(k): float(v) for k, v in (stored.get("charge_wh") or {}).items() if valid_charge_wh(v)},
             # Eigenes "Ladung beendet nach" und eigener Push bei beendeter Ladung des Geräts (seit 1.41.0).
             "charge_stall": {str(k): v for k, v in (stored.get("charge_stall") or {}).items() if _in_range(v, CONF_CHARGE_STALL)},
             "charge_stop": {str(k): v for k, v in (stored.get("charge_stop") or {}).items() if isinstance(v, bool)},
@@ -1064,7 +1076,7 @@ async def _async_save_devices(hass: HomeAssistant) -> None:
         data["liveness_conn"] = dict(settings["liveness_conn"])
     if settings.get("charge"):
         data["charge"] = dict(settings["charge"])
-    for key in ("charge_full", "charge_rise", "charge_stall", "charge_stop", "charge_live", "liveness_exclude"):
+    for key in ("charge_full", "charge_rise", "charge_stall", "charge_stop", "charge_live", "charge_wh", "liveness_exclude"):
         if settings.get(key):
             data[key] = dict(settings[key])
     await _types_store(hass).async_save(data)
@@ -1111,7 +1123,7 @@ def device_settings(hass: HomeAssistant) -> dict[str, Any]:
     "notify_mute": {Gerät: bis}, "signal": {Gerät: Schwelle | "off"},
     "offline": {Gerät: Minuten | "off"}, "charge": {Gerät: bool}}.
     """
-    return hass.data.get(DATA_DEVICE_SETTINGS) or {"battery": {}, "notify_off": set(), "notify_mute": {}, "signal": {}, "offline": {}, "notify_delay": {}, "flaky": {}, "liveness_conn": {}, "charge": {}, "charge_full": {}, "charge_rise": {}, "charge_stall": {}, "charge_stop": {}, "charge_live": {}, "liveness_exclude": {}}
+    return hass.data.get(DATA_DEVICE_SETTINGS) or {"battery": {}, "notify_off": set(), "notify_mute": {}, "signal": {}, "offline": {}, "notify_delay": {}, "flaky": {}, "liveness_conn": {}, "charge": {}, "charge_full": {}, "charge_rise": {}, "charge_stall": {}, "charge_stop": {}, "charge_live": {}, "charge_wh": {}, "liveness_exclude": {}}
 
 
 def signal_limit(d: dict[str, Any]) -> Any:
@@ -1154,6 +1166,15 @@ def valid_notify_delay_setting(value: Any) -> bool:
     """"Erst melden nach" des Geräts (seit 2.91.0): ganze Minuten im Bereich der Integrationen."""
     low, high = OFFLINE_INTEGRATION_RANGE
     return isinstance(value, int) and not isinstance(value, bool) and low <= value <= high
+
+
+CHARGE_WH_MIN = 0.1
+CHARGE_WH_MAX = 5000.0
+
+
+def valid_charge_wh(value: Any) -> bool:
+    """Akku-Kapazität des Geräts in Wattstunden (seit 2.203.0): Zahl (kein Wahrheitswert) von 0,1 bis 5000."""
+    return isinstance(value, (int, float)) and not isinstance(value, bool) and CHARGE_WH_MIN <= value <= CHARGE_WH_MAX
 
 
 def valid_flaky_setting(value: Any) -> bool:
@@ -1264,6 +1285,7 @@ async def async_set_device_settings(hass: HomeAssistant, device_id: str, **chang
     charge_full / charge_rise / charge_stall=None (Integration bzw. global) oder eigener Wert (seit 1.35.0, charge_stall seit 1.41.0);
     charge_stop=None (Integration bzw. global), True/False (Push bei beendeter Ladung, seit 1.41.0);
     charge_live=None (Integration bzw. global), True/False (Live-Aktivität beim Laden, seit 2.19.0);
+    charge_wh=None (nicht angegeben) oder Akku-Kapazität in Wh (seit 2.203.0, nur am Gerät);
     liveness_exclude=Liste von Entitäten, die nicht als Lebenszeichen zählen (leer = alle zählen, seit 2.165.0).
     """
     await async_load_type_overrides(hass)
@@ -1305,6 +1327,11 @@ async def async_set_device_settings(hass: HomeAssistant, device_id: str, **chang
                 settings.setdefault(key, {}).pop(device_id, None)
             else:
                 settings.setdefault(key, {})[device_id] = int(changes[key])
+    if "charge_wh" in changes:
+        if changes["charge_wh"] is None:
+            settings.setdefault("charge_wh", {}).pop(device_id, None)
+        else:
+            settings.setdefault("charge_wh", {})[device_id] = round(float(changes["charge_wh"]), 1)
     if "charge_live" in changes:
         if changes["charge_live"] is None:
             settings.setdefault("charge_live", {}).pop(device_id, None)
@@ -1336,7 +1363,7 @@ async def async_set_device_settings(hass: HomeAssistant, device_id: str, **chang
 
 
 # Eigene Werte der Lademeldung eines Geräts (Schlüssel in device_settings) und ihre Kurznamen für die Übersicht
-CHARGE_SETTING_KEYS = {"charge": "on", "charge_full": "full", "charge_rise": "rise", "charge_stall": "stall", "charge_stop": "stop", "charge_live": "live"}
+CHARGE_SETTING_KEYS = {"charge": "on", "charge_full": "full", "charge_rise": "rise", "charge_stall": "stall", "charge_stop": "stop", "charge_live": "live", "charge_wh": "wh"}
 
 
 async def async_reset_device_settings(
@@ -1800,6 +1827,9 @@ async def async_list_devices(hass: HomeAssistant, log: Any = None) -> dict[str, 
                 "charge_stall_setting": device_settings(hass).get("charge_stall", {}).get(device.id),
                 "charge_stop_setting": device_settings(hass).get("charge_stop", {}).get(device.id),
                 "charge_live_setting": device_settings(hass).get("charge_live", {}).get(device.id),
+                # Akku-Kapazität in Wh (seit 2.203.0, nur am Gerät) und ob das Gerät geladen werden kann (Feld im Reiter Batterie)
+                "charge_wh_setting": device_settings(hass).get("charge_wh", {}).get(device.id),
+                "rechargeable": _rechargeable(hass, opts, device),
                 "charge_default": {
                     # Ohne Wahl am Gerät: Wert der Integration, sonst global (full_integration/rise_integration nennen sie).
                     **dict(zip(("full", "rise", "full_integration", "rise_integration"), charge_values(opts, scope))),

@@ -620,6 +620,7 @@ const promptHtml = (text) => escape(text).replace(/\{(language|facts(?:_[a-z]+)?
 // "Voll ab" (seit 1.38.0): feste Stufen und "Eigener Wert"; ein Wert ausserhalb der Stufen gilt als eigener.
 const CHARGE_FULL_PRESETS = [100, 95, 90, 80];
 const CHARGE_FULL_OWN_START = 85;
+const CHARGE_WH_RANGE = [0.1, 5000];
 const CHARGE_FULL_RANGE = [50, 100];
 const INTEG_OWN_MAPS = ["offline_after_integrations", "notify_delay_integrations", "flaky_outages_integrations", "liveness_connectivity_integrations", "battery_low_integrations", "signal_low_integrations", "charge_full_integrations", "charge_rise_integrations", "charge_stall_integrations", "charge_stop_integrations", "charge_live_integrations"];
 // Liste der Integrationen mit Lademeldung (seit 1.32.0 auch hier einstellbar): zurücksetzen = aus, der Standard.
@@ -788,6 +789,7 @@ const devOwnCount = (d) =>
     d.charge_stall_setting != null,
     d.charge_stop_setting != null,
     d.charge_live_setting != null,
+    d.charge_wh_setting != null,
     d.notify_off || (d.notify_mute_until && Date.parse(d.notify_mute_until) > Date.now()),
   ].filter(Boolean).length;
 const hasOverride = (d) => d.offline_setting != null || d.notify_delay_setting != null || d.flaky_setting != null || d.liveness_conn_setting != null || d.battery_setting != null || Boolean(d.notify_off) || Boolean(d.connection_manual) || d.signal_setting != null;
@@ -1871,6 +1873,7 @@ class DevicePanel extends HTMLElement {
         // Eigenes "Voll ab" des Geräts (seit 1.35.0): "default" = globaler Wert, "own" = Zahl (Start 85, sonst der bisherige Wert).
         const d = this._devices.find((x) => x.id === this._detailId);
         this._chargeFullRangeError = null;
+    this._chargeWhError = null;
         const own = Number.isInteger(d?.charge_full_setting) && !CHARGE_FULL_PRESETS.includes(d.charge_full_setting) ? d.charge_full_setting : CHARGE_FULL_OWN_START;
         this._setDeviceSettings(this._detailId, { charge_full: el.value === "default" ? null : el.value === "own" ? own : Number(el.value) });
       } else if (el.matches?.('input[data-dlg="dev-charge-full-val"]')) {
@@ -1883,6 +1886,21 @@ class DevicePanel extends HTMLElement {
         } else {
           this._chargeFullRangeError = null;
           this._setDeviceSettings(this._detailId, { charge_full: v });
+        }
+      } else if (el.matches?.('input[data-dlg="dev-charge-wh"]')) {
+        // Akku-Kapazität in Wh (seit 2.203.0): Punkt oder Komma, leer = nicht angegeben
+        const raw = el.value.trim().replace(",", ".");
+        const v = Number(raw);
+        if (raw === "") {
+          this._chargeWhError = null;
+          this._setDeviceSettings(this._detailId, { charge_wh: null });
+        } else if (!Number.isFinite(v) || v < CHARGE_WH_RANGE[0] || v > CHARGE_WH_RANGE[1]) {
+          this._chargeWhError = { value: el.value, message: this._t("devChargeWhRange", CHARGE_WH_RANGE[0], CHARGE_WH_RANGE[1]) };
+          this._devForce = true;
+          this._renderDevice();
+        } else {
+          this._chargeWhError = null;
+          this._setDeviceSettings(this._detailId, { charge_wh: Math.round(v * 10) / 10 });
         }
       } else if (el.matches?.('select[data-dlg="dev-charge-rise"]')) {
         // Eigener Anstieg: mit dem globalen Wert beginnen, dann anpassen.
@@ -2255,6 +2273,15 @@ class DevicePanel extends HTMLElement {
   }
 
   // Prozent mit einer Stelle, 100 ohne.
+  // Dezimaltrenner der Sprache (Komma oder Punkt) für das Feld der Akku-Kapazität
+  _decimalSep() {
+    try {
+      return (1.1).toLocaleString(this._locale()).charAt(1) || ".";
+    } catch (err) {
+      return ".";
+    }
+  }
+
   _fmtPct(v) {
     return Number(v).toLocaleString(this._locale(), { minimumFractionDigits: v >= 100 ? 0 : 1, maximumFractionDigits: 1 });
   }
@@ -4538,6 +4565,7 @@ class DevicePanel extends HTMLElement {
     return `<button type="button" class="st-tile chg-tile" data-dlg="stat" data-range="30d" data-kind="battery">
       <span class="chg-head"><span class="chg-n">${mdi("batteryCharging", 20)}${escape(String(c.level))}<small>%</small></span><span class="chg-e${left == null ? " wait" : ""}">${escape(main)}</span></span>
       ${this._chargeBarHtml(c)}
+      ${c.power_w != null ? `<span class="chg-pow">${escape(t("chgTilePower", this._fmtPct(c.power_w)))}</span>` : ""}
       <span class="chg-meta"><span>${escape(t("chgTileMeta", this._duration(c.since), rate))}</span>${eta ? `<span>${escape(t("chgTileDone", this._fmtTime(eta)))}</span>` : ""}</span>
       <span class="cbtn chev" aria-hidden="true">${mdi("chevron", 16)}</span></button>`;
   }
@@ -4822,6 +4850,16 @@ class DevicePanel extends HTMLElement {
           : ""
       }${origin(sigMode !== "default", sdef.source === "integration" ? d.integration?.domain : sdef.source === "label" ? sdef.label : null, sigMode !== "default" ? t("originDefaultWould", std) : "", t("devSigShort", d.signal?.value != null ? sigText(d.signal) : null))}</div>`;
     }
+    // Akku-Kapazität in Wh (seit 2.203.0, nur am Gerät): sichtbar, sobald das Gerät geladen werden kann (Lademeldung an oder eigene Ladeanzeige);
+    // mit ihr schätzt die Kachel "Lädt", mit wie viel Watt ins Akku geladen wird. Leeres Feld = nicht angegeben.
+    if (d.rechargeable) {
+      const whSet = d.charge_wh_setting;
+      const whErr = this._chargeWhError;
+      const whShown = whErr ? whErr.value : whSet != null ? String(whSet).replace(".", this._decimalSep()) : "";
+      parts.bat += `<div class="opt${whSet != null ? " changed" : ""}${whErr ? " invalid" : ""}"><div class="opt-line"><span class="opt-label">${escape(t("devChargeWh"))}</span><span class="opt-input${whErr ? " bad" : ""}"><input type="text" inputmode="decimal" autocomplete="off" data-dlg="dev-charge-wh" value="${escape(whShown)}" placeholder="–" aria-label="${escape(t("devChargeWh"))}"><span class="unit">Wh</span></span></div>${
+        whErr ? `<div class="opt-error" data-dev-range>${escape(whErr.message)}</div>` : ""
+      }${origin(whSet != null, null, whSet != null ? "" : t("devChargeWhNone"), t("devChargeWhShort"))}</div>`;
+    }
     // Lademeldung (seit 1.30.0): Push, sobald das Gerät voll geladen ist; ohne Wahl gilt die Integration.
     if (d.battery?.level != null) {
       const cd = d.charge_default || { on: false, integration: null };
@@ -4968,7 +5006,7 @@ class DevicePanel extends HTMLElement {
     };
     const ownTab = {
       out: d.offline_setting != null || d.notify_delay_setting != null || d.flaky_setting != null || d.liveness_conn_setting != null || silenced,
-      bat: d.battery_setting != null,
+      bat: d.battery_setting != null || d.charge_wh_setting != null,
       chg: [d.charge_setting, d.charge_full_setting, d.charge_rise_setting, d.charge_stall_setting, d.charge_stop_setting, d.charge_live_setting].some((v) => v != null),
       sig: d.signal_setting != null,
     };
@@ -5032,6 +5070,8 @@ class DevicePanel extends HTMLElement {
       this._tile(this._t("software"), sw, d.update ? "has-upd" : ""),
     ];
     if (d.hw_version) tiles.push(this._tile(this._t("hardware"), text(d.hw_version)));
+    // Akku-Kapazität (seit 2.203.0): kleine Kachel, wenn sie im Reiter Batterie angegeben ist
+    if (d.charge_wh_setting != null) tiles.push(this._tile(this._t("tileCapacity"), `${escape(this._fmtPct(d.charge_wh_setting))} Wh`));
     tiles.push(this._tile(this._t("area"), text(d.area)));
     if (d.created_at) tiles.push(this._tile(this._t("added"), `${escape(this._fmtTime(Date.parse(d.created_at) / 1000, true, true))}${d.new ? `<small>${escape(this._t("newTag"))}</small>` : ""}`));
     return `<div class="tiles">${tiles.join("")}</div>`;
@@ -5402,6 +5442,7 @@ class DevicePanel extends HTMLElement {
     if (!this._devForce && d && typing?.dataset?.dlg === "dev-bat-pct" && typing.value !== String(d.battery_setting)) return;
     if (!this._devForce && d && typing?.dataset?.dlg === "dev-sig-val" && typing.value !== String(d.signal_setting)) return;
     if (!this._devForce && d && typing?.dataset?.dlg === "dev-charge-stall-val" && typing.value !== String(d.charge_stall_setting)) return;
+    if (!this._devForce && d && typing?.dataset?.dlg === "dev-charge-wh") return;
     if (!this._devForce && d && typing?.dataset?.dlg === "dev-charge-full-val" && typing.value !== String(d.charge_full_setting)) return;
     if (!this._devForce && d && typing?.dataset?.dlg === "dev-off-min" && typing.value !== String(d.offline_setting)) return;
     if (!this._devForce && d && typing?.dataset?.dlg === "dev-delay-min" && typing.value !== String(d.notify_delay_setting)) return;
@@ -8033,6 +8074,7 @@ class DevicePanel extends HTMLElement {
       v.stall === undefined ? "" : t("diffChargeStall", v.stall),
       v.stop === undefined ? "" : t("diffChargeStop", v.stop),
       v.live === undefined ? "" : t("diffChargeLive", v.live),
+      v.wh === undefined ? "" : t("diffChargeWh", this._fmtPct(v.wh)),
     ]
       .filter(Boolean)
       .join(" · ");

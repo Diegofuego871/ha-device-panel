@@ -196,7 +196,7 @@ async def test_charging_flag_in_list_and_entity_wins(hass: HomeAssistant) -> Non
         hass.states.async_set(ent, "55", {"device_class": "battery", "unit_of_measurement": "%"})
     await hass.async_block_till_done()
     by_name = {d["name"]: d for d in (await async_list_devices(hass))["devices"]}
-    assert by_name["Handy"]["charging"] == {"level": 55, "from": 20, "since": by_name["Handy"]["charging"]["since"], "full": 100, "source": "level", "eta": None, "rate": None}
+    assert by_name["Handy"]["charging"] == {"level": 55, "from": 20, "since": by_name["Handy"]["charging"]["since"], "full": 100, "source": "level", "eta": None, "rate": None, "power_w": None}
     # Gleicher Anstieg, aber Lademeldung aus: nie "lädt" (Schwanken eines Sensors ist kein Laden)
     assert by_name["Roboter"]["charging"] is None
     # Lademeldung am Roboter eingeschaltet: derselbe Anstieg zählt jetzt
@@ -459,3 +459,40 @@ def test_eta_in_charging_dict(hass: HomeAssistant) -> None:
     # Nach "voll" sind die Messpunkte weg
     n.step("d", 100, t0 + 4000, OPTS)
     assert "pts" not in n._state["d"]
+
+
+async def test_capacity_and_power(hass: HomeAssistant) -> None:
+    """Akku-Kapazität am Gerät (2.203.0): Speichern, ungültige Werte, "rechargeable", geschätzte Leistung ins Akku, Zurücksetzen mit der Lademeldung."""
+    import pytest  # noqa: PLC0415
+    import voluptuous as vol  # noqa: PLC0415
+    from custom_components.device_panel.devices import (  # noqa: PLC0415
+        _charging, async_device_overrides, async_list_devices, async_reset_device_settings, device_settings, valid_charge_wh,
+    )
+
+    await _setup(hass, notify_charge=True)
+    device, entity = _device(hass, "Saugroboter", level=40)
+    await hass.data[DATA_CHARGE].async_rebuild()
+    assert valid_charge_wh(60) and valid_charge_wh(12.5) and not valid_charge_wh(0) and not valid_charge_wh(True) and not valid_charge_wh("60") and not valid_charge_wh(9999)
+    await async_set_device_settings(hass, device.id, charge_wh=59.94)
+    assert device_settings(hass)["charge_wh"] == {device.id: 59.9}
+    by_name = {d["name"]: d for d in (await async_list_devices(hass))["devices"]}
+    assert by_name["Saugroboter"]["charge_wh_setting"] == 59.9 and by_name["Saugroboter"]["rechargeable"] is True
+    # Leistung: 1,2 Punkte pro Minute bei 60 Wh = 0,72 Wh pro Minute = 43,2 W
+    watcher = hass.data[DATA_CHARGE]
+    entries = er.async_entries_for_device(er.async_get(hass), device.id)
+    now = time.time()
+    watcher._state[device.id].update(min=40, min_at=now - 1800, last=76, up_at=now, pts=[[now - 1800, 40], [now - 900, 58], [now, 76]])
+    from custom_components.device_panel.options_api import effective  # noqa: PLC0415
+
+    opts = effective(hass)
+    info = _charging(hass, opts, device, entries, now)
+    assert info is not None and info["rate"] == 1.2 and info["power_w"] == round(1.2 / 100 * 59.9 * 60, 1)
+    # Ohne Kapazität keine Leistung
+    await async_set_device_settings(hass, device.id, charge_wh=None)
+    assert _charging(hass, opts, device, entries, now)["power_w"] is None
+    # Übersicht der eigenen Werte und Zurücksetzen gehören zur Lademeldung
+    await async_set_device_settings(hass, device.id, charge_wh=60)
+    own = await async_device_overrides(hass)
+    assert own["charge"][0]["value"] == {"wh": 60.0}
+    assert (await async_reset_device_settings(hass, [], [], charge=[device.id]))["charge"] == 1
+    assert device_settings(hass)["charge_wh"] == {}

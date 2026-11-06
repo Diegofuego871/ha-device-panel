@@ -7,6 +7,14 @@ All notable changes to this integration are documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/).
 
+## [2.203.0] - 2026-11-06
+
+The battery capacity of a device can be entered, and the charging tile then estimates the power.
+
+### Added
+
+- **Device, setting "Battery capacity" (Wh):** In the device pop-up under Settings › Battery a field for the capacity of the battery in watt-hours (point or comma, 0.1 to 5000, one decimal) appears as soon as the device can be charged (charging notification on, or an own charging display). It applies to this device only; an empty field means not set. With the capacity the tile "Charging" shows "≈ 43 W into the battery (estimated)": speed in points per minute × capacity, measured over the same window as the time left. This is the power that arrives in the battery, without the losses of the charger, and an estimate (steps of the level, ageing of the battery). If the value is set, the overview of the device shows a small tile "Battery capacity". The value is part of the device settings: overview of own values, reset (together with the charging values of the device), backup and restore. Without a capacity nothing changes.
+
 ## [2.202.0] - 2026-11-06
 
 The device pop-up shows how long a charge still takes.
@@ -5749,6 +5757,7 @@ First pre-release.
   GitHub Actions for HACS/hassfest validation and tests.
 
 [2.6.0]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v2.6.0
+[2.203.0]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v2.203.0
 [2.202.0]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v2.202.0
 [2.201.0]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v2.201.0
 [2.200.0]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v2.200.0

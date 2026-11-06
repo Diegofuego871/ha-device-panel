@@ -583,7 +583,7 @@
       charge: devices
         .map((d) => {
           const v = {};
-          for (const [key, short] of [["charge", "on"], ["chargeFull", "full"], ["chargeRise", "rise"], ["chargeStall", "stall"], ["chargeStop", "stop"], ["chargeLive", "live"]]) if (d.id in s[key]) v[short] = s[key][d.id];
+          for (const [key, short] of [["charge", "on"], ["chargeFull", "full"], ["chargeRise", "rise"], ["chargeStall", "stall"], ["chargeStop", "stop"], ["chargeLive", "live"], ["chargeWh", "wh"]]) if (d.id in s[key]) v[short] = s[key][d.id];
           return Object.keys(v).length ? { ...info(d), value: v } : null;
         })
         .filter(Boolean)
@@ -730,7 +730,7 @@
   const EMOJI_DEFAULTS = { outage: "🔴", group: "🚨", online: "🟢", battery: "🪫", charge: "🔋", charge_stop: "🔌", new: "✨", updates: "⬆️" };
   window.__services = [];
   // Einstellungen pro Gerät (Batterie, Meldungen), wie .storage/device_panel.devices.
-  window.__devSettings = { battery: {}, notifyOff: new Set(), mute: {}, signal: {}, offline: {}, notifyDelay: {}, flaky: {}, lconn: {}, charge: {}, chargeLive: {}, chargeFull: {}, chargeRise: {}, chargeStall: {}, chargeStop: {}, livenessExclude: {} };
+  window.__devSettings = { battery: {}, notifyOff: new Set(), mute: {}, signal: {}, offline: {}, notifyDelay: {}, flaky: {}, lconn: {}, charge: {}, chargeLive: {}, chargeFull: {}, chargeRise: {}, chargeStall: {}, chargeStop: {}, chargeWh: {}, livenessExclude: {} };
   window.__connOverrides = {};
   // Labels von Home Assistant (seit 2.155.0): window.__labels = [{ id, name }], window.__devLabels = { Geräte-ID: [Label-IDs] }
   window.__labels = [];
@@ -1013,7 +1013,7 @@
         let charge = 0;
         for (const id of new Set(msg.charge || [])) {
           let any = false;
-          for (const key of ["charge", "chargeFull", "chargeRise", "chargeStall", "chargeStop", "chargeLive"]) if (id in s[key]) { delete s[key][id]; any = true; }
+          for (const key of ["charge", "chargeFull", "chargeRise", "chargeStall", "chargeStop", "chargeLive", "chargeWh"]) if (id in s[key]) { delete s[key][id]; any = true; }
           if (any) charge++;
         }
         let notifyDelay = 0;
@@ -1335,6 +1335,12 @@
             else window.__devSettings[store][msg.device_id] = msg[key];
             out[key] = msg[key];
           }
+        }
+        if ("charge_wh" in msg) {
+          if (!(msg.charge_wh === null || (typeof msg.charge_wh === "number" && msg.charge_wh >= 0.1 && msg.charge_wh <= 5000))) throw { code: "invalid_format", message: "charge_wh" };
+          if (msg.charge_wh === null) delete window.__devSettings.chargeWh[msg.device_id];
+          else window.__devSettings.chargeWh[msg.device_id] = msg.charge_wh;
+          out.charge_wh = msg.charge_wh;
         }
         if ("charge_live" in msg) {
           if (!(msg.charge_live === null || typeof msg.charge_live === "boolean")) throw { code: "invalid_format", message: "charge_live" };
@@ -2104,12 +2110,15 @@
             notify_off: window.__devSettings.notifyOff.has(d.id),
             charge_setting: window.__devSettings.charge[d.id] ?? null,
             charge_full_setting: window.__devSettings.chargeFull[d.id] ?? null,
+            // Akku-Kapazität (2.203.0): window.__devSettings.chargeWh; rechargeable: ladendes Gerät oder in window.__rechargeable
+            charge_wh_setting: window.__devSettings.chargeWh[d.id] ?? null,
+            rechargeable: Boolean(window.__charging?.[d.id]) || (window.__rechargeable || []).includes(d.id),
             charge_rise_setting: window.__devSettings.chargeRise[d.id] ?? null,
             charge_stall_setting: window.__devSettings.chargeStall[d.id] ?? null,
             charge_stop_setting: window.__devSettings.chargeStop[d.id] ?? null,
             charge_live_setting: window.__devSettings.chargeLive[d.id] ?? null,
             // Lädt gerade (seit 1.35.0): window.__charging = { Geräte-ID: { level, from, ago (Sekunden) } }
-            charging: window.__charging?.[d.id] ? { level: window.__charging[d.id].level, from: window.__charging[d.id].from ?? null, since: new Date(Date.now() - (window.__charging[d.id].ago ?? 3600) * 1000).toISOString(), full: window.__devSettings.chargeFull[d.id] ?? window.__opts.charge_full, source: "level", eta: window.__charging[d.id].eta_min != null ? new Date(Date.now() + window.__charging[d.id].eta_min * 60000).toISOString() : null, rate: window.__charging[d.id].rate ?? null } : null,
+            charging: window.__charging?.[d.id] ? { level: window.__charging[d.id].level, from: window.__charging[d.id].from ?? null, since: new Date(Date.now() - (window.__charging[d.id].ago ?? 3600) * 1000).toISOString(), full: window.__devSettings.chargeFull[d.id] ?? window.__opts.charge_full, source: "level", eta: window.__charging[d.id].eta_min != null ? new Date(Date.now() + window.__charging[d.id].eta_min * 60000).toISOString() : null, rate: window.__charging[d.id].rate ?? null, power_w: window.__charging[d.id].rate && window.__devSettings.chargeWh[d.id] ? Math.round(window.__charging[d.id].rate / 100 * window.__devSettings.chargeWh[d.id] * 60 * 10) / 10 : null } : null,
             charge_default: { live: (window.__opts.charge_live_integrations || {})[d.integration?.domain] ?? Boolean(window.__opts.charge_live), live_integration: (window.__opts.charge_live_integrations || {})[d.integration?.domain] != null ? d.integration.domain : null, stall: (window.__opts.charge_stall_integrations || {})[d.integration?.domain] ?? window.__opts.charge_stall, stall_integration: (window.__opts.charge_stall_integrations || {})[d.integration?.domain] != null ? d.integration.domain : null, stop: (window.__opts.charge_stop_integrations || {})[d.integration?.domain] ?? Boolean(window.__opts.notify_charge_stop), stop_integration: (window.__opts.charge_stop_integrations || {})[d.integration?.domain] != null ? d.integration.domain : null, full: (window.__opts.charge_full_integrations || {})[d.integration?.domain] ?? window.__opts.charge_full, rise: (window.__opts.charge_rise_integrations || {})[d.integration?.domain] ?? window.__opts.charge_rise, full_integration: (window.__opts.charge_full_integrations || {})[d.integration?.domain] != null ? d.integration.domain : null, rise_integration: (window.__opts.charge_rise_integrations || {})[d.integration?.domain] != null ? d.integration.domain : null, on: Boolean(window.__opts.notify_charge) && (window.__opts.charge_integrations || []).includes(d.integration?.domain), integration: (window.__opts.charge_integrations || []).includes(d.integration?.domain) ? d.integration.domain : null },
             notify_mute_until: window.__devSettings.mute[d.id] || null,
             signal_setting: window.__devSettings.signal[d.id] ?? null,
