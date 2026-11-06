@@ -1,0 +1,76 @@
+<!doctype html>
+<html lang="de"><head><meta charset="utf-8"><title>Ladungen: Kachel und Fenster, drei Varianten</title>
+<style>
+:root{--bg:#121212;--card:#1c1c1c;--card2:#242424;--text:#e6e6e6;--t2:#a8a8a8;--t3:#7d7d7d;--div:#3a3a3a;--ok:#4caf6e;--warn:#f5a623;--pri:#03a9f4}
+*{box-sizing:border-box}
+body{margin:0;background:#0b0b0b;color:var(--text);font:15px/1.4 -apple-system,Segoe UI,Roboto,sans-serif;padding:24px}
+h1{font-size:18px;font-weight:500;margin:0 0 4px}.sub{color:var(--t2);margin:0 0 18px;font-size:13px;max-width:1200px}
+.row{display:flex;gap:24px;align-items:flex-start}
+.col{width:358px;flex:none}.col h2{font-size:14px;margin:0 0 4px;font-weight:600}.col .why{font-size:12px;color:var(--t2);margin:0 0 10px;min-height:64px}.rec{color:var(--ok)}
+.phone{background:var(--card);border-radius:18px;padding:14px}
+.head{display:flex;gap:12px;align-items:center;margin-bottom:12px}
+.av{width:44px;height:44px;border-radius:13px;background:color-mix(in srgb,var(--ok) 18%,var(--card));display:grid;place-items:center;color:var(--ok);font-size:22px}
+.head b{font-size:21px;font-weight:700;display:block;line-height:1.1}.head small{color:var(--t2);font-size:13px}
+.x{margin-left:auto;width:38px;height:38px;border-radius:50%;border:1px solid var(--div);display:grid;place-items:center;color:var(--t2)}
+.sec{font-size:12px;letter-spacing:.06em;text-transform:uppercase;color:var(--t2);margin:0 0 8px}
+.card{background:var(--bg);border:1px solid var(--div);border-radius:14px;padding:10px 12px}
+.t{position:relative;min-height:70px}.t small{display:block;color:var(--t3);font-size:12px}.t .v{font-size:20px;margin:2px 0}.t .v i{font-style:normal;font-size:12px;color:var(--t2)}
+.go{position:absolute;right:8px;bottom:8px;width:24px;height:24px;border-radius:50%;border:1.5px solid var(--ok);color:var(--ok);display:grid;place-items:center;font-size:13px}
+.grid2{display:grid;grid-template-columns:1fr 1fr;gap:8px}
+.stats{display:grid;grid-template-columns:repeat(4,1fr);gap:6px;margin:10px 0}
+.stat{background:var(--card2);border-radius:10px;padding:6px 8px}.stat small{display:block;color:var(--t3);font-size:10.5px}.stat b{font-size:13px;font-weight:500;white-space:nowrap}
+svg{display:block;width:100%;height:auto}
+.axis text{fill:var(--t3);font-size:10px}
+.list{margin-top:8px}.li{display:flex;align-items:center;gap:10px;padding:9px 10px;border-radius:10px;font-size:13px}
+.li.on{background:color-mix(in srgb,var(--ok) 14%,var(--card2));box-shadow:inset 0 0 0 1px color-mix(in srgb,var(--ok) 50%,transparent)}
+.li .d{flex:1;min-width:0}.li .d b{white-space:nowrap}.li .d small{display:block;color:var(--t3);font-size:11px}.li .w{color:var(--text);font-weight:500}.li .p{color:var(--t2);font-size:12px;min-width:74px;text-align:right}
+.legend{display:flex;gap:12px;font-size:11px;color:var(--t2);margin-top:4px}.legend i{display:inline-block;width:14px;height:3px;border-radius:2px;vertical-align:middle;margin-right:4px}
+.note{font-size:11px;color:var(--t3);margin-top:6px}
+</style></head><body>
+<h1>Ladungen: Kachel in der Übersicht und Fenster mit Grafik, drei Varianten</h1>
+<p class="sub">Erfundene Daten (Staubsauger-Roboter, Akku 97 Wh, die letzten 5 Ladungen). Die Kachel steht bei Geräten mit Ladeerkennung neben "Batterie"; ein Tipp öffnet das Fenster. Die Watt-Kurve gibt es nur mit eingetragener Akku-Kapazität, sonst bleibt die Prozent-Kurve. Alle Zahlen sind Schätzungen aus den Messpunkten.</p>
+<div class="row" id="root"></div>
+<script>
+const charges=[
+ {d:"Mi., 4.11., 22:30",from:19,to:80,min:62,avg:41,peak:58,pts:[[0,19],[6,24],[12,31],[18,38],[24,45],[30,52],[36,58],[42,64],[48,69],[54,74],[58,77],[62,80]]},
+ {d:"Mo., 2.11., 14:30",from:40,to:80,min:44,avg:44,peak:60,pts:[[0,40],[6,48],[12,56],[18,63],[24,69],[30,73],[36,77],[44,80]]},
+ {d:"Fr., 30.10., 12:30",from:29,to:80,min:57,avg:42,peak:57,pts:[[0,29],[8,38],[16,47],[24,55],[32,62],[40,68],[48,73],[57,80]]},
+ {d:"Mi., 28.10., 12:30",from:37,to:80,min:49,avg:43,peak:59,pts:[[0,37],[7,46],[14,54],[21,62],[28,68],[35,73],[42,77],[49,80]]},
+ {d:"Mo., 26.10., 13:30",from:33,to:80,min:52,avg:42,peak:58,pts:[[0,33],[8,42],[16,50],[24,58],[32,65],[40,71],[46,76],[52,80]]},
+];
+const WH=97;
+const watt=(c)=>c.pts.slice(1).map((p,i)=>{const q=c.pts[i];return [(p[0]+q[0])/2,(p[1]-q[1])/100*WH*60/(p[0]-q[0])]});
+function chart(c,opts={}){
+  const W=330,H=opts.h||150,L=40,R=10,T=8,B=20;const xmax=Math.max(...charges.map(x=>x.min))+2;
+  const sx=m=>L+(W-L-R)*m/xmax, sy=v=>T+(H-T-B)*(1-v/100);
+  let s=`<svg viewBox="0 0 ${W} ${H}"><g class="axis">`;
+  for(const v of [0,50,100]) s+=`<line x1="${L}" x2="${W-R}" y1="${sy(v)}" y2="${sy(v)}" stroke="#2f2f2f"/><text x="${L-4}" y="${sy(v)+3}" text-anchor="end">${v} %</text>`;
+  for(const m of [0,20,40,60]) s+=`<text x="${sx(m)}" y="${H-5}" text-anchor="middle">${m} Min.</text>`;
+  s+=`</g>`;
+  const path=pts=>pts.map((p,i)=>(i?"L":"M")+sx(p[0]).toFixed(1)+","+sy(p[1]).toFixed(1)).join("");
+  if(opts.all){charges.slice(1).forEach(o=>{s+=`<path d="${path(o.pts)}" fill="none" stroke="#6b7f72" stroke-width="1.4" opacity=".55"/>`});}
+  s+=`<path d="${path(c.pts)}L${sx(c.pts.at(-1)[0])},${sy(0)}L${sx(0)},${sy(0)}Z" fill="#4caf6e" opacity=".16"/><path d="${path(c.pts)}" fill="none" stroke="#4caf6e" stroke-width="2.4"/>`;
+  c.pts.forEach(p=>s+=`<circle cx="${sx(p[0])}" cy="${sy(p[1])}" r="2.4" fill="#4caf6e"/>`);
+  if(opts.watt){const w=watt(c);const wy=v=>T+(H-T-B)*(1-v/80);const wp=w.map((p,i)=>(i?"L":"M")+sx(p[0]).toFixed(1)+","+wy(p[1]).toFixed(1)).join("");s+=`<path d="${wp}" fill="none" stroke="#f5a623" stroke-width="2" stroke-dasharray="5 3"/>`;}
+  return s+`</svg>`;
+}
+function wattBars(c){
+  const W=330,H=70,L=40,R=10,T=6,B=16;const xmax=c.min+2;const w=watt(c);const sx=m=>L+(W-L-R)*m/xmax;
+  let s=`<svg viewBox="0 0 ${W} ${H}"><g class="axis"><text x="${L-4}" y="${T+8}" text-anchor="end">60 W</text><text x="${L-4}" y="${H-B+2}" text-anchor="end">0</text></g>`;
+  w.forEach((p,i)=>{const a=c.pts[i],b=c.pts[i+1];const h=(H-T-B)*Math.min(1,p[1]/60);s+=`<rect x="${sx(a[0])+1}" y="${H-B-h}" width="${sx(b[0])-sx(a[0])-2}" height="${h}" rx="2" fill="#f5a623" opacity=".85"/>`});
+  return s+`</svg>`;
+}
+const stats=c=>`<div class="stats"><div class="stat"><small>Dauer</small><b>${c.min} Min.</b></div><div class="stat"><small>Stand</small><b>${c.from}→${c.to} %</b></div><div class="stat"><small>Ø Leistung</small><b>≈ ${c.avg} W</b></div><div class="stat"><small>Spitze</small><b>≈ ${c.peak} W</b></div></div>`;
+const list=(sel,compact)=>`<div class="list">${charges.map((c,i)=>`<div class="li${i===sel?" on":""}"><div class="d"><b style="font-weight:500">${c.d}</b>${compact?"":`<small>${c.from} % → ${c.to} % · ${c.min} Min.</small>`}</div>${compact?`<span class="p">${c.from} → ${c.to} %</span><span class="p">${c.min} Min.</span>`:""}<span class="w">≈ ${c.avg} W</span></div>`).join("")}</div>`;
+const tile=`<div class="sec">Statistik</div><div class="grid2"><div class="card t"><small>Batterie</small><div class="v">🔋 75 <i>%</i></div><small>Verlauf</small><span class="go">›</span></div><div class="card t"><small>Ladungen</small><div class="v">5</div><small>zuletzt 4.11.</small><span class="go">›</span></div></div>`;
+const head=`<div class="head"><div class="av">🔋</div><div><b>Ladungen</b><small>Dyson v16 Piston</small></div><span class="x">✕</span></div>`;
+const root=document.getElementById("root");
+const col=(t,rec,why,body)=>`<div class="col"><h2 class="${rec?"rec":""}">${t}</h2><p class="why">${why}</p>${body}</div>`;
+root.innerHTML=
+col("A · Grafik oben, Liste darunter (Empfehlung)",1,"Ein Tipp auf eine Ladung zeigt oben ihre Kurve (Stand in Grün, Leistung gestrichelt in Orange) und vier Kennzahlen. Darunter die fünf Ladungen nach Datum. Klar und passt zu den Unterseiten Batterie und Empfang.",
+ `<div class="phone">${tile}</div><div style="height:12px"></div><div class="phone">${head}<div class="card">${chart(charges[0],{watt:1})}<div class="legend"><span><i style="background:#4caf6e"></i>Stand</span><span><i style="background:#f5a623"></i>Leistung (≈, geschätzt)</span></div></div>${stats(charges[0])}${list(0)}<p class="note">Die Leistung ist die, die im Akku ankommt, geschätzt aus dem Anstieg und der Akku-Kapazität (97 Wh).</p></div>`)+
+col("B · Zwei Felder: Stand und Leistung",0,"Die Kurve für den Stand oben, darunter die Leistung als Balken je Messintervall. Zeigt gut, wo das Gerät langsamer wird (gegen Ende). Etwas höher, aber die Watt sind leichter abzulesen.",
+ `<div class="phone">${tile}</div><div style="height:12px"></div><div class="phone">${head}<div class="card">${chart(charges[0],{h:120})}<div class="sec" style="margin:6px 0 2px">Leistung ≈ W</div>${wattBars(charges[0])}</div>${stats(charges[0])}${list(0,1)}</div>`)+
+col("C · Alle fünf übereinander",0,"Die gewählte Ladung ist kräftig, die anderen vier blass darunter. So sieht man sofort, ob eine Ladung langsamer war als sonst. Gut zum Vergleichen, die Watt stehen nur in der Liste.",
+ `<div class="phone">${tile}</div><div style="height:12px"></div><div class="phone">${head}<div class="card">${chart(charges[2],{all:1})}<div class="legend"><span><i style="background:#4caf6e"></i>gewählte Ladung</span><span><i style="background:#6b7f72"></i>die anderen vier</span></div></div>${stats(charges[2])}${list(2)}</div>`);
+</script></body></html>
