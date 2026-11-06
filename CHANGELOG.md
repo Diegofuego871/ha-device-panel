@@ -7,7 +7,19 @@ All notable changes to this integration are documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/).
 
+## [2.202.0] - 2026-11-06
+
+The device pop-up shows how long a charge still takes.
+
+Includes the changes from 2.201.1.
+
+### Added
+
+- **Device pop-up, tile "Charging":** While a device charges, a wide tile stands above the statistics: the level, a bar with the target ("Full from"), "about 25 min left", the time it will be done ("done around 14:35") and the speed ("+1.2 % / min"). The time left is the same estimate as in the live activity: it appears once the time and the rise measured so far are enough, until then the tile says that it follows. The battery tile shows "charging · 25 min left" (before: "charging for ...", and the bar, which is now in the new tile). The measuring points of the charge are now also collected without the live activity; they are dropped when the device is full. Nothing new to set.
+
 ## [2.201.1] - 2026-11-06
+
+Not released; included in 2.202.0.
 
 The log over all devices shows which routine ran and on which device.
 
@@ -5737,7 +5749,7 @@ First pre-release.
   GitHub Actions for HACS/hassfest validation and tests.
 
 [2.6.0]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v2.6.0
-[2.201.1]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v2.201.1
+[2.202.0]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v2.202.0
 [2.201.0]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v2.201.0
 [2.200.0]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v2.200.0
 [2.199.0]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v2.199.0

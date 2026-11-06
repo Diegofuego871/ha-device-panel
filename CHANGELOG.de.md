@@ -7,7 +7,19 @@ Alle nennenswerten Änderungen an dieser Integration stehen in dieser Datei.
 Das Format folgt [Keep a Changelog](https://keepachangelog.com/de/1.1.0/),
 die Versionsnummern folgen [Semantic Versioning](https://semver.org/lang/de/).
 
+## [2.202.0] - 2026-11-06
+
+Das Geräte-Popup zeigt, wie lange eine Ladung noch dauert.
+
+Enthält die Änderungen von 2.201.1.
+
+### Hinzugefügt
+
+- **Geräte-Popup, Kachel "Lädt":** Während ein Gerät lädt, steht über der Statistik eine breite Kachel: der Stand, ein Balken mit dem Ziel ("Voll ab"), "noch etwa 25 Min.", die Uhrzeit, zu der es fertig ist ("fertig gegen 14:35"), und das Tempo ("+1,2 % / Min."). Die Restzeit ist dieselbe Schätzung wie in der Live-Aktivität: Sie erscheint, sobald die bisher gemessene Zeit und der Anstieg genügen, bis dahin sagt die Kachel, dass sie folgt. Die Batterie-Kachel zeigt "lädt · noch 25 Min." (vorher "lädt seit ..." und der Balken, der jetzt in der neuen Kachel steht). Die Messpunkte der Ladung werden jetzt auch ohne Live-Aktivität gesammelt; sie entfallen, sobald das Gerät voll ist. Nichts Neues einzustellen.
+
 ## [2.201.1] - 2026-11-06
+
+Nicht veröffentlicht; enthalten in 2.202.0.
 
 Das Protokoll über alle Geräte zeigt, welche Routine auf welchem Gerät lief.
 
@@ -5838,7 +5850,7 @@ Erste Vorabversion.
   GitHub Actions für die Prüfungen von HACS und hassfest sowie die Tests.
 
 [2.6.0]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v2.6.0
-[2.201.1]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v2.201.1
+[2.202.0]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v2.202.0
 [2.201.0]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v2.201.0
 [2.200.0]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v2.200.0
 [2.199.0]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v2.199.0

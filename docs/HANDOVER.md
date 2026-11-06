@@ -3,6 +3,11 @@
 Einstieg für jede neue Claude-Code-Session. Zuerst diese Datei lesen, dann
 `CLAUDE.md`, `docs/CONCEPT.md`, `docs/LEARNINGS.md`, `docs/DESIGN.md`.
 
+## Stand (2.202.0, Kachel "Lädt" mit Restzeit)
+
+- `charge.py`: `_state[dev]["pts"]` (Messpunkte der laufenden Ladung, höchstens `ETA_POINTS_MAX`, weg nach "voll"), `_eta()` mit `estimate_finish` (gleiche Schätzung wie die Live-Aktivität) in `charging()`/`charging_of()` als `eta`, `rate`; `devices._charging` gibt sie als ISO bzw. Punkte/Min. weiter.
+- `device-panel.js` `_chargeTileHtml` (breit über `.st-tiles`, Mockup `docs/mockups/charging-tile-v1`, A), Batterie-Kachel "lädt · noch …"; Suite `chargetile-e2e`, Test `test_eta_in_charging_dict`; Simulator `__charging[id].eta_min/rate`.
+
 ## Stand (2.201.1, Protokoll: Name und Gerät in den Zeilen)
 
 - `protocol.js` `rowWho`/`itemDevice`: unter der Aktion (Routinen) bzw. dem Titel (Magic Push) der Name, in der Liste über alle Geräte auch das Gerät (aus `s.items`: `device_id`, sonst Entität).

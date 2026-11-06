@@ -454,6 +454,16 @@ tr.dev.flaky td:first-child { box-shadow: inset 4px 0 0 var(--dp-warning); }
 .chg-bar { display: block; position: relative; height: 6px; margin-top: 6px; border-radius: 3px; background: var(--dp-bar-off); overflow: hidden; }
 .chg-bar i { position: absolute; inset: 0 auto 0 0; border-radius: 3px; background: var(--dp-success); }
 .chg-sub { display: block; margin-top: 2px; }
+/* Kachel "Lädt" im Geräte-Popup (seit 2.202.0, docs/mockups/charging-tile-v1, A): breit über den Statistik-Kacheln */
+.st-tile.chg-tile { position: relative; display: block; width: 100%; margin-bottom: 8px; text-align: left; background: color-mix(in srgb, var(--dp-success) 10%, var(--dp-bg)); border-color: color-mix(in srgb, var(--dp-success) 45%, var(--dp-divider)); }
+.chg-tile .chg-head { display: flex; align-items: baseline; gap: 10px; flex-wrap: wrap; }
+.chg-tile .chg-n { display: inline-flex; align-items: center; gap: 6px; font-size: 30px; font-weight: 500; color: var(--dp-text); }
+.chg-tile .chg-n small { font-size: 14px; color: var(--dp-text2); font-weight: 400; }
+.chg-tile .chg-n svg { color: var(--dp-success); }
+.chg-tile .chg-e { font-size: 15px; font-weight: 500; color: var(--dp-success); }
+.chg-tile .chg-e.wait { font-size: 13px; font-weight: 400; color: var(--dp-text2); }
+.chg-tile .chg-bar { margin-top: 18px; }
+.chg-tile .chg-meta { display: flex; justify-content: space-between; gap: 10px; margin-top: 8px; padding-right: 30px; font-size: 12px; color: var(--dp-text2); }
 /* Ziel unter 100 %: Rest schraffiert, Strich und Zahl am Ziel (die Zahl steht über dem Balken, daher Platz oben) */
 .chg-bar.has-goal { overflow: visible; margin-top: 15px; }
 .chg-bar i { z-index: 1; }

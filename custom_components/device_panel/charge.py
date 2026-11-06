@@ -256,7 +256,7 @@ class ChargeNotifier:
         rise = opts[CONF_CHARGE_RISE]
         st = self._state.get(dev)
         if st is None:
-            self._state[dev] = {"min": level, "min_at": now, "last": level, "peak": level, "done": level >= full}
+            self._state[dev] = {"min": level, "min_at": now, "last": level, "peak": level, "done": level >= full, **({} if level >= full else {"pts": [[now, level]]})}
             self._save()
             return None
         prev = st["last"]
@@ -285,6 +285,16 @@ class ChargeNotifier:
                     result = {"level": level, "start": st["min"], "seconds": max(0.0, now - st["min_at"])}
                 else:
                     result = {"level": level, "start": prev, "seconds": None}
+        # Messpunkte der laufenden Ladung für die Restzeit im Panel (seit 2.202.0); eine neue Ladung (neuer Tiefpunkt) beginnt neu, nach "voll" entfallen sie
+        if st.get("done"):
+            st.pop("pts", None)
+        else:
+            pts = st.setdefault("pts", [])
+            if st["min_at"] == now:
+                pts.clear()
+            if not pts or pts[-1][1] != level:
+                pts.append([now, level])
+                del pts[:-ETA_POINTS_MAX]
         self._save()
         return result
 
@@ -352,7 +362,14 @@ class ChargeNotifier:
         up = st.get("up_at")
         if up is None or now - up > CHARGE_STALE:
             return None
-        return {"level": st["last"], "from": st["min"], "since": st["min_at"], "full": opts[CONF_CHARGE_FULL], "source": "level"}
+        return {"level": st["last"], "from": st["min"], "since": st["min_at"], "full": opts[CONF_CHARGE_FULL], "source": "level", **self._eta(st, opts[CONF_CHARGE_FULL], now)}
+
+    @staticmethod
+    def _eta(st: dict[str, Any] | None, full: float, now: float) -> dict[str, Any]:
+        """Restzeit der laufenden Ladung (gleiche Schätzung wie die Live-Aktivität): {"eta": Zeitpunkt, "rate": Punkte pro Minute}; leer, solange sie nicht trägt."""
+        pts = st.get("pts") if st else None
+        est = estimate_finish(pts, st["last"], full, now) if pts and st else None
+        return {"eta": est[0], "rate": est[1]} if est else {"eta": None, "rate": None}
 
     def charging_of(self, device: dr.DeviceEntry, entries: list[er.RegistryEntry], now: float, opts: dict[str, Any]) -> dict[str, Any] | None:
         """
@@ -369,7 +386,7 @@ class ChargeNotifier:
                 return None
             st = self._state.get(device.id)
             full = device_charge_opts(self.hass, opts, device.id)[CONF_CHARGE_FULL]
-            return {"level": st["last"] if st else None, "from": None, "since": state.last_changed.timestamp(), "full": full, "source": "entity"}
+            return {"level": st["last"] if st else None, "from": None, "since": state.last_changed.timestamp(), "full": full, "source": "entity", **self._eta(st, full, now)}
         if not self.enabled(opts, self.hass, device):
             return None
         return self.charging(device.id, now, device_charge_opts(self.hass, opts, device.id))

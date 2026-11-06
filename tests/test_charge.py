@@ -158,7 +158,7 @@ def test_charging_by_level_rise_then_full_or_drop() -> None:
     assert n.charging("d", 300, OPTS) is None  # Anstieg 8 < 20
     n.step("d", 50, 400, OPTS)
     info = n.charging("d", 400, OPTS)
-    assert info == {"level": 50, "from": 22, "since": 200, "full": 100, "source": "level"}
+    assert info == {"level": 50, "from": 22, "since": 200, "full": 100, "source": "level", "eta": None, "rate": None}  # Restzeit trägt noch nicht (seit 2.202.0)
     # Lange ohne Anstieg: unbekannt, nicht mehr "lädt"
     assert n.charging("d", 400 + 3 * 3600, OPTS) is None
     # Entladen (fünf Punkte unter dem Höchststand): der Tiefpunkt beginnt neu
@@ -196,7 +196,7 @@ async def test_charging_flag_in_list_and_entity_wins(hass: HomeAssistant) -> Non
         hass.states.async_set(ent, "55", {"device_class": "battery", "unit_of_measurement": "%"})
     await hass.async_block_till_done()
     by_name = {d["name"]: d for d in (await async_list_devices(hass))["devices"]}
-    assert by_name["Handy"]["charging"] == {"level": 55, "from": 20, "since": by_name["Handy"]["charging"]["since"], "full": 100, "source": "level"}
+    assert by_name["Handy"]["charging"] == {"level": 55, "from": 20, "since": by_name["Handy"]["charging"]["since"], "full": 100, "source": "level", "eta": None, "rate": None}
     # Gleicher Anstieg, aber Lademeldung aus: nie "lädt" (Schwanken eines Sensors ist kein Laden)
     assert by_name["Roboter"]["charging"] is None
     # Lademeldung am Roboter eingeschaltet: derselbe Anstieg zählt jetzt
@@ -440,3 +440,22 @@ async def test_unchanged_level_is_not_logged_again(hass: HomeAssistant) -> None:
     await hass.async_block_till_done()
     texts = [e["text"] for e in activity.snapshot(hass)["entries"] if e["title"] == "Eve Tür" and e["cat"] == "charge"]
     assert len([t for t in texts if t.startswith("level 100 %")]) == 0 and len([t for t in texts if t.startswith("level 99 %")]) == 1
+
+
+def test_eta_in_charging_dict(hass: HomeAssistant) -> None:
+    """Restzeit der laufenden Ladung im Panel (2.202.0): Messpunkte werden gesammelt, die Schätzung kommt erst, wenn sie trägt, und entfällt nach "voll"."""
+    n = ChargeNotifier(hass)
+    t0 = 1000.0
+    n.step("d", 40, t0, OPTS)
+    assert n.charging("d", t0, OPTS) is None
+    # 10 Minuten später 8 Punkte mehr: Anstieg und Zeitraum genügen (Anstieg 8 >= Schwelle), Tempo 0,8 Punkte pro Minute
+    n.step("d", 48, t0 + 600, OPTS)
+    info = n.charging("d", t0 + 600, OPTS)
+    if info is None:  # Schwelle für "lädt" (Anstieg) noch nicht erreicht: weiter steigen lassen
+        n.step("d", 60, t0 + 1200, OPTS)
+        info = n.charging("d", t0 + 1200, OPTS)
+    assert info is not None and info["eta"] is not None and info["rate"] > 0
+    assert info["eta"] > info["since"]
+    # Nach "voll" sind die Messpunkte weg
+    n.step("d", 100, t0 + 4000, OPTS)
+    assert "pts" not in n._state["d"]

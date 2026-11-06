@@ -4525,6 +4525,23 @@ class DevicePanel extends HTMLElement {
     return `<div class="tile${cls ? ` ${cls}` : ""}"><div class="tile-k">${escape(label)}</div><div class="tile-v">${valueHtml}</div></div>`;
   }
 
+  // Kachel "Lädt" über den Statistik-Kacheln (seit 2.202.0, docs/mockups/charging-tile-v1, A): Stand, Balken mit Ladeziel, Restzeit (die Schätzung der
+  // Live-Aktivität, erst wenn sie trägt) und Uhrzeit; ein Tipp öffnet den Batterie-Verlauf
+  _chargeTileHtml(d) {
+    const c = d.charging;
+    if (!c || c.level == null || !d.battery) return "";
+    const t = (k, ...a) => this._t(k, ...a);
+    const eta = c.eta ? Date.parse(c.eta) / 1000 : null;
+    const left = eta ? Math.max(60, eta - Date.now() / 1000) : null;
+    const rate = c.rate != null && c.rate > 0 ? this._fmtPct(c.rate) : "";
+    const main = left != null ? t("chgTileLeft", this._fmtSeconds(left)) : t("chgTileWait");
+    return `<button type="button" class="st-tile chg-tile" data-dlg="stat" data-range="30d" data-kind="battery">
+      <span class="chg-head"><span class="chg-n">${mdi("batteryCharging", 20)}${escape(String(c.level))}<small>%</small></span><span class="chg-e${left == null ? " wait" : ""}">${escape(main)}</span></span>
+      ${this._chargeBarHtml(c)}
+      <span class="chg-meta"><span>${escape(t("chgTileMeta", this._duration(c.since), rate))}</span>${eta ? `<span>${escape(t("chgTileDone", this._fmtTime(eta)))}</span>` : ""}</span>
+      <span class="cbtn chev" aria-hidden="true">${mdi("chevron", 16)}</span></button>`;
+  }
+
   _statTilesHtml(d) {
     const detail = this._detail?.id === d.id ? this._detail.data : null;
     // 24 Std. kommt schon mit der Liste, 7 Tage erst mit dem Popup.
@@ -4565,8 +4582,9 @@ class DevicePanel extends HTMLElement {
       const b = d.battery;
       const value = `${batIcon(b, 18)}${b.level != null ? `${escape(String(b.level))}<small>%</small>` : escape(b.low ? this._t("batteryLow") : "OK")}`;
       // Mit Prozent: Tipp öffnet den Verlauf; "schwach ja/nein" nur als Kachel.
-      const chg = d.charging ? this._t("chargingSince", this._duration(d.charging.since)) : null;
-      if (b.level != null) tiles.push(this._statTile("30d", this._t("tileBattery"), d.charging ? `${mdi("batteryCharging", 18)}${escape(String(b.level))}<small>%</small>` : value, chg || (b.low ? this._t("batteryLow") : this._t("batHistoryHint")), "battery", b.low, b.low, d.charging ? this._chargeBarHtml({ ...d.charging, level: b.level }) : ""));
+      const left = d.charging?.eta ? Math.max(60, Date.parse(d.charging.eta) / 1000 - Date.now() / 1000) : null;
+      const chg = d.charging ? (left != null ? this._t("chargingLeft", this._fmtSeconds(left)) : this._t("chargingSince", this._duration(d.charging.since))) : null;
+      if (b.level != null) tiles.push(this._statTile("30d", this._t("tileBattery"), d.charging ? `${mdi("batteryCharging", 18)}${escape(String(b.level))}<small>%</small>` : value, chg || (b.low ? this._t("batteryLow") : this._t("batHistoryHint")), "battery", b.low, b.low, ""));
       else tiles.push(this._staticTile(this._t("tileBattery"), value, "", b.low, b.low));
     }
     else if (d.battery_last) {
@@ -4574,7 +4592,7 @@ class DevicePanel extends HTMLElement {
       const l = d.battery_last;
       tiles.push(this._staticTile(this._t("tileBattery"), `${batIcon({ level: l.level, low: false }, 18)}${escape(String(l.level))}<small>%</small>`, this._t("batLastSub", this._batteryLastAge(d))).replace("st-tile static", "st-tile static stale"));
     }
-    return `<div class="st-tiles" style="--n:${tiles.length}">${tiles.join("")}</div>`;
+    return `${this._chargeTileHtml(d)}<div class="st-tiles" style="--n:${tiles.length}">${tiles.join("")}</div>`;
   }
 
   // Verbindungsart: im Reiter "Einstellungen" wählbar, in der Übersicht nur Text (seit 1.37.0).

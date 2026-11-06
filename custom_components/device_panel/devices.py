@@ -696,7 +696,7 @@ def _charging(hass: HomeAssistant, opts: dict[str, Any], device: dr.DeviceEntry,
     info = watcher.charging_of(device, entries, now, opts)
     if info is None:
         return None
-    return {**info, "level": None if info["level"] is None else round(info["level"]), "from": None if info["from"] is None else round(info["from"]), "since": _iso(info["since"])}
+    return {**info, "level": None if info["level"] is None else round(info["level"]), "from": None if info["from"] is None else round(info["from"]), "since": _iso(info["since"]), "eta": _iso(info["eta"]) if info.get("eta") else None, "rate": None if info.get("rate") is None else round(info["rate"], 1)}
 
 
 def has_battery(hass: HomeAssistant, entries: list[er.RegistryEntry]) -> bool:
