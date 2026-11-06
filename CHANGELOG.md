@@ -7,6 +7,14 @@ All notable changes to this integration are documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/).
 
+## [2.201.1] - 2026-11-06
+
+The log over all devices shows which routine ran and on which device.
+
+### Fixed
+
+- **Log, tabs "Routines" and "Magic Push" over all devices:** The rows showed only the time, the trigger, the action and the result, but neither the name of the routine (or message) nor the device. Now the name stands under the action and, in the list over all devices, the device (a scene or group without a device names its entity). If a single routine or message is chosen, the name is left out as before; in the log of one device the device is left out.
+
 ## [2.201.0] - 2026-11-05
 
 The app "Updates" is a full-screen window like "Status" and "Magic Push".
@@ -5729,6 +5737,7 @@ First pre-release.
   GitHub Actions for HACS/hassfest validation and tests.
 
 [2.6.0]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v2.6.0
+[2.201.1]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v2.201.1
 [2.201.0]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v2.201.0
 [2.200.0]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v2.200.0
 [2.199.0]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v2.199.0

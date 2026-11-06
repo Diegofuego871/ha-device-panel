@@ -3,6 +3,10 @@
 Einstieg für jede neue Claude-Code-Session. Zuerst diese Datei lesen, dann
 `CLAUDE.md`, `docs/CONCEPT.md`, `docs/LEARNINGS.md`, `docs/DESIGN.md`.
 
+## Stand (2.201.1, Protokoll: Name und Gerät in den Zeilen)
+
+- `protocol.js` `rowWho`/`itemDevice`: unter der Aktion (Routinen) bzw. dem Titel (Magic Push) der Name, in der Liste über alle Geräte auch das Gerät (aus `s.items`: `device_id`, sonst Entität).
+
 ## Stand (2.201.0, App Updates als Vollbild)
 
 - `updapp.js` `badge()`: bei Apps (`kind` addons) das Symbol aus `states[entity_id].attributes.entity_picture`, nur Pfad mit "/" am Anfang (nie fremde Adresse); Test in `updappall-e2e`.

@@ -7,6 +7,14 @@ Alle nennenswerten Änderungen an dieser Integration stehen in dieser Datei.
 Das Format folgt [Keep a Changelog](https://keepachangelog.com/de/1.1.0/),
 die Versionsnummern folgen [Semantic Versioning](https://semver.org/lang/de/).
 
+## [2.201.1] - 2026-11-06
+
+Das Protokoll über alle Geräte zeigt, welche Routine auf welchem Gerät lief.
+
+### Behoben
+
+- **Protokoll, Reiter "Routinen" und "Magic Push" über alle Geräte:** Die Zeilen zeigten nur Zeit, Auslöser, Aktion und Ergebnis, aber weder den Namen der Routine (oder Meldung) noch das Gerät. Jetzt steht der Name unter der Aktion und in der Liste über alle Geräte auch das Gerät (eine Szene oder Gruppe ohne Gerät nennt ihre Entität). Ist eine einzelne Routine oder Meldung gewählt, entfällt der Name wie bisher; im Protokoll eines Geräts entfällt das Gerät.
+
 ## [2.201.0] - 2026-11-05
 
 Die App "Updates" ist ein Vollbild-Fenster wie "Status" und "Magic Push".
@@ -5830,6 +5838,7 @@ Erste Vorabversion.
   GitHub Actions für die Prüfungen von HACS und hassfest sowie die Tests.
 
 [2.6.0]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v2.6.0
+[2.201.1]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v2.201.1
 [2.201.0]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v2.201.0
 [2.200.0]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v2.200.0
 [2.199.0]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v2.199.0

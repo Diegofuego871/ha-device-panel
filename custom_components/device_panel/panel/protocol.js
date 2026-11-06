@@ -586,6 +586,29 @@ export class ProtocolUi {
     return this.t("prLate", late < 60 ? `${Math.round(late)} s` : this.host._fmtSeconds(late));
   }
 
+  // Gerät, auf das eine Meldung oder Routine wirkt (seit 2.201.0): in der Liste über alle Geräte steht es unter dem Namen; eine Szene oder Gruppe ohne Gerät nennt ihre Entität
+  itemDevice(id) {
+    const it = (this.s.items || []).find((x) => x.id === id);
+    if (!it) return "";
+    const d = it.device_id ? this.host._devices.find((x) => x.id === it.device_id) : null;
+    if (d) return d.name;
+    const st = it.entity_id ? this.host._hass?.states?.[it.entity_id] : null;
+    return st?.attributes?.friendly_name || it.entity_id || "";
+  }
+
+  // Zeile unter dem Titel: Name der Meldung oder Routine (ausser eine einzelne ist gewählt) und, in der Liste über alle Geräte, das Gerät
+  rowWho(e) {
+    const s = this.s;
+    if (s.item) return [];
+    const out = [];
+    if (e.name) out.push(this.esc(e.name));
+    if (!s.deviceId) {
+      const d = this.itemDevice(e.id);
+      if (d && d !== e.name) out.push(this.esc(d));
+    }
+    return out;
+  }
+
   magicRow(e, i, device) {
     const s = this.s;
     const [res, tone] = this.magicResult(e);
@@ -593,8 +616,7 @@ export class ProtocolUi {
     const open = s.open.has(key);
     const body = String(e.body || "");
     const hasMsg = Boolean(e.title || body);
-    const extra = [];
-    if (device && e.name) extra.push(this.esc(e.name));
+    const extra = [...this.rowWho(e)];
     if (e.k === "recovered" && e.dur) extra.push(this.esc(this.t("prDur", this.host._fmtSeconds(e.dur))));
     const err = e.err ? `<small class="pr-err">${this.esc(this.errText(e.err))}</small>` : "";
     const target = e.target && e.res === "sent" ? `<small>→ ${this.esc(e.target)}</small>` : e.target && e.res === "held" ? `<small>${this.esc(e.target)}</small>` : "";
@@ -615,7 +637,7 @@ export class ProtocolUi {
     return `<div class="pr-item" role="listitem"><button type="button" class="pr-row" data-pr="trace" data-i="${i}">
         <span class="c-date">${this.esc(this.fmtStamp(e.at))}<small>${this.esc(this.ago(e.at))}</small></span>
         <span class="c-kind">${this.esc(src)}${late ? `<small>${this.esc(late)}</small>` : ""}</span>
-        <span class="c-main"><b>${this.esc(this.actText(e))}</b>${device && e.name ? `<small>${this.esc(e.name)}</small>` : ""}</span>
+        <span class="c-main"><b>${this.esc(this.actText(e))}</b>${this.rowWho(e).length ? `<small>${this.rowWho(e).join(" · ")}</small>` : ""}</span>
         <span class="c-res"><span class="pr-st ${tone}">${this.esc(res)}</span>${err}</span>
         <span class="c-val pr-go">${this.h.mdi("chevronRight", 18)}</span></button></div>`;
   }
