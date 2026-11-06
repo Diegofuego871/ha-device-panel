@@ -12,7 +12,7 @@ from homeassistant.helpers import device_registry as dr
 from homeassistant.helpers import entity_registry as er
 from pytest_homeassistant_custom_component.common import MockConfigEntry, async_mock_service
 
-from custom_components.device_panel.charge import ChargeNotifier
+from custom_components.device_panel.charge import ETA_POINTS_MAX, ETA_WINDOW, ChargeNotifier, _thin
 from custom_components.device_panel.const import DATA_CHARGE, DOMAIN
 from custom_components.device_panel.devices import async_set_device_settings
 from custom_components.device_panel.options_api import values_from
@@ -605,3 +605,45 @@ async def test_charges_persist_and_ws(hass: HomeAssistant, hass_ws_client) -> No
         assert fresh.charges_info(device.id)[0] == 1 and fresh._charges[device.id][0]["pts"][-1][1] == 100
     finally:
         await fresh.async_stop()
+
+
+def test_long_charge_with_decimals_keeps_its_start() -> None:
+    """
+    2.204.1: Ein Sensor mit Nachkommastellen meldet bei einer Ladung von 20 auf 100 % Hunderte von Ständen. Statt der ältesten fallen jetzt
+    Punkte zwischen Beginn und Fenster der Restzeit weg: Die aufgezeichnete Ladung beginnt beim Tiefpunkt, nicht irgendwo in der Mitte.
+    """
+    n = _notifier()
+    t = 50_000.0
+    level, i = 20.0, 0
+    while level < 100:
+        n.step("d", level, t + i * 30, OPTS)
+        level = round(level + 0.1, 1)
+        i += 1
+    n.step("d", 100.0, t + i * 30, OPTS)
+    rec = n._charges["d"][0]
+    assert rec["from"] == 20.0 and rec["start"] == t and rec["to"] == 100.0
+    assert len(rec["pts"]) <= ETA_POINTS_MAX + 1
+    # Die Zeit läuft vorwärts, der Stand steigt (keine vertauschten Punkte)
+    assert all(a[0] < b[0] and a[1] < b[1] for a, b in zip(rec["pts"], rec["pts"][1:]))
+
+
+def test_thin_keeps_first_and_recent_points() -> None:
+    pts = [[float(i * 60), float(i) / 10] for i in range(ETA_POINTS_MAX + 1)]
+    now = pts[-1][0]
+    recent_before = [p for p in pts if now - p[0] <= ETA_WINDOW]
+    _thin(pts, now)
+    assert pts[0] == [0.0, 0.0] and len(pts) <= ETA_POINTS_MAX
+    assert [p for p in pts if now - p[0] <= ETA_WINDOW] == recent_before
+
+
+def test_rearm_resets_the_peak() -> None:
+    """2.204.1: Nach "voll" und Entladen unter "Voll ab" − 10 beginnt eine neue Ladung am neuen Tiefpunkt (die alte Spitze 100 % zählt nicht mehr)."""
+    n = _notifier()
+    for at, level in enumerate((40, 70, 100)):
+        n.step("d", level, at * 600.0, OPTS)
+    n.step("d", 89, 5000.0, OPTS)  # wieder scharf
+    for k, level in enumerate((91, 94, 97)):
+        n.step("d", level, 6000.0 + k * 600, OPTS)
+    st = n._state["d"]
+    assert st["min"] == 89 and st["peak"] == 97
+    assert [p[1] for p in st["pts"]] == [89, 91, 94, 97]

@@ -13,6 +13,7 @@ fertig, fehlgeschlagen.
 from __future__ import annotations
 
 import time
+from functools import partial
 from typing import Any
 
 from homeassistant.const import STATE_OFF, STATE_UNAVAILABLE, STATE_UNKNOWN
@@ -151,14 +152,17 @@ class UpdateQueue:
                 continue
             if item["status"] != "running":
                 continue
+            # Die Termine müssen callbacks sein (partial auf eine @callback-Methode): eine einfache lambda liefe als Executor-Job in einem Thread,
+            # und der Start des nächsten Updates von dort bricht ab (Home Assistant erlaubt hass.async_create_task nur in der Ereignisschleife)
             item["cancel"] = [
-                async_call_later(self.hass, NO_PROGRESS_SECONDS, lambda _n, i=item: self._timeout(i, False)),
-                async_call_later(self.hass, MAX_SECONDS, lambda _n, i=item: self._timeout(i, True)),
+                async_call_later(self.hass, NO_PROGRESS_SECONDS, partial(self._timeout, item, False)),
+                async_call_later(self.hass, MAX_SECONDS, partial(self._timeout, item, True)),
             ]
             running.append(item)
             busy.add(item["platform"])
 
-    def _timeout(self, item: dict[str, Any], hard: bool) -> None:
+    @callback
+    def _timeout(self, item: dict[str, Any], hard: bool, _now: Any = None) -> None:
         if item["status"] == "running" and (hard or not item["seen"]):
             self._end(item, "failed", "timeout" if hard else "no progress")
 
@@ -176,9 +180,10 @@ class UpdateQueue:
         """Wieder "verfügbar" ohne Fortschritt: noch eine Frist, ob die Entität doch noch auf "aktuell" fällt."""
         self._unsettle(item)
         item["settling"] = True
-        item["settle_cancel"] = async_call_later(self.hass, SETTLE_SECONDS, lambda _n, i=item: self._settled(i))
+        item["settle_cancel"] = async_call_later(self.hass, SETTLE_SECONDS, partial(self._settled, item))
 
-    def _settled(self, item: dict[str, Any]) -> None:
+    @callback
+    def _settled(self, item: dict[str, Any], _now: Any = None) -> None:
         item.update(settle_cancel=None, settling=False)
         if item["status"] == "running":
             self._end(item, "failed", "update failed")

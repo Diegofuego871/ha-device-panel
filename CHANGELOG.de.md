@@ -7,6 +7,16 @@ Alle nennenswerten Änderungen an dieser Integration stehen in dieser Datei.
 Das Format folgt [Keep a Changelog](https://keepachangelog.com/de/1.1.0/),
 die Versionsnummern folgen [Semantic Versioning](https://semver.org/lang/de/).
 
+## [2.204.1] - 2026-11-06
+
+Korrekturen aus einem Code-Review: Die App "Updates" bleibt nach einem fehlgeschlagenen Update nicht mehr hängen, und aufgezeichnete Ladungen beginnen beim richtigen Stand.
+
+### Behoben
+
+- **App "Updates", nächstes Update hängt auf "läuft":** Zeigte ein Update 10 Minuten lang keinen Fortschritt oder fiel es auf "Update verfügbar" zurück und blieb dort, sollte das nächste wartende Update derselben Integration starten. Es wurde nur als laufend geführt, aber nie gestartet, und blieb für immer auf "läuft". Ursache: Die Termine liefen in einem Arbeits-Thread statt in der Ereignisschleife von Home Assistant, und von dort lehnt Home Assistant den Start einer Aufgabe ab. Sie laufen jetzt in der Ereignisschleife.
+- **Ladungen, Beginn der Ladung:** Ein Batteriesensor mit Nachkommastellen (zum Beispiel 47,3 %) meldet während einer Ladung Hunderte von Ständen. Das Panel behielt höchstens 150 Messpunkte und liess die ältesten weg, so dass eine Ladung ab 20 % als Ladung ab etwa 85 % aufgezeichnet wurde. Jetzt bleibt der Beginn immer stehen, und nur zwischen dem Beginn und den letzten 30 Minuten fällt jeder zweite Punkt weg. Die Schätzung der Restzeit bleibt gleich.
+- **Ladungen, neue Ladung gleich nach "voll":** Nach einer Ladung bis "voll" und einem Rückgang um 10 Punkte darunter blieb die alte Spitze (zum Beispiel 100 %) der Massstab. Eine neue Ladung von dort galt zuerst als Entladen, und ihre ersten Punkte gingen verloren. Die Spitze beginnt jetzt mit dem neuen Tiefpunkt neu.
+
 ## [2.204.0] - 2026-11-06
 
 Das Geräte-Popup merkt sich die letzten fünf Ladungen und zeigt sie als Kurve.
@@ -5886,6 +5896,7 @@ Erste Vorabversion.
   GitHub Actions für die Prüfungen von HACS und hassfest sowie die Tests.
 
 [2.6.0]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v2.6.0
+[2.204.1]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v2.204.1
 [2.204.0]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v2.204.0
 [2.203.1]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v2.203.1
 [2.203.0]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v2.203.0

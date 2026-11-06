@@ -7,6 +7,16 @@ All notable changes to this integration are documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/).
 
+## [2.204.1] - 2026-11-06
+
+Fixes from a code review: the app "Updates" no longer gets stuck after a failed update, and recorded charges start at the right level.
+
+### Fixed
+
+- **App "Updates", next update stuck on "running":** If an update showed no progress for 10 minutes, or fell back to "update available" and stayed there, the next waiting update of the same integration should start. It was only marked as running, but never started, and stayed on "running" for good. Cause: the timers ran in a worker thread instead of the event loop of Home Assistant, which refuses to start a task from there. They now run in the event loop.
+- **Charges, start of the charge:** A battery sensor with decimals (for example 47.3 %) reports hundreds of levels during one charge. The panel kept at most 150 measuring points and dropped the oldest ones, so a charge from 20 % was recorded as starting at about 85 %. Now the start always stays, and only every second point between the start and the last 30 minutes is dropped. The estimate of the time left is unchanged.
+- **Charges, new charge right after "full":** After a charge to "full" and a drop of 10 points below it, the old peak (for example 100 %) stayed as the reference. A new charge from there was first taken as a discharge, and its first points were lost. The peak now starts again with the new low.
+
 ## [2.204.0] - 2026-11-06
 
 The device pop-up keeps the last five charges and shows them as a curve.
@@ -5785,6 +5795,7 @@ First pre-release.
   GitHub Actions for HACS/hassfest validation and tests.
 
 [2.6.0]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v2.6.0
+[2.204.1]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v2.204.1
 [2.204.0]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v2.204.0
 [2.203.1]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v2.203.1
 [2.203.0]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v2.203.0

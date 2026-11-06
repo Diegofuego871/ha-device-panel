@@ -5,6 +5,11 @@ hat dort einen echten Fehler oder Umweg gekostet.
 
 ## Home Assistant (Backend)
 
+- **Termine nie als lambda (2.204.1):** `async_call_later`, `async_track_*` und `bus.async_listen` prüfen, ob das Ziel eine Koroutine
+  oder mit `@callback` markiert ist (`get_hassjob_callable_job_type`, auch durch `functools.partial` hindurch). Alles andere, also auch eine
+  einfache `lambda`, läuft als Executor-Job in einem Thread. Von dort wirft `hass.async_create_task` (und vieles mehr) einen RuntimeError.
+  So blieb in der App "Updates" das nächste Update für immer auf "läuft". Regel: Ziel ist eine `@callback`-Methode, Argumente über
+  `partial(self._methode, arg)`; die Methode nimmt den Zeitpunkt als letztes Argument (`_now: Any = None`).
 - **Veraltete Eigenschaften nie in Schleifen lesen (1.31.1):** Seit HA 2026.10 meldet jedes
   Lesen von `DeviceEntry.config_entries` / `primary_config_entry` zur Laufzeit
   (`report_usage` untersucht den Aufrufstapel, rund 1 ms je Aufruf auf einem PC, auf einem

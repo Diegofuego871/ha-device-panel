@@ -224,3 +224,36 @@ async def test_service_error_is_the_reason(hass: HomeAssistant, setup) -> None:
     await hass.async_block_till_done()
     item = queue.snapshot()[0]
     assert item["status"] == "failed" and "Device unreachable" in item["error"]
+
+
+async def test_timeout_and_settle_start_the_next_update(hass: HomeAssistant, setup, freezer) -> None:
+    """
+    2.204.1: Ein Zeitablauf (kein Fortschritt) und die abgelaufene Frist nach "wieder verfügbar" starten das nächste wartende Update derselben
+    Integration. Vorher liefen die Termine als lambda im Executor-Thread: der Start brach ab (hass.async_create_task ausserhalb der Ereignisschleife),
+    das nächste Update blieb für immer auf "läuft", ohne dass es gestartet wurde.
+    """
+    calls = async_mock_service(hass, "update", "install")
+    a = _update(hass, _device(hass, "A"), "shelly")
+    b = _update(hass, _device(hass, "B"), "shelly", key="fw2")
+    c = _update(hass, _device(hass, "C"), "shelly", key="fw3")
+    queue = get_queue(hass)
+    queue.enqueue([a, b, c], backup=False)
+    await hass.async_block_till_done()
+    assert {i["entity_id"]: i["status"] for i in queue.snapshot()} == {a: "running", b: "waiting", c: "waiting"}
+    assert [x.data["entity_id"] for x in calls] == [a]
+    # A zeigt nie einen Fortschritt: nach der Frist fehlgeschlagen, B startet wirklich
+    freezer.tick(timedelta(seconds=NO_PROGRESS_SECONDS + 1))
+    async_fire_time_changed(hass)
+    await hass.async_block_till_done()
+    assert {i["entity_id"]: i["status"] for i in queue.snapshot()} == {a: "failed", b: "running", c: "waiting"}
+    assert [x.data["entity_id"] for x in calls] == [a, b]
+    # B läuft und fällt auf "Update verfügbar" zurück: nach der Frist fehlgeschlagen, C startet wirklich
+    hass.states.async_set(b, "on", {"supported_features": 13, "in_progress": True})
+    await hass.async_block_till_done()
+    hass.states.async_set(b, "on", {"supported_features": 13})
+    await hass.async_block_till_done()
+    freezer.tick(timedelta(seconds=SETTLE_SECONDS + 1))
+    async_fire_time_changed(hass)
+    await hass.async_block_till_done()
+    assert {i["entity_id"]: i["status"] for i in queue.snapshot()} == {a: "failed", b: "failed", c: "running"}
+    assert [x.data["entity_id"] for x in calls] == [a, b, c]

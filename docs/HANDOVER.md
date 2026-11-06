@@ -11,6 +11,11 @@ Einstieg für jede neue Claude-Code-Session. Zuerst diese Datei lesen, dann
 
 - `charge.py` `known_rechargeable`: Lademeldung gilt (global + Gerät/Integration), oder am Gerät ausdrücklich "Ein", oder Live-Aktivität für das Gerät an; `rechargeable()` und `charging_of()` nutzen sie (vorher nur `enabled()` mit globalem Schalter). Test `test_rechargeable_by_device_charge_or_live`.
 
+## Stand (2.204.1, Korrekturen aus dem Code-Review)
+
+- `update_queue.py`: Termine (`_timeout`, `_settled`) als `partial` auf `@callback`-Methoden. Eine lambda an `async_call_later` läuft als Executor-Job im Thread (siehe LEARNINGS); `hass.async_create_task` von dort wirft. Test `test_timeout_and_settle_start_the_next_update`.
+- `charge.py`: `_thin()` statt `del pts[:-ETA_POINTS_MAX]` (der Beginn der Ladung bleibt), Spitze beim Wiederscharfmachen neu. Tests in `test_charge.py`.
+
 ## Stand (2.204.0, Ladungen: die letzten fünf Ladungen als Kurve)
 
 - `charge.py`: `ChargeNotifier._charges` (Speicher-Schlüssel "charges", je Gerät höchstens `CHARGES_KEEP` = 5), `_record_charge` (an den vier Stellen, an denen eine Ladung endet: neuer Tiefstand, Entladung, voll, `check_stalls`; mindestens `CHARGE_MIN_POINTS`/`CHARGE_MIN_RISE`), `charges_info`, `charges_view` (Kurve, Watt über `POWER_WINDOW` geglättet, nur mit Akku-Grösse). `devices._charges_fields` liefert `charges_count`/`charges_last`; WS `device_panel/charges` (`__init__.py`, nur Administratoren).

@@ -117,6 +117,23 @@ def estimate_finish(points: list[list[float]], level: float, full: float, now: f
     return finish, rate * 60, span / 60
 
 
+def _thin(pts: list[list[float]], now: float) -> None:
+    """
+    Höchstens ETA_POINTS_MAX Messpunkte (seit 2.204.1): statt der ältesten fällt jeder zweite Punkt vor dem Fenster der Restzeit weg. Der erste
+    Punkt (Beginn der Ladung) bleibt, sonst begänne die aufgezeichnete Ladung bei Sensoren mit Nachkommastellen zu spät; die Punkte im Fenster
+    der Restzeit bleiben vollständig.
+    """
+    if len(pts) <= ETA_POINTS_MAX:
+        return
+    recent = next((i for i, p in enumerate(pts) if now - p[0] <= ETA_WINDOW), len(pts))
+    if recent > 2:
+        # Zwischen dem ersten Punkt und dem Fenster jeden zweiten weglassen
+        pts[1:recent] = pts[2:recent:2]
+    if len(pts) > ETA_POINTS_MAX:
+        # Mehr Punkte im Fenster als erlaubt (sehr häufige Meldungen): den ältesten nach dem Beginn weglassen
+        del pts[1 : len(pts) - ETA_POINTS_MAX + 1]
+
+
 def _valid_charge(c: Any) -> bool:
     """Eine gespeicherte Ladung: Start, Ende, Stand von bis und mindestens zwei Messpunkte [Zeit, Stand]."""
     return (
@@ -306,7 +323,8 @@ class ChargeNotifier:
         if st.get("done"):
             # Wieder scharf, wenn der Stand deutlich unter "voll" fällt (Entladen oder Batteriewechsel).
             if level < full - CHARGE_REARM:
-                st.update(done=False, min=level, min_at=now)
+                # Auch die Spitze neu: sonst hielte der nächste Anstieg die alte Spitze ("voll") für den Massstab und gälte als Entladen
+                st.update(done=False, min=level, min_at=now, peak=level)
         else:
             if level < st["min"]:
                 self._record_charge(dev, st, now)
@@ -339,7 +357,7 @@ class ChargeNotifier:
                 pts.clear()
             if not pts or pts[-1][1] != level:
                 pts.append([now, level])
-                del pts[:-ETA_POINTS_MAX]
+                _thin(pts, now)
         self._save()
         return result
 

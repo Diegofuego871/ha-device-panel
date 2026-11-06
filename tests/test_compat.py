@@ -95,3 +95,18 @@ def test_no_direct_reads_of_deprecated_device_properties() -> None:
             if re.search(r"(?<!hass)\.config_entries\b(?!\s+import)", code) or "primary_config_entry" in code or "config_entries_subentries" in code:
                 bad.append(f"{path.name}:{number}: {line.strip()}")
     assert not bad, "\n".join(bad)
+
+
+def test_no_lambda_as_timer_or_listener() -> None:
+    """
+    2.204.1 (LEARNINGS "Termine nie als lambda"): Eine lambda an async_call_later, async_track_* oder bus.async_listen läuft als Executor-Job
+    in einem Thread; von dort wirft hass.async_create_task. Ziele sind @callback-Methoden oder Koroutinen, Argumente über functools.partial.
+    """
+    pattern = re.compile(r"(async_call_later|async_track_[a-z_]+|async_listen(?:_once)?|async_at_started)\((?:[^()]|\([^()]*\))*lambda")
+    found = [
+        f"{path.name}:{i}"
+        for path in sorted(SRC.glob("*.py"))
+        for i, line in enumerate(path.read_text(encoding="utf-8").splitlines(), 1)
+        if pattern.search(line)
+    ]
+    assert not found, found
