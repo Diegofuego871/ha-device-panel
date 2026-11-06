@@ -7,6 +7,14 @@ Alle nennenswerten Änderungen an dieser Integration stehen in dieser Datei.
 Das Format folgt [Keep a Changelog](https://keepachangelog.com/de/1.1.0/),
 die Versionsnummern folgen [Semantic Versioning](https://semver.org/lang/de/).
 
+## [2.203.1] - 2026-11-06
+
+Ein Gerät mit Live-Aktivität oder am Gerät eingeschalteter Lademeldung gilt nun als ladefähig.
+
+### Behoben
+
+- **Akku-Kapazität, Feld fehlte:** Das Feld "Akku-Kapazität" und die Kachel "Lädt" erschienen nur, wenn die Lademeldung für das Gerät galt, wozu auch der globale Schalter "Lademeldung" nötig ist. Ein Gerät, bei dem die Lademeldung am Gerät selbst eingeschaltet ist (bei ausgeschaltetem globalem Schalter) oder bei dem die Live-Aktivität an ist, galt nicht als ladefähig. Jetzt gilt es als solches: Wer die Live-Aktivität einschaltet, sagt damit, dass das Gerät wiederaufladbar ist (wie es die Live-Aktivität selbst annimmt). Damit funktionieren für solche Geräte auch der Chip "Lädt", der Ladebalken und das Wort "Laden" (statt "Wechsel") im Batterie-Verlauf.
+
 ## [2.203.0] - 2026-11-06
 
 Die Akku-Kapazität eines Geräts lässt sich angeben, und die Kachel "Lädt" schätzt dann die Leistung.
@@ -5858,6 +5866,7 @@ Erste Vorabversion.
   GitHub Actions für die Prüfungen von HACS und hassfest sowie die Tests.
 
 [2.6.0]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v2.6.0
+[2.203.1]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v2.203.1
 [2.203.0]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v2.203.0
 [2.202.0]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v2.202.0
 [2.201.0]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v2.201.0

@@ -496,3 +496,20 @@ async def test_capacity_and_power(hass: HomeAssistant) -> None:
     assert own["charge"][0]["value"] == {"wh": 60.0}
     assert (await async_reset_device_settings(hass, [], [], charge=[device.id]))["charge"] == 1
     assert device_settings(hass)["charge_wh"] == {}
+
+
+async def test_rechargeable_by_device_charge_or_live(hass: HomeAssistant) -> None:
+    """Ladefähig (2.203.1): auch wenn die Lademeldung am Gerät "Ein" ist, aber der globale Schalter aus, oder wenn die Live-Aktivität für das Gerät an ist."""
+    from custom_components.device_panel.devices import async_list_devices  # noqa: PLC0415
+
+    await _setup(hass, notify_charge=False, charge_integrations=[])  # globaler Schalter "Lademeldung" aus
+    a, _ = _device(hass, "Schloss A", level=40)
+    b, _ = _device(hass, "Schloss B", level=40)
+    c, _ = _device(hass, "Schloss C", level=40)
+    await hass.data[DATA_CHARGE].async_rebuild()
+    listed = {d["name"]: d for d in (await async_list_devices(hass))["devices"]}
+    assert not any(listed[n]["rechargeable"] for n in ("Schloss A", "Schloss B", "Schloss C"))
+    await async_set_device_settings(hass, a.id, charge=True)
+    await async_set_device_settings(hass, b.id, charge_live=True)
+    listed = {d["name"]: d for d in (await async_list_devices(hass))["devices"]}
+    assert listed["Schloss A"]["rechargeable"] is True and listed["Schloss B"]["rechargeable"] is True and listed["Schloss C"]["rechargeable"] is False

@@ -7,6 +7,14 @@ All notable changes to this integration are documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/).
 
+## [2.203.1] - 2026-11-06
+
+A device with the live activity or the charging notification switched on at the device is now known as rechargeable.
+
+### Fixed
+
+- **Battery capacity, field missing:** The field "Battery capacity" and the tile "Charging" only appeared if the charging notification applied to the device, which also needs the global switch "Charging notification". A device for which the charging notification is switched on at the device itself (with the global switch off), or for which the live activity is on, was not seen as rechargeable. Now it is: whoever switches on the live activity says that the device is rechargeable (as the live activity itself assumes). This also makes the chip "Charging", the charge bar and the word "charging" (instead of "change") in the battery history work for such devices.
+
 ## [2.203.0] - 2026-11-06
 
 The battery capacity of a device can be entered, and the charging tile then estimates the power.
@@ -5757,6 +5765,7 @@ First pre-release.
   GitHub Actions for HACS/hassfest validation and tests.
 
 [2.6.0]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v2.6.0
+[2.203.1]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v2.203.1
 [2.203.0]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v2.203.0
 [2.202.0]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v2.202.0
 [2.201.0]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v2.201.0

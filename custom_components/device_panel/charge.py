@@ -169,6 +169,19 @@ class ChargeNotifier:
         return bool(listed(opts[CONF_CHARGE_INTEGRATIONS], domain))
 
     @staticmethod
+    def known_rechargeable(opts: dict[str, Any], hass: HomeAssistant, device: dr.DeviceEntry) -> bool:
+        """
+        Weiss das Panel, dass das Gerät geladen wird (seit 2.203.1)? Ja, wenn die Lademeldung für es gilt, wenn sie am Gerät ausdrücklich
+        eingeschaltet ist (auch bei ausgeschaltetem globalem Schalter) oder wenn die Live-Aktivität für es an ist: Wer sie einschaltet,
+        sagt damit, dass das Gerät wiederaufladbar ist (wie in _is_charging). Vorher zählte nur die Lademeldung mit globalem Schalter.
+        """
+        if ChargeNotifier.enabled(opts, hass, device):
+            return True
+        if device_settings(hass).get("charge", {}).get(device.id) is True:
+            return True
+        return bool(device_charge_opts(hass, opts, device.id).get(CONF_CHARGE_LIVE))
+
+    @staticmethod
     def rechargeable(opts: dict[str, Any], hass: HomeAssistant, device: dr.DeviceEntry) -> bool:
         """
         Ist das ein Gerät, das geladen wird (nicht: dessen Batterie gewechselt wird)? Ja, wenn die Lademeldung für es an
@@ -176,7 +189,7 @@ class ChargeNotifier:
         (Wunsch des Nutzers): Das Fenster "Batterie" und die KI-Einschätzung nennen einen Anstieg dann "Laden" und
         nicht "Wechsel", auch ohne Lademeldung. Ohne beides kann das Panel Laden und Wechsel nicht unterscheiden.
         """
-        if ChargeNotifier.enabled(opts, hass, device):
+        if ChargeNotifier.known_rechargeable(opts, hass, device):
             return True
         return charging_entity(hass, er.async_entries_for_device(er.async_get(hass), device.id)) is not None
 
@@ -387,7 +400,7 @@ class ChargeNotifier:
             st = self._state.get(device.id)
             full = device_charge_opts(self.hass, opts, device.id)[CONF_CHARGE_FULL]
             return {"level": st["last"] if st else None, "from": None, "since": state.last_changed.timestamp(), "full": full, "source": "entity", **self._eta(st, full, now)}
-        if not self.enabled(opts, self.hass, device):
+        if not self.known_rechargeable(opts, self.hass, device):
             return None
         return self.charging(device.id, now, device_charge_opts(self.hass, opts, device.id))
 
