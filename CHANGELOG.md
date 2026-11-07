@@ -7,6 +7,14 @@ All notable changes to this integration are documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/).
 
+## [2.209.1] - 2026-11-07
+
+The setting "Record charges" moves from Settings › Battery to Settings › Charging in the device pop-up.
+
+### Changed
+
+- **Device, setting "Record charges":** The choice **Automatic / On / Off** now stands in the tab "Charging" of the device settings (before in "Battery"), where the other charging settings are. Its own value is counted at the tab "Charging". The function is unchanged.
+
 ## [2.209.0] - 2026-11-07
 
 The loading animation is faster, takes the colour of the graph, and now covers every graph that may load slowly.
@@ -37,7 +45,7 @@ Includes the changes from 2.206.0.
 
 ### Added
 
-- **Device, setting "Record charges":** In the device pop-up under Settings › Charging a new choice **Automatic / On / Off** decides whether the panel records the charges of this device. Automatic is as before: only devices the panel knows as rechargeable are recorded (the choice says which applies). **On** also records a device that is not seen as rechargeable, for example a sensor you charge yourself; the tile "Charges" then appears for it. **Off** records nothing, even for a rechargeable device. It applies to this device only (like the battery capacity). The value is part of the device settings: overview of own values, reset (together with the charging values of the device), backup and restore.
+- **Device, setting "Record charges":** In the device pop-up under Settings › Battery a new choice **Automatic / On / Off** decides whether the panel records the charges of this device. Automatic is as before: only devices the panel knows as rechargeable are recorded (the choice says which applies). **On** also records a device that is not seen as rechargeable, for example a sensor you charge yourself; the tile "Charges" then appears for it. **Off** records nothing, even for a rechargeable device. It applies to this device only (like the battery capacity). The value is part of the device settings: overview of own values, reset (together with the charging values of the device), backup and restore.
 
 ### Changed
 
@@ -5866,7 +5874,8 @@ First pre-release.
   GitHub Actions for HACS/hassfest validation and tests.
 
 [2.6.0]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v2.6.0
-[2.209.0]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v2.209.0
+[2.209.1]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v2.209.1
+[2.209.0]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/2.209.0
 [2.208.0]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v2.208.0
 [2.205.0]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v2.205.0
 [2.204.1]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v2.204.1

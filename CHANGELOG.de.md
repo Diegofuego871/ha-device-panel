@@ -7,6 +7,14 @@ Alle nennenswerten Änderungen an dieser Integration stehen in dieser Datei.
 Das Format folgt [Keep a Changelog](https://keepachangelog.com/de/1.1.0/),
 die Versionsnummern folgen [Semantic Versioning](https://semver.org/lang/de/).
 
+## [2.209.1] - 2026-11-07
+
+Die Einstellung "Ladungen aufzeichnen" wechselt im Geräte-Popup von Einstellungen › Batterie zu Einstellungen › Laden.
+
+### Geändert
+
+- **Gerät, Einstellung "Ladungen aufzeichnen":** Die Wahl **Automatisch / Ein / Aus** steht jetzt im Reiter "Laden" der Geräteeinstellungen (vorher in "Batterie"), bei den übrigen Ladeeinstellungen. Ein eigener Wert wird beim Reiter "Laden" gezählt. Die Funktion ist unverändert.
+
 ## [2.209.0] - 2026-11-07
 
 Die Ladeanimation ist schneller, nimmt die Farbe der Grafik an und gilt jetzt für jede Grafik, die langsam laden könnte.
@@ -37,7 +45,7 @@ Enthält die Änderungen von 2.206.0.
 
 ### Hinzugefügt
 
-- **Gerät, Einstellung "Ladungen aufzeichnen":** Im Geräte-Popup unter Einstellungen › Laden entscheidet eine neue Wahl **Automatisch / Ein / Aus**, ob das Panel die Ladungen dieses Geräts aufzeichnet. Automatisch ist wie bisher: nur Geräte, die das Panel als ladefähig kennt, werden aufgezeichnet (die Wahl nennt, was gilt). **Ein** zeichnet auch ein Gerät auf, das nicht als ladefähig gilt, zum Beispiel einen Sensor, den du selbst auflädst; die Kachel "Ladungen" erscheint dann dafür. **Aus** zeichnet nichts auf, auch bei einem ladefähigen Gerät. Sie gilt nur für dieses Gerät (wie die Akku-Kapazität). Der Wert gehört zu den Geräteeinstellungen: Übersicht der eigenen Werte, Zurücksetzen (mit den Lade-Werten des Geräts), Sicherung und Wiederherstellung.
+- **Gerät, Einstellung "Ladungen aufzeichnen":** Im Geräte-Popup unter Einstellungen › Batterie entscheidet eine neue Wahl **Automatisch / Ein / Aus**, ob das Panel die Ladungen dieses Geräts aufzeichnet. Automatisch ist wie bisher: nur Geräte, die das Panel als ladefähig kennt, werden aufgezeichnet (die Wahl nennt, was gilt). **Ein** zeichnet auch ein Gerät auf, das nicht als ladefähig gilt, zum Beispiel einen Sensor, den du selbst auflädst; die Kachel "Ladungen" erscheint dann dafür. **Aus** zeichnet nichts auf, auch bei einem ladefähigen Gerät. Sie gilt nur für dieses Gerät (wie die Akku-Kapazität). Der Wert gehört zu den Geräteeinstellungen: Übersicht der eigenen Werte, Zurücksetzen (mit den Lade-Werten des Geräts), Sicherung und Wiederherstellung.
 
 ### Geändert
 
@@ -5967,7 +5975,8 @@ Erste Vorabversion.
   GitHub Actions für die Prüfungen von HACS und hassfest sowie die Tests.
 
 [2.6.0]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v2.6.0
-[2.209.0]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v2.209.0
+[2.209.1]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v2.209.1
+[2.209.0]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/2.209.0
 [2.208.0]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v2.208.0
 [2.205.0]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v2.205.0
 [2.204.1]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v2.204.1

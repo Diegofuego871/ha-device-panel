@@ -11,6 +11,10 @@ Einstieg für jede neue Claude-Code-Session. Zuerst diese Datei lesen, dann
 
 - `charge.py` `known_rechargeable`: Lademeldung gilt (global + Gerät/Integration), oder am Gerät ausdrücklich "Ein", oder Live-Aktivität für das Gerät an; `rechargeable()` und `charging_of()` nutzen sie (vorher nur `enabled()` mit globalem Schalter). Test `test_rechargeable_by_device_charge_or_live`.
 
+## Stand (2.209.1, "Ladungen aufzeichnen" im Reiter Laden)
+
+- 2.209.0 ist als offizielles Release getaggt (Tag ohne "v": `2.209.0`, Commit 13f1ed5). Die Verschiebung der Auswahl `dev-charge-rec` von `parts.bat` nach `parts.chg` (Reiter Laden, Zähler eigener Werte beim Reiter "chg") kam danach und steht deshalb in 2.209.1. Test: `chargerec-e2e` (`data-stab="chg"`).
+
 ## Stand (2.209.0, Ladeanzeige überall, schneller, Farbe der Grafik)
 
 - Gemeinsame Ladeanzeige im Host: `_loaderHtml(color, top)` (`.pl-ld`, Farbe über `--ld`) und `_loaderStart()` (ein rAF-Zeitgeber für alle; `SPEED` 2,1; endet nach kurzer Pause ohne Anzeige; mehrfach angestossen, weil Fenster verzögert zeichnen können); Umhüllung `.pl-ldwrap` (alte Grafik auf 28 % Deckkraft, ohne Weichzeichner: der war auf schwachen Handys schwer). Farbregel: "Farbe der Grafik" (`--dp-primary` für Linien der Batterie-, Empfang- und Status-Kurven, `--dp-success` für Verfügbarkeit und die Kurve der Ladungen). Eingebaut in: Status › System (`status-ui.js`, ersetzt die eigene Fassung), Statistik-Fenster (`_histLoadingHtml` mit Schatten `_histGhost`, Zwischenspeicher `_histCache` 60 s im Klick auf den Zeitraum), Protokoll (`renderBody` bei `s.loading`, `load()` zeichnet die Liste gleich gedimmt), Fenster "Ladungen" (`charges.js`). Regel in CLAUDE.md. Simulator: `window.__wsDelay = { "<Befehl>": ms }`. Tests: Suite `loaders-e2e` (Reiter sofort, Farbe, Bewegung, Zwischenspeicher), `statusloader-e2e`; `battery-e2e`/`sighist-e2e` leeren `_histCache` je Wechsel, `popup-e2e` erwartet das Zurückwechseln aus dem Zwischenspeicher. Bekannt, nur lokal rot: `popup-e2e` "Handy: beide Knöpfe" (de/mobile).
