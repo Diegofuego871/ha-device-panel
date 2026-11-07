@@ -1958,6 +1958,7 @@ input.mg-pill { cursor: text; }
 .mg-dhead .mg-t b { font-size: 15px; }
 .mg-dsum { color: var(--dp-text2); }
 .mg-dsum .mg-on { color: var(--dp-primary); font-weight: 500; }
+.rt-offword { color: var(--dp-text); font-weight: 600; }
 .mg-dsum .mg-warn { color: var(--dp-warning); font-weight: 500; }
 /* Routinen, zugeklappte Karte (seit 2.171.0): Schalter im Kopf anstelle der Zahl (liegt über dem Platzhalter, der Kopf ist selbst ein Knopf), bei mehreren Routinen eine Zeile je Routine */
 .mg-dwrap { position: relative; }

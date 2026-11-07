@@ -599,7 +599,7 @@ export class RoutineUi {
     else if (rt.kind === "trigger" && rt.enabled) next = `<span class="mg-on">${esc(this.waitsText(rt))}</span>`;
     else if (rt.enabled && rt.due_local) next = `${esc(t("rtNextRun"))} <span class="mg-on">${esc(this.localText(rt.due_local))}</span>`;
     else if (rt.done) next = esc(t("rtDone"));
-    else next = esc(t(rt.enabled ? "rtFilterOn" : "rtDisabled"));
+    else next = rt.enabled ? esc(t("rtFilterOn")) : this.offHtml(rt, t("rtFilterOff"));
     const warn = this.statusHtml(rt).find((x) => x.includes("mg-warn"));
     return `<div class="mg-dcard closed rt-rowcard${rt.enabled ? "" : " off"}"><div class="mg-dwrap"><button type="button" class="mg-dhead" data-rt="list-fold" data-id="${esc(rt.id)}" aria-expanded="false">
         <span class="rt-rtime" aria-hidden="true">${time}</span>
@@ -657,7 +657,7 @@ export class RoutineUi {
     else if (rt.kind === "trigger" && rt.enabled) next = `<span>${esc(this.waitsText(rt))}</span>`;
     else if (rt.enabled && rt.due_local) next = `<span>${esc(t("rtNextRun"))} <b>${esc(this.localText(rt.due_local))}</b></span>`;
     else if (rt.done) next = `<span class="rt-tag grey">${esc(t("rtDone"))}</span>`;
-    else next = `<span>${esc(t("rtDisabled"))}</span>`;
+    else next = `<span>${this.offHtml(rt, t("rtDisabled"))}</span>`;
     if (rt.revert_local) next += `<span>${esc(t("rtRevertAt", rt.revert_local.time))}</span>`;
     const acts = confirming
       ? ""
@@ -884,11 +884,18 @@ export class RoutineUi {
     return html;
   }
 
+  // Ausgeschaltet (seit 2.210.0): "Aus" zuerst und fett, dann, wann sie laufen würde (grau, nicht grün wie ein echter nächster Lauf)
+  offHtml(rt, word) {
+    const esc = (v) => this.esc(v);
+    const w = `<span class="rt-offword">${esc(word)}</span>`;
+    return rt.off_local ? `${w} · ${esc(this.t("rtOffWould"))} ${esc(this.localText(rt.off_local))}` : w;
+  }
+
   // Wann die Routine als Nächstes schaltet (oder warum nicht), als Zeile unter dem Namen
   nextHtml(rt) {
     const esc = (v) => this.esc(v);
     const t = (k, ...a) => this.t(k, ...a);
-    return rt.running ? `<span class="mg-on">${esc(t("rtRunningShort"))}</span>` : rt.kind === "trigger" && rt.enabled ? `<span class="mg-on">${esc(this.waitsText(rt))}</span>` : rt.enabled && rt.due_local ? `${esc(t("rtNextRun"))} <span class="mg-on">${esc(this.localText(rt.due_local))}</span>` : esc(t(rt.enabled ? "rtFilterOn" : "rtFilterOff"));
+    return rt.running ? `<span class="mg-on">${esc(t("rtRunningShort"))}</span>` : rt.kind === "trigger" && rt.enabled ? `<span class="mg-on">${esc(this.waitsText(rt))}</span>` : rt.enabled && rt.due_local ? `${esc(t("rtNextRun"))} <span class="mg-on">${esc(this.localText(rt.due_local))}</span>` : rt.enabled ? esc(t("rtFilterOn")) : this.offHtml(rt, t("rtFilterOff"));
   }
 
   // Schalter einer Routine (Kopf der zugeklappten Karte, Zeile und aufgeklappte Karte teilen ihn)
@@ -920,7 +927,7 @@ export class RoutineUi {
     // Wartet auf das Zurückschalten: wann, steht in der Zeile (Reiter "Läuft", seit 2.26.0)
     const backWord = rt.reverting && rt.revert_local && canBack(rt.action) ? (rt.action === "set" ? t("rtRestoreWord") : this.t(`rtRes_${resKey(rt.domain, opposite(rt.action))}`)) : "";
     if (backWord) status.unshift(`<span class="mg-on">${esc(rt.back_mode === "restore" || rt.action === "set" ? t("rtBackAtRowRestore", this.localText(rt.revert_local)) : t("rtBackAtRow", backWord, this.localText(rt.revert_local)))}</span>`);
-    const next = rt.running ? `<span class="mg-on">${esc(t("rtRunningShort"))}</span>` : rt.kind === "trigger" && rt.enabled ? `<span class="mg-on">${esc(this.waitsText(rt))}</span>` : rt.enabled && rt.due_local ? `${esc(t("rtNextRun"))} <span class="mg-on">${esc(this.localText(rt.due_local))}</span>` : rt.done ? esc(t("rtDone")) : esc(t("rtDisabled"));
+    const next = rt.running ? `<span class="mg-on">${esc(t("rtRunningShort"))}</span>` : rt.kind === "trigger" && rt.enabled ? `<span class="mg-on">${esc(this.waitsText(rt))}</span>` : rt.enabled && rt.due_local ? `${esc(t("rtNextRun"))} <span class="mg-on">${esc(this.localText(rt.due_local))}</span>` : rt.done ? esc(t("rtDone")) : this.offHtml(rt, t("rtDisabled"));
     return `<div class="mg-card${rt.enabled ? "" : " off"}"><div class="mg-row"><span class="mg-ic" aria-hidden="true">${routineEmoji(rt.domain)}</span>
       <div class="mg-t">${nameInHead ? "" : `<b>${esc(rt.name)}</b>`}<small>${esc(this.sentence(rt))}</small><small class="mg-status">${[next, ...status].join(" · ")}</small></div>${sw}</div>${acts}${this.targetsListHtml(rt, here)}${ran}${confirm}</div>`;
   }

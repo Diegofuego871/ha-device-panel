@@ -11,6 +11,10 @@ Einstieg für jede neue Claude-Code-Session. Zuerst diese Datei lesen, dann
 
 - `charge.py` `known_rechargeable`: Lademeldung gilt (global + Gerät/Integration), oder am Gerät ausdrücklich "Ein", oder Live-Aktivität für das Gerät an; `rechargeable()` und `charging_of()` nutzen sie (vorher nur `enabled()` mit globalem Schalter). Test `test_rechargeable_by_device_charge_or_live`.
 
+## Stand (2.210.0, ausgeschaltete Routine zeigt den nächsten Termin)
+
+- `routines.py` `_off_local` (Feld `off_local` im Payload, nur ausgeschaltet, nicht Countdown/Auslöser/erledigt); Panel `routines.js` `offHtml(rt, word)` in den vier Zeilen (Kopf im Popup, Karte, `nextHtml`, Karte der Liste), Klasse `.rt-offword`. Test `test_disabled_routine_shows_when_it_would_run`, Suite `routineoff-e2e`; Simulator liefert `off_local`.
+
 ## Stand (2.209.1, "Ladungen aufzeichnen" im Reiter Laden)
 
 - 2.209.0 ist als offizielles Release getaggt (Tag ohne "v": `2.209.0`, Commit 13f1ed5). Die Verschiebung der Auswahl `dev-charge-rec` von `parts.bat` nach `parts.chg` (Reiter Laden, Zähler eigener Werte beim Reiter "chg") kam danach und steht deshalb in 2.209.1. Test: `chargerec-e2e` (`data-stab="chg"`).

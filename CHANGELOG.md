@@ -7,6 +7,14 @@ All notable changes to this integration are documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/).
 
+## [2.210.0] - 2026-11-07
+
+A switched-off routine still shows when it would run next, and says clearly that it is off.
+
+### Changed
+
+- **Routines, switched-off routine in the list:** The collapsed row (in the device pop-up and in the list over all devices) now shows "**Off** · next run would be tomorrow 10:00" instead of only "Off". "Off" comes first and in bold, the time in the normal text colour (a running routine keeps the green "next run"), so it is clear at once that the routine is not active. Without a time (countdown, trigger, a date in the past, done) the row says only "Off" as before. The server sends the time as `off_local` for switched-off routines.
+
 ## [2.209.1] - 2026-11-07
 
 The setting "Record charges" moves from Settings › Battery to Settings › Charging in the device pop-up.
@@ -5874,6 +5882,7 @@ First pre-release.
   GitHub Actions for HACS/hassfest validation and tests.
 
 [2.6.0]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v2.6.0
+[2.210.0]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v2.210.0
 [2.209.1]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v2.209.1
 [2.209.0]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/2.209.0
 [2.208.0]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v2.208.0

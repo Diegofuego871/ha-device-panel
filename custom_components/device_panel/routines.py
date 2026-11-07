@@ -2220,6 +2220,14 @@ def _target_payload(hass: HomeAssistant, manager: RoutineManager, routine: dict[
     }
 
 
+def _off_local(routine: dict[str, Any], rt: dict[str, Any], manager: RoutineManager) -> dict[str, Any] | None:
+    """Nächster Zeitpunkt einer ausgeschalteten Routine, wenn man sie jetzt einschaltete (nur Uhrzeit-Arten, nichts Erledigtes)."""
+    if routine["enabled"] or rt["done"] or routine["kind"] in ("countdown", "trigger"):
+        return None
+    due = first_due(routine, time.time(), manager.tz)
+    return local_parts(due, manager.tz) if due is not None else None
+
+
 def routine_payload(hass: HomeAssistant, manager: RoutineManager, routine: dict[str, Any]) -> dict[str, Any]:
     """Routine mit Stand für das Panel: nächster Lauf, Zurückschalten, zuletzt, erledigt, Entität."""
     rt = manager.runtime(routine["id"])
@@ -2230,6 +2238,8 @@ def routine_payload(hass: HomeAssistant, manager: RoutineManager, routine: dict[
         **{k: v for k, v in routine.items() if not k.startswith("_")},
         "due": rt["due"] if routine["enabled"] else None,
         "due_local": local_parts(rt["due"], manager.tz) if routine["enabled"] and rt["due"] is not None else None,
+        # Ausgeschaltet (seit 2.210.0): wann sie laufen würde, damit die Zeile es trotzdem zeigt; nicht bei Countdown und Auslöser, nicht bei Erledigtem
+        "off_local": _off_local(routine, rt, manager),
         "revert_due": rt["revert_due"],
         "revert_local": local_parts(rt["revert_due"], manager.tz) if rt["revert_due"] is not None else None,
         "last": rt["last"],

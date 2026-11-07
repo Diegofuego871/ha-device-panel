@@ -7,6 +7,14 @@ Alle nennenswerten Änderungen an dieser Integration stehen in dieser Datei.
 Das Format folgt [Keep a Changelog](https://keepachangelog.com/de/1.1.0/),
 die Versionsnummern folgen [Semantic Versioning](https://semver.org/lang/de/).
 
+## [2.210.0] - 2026-11-07
+
+Eine ausgeschaltete Routine zeigt weiterhin, wann sie als Nächstes laufen würde, und sagt klar, dass sie aus ist.
+
+### Geändert
+
+- **Routinen, ausgeschaltete Routine in der Liste:** Die zugeklappte Zeile (im Geräte-Popup und in der Liste über alle Geräte) zeigt jetzt "**Aus** · nächster Lauf wäre morgen 10:00" statt nur "Aus". "Aus" steht vorn und fett, die Zeit in der normalen Textfarbe (eine laufende Routine behält den grünen "nächsten Lauf"), so ist sofort klar, dass die Routine nicht aktiv ist. Ohne Zeit (Countdown, Auslöser, ein Datum in der Vergangenheit, erledigt) steht wie bisher nur "Aus". Der Server liefert die Zeit für ausgeschaltete Routinen als `off_local`.
+
 ## [2.209.1] - 2026-11-07
 
 Die Einstellung "Ladungen aufzeichnen" wechselt im Geräte-Popup von Einstellungen › Batterie zu Einstellungen › Laden.
@@ -5975,6 +5983,7 @@ Erste Vorabversion.
   GitHub Actions für die Prüfungen von HACS und hassfest sowie die Tests.
 
 [2.6.0]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v2.6.0
+[2.210.0]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v2.210.0
 [2.209.1]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v2.209.1
 [2.209.0]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/2.209.0
 [2.208.0]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v2.208.0

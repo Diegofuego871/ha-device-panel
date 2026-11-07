@@ -158,6 +158,22 @@ async def test_countdown_runs_once_then_is_done(hass: HomeAssistant, setup, free
     assert len(on) == 1
 
 
+async def test_disabled_routine_shows_when_it_would_run(hass: HomeAssistant, setup, freezer) -> None:  # noqa: F811
+    """Ausgeschaltet (2.210.0): off_local nennt den nächsten Zeitpunkt; nicht bei Countdown, nicht bei Eingeschaltetem."""
+    freezer.move_to(_at(2026, 10, 12, 6, 0))
+    manager = hass.data[DATA_ROUTINES]
+    device = _device(hass, "Steckdose")
+    plug = _switch(hass, device)
+    saved = await manager.async_save_routine(_raw(device, plug, kind="repeat", time="07:30", repeat="daily", enabled=False))
+    payload = routines.routine_payload(hass, manager, manager.get(saved["id"]))
+    assert payload["enabled"] is False and payload["due_local"] is None
+    assert payload["off_local"]["time"] == "07:30" and payload["off_local"]["date"] == "2026-10-12"
+    saved = await manager.async_save_routine({**_raw(device, plug, kind="repeat", time="07:30", repeat="daily"), "id": saved["id"], "enabled": True})
+    assert routines.routine_payload(hass, manager, manager.get(saved["id"]))["off_local"] is None
+    counter = await manager.async_save_routine(_raw(device, plug, enabled=False))
+    assert routines.routine_payload(hass, manager, manager.get(counter["id"]))["off_local"] is None
+
+
 async def test_repeat_runs_and_advances(hass: HomeAssistant, setup, freezer) -> None:  # noqa: F811
     freezer.move_to(_at(2026, 10, 12, 6, 0))
     off = async_mock_service(hass, "switch", "turn_off")
