@@ -378,3 +378,18 @@ def test_every_store_is_classified() -> None:
         found |= set(re.findall(r'f"\{DOMAIN\}\.([a-z_]+)"', path.read_text()))
     unknown = found - backed_up - runtime
     assert not unknown, f"neue Ablage ohne Entscheidung (Sicherung oder Laufzeit?): {sorted(unknown)}"
+
+
+async def test_charge_rec_in_backup(hass: HomeAssistant, setup) -> None:  # noqa: F811
+    """"Ladungen aufzeichnen" am Gerät (2.207.0: ein/aus, automatisch ohne Eintrag) gehört zur Sicherung: sichern, zurücksetzen, wiederherstellen, ungültigen Wert überspringen."""
+    from custom_components.device_panel.devices import async_set_device_settings
+
+    a, b = _device(hass, "Saugroboter"), _device(hass, "Zahnbürste")
+    await async_set_device_settings(hass, a.id, charge_rec=False)
+    file = await backup.async_export(hass, ["devices"])
+    assert file["sections"]["devices"]["settings"][a.id] == {"charge_rec": False}
+    await async_set_device_settings(hass, a.id, charge_rec=None)
+    file["sections"]["devices"]["settings"][b.id] = {"charge_rec": "ja"}  # kein Wahrheitswert
+    report = await backup.async_import(hass, file, ["devices"], dry_run=False)
+    assert hass.data[DATA_DEVICE_SETTINGS]["charge_rec"] == {a.id: False}
+    assert any(s["what"] == "charge_rec" and s["reason"] == "invalid" for s in report["sections"]["devices"]["skipped"])

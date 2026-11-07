@@ -11,6 +11,11 @@ Einstieg für jede neue Claude-Code-Session. Zuerst diese Datei lesen, dann
 
 - `charge.py` `known_rechargeable`: Lademeldung gilt (global + Gerät/Integration), oder am Gerät ausdrücklich "Ein", oder Live-Aktivität für das Gerät an; `rechargeable()` und `charging_of()` nutzen sie (vorher nur `enabled()` mit globalem Schalter). Test `test_rechargeable_by_device_charge_or_live`.
 
+## Stand (2.207.0, Ladungen aufzeichnen je Gerät, Download nach Auswahl)
+
+- Geräteeinstellung `charge_rec` (None = automatisch, True = ein, False = aus; nur am Gerät, Entscheid des Nutzers): `devices.py` (laden/speichern/`async_set_device_settings`/`CHARGE_SETTING_KEYS` "rec" für Übersicht und Zurücksetzen, `charge_rec_setting` im Detail), WS `set_device_settings`, `backup.py` (Bool-Wert), `charge.py` `_may_record` (Wahl, sonst `rechargeable`; auch im Pfad `_on_indicator`). Panel: Auswahl `dev-charge-rec` im Reiter Batterie (immer sichtbar), Kachel "Ladungen" nur bei ein oder (automatisch und ladefähig), `diffChargeRec`. Simulator `chargeRec`. Tests `test_only_rechargeable_devices_record_charges`, `test_charge_rec_in_backup`, Suite `chargerec-e2e`. Die vier Ebenen der Regel (global/Integration/Label) wurden bewusst nicht gebaut: wie die Akku-Kapazität eine Eigenschaft des Geräts.
+- Protokoll-Download: `ProtocolUi.query()` baut die Abfrage der Ansicht (auch für `load`), `download()` pagt sie ohne Grenze (`DOWNLOAD_PAGE` 500). Suite `protocoldownload-e2e` (Filter, Zeitraum, Suche). PANEL_VERSION 474.
+
 ## Stand (2.206.0, Ladungen nur ladefähig, ruhigeres Debug-Log)
 
 - `charge.py`: `_record_charge` ruft `_may_record(dev)` (`known_rechargeable`): Rauschsensoren (Log des Nutzers: 44, 52, 53, 55 % im 6-Min-Takt) sind allein am Stand nicht von einer Ladung zu trennen (`is_charge` sagt bei jedem "Anstieg" ja). Debug-Zeile `charge_level` je Gerät höchstens alle `LEVEL_LOG_SECONDS` (600) und bei Wechsel lädt/lädt nicht (`_level_logged`). Tests `test_only_rechargeable_devices_record_charges`, `test_level_debug_line_is_throttled`. Protokoll: Download-Knopf zuletzt im Fuss (Suite `protocoldownload-e2e`). PANEL_VERSION 473. Der Download holt den ganzen Reiter ohne Zeitraum (Entscheid des Nutzers).

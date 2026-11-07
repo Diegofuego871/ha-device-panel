@@ -7,7 +7,23 @@ Alle nennenswerten Änderungen an dieser Integration stehen in dieser Datei.
 Das Format folgt [Keep a Changelog](https://keepachangelog.com/de/1.1.0/),
 die Versionsnummern folgen [Semantic Versioning](https://semver.org/lang/de/).
 
+## [2.207.0] - 2026-11-07
+
+Ladungen lassen sich je Gerät aufzeichnen (automatisch, ein, aus), und der Download des Protokolls folgt der gewählten Auswahl.
+
+Enthält die Änderungen von 2.206.0.
+
+### Hinzugefügt
+
+- **Gerät, Einstellung "Ladungen aufzeichnen":** Im Geräte-Popup unter Einstellungen › Batterie entscheidet eine neue Wahl **Automatisch / Ein / Aus**, ob das Panel die Ladungen dieses Geräts aufzeichnet. Automatisch ist wie bisher: nur Geräte, die das Panel als ladefähig kennt, werden aufgezeichnet (die Wahl nennt, was gilt). **Ein** zeichnet auch ein Gerät auf, das nicht als ladefähig gilt, zum Beispiel einen Sensor, den du selbst auflädst; die Kachel "Ladungen" erscheint dann dafür. **Aus** zeichnet nichts auf, auch bei einem ladefähigen Gerät. Sie gilt nur für dieses Gerät (wie die Akku-Kapazität). Der Wert gehört zu den Geräteeinstellungen: Übersicht der eigenen Werte, Zurücksetzen (mit den Lade-Werten des Geräts), Sicherung und Wiederherstellung.
+
+### Geändert
+
+- **Protokoll, Download:** Der Knopf lädt jetzt herunter, was das Fenster zeigt, ohne die Grenze von 500 Einträgen: den gewählten Reiter, den Zeitraum (7 Tage bis alle, oder eigene Daten), die Chips (Stufe, Kategorie, Art, Auswahl einer Meldung oder Routine) und die Suche. "Alle" ohne Filter lädt alles Gespeicherte herunter. In 2.205.0 lud er immer den ganzen Reiter.
+
 ## [2.206.0] - 2026-11-07
+
+Nicht veröffentlicht; enthalten in 2.207.0.
 
 Ladungen werden nur für ladefähige Geräte aufgezeichnet, die Debug-Zeile zum Batteriestand ist viel ruhiger, und der Download-Knopf im Protokoll steht ganz rechts.
 
@@ -5929,7 +5945,7 @@ Erste Vorabversion.
   GitHub Actions für die Prüfungen von HACS und hassfest sowie die Tests.
 
 [2.6.0]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v2.6.0
-[2.206.0]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v2.206.0
+[2.207.0]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v2.207.0
 [2.205.0]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v2.205.0
 [2.204.1]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v2.204.1
 [2.204.0]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v2.204.0

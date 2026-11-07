@@ -783,8 +783,11 @@ async def test_charge_by_indicator(hass: HomeAssistant) -> None:
 
 
 async def test_only_rechargeable_devices_record_charges(hass: HomeAssistant) -> None:
-    """2.205.0: Ein Sensor mit Messrauschen (Temperatur) ist nicht ladefähig; seine Kurve füllt keinen Platz, auch wenn sie wie eine Ladung aussieht."""
+    """2.205.0/2.207.0: Ein Sensor mit Messrauschen ist nicht ladefähig; seine Kurve füllt keinen Platz. Am Gerät: automatisch, aus, ein."""
     from custom_components.device_panel.charge import is_charge  # noqa: PLC0415
+    from custom_components.device_panel.devices import (  # noqa: PLC0415
+        async_device_overrides, async_list_devices, async_reset_device_settings, device_settings,
+    )
 
     noise = [[0, 44], [360, 52], [720, 53], [1440, 55]]  # Log eines Kühlschrank-Sensors
     assert is_charge(noise, 5)  # allein am Stand nicht zu trennen
@@ -792,15 +795,29 @@ async def test_only_rechargeable_devices_record_charges(hass: HomeAssistant) -> 
     plain, _e1 = _device(hass, "Kühlschrank", 50)
     phone, _e2 = _device(hass, "Handy", 50)
     n = ChargeNotifier(hass)
-    assert not n._may_record(plain.id)
-    from custom_components.device_panel.devices import device_settings  # noqa: PLC0415
-
-    device_settings(hass).setdefault("charge", {})[phone.id] = True
-    assert n._may_record(phone.id) and not n._may_record(plain.id)
     n._save = lambda: None  # type: ignore[method-assign]
+    # Automatisch: nur ladefähig (hier: Lademeldung am Gerät ein)
+    assert not n._may_record(plain.id)
+    await async_set_device_settings(hass, phone.id, charge=True)
+    assert n._may_record(phone.id) and not n._may_record(plain.id)
+    # Ein: auch ein Gerät, das nicht als ladefähig gilt
+    await async_set_device_settings(hass, plain.id, charge_rec=True)
+    assert n._may_record(plain.id)
+    # Aus: auch ein ladefähiges Gerät zeichnet nichts auf
+    await async_set_device_settings(hass, phone.id, charge_rec=False)
+    assert not n._may_record(phone.id)
     for dev in (plain.id, phone.id):
         n._record_charge(dev, {"pts": noise}, 2000.0, 5)
-    assert plain.id not in n._charges and len(n._charges[phone.id]) == 1
+    assert phone.id not in n._charges and len(n._charges[plain.id]) == 1
+    # Anzeige am Gerät, Übersicht der eigenen Werte, Zurücksetzen (mit der Lademeldung)
+    listed = {d["name"]: d for d in (await async_list_devices(hass))["devices"]}
+    assert listed["Handy"]["charge_rec_setting"] is False and listed["Kühlschrank"]["charge_rec_setting"] is True
+    own = await async_device_overrides(hass)
+    assert {"rec": False, "on": True} in [r["value"] for r in own["charge"]] or any(r["value"].get("rec") is False for r in own["charge"])
+    assert (await async_reset_device_settings(hass, [], [], charge=[phone.id, plain.id]))["charge"] == 2
+    assert device_settings(hass)["charge_rec"] == {}
+    await async_set_device_settings(hass, plain.id, charge_rec=None)  # automatisch ohne Eintrag
+    assert plain.id not in device_settings(hass)["charge_rec"]
 
 
 async def test_level_debug_line_is_throttled(hass: HomeAssistant) -> None:

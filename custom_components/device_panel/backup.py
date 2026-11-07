@@ -125,6 +125,7 @@ _DEVICE_SETTING_KEYS = (
     "charge_stop",
     "charge_live",
     "charge_wh",
+    "charge_rec",
     "liveness_exclude",
 )
 _ITEMS_MAX = 400
@@ -397,7 +398,7 @@ async def _panel_part(hass: HomeAssistant, file_options: Any, dry_run: bool, rep
 
 
 def _valid_device_setting(key: str, value: Any) -> bool:
-    if key in ("notify", "charge", "charge_stop", "charge_live", "liveness_conn"):
+    if key in ("notify", "charge", "charge_stop", "charge_live", "charge_rec", "liveness_conn"):
         return isinstance(value, bool)
     if key == "liveness_exclude":
         return isinstance(value, list) and 0 < len(value) <= 500 and all(isinstance(v, str) and 0 < len(v) < 256 for v in value)

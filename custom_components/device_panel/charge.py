@@ -353,7 +353,7 @@ class ChargeNotifier:
         level = (self._state.get(dev) or {}).get("last")
         if level is not None and (not pts or pts[-1][1] != level):
             pts.append([now, level])
-        if len(pts) >= 2 and max(p[1] for p in pts) - pts[0][1] >= ENTITY_MIN_RISE and now - session["start"] >= ENTITY_MIN_SECONDS:
+        if self._may_record(dev) and len(pts) >= 2 and max(p[1] for p in pts) - pts[0][1] >= ENTITY_MIN_RISE and now - session["start"] >= ENTITY_MIN_SECONDS:
             self._store_charge(dev, {"start": session["start"], "end": now, "from": pts[0][1], "to": max(p[1] for p in pts), "pts": [list(p) for p in pts]})
         self._save()
 
@@ -481,7 +481,7 @@ class ChargeNotifier:
         # Meldet die Ladeanzeige etwas, zeichnet sie auf; eine stumme (unbekannt, nicht verfügbar) lässt den Verlauf des Stands entscheiden
         if any(d == dev and (s := self.hass.states.get(e)) is not None and s.state in (*CHARGING_ON, *CHARGING_OFF) for e, d in self._chg.items()):
             return
-        # Nur Geräte, die das Panel als ladefähig kennt (seit 2.205.0): Sensoren mit Messrauschen (Temperatur, Kühlschrank) liefern Kurven, die
+        # Nur Geräte, die das Panel als ladefähig kennt oder bei denen es der Nutzer einschaltet (seit 2.206.0, Wahl am Gerät seit 2.207.0): Sensoren mit Messrauschen (Temperatur, Kühlschrank) liefern Kurven, die
         # allein am Stand nicht von einer Ladung zu trennen sind, und füllten die Plätze still; das Fenster zeigt sie nur bei ladefähigen Geräten
         if not self._may_record(dev):
             return
@@ -497,9 +497,15 @@ class ChargeNotifier:
         })
 
     def _may_record(self, dev: str) -> bool:
-        """Kennt das Panel das Gerät als ladefähig (Lademeldung, Ladeanzeige oder Live-Aktivität)?"""
+        """
+        Ladungen des Geräts aufzeichnen? Nach der Wahl am Gerät (seit 2.207.0): ein = immer, aus = nie, automatisch = wenn das Panel das Gerät als
+        ladefähig kennt (Lademeldung, Ladeanzeige oder Live-Aktivität).
+        """
+        mode = device_settings(self.hass).get("charge_rec", {}).get(dev)
+        if mode is not None:
+            return bool(mode)
         device = dr.async_get(self.hass).async_get(dev)
-        return device is not None and self.known_rechargeable(effective(self.hass), self.hass, device)
+        return device is not None and self.rechargeable(effective(self.hass), self.hass, device)
 
     def _store_charge(self, dev: str, rec: dict[str, Any]) -> None:
         lst = self._charges.setdefault(dev, [])

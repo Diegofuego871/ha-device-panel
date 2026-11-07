@@ -1127,6 +1127,8 @@ def _signal_setting(value: Any) -> Any:
         vol.Optional("charge_live"): vol.Any(None, bool),
         # Akku-Kapazität in Wh (seit 2.203.0): None = nicht angegeben; nur am Gerät.
         vol.Optional("charge_wh"): vol.Any(None, vol.All(vol.Coerce(float), vol.Range(min=CHARGE_WH_MIN, max=CHARGE_WH_MAX))),
+        # Ladungen aufzeichnen (seit 2.207.0): None = automatisch (ladefähige Geräte), True = ein, False = aus; nur am Gerät.
+        vol.Optional("charge_rec"): vol.Any(None, bool),
         # Entitäten, die am Gerät nicht als Lebenszeichen zählen (seit 2.165.0): None oder leer = alle zählen.
         vol.Optional("liveness_exclude"): vol.Any(None, vol.All([str], vol.Length(max=500))),
     }
@@ -1140,7 +1142,7 @@ async def _ws_set_device_settings(
     if dr.async_get(hass).async_get(msg["device_id"]) is None:
         connection.send_error(msg["id"], websocket_api.ERR_NOT_FOUND, "device not found")
         return
-    changes = {k: msg[k] for k in ("battery", "notify", "signal", "offline", "notify_delay", "flaky", "liveness_conn", "charge", "charge_full", "charge_rise", "charge_stall", "charge_stop", "charge_live", "charge_wh", "liveness_exclude") if k in msg}
+    changes = {k: msg[k] for k in ("battery", "notify", "signal", "offline", "notify_delay", "flaky", "liveness_conn", "charge", "charge_full", "charge_rise", "charge_stall", "charge_stop", "charge_live", "charge_wh", "charge_rec", "liveness_exclude") if k in msg}
     # "Erst melden nach" des Geräts nie kürzer als sein "Ausgefallen nach" (seit 2.91.0, wie global und pro Integration): Fehler, nichts gespeichert
     if error := await async_notify_delay_error(hass, msg["device_id"], changes):
         connection.send_error(msg["id"], websocket_api.ERR_INVALID_FORMAT, error)

@@ -583,7 +583,7 @@
       charge: devices
         .map((d) => {
           const v = {};
-          for (const [key, short] of [["charge", "on"], ["chargeFull", "full"], ["chargeRise", "rise"], ["chargeStall", "stall"], ["chargeStop", "stop"], ["chargeLive", "live"], ["chargeWh", "wh"]]) if (d.id in s[key]) v[short] = s[key][d.id];
+          for (const [key, short] of [["charge", "on"], ["chargeFull", "full"], ["chargeRise", "rise"], ["chargeStall", "stall"], ["chargeStop", "stop"], ["chargeLive", "live"], ["chargeWh", "wh"], ["chargeRec", "rec"]]) if (d.id in s[key]) v[short] = s[key][d.id];
           return Object.keys(v).length ? { ...info(d), value: v } : null;
         })
         .filter(Boolean)
@@ -730,7 +730,7 @@
   const EMOJI_DEFAULTS = { outage: "🔴", group: "🚨", online: "🟢", battery: "🪫", charge: "🔋", charge_stop: "🔌", new: "✨", updates: "⬆️" };
   window.__services = [];
   // Einstellungen pro Gerät (Batterie, Meldungen), wie .storage/device_panel.devices.
-  window.__devSettings = { battery: {}, notifyOff: new Set(), mute: {}, signal: {}, offline: {}, notifyDelay: {}, flaky: {}, lconn: {}, charge: {}, chargeLive: {}, chargeFull: {}, chargeRise: {}, chargeStall: {}, chargeStop: {}, chargeWh: {}, livenessExclude: {} };
+  window.__devSettings = { battery: {}, notifyOff: new Set(), mute: {}, signal: {}, offline: {}, notifyDelay: {}, flaky: {}, lconn: {}, charge: {}, chargeLive: {}, chargeFull: {}, chargeRise: {}, chargeStall: {}, chargeStop: {}, chargeWh: {}, chargeRec: {}, livenessExclude: {} };
   window.__connOverrides = {};
   // Labels von Home Assistant (seit 2.155.0): window.__labels = [{ id, name }], window.__devLabels = { Geräte-ID: [Label-IDs] }
   window.__labels = [];
@@ -1013,7 +1013,7 @@
         let charge = 0;
         for (const id of new Set(msg.charge || [])) {
           let any = false;
-          for (const key of ["charge", "chargeFull", "chargeRise", "chargeStall", "chargeStop", "chargeLive", "chargeWh"]) if (id in s[key]) { delete s[key][id]; any = true; }
+          for (const key of ["charge", "chargeFull", "chargeRise", "chargeStall", "chargeStop", "chargeLive", "chargeWh", "chargeRec"]) if (id in s[key]) { delete s[key][id]; any = true; }
           if (any) charge++;
         }
         let notifyDelay = 0;
@@ -1341,6 +1341,12 @@
           if (msg.charge_wh === null) delete window.__devSettings.chargeWh[msg.device_id];
           else window.__devSettings.chargeWh[msg.device_id] = msg.charge_wh;
           out.charge_wh = msg.charge_wh;
+        }
+        if ("charge_rec" in msg) {
+          if (!(msg.charge_rec === null || typeof msg.charge_rec === "boolean")) throw { code: "invalid_format", message: "charge_rec" };
+          if (msg.charge_rec === null) delete window.__devSettings.chargeRec[msg.device_id];
+          else window.__devSettings.chargeRec[msg.device_id] = msg.charge_rec;
+          out.charge_rec = msg.charge_rec;
         }
         if ("charge_live" in msg) {
           if (!(msg.charge_live === null || typeof msg.charge_live === "boolean")) throw { code: "invalid_format", message: "charge_live" };
@@ -2112,6 +2118,7 @@
             charge_full_setting: window.__devSettings.chargeFull[d.id] ?? null,
             // Akku-Kapazität (2.203.0): window.__devSettings.chargeWh; rechargeable: ladendes Gerät oder in window.__rechargeable
             charge_wh_setting: window.__devSettings.chargeWh[d.id] ?? null,
+            charge_rec_setting: window.__devSettings.chargeRec[d.id] ?? null,
             rechargeable: Boolean(window.__charging?.[d.id]) || (window.__rechargeable || []).includes(d.id),
             // Ladungen (2.204.0): window.__charges = { Geräte-ID: [ { start (Epoch-Sekunden), minutes, from, to, pts, watts, avg_w, peak_w } ] }, neueste zuerst
             charges_count: (window.__charges?.[d.id] || []).length,

@@ -808,6 +808,7 @@ const devOwnCount = (d) =>
     d.charge_stop_setting != null,
     d.charge_live_setting != null,
     d.charge_wh_setting != null,
+    d.charge_rec_setting != null,
     d.notify_off || (d.notify_mute_until && Date.parse(d.notify_mute_until) > Date.now()),
   ].filter(Boolean).length;
 const hasOverride = (d) => d.offline_setting != null || d.notify_delay_setting != null || d.flaky_setting != null || d.liveness_conn_setting != null || d.battery_setting != null || Boolean(d.notify_off) || Boolean(d.connection_manual) || d.signal_setting != null;
@@ -1945,6 +1946,8 @@ class DevicePanel extends HTMLElement {
         }
       } else if (el.matches?.('select[data-dlg="dev-charge-live"]')) {
         this._setDeviceSettings(this._detailId, { charge_live: el.value === "on" ? true : el.value === "off" ? false : null });
+      } else if (el.matches?.('select[data-dlg="dev-charge-rec"]')) {
+        this._setDeviceSettings(this._detailId, { charge_rec: el.value === "on" ? true : el.value === "off" ? false : null });
       } else if (el.matches?.('select[data-dlg="dev-charge-stop"]')) {
         this._setDeviceSettings(this._detailId, { charge_stop: el.value === "on" ? true : el.value === "off" ? false : null });
       } else if (el.matches?.('input[data-dlg="dev-charge-rise-val"]')) {
@@ -4652,7 +4655,7 @@ class DevicePanel extends HTMLElement {
       tiles.push(this._staticTile(this._t("tileBattery"), `${batIcon({ level: l.level, low: false }, 18)}${escape(String(l.level))}<small>%</small>`, this._t("batLastSub", this._batteryLastAge(d))).replace("st-tile static", "st-tile static stale"));
     }
     // Kachel "Ladungen" (seit 2.204.0): die letzten Ladungen; nur für Administratoren (die Daten liefert ein Befehl nur für sie) und erst, wenn eine aufgezeichnet ist
-    if (d.rechargeable && d.charges_count > 0 && this._hass?.user?.is_admin !== false) {
+    if ((d.charge_rec_setting === true || (d.charge_rec_setting == null && d.rechargeable)) && d.charges_count > 0 && this._hass?.user?.is_admin !== false) {
       tiles.push(`<button type="button" class="st-tile" data-dlg="charges"><span class="st-k">${escape(this._t("tileCharges"))}</span><span class="st-v">${mdi("batteryCharging", 18)}${escape(String(d.charges_count))}</span><span class="st-sub">${escape(d.charges_last ? this._fmtDate(Date.parse(d.charges_last) / 1000) : this._t("chgWinTitle"))}</span><span class="cbtn chev" aria-hidden="true">${mdi("chevron", 16)}</span></button>`);
     }
     return `${this._chargeTileHtml(d)}<div class="st-tiles" style="--n:${tiles.length}">${tiles.join("")}</div>`;
@@ -4895,6 +4898,18 @@ class DevicePanel extends HTMLElement {
         whErr ? `<div class="opt-error" data-dev-range>${escape(whErr.message)}</div>` : ""
       }${origin(whSet != null, null, whSet != null ? "" : t("devChargeWhNone"), t("devChargeWhShort"))}</div>`;
     }
+    // Ladungen aufzeichnen (seit 2.207.0, nur am Gerät): automatisch (ladefähige Geräte), aus oder ein; "ein" auch für ein Gerät, das das Panel nicht
+    // als ladefähig kennt (dann erscheint die Kachel "Ladungen" mit dem, was aufgezeichnet wird)
+    {
+      const recSet = d.charge_rec_setting;
+      const recMode = recSet == null ? "default" : recSet ? "on" : "off";
+      parts.bat += `<div class="opt${recSet != null ? " changed" : ""}"><div class="opt-line"><span class="opt-label">${escape(t("devChargeRec"))}</span>${sel(
+        "dev-charge-rec",
+        [["default", t("devChargeRecAuto", Boolean(d.rechargeable))], ["on", t("devChargeOn")], ["off", t("devChargeOff")]],
+        recMode,
+        t("devChargeRec")
+      )}</div>${origin(recSet != null, null, "", t("devChargeRecShort"))}</div>`;
+    }
     // Lademeldung (seit 1.30.0): Push, sobald das Gerät voll geladen ist; ohne Wahl gilt die Integration.
     if (d.battery?.level != null) {
       const cd = d.charge_default || { on: false, integration: null };
@@ -5041,7 +5056,7 @@ class DevicePanel extends HTMLElement {
     };
     const ownTab = {
       out: d.offline_setting != null || d.notify_delay_setting != null || d.flaky_setting != null || d.liveness_conn_setting != null || silenced,
-      bat: d.battery_setting != null || d.charge_wh_setting != null,
+      bat: d.battery_setting != null || d.charge_wh_setting != null || d.charge_rec_setting != null,
       chg: [d.charge_setting, d.charge_full_setting, d.charge_rise_setting, d.charge_stall_setting, d.charge_stop_setting, d.charge_live_setting].some((v) => v != null),
       sig: d.signal_setting != null,
     };
@@ -8114,6 +8129,7 @@ class DevicePanel extends HTMLElement {
       v.stop === undefined ? "" : t("diffChargeStop", v.stop),
       v.live === undefined ? "" : t("diffChargeLive", v.live),
       v.wh === undefined ? "" : t("diffChargeWh", this._fmtPct(v.wh)),
+      v.rec === undefined ? "" : t("diffChargeRec", v.rec),
     ]
       .filter(Boolean)
       .join(" · ");

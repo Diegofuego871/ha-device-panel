@@ -258,20 +258,27 @@ export class ProtocolUi {
 
   // --- Laden ---------------------------------------------------------------------
 
-  async load(soft = false) {
+  // Die Abfrage der Ansicht (Reiter, Zeitraum, Filter, Auswahl, Suche); der Download nimmt dieselbe, nur Seite für Seite und ohne die Grenze der Liste
+  query(limit, offset, span = this.span()) {
     const s = this.s;
-    if (!s) return;
-    const seq = ++s.seq;
-    const { since, until } = this.span();
-    const msg = { type: "device_panel/protocol_get", kind: s.kind, ...(since === null ? {} : { since }), until, limit: s.limit, filter: s.filter === "all" ? null : s.filter, q: s.q.trim() };
-    const items = s.kind === "magic" || s.kind === "routine";
+    const msg = { type: "device_panel/protocol_get", kind: s.kind, ...(span.since === null ? {} : { since: span.since }), until: span.until, limit, filter: s.filter === "all" ? null : s.filter, q: s.q.trim() };
+    if (offset) msg.offset = offset;
     if (s.kind === "system") {
       // Kategorie des Reiters "System"; ohne Gerät und ohne Auswahl einer Meldung
       if (s.item) msg.cat = s.item;
     } else {
       if (s.deviceId) msg.device_id = s.deviceId;
-      if (items && s.item) msg.item_ids = [s.item];
+      if ((s.kind === "magic" || s.kind === "routine") && s.item) msg.item_ids = [s.item];
     }
+    return msg;
+  }
+
+  async load(soft = false) {
+    const s = this.s;
+    if (!s) return;
+    const seq = ++s.seq;
+    const msg = this.query(s.limit, 0);
+    const items = s.kind === "magic" || s.kind === "routine";
     if (!soft) {
       s.loading = true;
       this.renderFoot();
@@ -926,8 +933,8 @@ export class ProtocolUi {
       .join("\n");
   }
 
-  // Alles Gespeicherte des Reiters als Textdatei (seit 2.205.0): ohne Zeitraum, Chips und Suche, in Seiten zu PAGE_MAX, bis alles da ist.
-  // Das Fenster zeigt höchstens LIMIT_MAX Einträge; die Datei hat alle, die der Server hält.
+  // Die gewählte Ansicht als Textdatei (seit 2.205.0; mit Zeitraum, Filter, Auswahl und Suche seit 2.207.0), in Seiten zu DOWNLOAD_PAGE, bis alles da ist.
+  // Das Fenster zeigt höchstens LIMIT_MAX Einträge; die Datei hat alle, die zur Auswahl passen. "Alle" und kein Filter: der ganze Reiter.
   async download() {
     const s = this.s;
     if (!s || s.downloading) return;
@@ -935,13 +942,9 @@ export class ProtocolUi {
     this.renderFoot();
     const rows = [];
     try {
-      const until = s.data?.until ?? Date.now() / 1000;
+      const span = this.span();
       for (let page = 0; page < DOWNLOAD_PAGES_MAX; page++) {
-        const msg = { type: "device_panel/protocol_get", kind: s.kind, until, limit: DOWNLOAD_PAGE, offset: rows.length, q: "" };
-        if (s.kind !== "system") {
-          if (s.deviceId) msg.device_id = s.deviceId;
-          if ((s.kind === "magic" || s.kind === "routine") && s.item) msg.item_ids = [s.item];
-        }
+        const msg = this.query(DOWNLOAD_PAGE, rows.length, span);
         const r = await this.host._hass.callWS(msg);
         if (this.s !== s) return;
         const got = r.entries || [];
