@@ -12,6 +12,8 @@
 const REFRESH_MS = 10000;
 // Systemwerte (CPU, RAM, Festplatte): alle 60 Sekunden neu, nicht bei jedem Takt des Fensters
 const SYS_EVERY = 6;
+// So lange gilt eine geholte Kurve beim Zurückwechseln des Zeitraums (Millisekunden)
+const SYS_CACHE_MS = 60000;
 const SYS_RANGES = ["24h", "7d", "30d", "90d", "180d", "365d"];
 // Höchstens so viele Sensoren zeigt die Auswahl auf einmal (der Rest folgt nach der Eingabe)
 const PICK_MAX = 60;
@@ -38,6 +40,9 @@ export class StatusUi {
     this.sysError = null;
     // Zeitraum je Kurve (seit 2.128.0): bisher gab es ihn nur für die Festplatte
     this.ranges = { cpu: "24h", ram: "24h", disk: "24h" };
+    // Wechsel des Zeitraums (seit 2.208.0): welche Karte gerade lädt, und schon geholte Kurven je Art und Zeitraum (kurz zwischengespeichert)
+    this.sysLoading = {};
+    this.sysCache = new Map();
     this._ticks = 0;
     // Neustart von Hand (seit 2.63.0): confirm = Teil mit offener Rückfrage, busy = Teil, der gerade neu startet, flash = Hinweis danach
     this.ui = { confirm: null, busy: null, flash: "", flashTimer: null, pick: null, pickQ: "", enabled: {}, enabling: null, enableAsk: null, tab: "services", saved: false, saveError: "" };
@@ -170,7 +175,7 @@ export class StatusUi {
         const kind = range.dataset.stKind;
         if (this.ranges[kind] && SYS_RANGES.includes(range.dataset.stRange) && range.dataset.stRange !== this.ranges[kind]) {
           this.ranges = { ...this.ranges, [kind]: range.dataset.stRange };
-          this.loadSystem();
+          this.pickRange(kind, range.dataset.stRange);
         }
         return;
       }
@@ -241,17 +246,95 @@ export class StatusUi {
   }
 
   // CPU, Arbeitsspeicher, Festplatte (status_system); jede Kurve hat ihren Zeitraum
-  async loadSystem() {
+  // Zeitraum einer Karte gewählt (seit 2.208.0): der Reiter wechselt sofort; ist die Kurve frisch zwischengespeichert, steht sie gleich da, sonst lädt
+  // nur diese Karte (die alte Kurve bleibt gedimmt unter der Ladeanzeige)
+  pickRange(kind, key) {
+    const hit = this.sysCache.get(`${kind}:${key}`);
+    if (hit && this.sys && Date.now() - hit.at < SYS_CACHE_MS) {
+      this.mergeMetric(hit.metric);
+      this.sysLoading = { ...this.sysLoading, [kind]: false };
+      this.render();
+      return;
+    }
+    this.sysLoading = { ...this.sysLoading, [kind]: true };
+    this.render();
+    this.loadSystem(kind);
+  }
+
+  // Ladeanzeige: drei Punkte als Dreieck, das sich ohne festen Rhythmus um alle Achsen dreht (Summe von Sinuswellen je Achse); was näher ist, wirkt
+  // grösser und heller. Läuft nur, solange eine Karte lädt.
+  startLoader() {
+    if (this._ldRaf || window.matchMedia?.("(prefers-reduced-motion: reduce)").matches) return;
+    const K = { a: 1.7, b: 0.9, p: 0, c: 1.3, d: 1.3, q: 1.7, e: 0.9, f: 0.7, r: 3.1 };
+    const R = 26;
+    const rot = ([a, b, c], [x, y, z]) => {
+      let u = b * Math.cos(x) - c * Math.sin(x);
+      c = b * Math.sin(x) + c * Math.cos(x);
+      b = u;
+      u = a * Math.cos(y) + c * Math.sin(y);
+      c = -a * Math.sin(y) + c * Math.cos(y);
+      a = u;
+      u = a * Math.cos(z) - b * Math.sin(z);
+      b = a * Math.sin(z) + b * Math.cos(z);
+      return [u, b, c];
+    };
+    const tick = (now) => {
+      const boxes = this.dlg?.querySelectorAll(".st-ld");
+      if (!boxes?.length) {
+        this._ldRaf = 0;
+        return;
+      }
+      const t = now / 1000;
+      const ang = [K.a * t + 0.9 * Math.sin(K.b * t + K.p), K.c * t + 0.8 * Math.sin(K.d * t + K.q), K.e * t + 0.7 * Math.sin(K.f * t + K.r)];
+      const pos = [0, 1, 2].map((i) => {
+        const a = (i * 2 * Math.PI) / 3;
+        const p = rot([Math.cos(a) * R, Math.sin(a) * R, 0], ang);
+        const s = 1 / (1 - p[2] / (R * 4.2));
+        return { x: p[0] * s, y: p[1] * s, s, z: p[2] };
+      });
+      for (const box of boxes) {
+        box.querySelectorAll("s").forEach((dot, i) => {
+          const p = pos[i];
+          const size = 14 * p.s;
+          dot.style.cssText = `width:${size}px;height:${size}px;left:${36 + p.x - size / 2}px;top:${36 + p.y - size / 2}px;opacity:${0.55 + 0.45 * Math.min(1, Math.max(0, (p.z / R + 1) / 2))}`;
+        });
+      }
+      this._ldRaf = requestAnimationFrame(tick);
+    };
+    this._ldRaf = requestAnimationFrame(tick);
+  }
+
+  mergeMetric(metric) {
+    const i = this.sys.metrics.findIndex((x) => x.id === metric.id);
+    if (i >= 0) this.sys.metrics[i] = metric;
+    else this.sys.metrics.push(metric);
+  }
+
+  // CPU, Arbeitsspeicher, Festplatte (status_system); kind = nur diese Karte (Wechsel des Zeitraums), sonst alle drei
+  async loadSystem(kind = null) {
     const ranges = this.ranges;
+    const msg = { type: "device_panel/status_system", range: ranges.disk, ranges, ...(kind && this.sys ? { kinds: [kind] } : {}) };
+    const only = msg.kinds ? kind : null;
     try {
-      const res = await this.host._hass.callWS({ type: "device_panel/status_system", range: ranges.disk, ranges });
-      if (ranges !== this.ranges) return;
-      this.sys = res;
+      const res = await this.host._hass.callWS(msg);
+      // Überholt: inzwischen ein anderer Zeitraum gewählt (die neuere Abfrage zeichnet)
+      if (only ? ranges[only] !== this.ranges[only] : ranges !== this.ranges) return;
+      if (only && this.sys) {
+        for (const m of res.metrics) this.mergeMetric(m);
+        this.sys.candidates = res.candidates;
+        this.sys.integrations = res.integrations;
+        this.sysLoading = { ...this.sysLoading, [only]: false };
+      } else {
+        this.sys = res;
+        this.sysLoading = {};
+      }
       this.sysError = null;
+      for (const m of res.metrics) this.sysCache.set(`${m.id}:${res.ranges[m.id]}`, { at: Date.now(), metric: m });
       // "Eingeschaltet"-Hinweis nur, solange die Sensoren noch fehlen; sind sie da (oder fehlt nichts mehr), gilt er nicht mehr
       for (const m of res.metrics) if (!m.disabled?.length) delete this.ui.enabled[m.id];
     } catch (err) {
       this.sysError = this.h.errText(err);
+      this.sysLoading = {};
     }
     this.render();
   }
@@ -365,6 +448,7 @@ export class StatusUi {
     }
     this.saving = false;
     // Eine neue Quelle ändert die Karten: beides neu holen
+    this.sysCache.clear();
     await Promise.all([this.load(), this.loadSystem()]);
     this.render(true);
   }
@@ -423,6 +507,7 @@ export class StatusUi {
     const sc = body.closest(".dlg-body");
     if (sc) sc.scrollTop = scroll;
     this.renderFoot();
+    if (body.querySelector(".st-ld")) this.startLoader();
   }
 
   // Leiste unten mit Speichern: nur im Reiter "Einstellungen", getrennt vom Rest, damit das Tippen in einem Feld sie nachführen kann
@@ -674,6 +759,11 @@ export class StatusUi {
     else if (m.missing) body = `<p class="st-sys-note warn">${escape(t("stSysMissing"))}</p>`;
     else if (m.pending) body = `<p class="st-sys-note" role="status">${escape(t("stSysPending"))}</p>`;
     else if (m.off) body = `<p class="st-sys-note warn">${escape(t("stSysOwnOff"))}</p>${this.enableHtml(m)}`;
+    else if (this.sysLoading[m.id]) {
+      // Zeitraum gewechselt, Kurve lädt: die alte bleibt gedimmt stehen, die Ladeanzeige liegt darüber (Reiter und Fuss zeigen schon den neuen Zeitraum)
+      const loader = `<span class="st-ld" role="status" aria-label="${escape(t("stSysLoading"))}"><s></s><s></s><s></s></span>`;
+      body = `<div class="st-sys-ldwrap">${m.points.length ? this.plotHtml(m) : `<div class="st-sys-plot"></div>`}${loader}</div><div class="st-sys-foot"><span>${escape(t(`stSysAgo_${range}`))}</span><span class="mid"></span></div>`;
+    }
     else if (!m.points.length) body = `<p class="st-sys-note">${escape(t("stSysNoData"))}</p>`;
     else {
       const stats =

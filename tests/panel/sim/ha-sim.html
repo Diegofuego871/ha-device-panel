@@ -1980,6 +1980,8 @@
       if (msg.type === "device_panel/status_system") {
         // Wie system_stats.async_system: drei Kurven (Festplatte mit Zeitraum), Sensoren zur Auswahl; Erfindung statt Messung
         if (window.__systemFails) throw new Error(window.__systemFails);
+        // Verzögerung zum Prüfen der Ladeanzeige (window.__systemDelay in ms)
+        if (window.__systemDelay) await new Promise((r) => setTimeout(r, window.__systemDelay));
         const now = Date.now() / 1000;
         const range = msg.range || "24h";
         const dayOf = { "24h": 1, "7d": 7, "30d": 30, "90d": 90, "180d": 180, "365d": 365 };
@@ -2016,7 +2018,7 @@
             mk("cpu", "host", "Prozessornutzung", "sensor.system_monitor_processor_use", dayOf[rg("cpu")], (x) => 14 + 12 * Math.sin(x * 14) + (x > 0.8 && x < 0.86 ? 55 : 0), 17, ["24h", "7d"].includes(rg("cpu")) ? "history" : "statistics"),
             mk("ram", "host", "Arbeitsspeicher", "sensor.system_monitor_memory_use_percent", dayOf[rg("ram")], (x) => 52 + 6 * Math.sin(x * 5), 54, ["24h", "7d"].includes(rg("ram")) ? "history" : "statistics"),
             disk,
-          ],
+          ].filter((m) => !msg.kinds || msg.kinds.includes(m.id)),
           candidates: [
             { entity_id: "sensor.mein_server_cpu", name: "Mein Server CPU", unit: "%", pref: true }, { entity_id: "sensor.nas_speicher", name: "NAS Speicher", unit: "%", pref: true },
             { entity_id: "sensor.system_monitor_arbeitsspeicherauslastung", name: "System Monitor Arbeitsspeicherauslastung", unit: "%", pref: true },

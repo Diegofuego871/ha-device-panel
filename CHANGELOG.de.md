@@ -7,7 +7,19 @@ Alle nennenswerten Änderungen an dieser Integration stehen in dieser Datei.
 Das Format folgt [Keep a Changelog](https://keepachangelog.com/de/1.1.0/),
 die Versionsnummern folgen [Semantic Versioning](https://semver.org/lang/de/).
 
+## [2.208.0] - 2026-11-07
+
+Der Wechsel des Zeitraums in Status › System ist sofort, und nur die gewählte Karte lädt, mit einer Ladeanimation.
+
+Enthält die Änderungen von 2.206.0 und 2.207.0.
+
+### Geändert
+
+- **Status › System, Wechsel des Zeitraums:** Der Reiter wechselt jetzt sofort (vorher erst, wenn die Daten da waren, was sehr lange dauern konnte). Nur die angetippte Karte lädt: Ihre alte Kurve bleibt gedimmt stehen, und darüber drehen sich drei Punkte in der Akzentfarbe frei um alle Achsen (näher grösser und heller). Die beiden anderen Karten bleiben, wie sie sind. Vorher holte jedes Antippen alle drei Kurven, eine nach der anderen. Eine schon geholte Kurve (zum Beispiel beim Zurückwechseln auf "24 Std.") erscheint eine Minute lang sofort ohne neue Abfrage. Der Server liest nur die gefragten Kurven und mehrere gleichzeitig, wenn alle drei gebraucht werden. Bei eingeschalteter Einstellung "Bewegung reduzieren" pulsieren die Punkte, statt sich zu drehen.
+
 ## [2.207.0] - 2026-11-07
+
+Nicht veröffentlicht; enthalten in 2.208.0.
 
 Ladungen lassen sich je Gerät aufzeichnen (automatisch, ein, aus), und der Download des Protokolls folgt der gewählten Auswahl.
 
@@ -5945,7 +5957,7 @@ Erste Vorabversion.
   GitHub Actions für die Prüfungen von HACS und hassfest sowie die Tests.
 
 [2.6.0]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v2.6.0
-[2.207.0]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v2.207.0
+[2.208.0]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v2.208.0
 [2.205.0]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v2.205.0
 [2.204.1]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v2.204.1
 [2.204.0]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v2.204.0

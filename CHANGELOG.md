@@ -7,7 +7,19 @@ All notable changes to this integration are documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/).
 
+## [2.208.0] - 2026-11-07
+
+Switching the period in Status › System is instant, and only the chosen card loads, with a loading animation.
+
+Includes the changes from 2.206.0 and 2.207.0.
+
+### Changed
+
+- **Status › System, switching the period:** The tab now switches at once (before, it only switched when the data had arrived, which could take very long). Only the card you tapped loads: its old curve stays dimmed, and over it three dots in the accent colour turn freely around all axes (larger and brighter when closer). The other two cards stay as they are. Before, every tap fetched all three curves, one after the other. A curve you already fetched (for example when you go back to "24 h") appears at once for a minute without a new request. The server reads only the asked curves, and several at once when all three are needed. With "reduce motion" switched on, the dots pulse instead of turning.
+
 ## [2.207.0] - 2026-11-07
+
+Not released; included in 2.208.0.
 
 Charges can be recorded per device (automatic, on, off), and the download of the history follows the chosen selection.
 
@@ -5844,7 +5856,7 @@ First pre-release.
   GitHub Actions for HACS/hassfest validation and tests.
 
 [2.6.0]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v2.6.0
-[2.207.0]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v2.207.0
+[2.208.0]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v2.208.0
 [2.205.0]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v2.205.0
 [2.204.1]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v2.204.1
 [2.204.0]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v2.204.0

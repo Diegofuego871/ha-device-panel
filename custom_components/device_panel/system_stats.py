@@ -21,6 +21,7 @@ weit wie die Aufbewahrung des Recorders.
 
 from __future__ import annotations
 
+import asyncio
 import logging
 import math
 import time
@@ -466,22 +467,25 @@ async def async_metric(hass: HomeAssistant, kind: str, own: str, days: int, now:
     return out
 
 
-async def async_system(hass: HomeAssistant, range_key: str, now: float | None = None, ranges: dict[str, str] | None = None) -> dict[str, Any]:
+async def async_system(
+    hass: HomeAssistant, range_key: str, now: float | None = None, ranges: dict[str, str] | None = None, kinds: list[str] | None = None
+) -> dict[str, Any]:
     """
-    Alle drei Kurven plus die Sensoren zur Auswahl. ranges wählt den Zeitraum je Kurve (cpu, ram, disk); ohne Angabe gilt range_key nur für die
-    Festplatte (ältere Panels) und die beiden anderen sind 24 Stunden.
+    Die Kurven plus die Sensoren zur Auswahl. ranges wählt den Zeitraum je Kurve (cpu, ram, disk); ohne Angabe gilt range_key nur für die
+    Festplatte (ältere Panels) und die beiden anderen sind 24 Stunden. kinds (seit 2.208.0) nennt die Kurven, die gebraucht werden (Wechsel
+    des Zeitraums an einer Karte): nur sie werden gelesen, und zwar gleichzeitig statt nacheinander; ohne Angabe alle drei.
     """
     now = now if now is not None else time.time()
     opts = effective(hass)
-    metrics = []
     chosen: dict[str, str] = {}
     for kind in KINDS:
         key = (ranges or {}).get(kind) or (range_key if kind == "disk" else "24h")
         chosen[kind] = key if key in RANGES else "24h"
-        metrics.append(await async_metric(hass, kind, str(opts.get(OPTION_OF[kind]) or ""), RANGES[chosen[kind]], now))
+    wanted = [k for k in KINDS if not kinds or k in kinds]
+    metrics = await asyncio.gather(*(async_metric(hass, kind, str(opts.get(OPTION_OF[kind]) or ""), RANGES[chosen[kind]], now) for kind in wanted))
     # Ob die Integrationen eingerichtet sind: ohne "System Monitor" sagt die App, wie man es hinzufügt (nicht zwingend, es gibt die Auswahl)
     integrations = {"systemmonitor": bool(hass.config_entries.async_entries("systemmonitor")), "hassio": "hassio" in hass.config.components}
-    return {"range": chosen["disk"], "ranges": chosen, "metrics": metrics, "candidates": candidates(hass), "integrations": integrations}
+    return {"range": chosen["disk"], "ranges": chosen, "metrics": list(metrics), "candidates": candidates(hass), "integrations": integrations}
 
 
 @websocket_api.websocket_command(
@@ -489,13 +493,15 @@ async def async_system(hass: HomeAssistant, range_key: str, now: float | None = 
         vol.Required("type"): f"{DOMAIN}/status_system",
         vol.Optional("range", default="24h"): vol.In(tuple(RANGES)),
         vol.Optional("ranges"): {vol.In(KINDS): vol.In(tuple(RANGES))},
+        # Nur diese Kurven lesen (seit 2.208.0): der Wechsel des Zeitraums an einer Karte holt nur sie
+        vol.Optional("kinds"): vol.All([vol.In(KINDS)], vol.Length(min=1, max=len(KINDS))),
     }
 )
 @websocket_api.require_admin
 @websocket_api.async_response
 async def ws_status_system(hass: HomeAssistant, connection: websocket_api.ActiveConnection, msg: dict[str, Any]) -> None:
     """CPU, Arbeitsspeicher und Festplatte für die Status-App (Administratoren)."""
-    connection.send_result(msg["id"], await async_system(hass, msg["range"], ranges=msg.get("ranges")))
+    connection.send_result(msg["id"], await async_system(hass, msg["range"], ranges=msg.get("ranges"), kinds=msg.get("kinds")))
 
 
 @websocket_api.websocket_command({vol.Required("type"): f"{DOMAIN}/status_system_enable", vol.Required("kind"): vol.In(KINDS)})

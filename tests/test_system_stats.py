@@ -390,3 +390,18 @@ def test_thin_peaks_keeps_a_short_spike_that_the_mean_would_hide() -> None:
     # zeitlich geordnet, letzter Punkt bleibt, kurze Reihen unverändert
     assert [t for t, _v in peaks] == sorted(t for t, _v in peaks) and peaks[-1] == points[-1]
     assert system_stats.thin_peaks(points[:10], start, end, 300) == points[:10]
+
+
+async def test_status_system_only_the_asked_kinds(hass: HomeAssistant, hass_ws_client) -> None:
+    """2.208.0: "kinds" liest nur die genannten Kurven (Wechsel des Zeitraums an einer Karte); die Zeiträume aller bleiben in der Antwort; ungültige Art wird abgelehnt."""
+    await _setup(hass)
+    client = await hass_ws_client(hass)
+    res = (await _ws(client, 1, type=f"{DOMAIN}/status_system", range="24h", ranges={"cpu": "7d", "ram": "24h", "disk": "30d"}, kinds=["cpu"]))["result"]
+    assert [m["id"] for m in res["metrics"]] == ["cpu"] and res["metrics"][0]["days"] == 7
+    assert res["ranges"] == {"cpu": "7d", "ram": "24h", "disk": "30d"}
+    assert "candidates" in res and "integrations" in res
+    # ohne Angabe: alle drei, in fester Reihenfolge
+    res = (await _ws(client, 2, type=f"{DOMAIN}/status_system"))["result"]
+    assert [m["id"] for m in res["metrics"]] == ["cpu", "ram", "disk"]
+    assert not (await _ws(client, 3, type=f"{DOMAIN}/status_system", kinds=["gpu"]))["success"]
+    assert not (await _ws(client, 4, type=f"{DOMAIN}/status_system", kinds=[]))["success"]
