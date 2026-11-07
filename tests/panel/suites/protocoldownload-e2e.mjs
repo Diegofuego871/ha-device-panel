@@ -39,6 +39,12 @@ for (const lang of ["de", "en"]) for (const mobile of [false, true]) {
   await wait(`return r.querySelectorAll("${D} .pr-list .lg-row").length > 0`);
   const btn = `${D} [data-pr="download"]`;
   check(`[${tag}] Knopf da, mit Beschriftung "${TITLE[lang]}"`, (await ev(`return r.querySelector(${JSON.stringify(btn)})?.getAttribute("aria-label")`)) === TITLE[lang]);
+  check(`[${tag}] Download-Knopf steht ganz rechts (System, nach "Leeren")`, await ev(`return r.querySelector("${D} [data-pr-foot]").lastElementChild?.dataset.pr === "download"`));
+  await tap(`${D} [data-pr="kind"][data-v="all"]`);
+  await wait(`return r.querySelector('${D} [data-pr="kind"].on')?.dataset.v === "all" && !!r.querySelector("${D} [data-pr-foot] [data-pr='download']")`);
+  check(`[${tag}] Download-Knopf steht ganz rechts (Alles)`, await ev(`return r.querySelector("${D} [data-pr-foot]").lastElementChild?.dataset.pr === "download"`));
+  await tap(`${D} [data-pr="kind"][data-v="system"]`);
+  await wait(`return r.querySelectorAll("${D} .pr-list .lg-row").length > 0`);
   check(`[${tag}] Fuss ohne seitliches Überlaufen`, await ev(`const f = r.querySelector("${D} [data-pr-foot]"); return f.scrollWidth <= f.clientWidth + 1`));
 
   // Filter setzen: Download ignoriert ihn

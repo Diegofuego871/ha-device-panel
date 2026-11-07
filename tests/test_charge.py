@@ -52,6 +52,7 @@ def test_step_rise_then_full() -> None:
     n._state = {}
     n._charges = {}
     n._save = lambda: None  # type: ignore[method-assign]
+    n._may_record = lambda dev: True  # type: ignore[method-assign]
     assert n.step("d", 40, 0, OPTS) is None
     assert n.step("d", 30, 100, OPTS) is None
     assert n.step("d", 22, 200, OPTS) is None  # tiefster Stand
@@ -74,6 +75,7 @@ def test_step_jump_and_fallback() -> None:
     n._state = {}
     n._charges = {}
     n._save = lambda: None  # type: ignore[method-assign]
+    n._may_record = lambda dev: True  # type: ignore[method-assign]
     assert n.step("d", 38, 0, OPTS) is None
     # Selten gemeldet: ein Sprung 38 -> 100 reicht (Anstieg 62 >= 20, Dauer unbekannt gilt trotzdem als beobachtet)
     done = n.step("d", 100, 50, OPTS)
@@ -84,6 +86,7 @@ def test_step_jump_and_fallback() -> None:
     n2._state = {}
     n2._charges = {}
     n2._save = lambda: None  # type: ignore[method-assign]
+    n2._may_record = lambda dev: True  # type: ignore[method-assign]
     assert n2.step("e", 100, 0, OPTS) is None
     assert n2.step("e", 100, 10, OPTS) is None
     # Ziel 95: ab 95 voll
@@ -93,6 +96,7 @@ def test_step_jump_and_fallback() -> None:
     n3._state = {}
     n3._charges = {}
     n3._save = lambda: None  # type: ignore[method-assign]
+    n3._may_record = lambda dev: True  # type: ignore[method-assign]
     n3.step("f", 50, 0, opts)
     assert n3.step("f", 96, 60, opts) is not None
 
@@ -158,6 +162,8 @@ def _notifier() -> ChargeNotifier:
     n._state = {}
     n._charges = {}
     n._save = lambda: None  # type: ignore[method-assign]
+    n._may_record = lambda dev: True  # type: ignore[method-assign]
+    n._level_logged = {}
     return n
 
 
@@ -531,6 +537,8 @@ def _notifier() -> ChargeNotifier:
     n._state = {}
     n._charges = {}
     n._save = lambda: None  # type: ignore[method-assign]
+    n._may_record = lambda dev: True  # type: ignore[method-assign]
+    n._level_logged = {}
     return n
 
 
@@ -772,3 +780,38 @@ async def test_charge_by_indicator(hass: HomeAssistant) -> None:
     lst = watcher._charges[device.id]
     assert len(lst) == 1 and lst[0]["from"] == 40 and lst[0]["to"] == 46 and lst[0]["start"] == session["start"]
     assert device.id not in watcher._sessions
+
+
+async def test_only_rechargeable_devices_record_charges(hass: HomeAssistant) -> None:
+    """2.205.0: Ein Sensor mit Messrauschen (Temperatur) ist nicht ladefähig; seine Kurve füllt keinen Platz, auch wenn sie wie eine Ladung aussieht."""
+    from custom_components.device_panel.charge import is_charge  # noqa: PLC0415
+
+    noise = [[0, 44], [360, 52], [720, 53], [1440, 55]]  # Log eines Kühlschrank-Sensors
+    assert is_charge(noise, 5)  # allein am Stand nicht zu trennen
+    await _setup(hass, charge_integrations=[])
+    plain, _e1 = _device(hass, "Kühlschrank", 50)
+    phone, _e2 = _device(hass, "Handy", 50)
+    n = ChargeNotifier(hass)
+    assert not n._may_record(plain.id)
+    from custom_components.device_panel.devices import device_settings  # noqa: PLC0415
+
+    device_settings(hass).setdefault("charge", {})[phone.id] = True
+    assert n._may_record(phone.id) and not n._may_record(plain.id)
+    n._save = lambda: None  # type: ignore[method-assign]
+    for dev in (plain.id, phone.id):
+        n._record_charge(dev, {"pts": noise}, 2000.0, 5)
+    assert plain.id not in n._charges and len(n._charges[phone.id]) == 1
+
+
+async def test_level_debug_line_is_throttled(hass: HomeAssistant) -> None:
+    """2.205.0: Die Debug-Zeile "Stand" kommt je Gerät höchstens alle 10 Minuten (und bei Wechsel lädt/lädt nicht), nicht bei jedem Wert."""
+    from custom_components.device_panel import activity  # noqa: PLC0415
+
+    device, entity = _device(hass, "Saugroboter", 90)
+    await _setup(hass)
+    activity.get(hass).debug = True
+    for level in (89, 88, 87, 86, 85):
+        _bat(hass, entity, level)
+        await hass.async_block_till_done()
+    texts = [e["text"] for e in activity.snapshot(hass)["entries"] if e["title"] == "Saugroboter" and e["cat"] == "charge"]
+    assert len([t for t in texts if t.startswith("level ")]) == 1

@@ -11,6 +11,10 @@ Einstieg für jede neue Claude-Code-Session. Zuerst diese Datei lesen, dann
 
 - `charge.py` `known_rechargeable`: Lademeldung gilt (global + Gerät/Integration), oder am Gerät ausdrücklich "Ein", oder Live-Aktivität für das Gerät an; `rechargeable()` und `charging_of()` nutzen sie (vorher nur `enabled()` mit globalem Schalter). Test `test_rechargeable_by_device_charge_or_live`.
 
+## Stand (2.206.0, Ladungen nur ladefähig, ruhigeres Debug-Log)
+
+- `charge.py`: `_record_charge` ruft `_may_record(dev)` (`known_rechargeable`): Rauschsensoren (Log des Nutzers: 44, 52, 53, 55 % im 6-Min-Takt) sind allein am Stand nicht von einer Ladung zu trennen (`is_charge` sagt bei jedem "Anstieg" ja). Debug-Zeile `charge_level` je Gerät höchstens alle `LEVEL_LOG_SECONDS` (600) und bei Wechsel lädt/lädt nicht (`_level_logged`). Tests `test_only_rechargeable_devices_record_charges`, `test_level_debug_line_is_throttled`. Protokoll: Download-Knopf zuletzt im Fuss (Suite `protocoldownload-e2e`). PANEL_VERSION 473. Der Download holt den ganzen Reiter ohne Zeitraum (Entscheid des Nutzers).
+
 ## Stand (2.205.0, Protokoll: Download von allem)
 
 - `protocol.js` `download()`: holt den Reiter seitenweise (`DOWNLOAD_PAGE` 500, höchstens `DOWNLOAD_PAGES_MAX` 40 Seiten) per `protocol_get` mit `offset`, ohne `since`, `filter`, `q` (Entscheid des Nutzers: ganzer Reiter, Textdatei), Text über `tableText(rows)`, Datei über `host._downloadText` (neu, `_downloadBlob`). Knopf `data-pr="download"`, nur Symbol. Suite `protocoldownload-e2e`. Kein neues Backend. 2.204.1 hat den Tag; PANEL_VERSION 472.

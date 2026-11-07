@@ -7,6 +7,16 @@ Alle nennenswerten Änderungen an dieser Integration stehen in dieser Datei.
 Das Format folgt [Keep a Changelog](https://keepachangelog.com/de/1.1.0/),
 die Versionsnummern folgen [Semantic Versioning](https://semver.org/lang/de/).
 
+## [2.206.0] - 2026-11-07
+
+Ladungen werden nur für ladefähige Geräte aufgezeichnet, die Debug-Zeile zum Batteriestand ist viel ruhiger, und der Download-Knopf im Protokoll steht ganz rechts.
+
+### Geändert
+
+- **Ladungen, nur für ladefähige Geräte:** Das Panel zeichnete die Kurve jedes Batteriegeräts als mögliche Ladung auf. Sensoren mit Messrauschen (Temperatur, Kühlschrank) liefern Kurven, die sich allein am Stand nicht von einer Ladung trennen lassen (zum Beispiel 44, 52, 53, 55 % in 25 Minuten), und füllten still die fünf Plätze; das Fenster "Ladungen" zeigt sie nur bei ladefähigen Geräten. Jetzt wird eine Ladung nur aufgezeichnet, wenn das Panel das Gerät als ladefähig kennt (Lademeldung, eigene Ladeanzeige oder Live-Aktivität). Ein Gerät, das du später als ladefähig einstellst, beginnt mit leerer Liste.
+- **Debug-Log, Batteriestand:** Die Debug-Zeile "Stand …, Tiefpunkt …" wurde bei jeder Änderung des Stands jedes Geräts geschrieben; verrauschte Sensoren (alle 6 Minuten) und ein Saugroboter (jede Minute) machten den grössten Teil des Logs aus und verdrängten die übrigen Einträge. Jetzt erscheint sie je Gerät höchstens alle 10 Minuten und sofort, wenn ein Gerät zu laden beginnt oder aufhört.
+- **Protokoll, Download-Knopf:** Der Knopf steht jetzt immer ganz rechts im Fuss, auch im Reiter "System" (rechts von "Leeren").
+
 ## [2.205.0] - 2026-11-07
 
 Das Protokoll lässt sich vollständig als Textdatei herunterladen.
@@ -5919,6 +5929,7 @@ Erste Vorabversion.
   GitHub Actions für die Prüfungen von HACS und hassfest sowie die Tests.
 
 [2.6.0]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v2.6.0
+[2.206.0]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v2.206.0
 [2.205.0]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v2.205.0
 [2.204.1]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v2.204.1
 [2.204.0]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v2.204.0

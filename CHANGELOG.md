@@ -7,6 +7,16 @@ All notable changes to this integration are documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/).
 
+## [2.206.0] - 2026-11-07
+
+Charges are only recorded for devices that can be charged, the debug line for the battery level is much quieter, and the download button in the history stands at the far right.
+
+### Changed
+
+- **Charges, only for devices that can be charged:** The panel recorded the curve of every battery device as a possible charge. Sensors with noisy readings (temperature, fridge) deliver curves that cannot be told from a charge by the level alone (for example 44, 52, 53, 55 % within 25 minutes), and they silently filled the five places; the window "Charges" only shows them for devices that can be charged. Now a charge is only recorded if the panel knows the device as rechargeable (charging notification, own charging display or live activity). A device you mark as rechargeable later starts with an empty list.
+- **Debug log, battery level:** The debug line "Level …, low point …" was written for every change of the level of every device, so noisy sensors (every 6 minutes) and a robot vacuum (every minute) made up most of the log and pushed out the other entries. Now it is written at most every 10 minutes per device, and at once when a device starts or stops charging.
+- **History, download button:** The button now always stands at the far right of the footer, also in the tab "System" (right of "Clear").
+
 ## [2.205.0] - 2026-11-07
 
 The history can be downloaded completely as a text file.
@@ -5818,6 +5828,7 @@ First pre-release.
   GitHub Actions for HACS/hassfest validation and tests.
 
 [2.6.0]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v2.6.0
+[2.206.0]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v2.206.0
 [2.205.0]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v2.205.0
 [2.204.1]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v2.204.1
 [2.204.0]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v2.204.0

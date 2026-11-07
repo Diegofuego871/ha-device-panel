@@ -91,6 +91,7 @@ CHARGES_KEEP = 5  # aufgezeichnete Ladungen pro Gerät (seit 2.204.0)
 POWER_WINDOW = 600.0  # Sekunden: Fenster für die Glättung der Leistung
 # Was als Ladung zählt (seit 2.204.1, Kurvenprüfung statt fester Schwelle; Simulation im Code-Review): unter dem "Anstieg" des Geräts nur eine
 # saubere, zügige Kurve, darüber darf sie leicht schwanken. Mit eigener Ladeanzeige bestimmt diese Beginn und Ende (ENTITY_MIN_*).
+LEVEL_LOG_SECONDS = 600.0  # Abstand der Debug-Zeile "Stand" je Gerät
 CURVE_MIN_RISE = 5.0  # Punkte
 CURVE_MIN_UPS = 3  # Anstiege bis zur Spitze
 CURVE_MIN_RATE = 5.0  # Punkte pro Stunde, unter dem "Anstieg" des Geräts
@@ -199,6 +200,7 @@ class ChargeNotifier:
         self._store: Store[dict[str, Any]] = Store(hass, STORAGE_VERSION, STORE_KEY)
         # Je Gerät: tiefster Stand mit Zeitpunkt, letzter Stand, gemeldet (bis er wieder fällt).
         self._state: dict[str, dict[str, Any]] = {}
+        self._level_logged: dict[str, tuple[float, bool]] = {}  # Debug-Zeile je Gerät: (Zeit, lädt)
         self._entities: dict[str, str] = {}
         self._unsub_track: CALLBACK_TYPE | None = None
         self._unsubs: list[CALLBACK_TYPE] = []
@@ -384,7 +386,14 @@ class ChargeNotifier:
         low = round(st.get("min", level))
         hass = self.hass
         # Nur bei geändertem Stand: Wiederverbindungen (Matter, Eve) melden viele Geräte zugleich mit gleichem Wert und füllten das Protokoll (seit 2.43.0)
-        if before is None or round(before) != round(level):
+        # Seit 2.205.0 höchstens alle 10 Minuten je Gerät, dazu bei jedem Wechsel zwischen "lädt" und "lädt nicht": Sensoren mit Rauschen und Saugroboter
+        # (ein Wert je Minute) machten den grössten Teil des Protokolls aus und verdrängten die übrigen Einträge
+        now_charging = self.charging(dev, now, copts) is not None
+        last_log = self._level_logged.get(dev)
+        if (before is None or round(before) != round(level)) and (
+            last_log is None or now - last_log[0] >= LEVEL_LOG_SECONDS or last_log[1] != now_charging
+        ):
+            self._level_logged[dev] = (now, now_charging)
             activity.record(hass, "debug", "charge", "charge_level", name, dev, level=round(level), low=low, full=copts[CONF_CHARGE_FULL], rise=copts[CONF_CHARGE_RISE])
         if not was and done is None and self.charging(dev, now, copts) is not None:
             activity.record(hass, "info", "charge", "charge_started", name, dev, level=round(level), low=low, rise=copts[CONF_CHARGE_RISE])
@@ -472,6 +481,10 @@ class ChargeNotifier:
         # Meldet die Ladeanzeige etwas, zeichnet sie auf; eine stumme (unbekannt, nicht verfügbar) lässt den Verlauf des Stands entscheiden
         if any(d == dev and (s := self.hass.states.get(e)) is not None and s.state in (*CHARGING_ON, *CHARGING_OFF) for e, d in self._chg.items()):
             return
+        # Nur Geräte, die das Panel als ladefähig kennt (seit 2.205.0): Sensoren mit Messrauschen (Temperatur, Kühlschrank) liefern Kurven, die
+        # allein am Stand nicht von einer Ladung zu trennen sind, und füllten die Plätze still; das Fenster zeigt sie nur bei ladefähigen Geräten
+        if not self._may_record(dev):
+            return
         pts = st.get("pts") or []
         if not is_charge(pts, DEFAULT_CHARGE_RISE if rise is None else rise):
             return
@@ -482,6 +495,11 @@ class ChargeNotifier:
             "to": max(p[1] for p in pts),
             "pts": [list(p) for p in pts],
         })
+
+    def _may_record(self, dev: str) -> bool:
+        """Kennt das Panel das Gerät als ladefähig (Lademeldung, Ladeanzeige oder Live-Aktivität)?"""
+        device = dr.async_get(self.hass).async_get(dev)
+        return device is not None and self.known_rechargeable(effective(self.hass), self.hass, device)
 
     def _store_charge(self, dev: str, rec: dict[str, Any]) -> None:
         lst = self._charges.setdefault(dev, [])

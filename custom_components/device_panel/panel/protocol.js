@@ -792,7 +792,7 @@ export class ProtocolUi {
     const d = s.data;
     const count = s.loading && !d ? t("prLoading") : d ? t("prShown", d.entries.length, this.num(d.total)) : "";
     foot.innerHTML = `<button type="button" class="lg-btn" data-pr="close">${mdi("arrowLeft", 16)}<span>${this.esc(t("prBack"))}</span></button><span class="pr-count">${this.esc(count)}</span><span class="sp"></span>
-      <button type="button" class="lg-btn" data-pr="copy"${d?.entries?.length ? "" : " disabled"}>${mdi("copy", 16)}<span>${this.esc(s.flash || t("prCopyText"))}</span></button><button type="button" class="lg-btn lg-icon" data-pr="download" title="${this.esc(t("prDownload"))}" aria-label="${this.esc(t("prDownload"))}"${d?.entries?.length && !s.downloading ? "" : " disabled"}>${mdi("download", 16)}</button>${s.kind === "system" ? `<button type="button" class="lg-btn" data-pr="clear-log">${this.esc(t("logClear"))}</button>` : ""}`;
+      <button type="button" class="lg-btn" data-pr="copy"${d?.entries?.length ? "" : " disabled"}>${mdi("copy", 16)}<span>${this.esc(s.flash || t("prCopyText"))}</span></button>${s.kind === "system" ? `<button type="button" class="lg-btn" data-pr="clear-log">${this.esc(t("logClear"))}</button>` : ""}<button type="button" class="lg-btn lg-icon" data-pr="download" title="${this.esc(t("prDownload"))}" aria-label="${this.esc(t("prDownload"))}"${d?.entries?.length && !s.downloading ? "" : " disabled"}>${mdi("download", 16)}</button>`;
   }
 
   // --- Trace ---------------------------------------------------------------------
