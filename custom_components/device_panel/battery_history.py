@@ -15,6 +15,7 @@ from __future__ import annotations
 
 import logging
 import time
+from collections import deque
 from collections.abc import Callable
 from datetime import datetime
 from typing import Any
@@ -150,22 +151,40 @@ def changes(points: list[tuple[float, float]], window: float = CHANGE_WINDOW) ->
     vorigen Punkt oder innert window (über zwei Stundenmittel verteilt; bei
     Tagesmitteln über zwei Tage, sonst zählte ein Wechsel doppelt). "Von" ist der
     tiefste Wert davor, "auf" der höchste kurz danach, die Zeit die des
-    Anstiegs.
+    Anstiegs. points ist nach der Zeit sortiert.
+
+    Das Minimum im Fenster davor führt eine Warteschlange mit steigenden Werten (seit 2.204.1): vorher wurde für jeden Punkt die ganze
+    Vorgeschichte durchsucht, bei 20'000 Punkten (Verlauf einer oft meldenden Batterie) über 5 s im Event-Loop. Das Ergebnis ist gleich.
     """
     found: list[dict[str, float]] = []
+    n = len(points)
+    window_min: deque[int] = deque()  # Indizes im Fenster, ihre Werte steigend: vorne das Minimum
+    left = added = 0
     i = 1
-    while i < len(points):
+    while i < n:
         t, v = points[i]
-        # Der vorige Punkt zählt immer (Sensoren, die selten melden), dazu
-        # alle im Fenster (Stundenmittel, die den Sprung verteilen).
-        before = [points[i - 1][1]] + [pv for pt, pv in points[:i] if t - pt <= window]
-        if before and v - min(before) >= CHANGE_JUMP:
-            low = min(before)
-            after = [pv for pt, pv in points[i:] if pt - t <= window]
-            found.append({"at": t, "from": round(low), "to": round(max(after))})
+        # Alle Punkte vor i ins Fenster nehmen, die zu alten vorne entfernen
+        while added < i:
+            while window_min and points[window_min[-1]][1] >= points[added][1]:
+                window_min.pop()
+            window_min.append(added)
+            added += 1
+        while left < i and t - points[left][0] > window:
+            left += 1
+        while window_min and window_min[0] < left:
+            window_min.popleft()
+        # Der vorige Punkt zählt immer (Sensoren, die selten melden), dazu alle im Fenster (Stundenmittel, die den Sprung verteilen).
+        low = points[i - 1][1]
+        if window_min:
+            low = min(low, points[window_min[0]][1])
+        if v - low >= CHANGE_JUMP:
+            k, high = i, v
+            while k < n and points[k][0] - t <= window:
+                high = max(high, points[k][1])
+                k += 1
+            found.append({"at": t, "from": round(low), "to": round(high)})
             # Weiter nach dem Fenster: ein Wechsel zählt einmal.
-            while i < len(points) and points[i][0] - t <= window:
-                i += 1
+            i = k
             continue
         i += 1
     return found

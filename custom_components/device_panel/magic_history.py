@@ -89,9 +89,13 @@ def evaluate_tree(
     stamps = {r[0] for rows in rows_by.values() for r in rows} | {start} | _edge_stamps(tree, start, now)
     times = sorted(stamps)
 
+    # Zeitpunkte je Entität einmal (seit 2.204.1): vorher baute jeder Aufruf die Liste neu, bei vielen Werten (Leistung, Temperatur) quadratisch,
+    # mehrere Sekunden im Event-Loop für die Vorschau eines Tages
+    stamps_by = {entity_id: [r[0] for r in rows] for entity_id, rows in rows_by.items()}
+
     def state_at(entity_id: str, ts: float) -> str | None:
         rows = rows_by.get(entity_id) or []
-        i = bisect_right([r[0] for r in rows], ts) - 1
+        i = bisect_right(stamps_by.get(entity_id, ()), ts) - 1
         return rows[i][1] if i >= 0 else None
 
     per_leaf: list[list[list[Any]]] = [[] for _ in leaves]
