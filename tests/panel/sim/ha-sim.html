@@ -782,6 +782,8 @@
     entities: {},
     states: {},
     callWS: async (msg) => {
+      // Verzögerung je Befehl zum Prüfen der Ladeanzeigen: window.__wsDelay = { "device_panel/charges": 900 }
+      if (window.__wsDelay?.[msg.type]) await new Promise((r) => setTimeout(r, window.__wsDelay[msg.type]));
       window.__wsCalls.push(msg);
       // Verbindung weg (Handy im Ruhezustand): HA wirft keinen Error, sondern
       // eine Zahl (ERR_CONNECTION_LOST = 3) oder ein Objekt ohne Text;

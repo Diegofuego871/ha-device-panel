@@ -7,6 +7,15 @@ Alle nennenswerten Änderungen an dieser Integration stehen in dieser Datei.
 Das Format folgt [Keep a Changelog](https://keepachangelog.com/de/1.1.0/),
 die Versionsnummern folgen [Semantic Versioning](https://semver.org/lang/de/).
 
+## [2.209.0] - 2026-11-07
+
+Die Ladeanimation ist schneller, nimmt die Farbe der Grafik an und gilt jetzt für jede Grafik, die langsam laden könnte.
+
+### Geändert
+
+- **Ladeanimation, schneller und in der Farbe der Grafik:** Die drei Punkte drehen sich etwa doppelt so schnell. Sie haben nicht mehr immer die Akzentfarbe, sondern die Farbe der Grafik, auf der sie stehen (die Linie der Batterie- und Status-Kurven, grün bei Verfügbarkeit und bei der Kurve der Ladungen); die Regel heisst "Farbe der Grafik".
+- **Ladeanimation bei jeder Grafik, die langsam sein könnte:** Dasselbe Verhalten (der Reiter oder Filter wechselt sofort, die alte Grafik bleibt gedimmt, drei Punkte drehen sich darüber, bis die neue da ist) gilt jetzt auch im Statistik-Fenster eines Geräts (Verfügbarkeit, Batterie und Empfang, alle Zeiträume), im Protokoll-Fenster (Liste und Diagramm, auch für Magic Push, Routinen und "System", wenn Reiter, Zeitraum, Filter oder Suche wechseln) und im Fenster "Ladungen". Eine im Statistik-Fenster schon geholte Grafik erscheint beim Zurückwechseln eine Minute lang sofort, ohne neue Abfrage. Das Dimmen verwischt die alte Grafik nicht mehr, was auf schwachen Handys aufwendig war.
+
 ## [2.208.0] - 2026-11-07
 
 Der Wechsel des Zeitraums in Status › System ist sofort, und nur die gewählte Karte lädt, mit einer Ladeanimation.
@@ -5957,6 +5966,7 @@ Erste Vorabversion.
   GitHub Actions für die Prüfungen von HACS und hassfest sowie die Tests.
 
 [2.6.0]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v2.6.0
+[2.209.0]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v2.209.0
 [2.208.0]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v2.208.0
 [2.205.0]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v2.205.0
 [2.204.1]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v2.204.1

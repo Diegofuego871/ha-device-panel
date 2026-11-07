@@ -38,30 +38,30 @@ for (const lang of ["de", "en"]) for (const mobile of [false, true]) {
   await p.evaluate(() => { window.__systemDelay = 900; window.__wsCalls = []; });
   await tap(`${card("cpu")} [data-st-range="7d"]`);
   check(`[${tag}] Reiter "7 Tage" ist sofort gewählt (vor der Antwort)`, await ev(`return r.querySelector('${card("cpu")} [data-st-range="7d"]').classList.contains("on") && !r.querySelector('${card("cpu")} [data-st-range="24h"]').classList.contains("on")`));
-  check(`[${tag}] Ladeanzeige (drei Punkte) auf der Karte, alte Kurve noch da`, await ev(`return r.querySelectorAll('${card("cpu")} .st-ld s').length === 3 && !!r.querySelector('${card("cpu")} .st-sys-ldwrap .st-sys-plot')`));
-  const posOf = () => ev(`return [...r.querySelectorAll('${card("cpu")} .st-ld s')].map((d) => d.style.left + "," + d.style.top).join("|")`);
+  check(`[${tag}] Ladeanzeige (drei Punkte) auf der Karte, alte Kurve noch da`, await ev(`return r.querySelectorAll('${card("cpu")} .pl-ld s').length === 3 && !!r.querySelector('${card("cpu")} .pl-ldwrap .st-sys-plot')`));
+  const posOf = () => ev(`return [...r.querySelectorAll('${card("cpu")} .pl-ld s')].map((d) => d.style.left + "," + d.style.top).join("|")`);
   const pos1 = await posOf();
   await p.waitForTimeout(250);
   const pos2 = await posOf();
-  check(`[${tag}] die Kurve ist gedimmt (Deckkraft unter 0,5), die drei Punkte bewegen sich`, (await ev(`return Number(getComputedStyle(r.querySelector('${card("cpu")} .st-sys-ldwrap .st-sys-plot')).opacity) < 0.5`)) && pos1 !== "" && pos1 !== pos2, `${pos1} → ${pos2}`);
-  check(`[${tag}] RAM und Festplatte bleiben stehen: keine Ladeanzeige, Karte unverändert`, await ev(`return !r.querySelector('${card("ram")} .st-ld') && !r.querySelector('${card("disk")} .st-ld') && r.querySelector('${card("ram")}').innerHTML.length === ${before}`));
+  check(`[${tag}] die Kurve ist gedimmt (Deckkraft unter 0,5), die drei Punkte bewegen sich`, (await ev(`return Number(getComputedStyle(r.querySelector('${card("cpu")} .pl-ldwrap .st-sys-plot')).opacity) < 0.5`)) && pos1 !== "" && pos1 !== pos2, `${pos1} → ${pos2}`);
+  check(`[${tag}] RAM und Festplatte bleiben stehen: keine Ladeanzeige, Karte unverändert`, await ev(`return !r.querySelector('${card("ram")} .pl-ld') && !r.querySelector('${card("disk")} .pl-ld') && r.querySelector('${card("ram")}').innerHTML.length === ${before}`));
   check(`[${tag}] Fuss nennt schon den neuen Zeitraum`, await ev(`return /7/.test(r.querySelector('${card("cpu")} .st-sys-foot span').textContent)`));
   // Antwort: Ladeanzeige weg, neue Kurve
-  check(`[${tag}] nach der Antwort: Ladeanzeige weg, Kurve nicht mehr gedimmt`, await wait(`return !r.querySelector('${card("cpu")} .st-ld') && !r.querySelector('${card("cpu")} .st-sys-ldwrap')`, 4000));
+  check(`[${tag}] nach der Antwort: Ladeanzeige weg, Kurve nicht mehr gedimmt`, await wait(`return !r.querySelector('${card("cpu")} .pl-ld') && !r.querySelector('${card("cpu")} .pl-ldwrap')`, 4000));
   const c1 = await calls();
   check(`[${tag}] eine Abfrage, nur für die Karte CPU (kinds), mit allen Zeiträumen`, c1.length === 1 && JSON.stringify(c1[0].kinds) === '["cpu"]' && c1[0].ranges.cpu === "7d", JSON.stringify(c1.map((c) => [c.kinds, c.ranges])));
 
   // Zurück auf 24 Std.: war schon geholt (beim Öffnen), steht sofort da, ohne neue Abfrage
   await p.evaluate(() => { window.__wsCalls = []; });
   await tap(`${card("cpu")} [data-st-range="24h"]`);
-  check(`[${tag}] zurück auf "24 Std.": zwischengespeichert, sofort da, keine Ladeanzeige, keine neue Abfrage`, (await ev(`return r.querySelector('${card("cpu")} [data-st-range="24h"]').classList.contains("on") && !r.querySelector('${card("cpu")} .st-ld')`)) && (await calls()).length === 0);
+  check(`[${tag}] zurück auf "24 Std.": zwischengespeichert, sofort da, keine Ladeanzeige, keine neue Abfrage`, (await ev(`return r.querySelector('${card("cpu")} [data-st-range="24h"]').classList.contains("on") && !r.querySelector('${card("cpu")} .pl-ld')`)) && (await calls()).length === 0);
 
   // Zwei schnelle Wechsel: die überholte Antwort zeichnet nicht
   await p.evaluate(() => { window.__systemDelay = 700; window.__wsCalls = []; });
   await tap(`${card("ram")} [data-st-range="30d"]`);
   await tap(`${card("ram")} [data-st-range="90d"]`);
-  check(`[${tag}] "3 Monate" gewählt, lädt`, await ev(`return r.querySelector('${card("ram")} [data-st-range="90d"]').classList.contains("on") && !!r.querySelector('${card("ram")} .st-ld')`));
-  check(`[${tag}] am Ende steht "3 Monate" (die überholte Antwort für 30 Tage ändert nichts)`, await wait(`return !r.querySelector('${card("ram")} .st-ld') && r.querySelector('${card("ram")} .st-sys-foot').textContent.includes(${JSON.stringify(lang === "de" ? "vor 3 Monaten" : "3 months ago")})`, 4000));
+  check(`[${tag}] "3 Monate" gewählt, lädt`, await ev(`return r.querySelector('${card("ram")} [data-st-range="90d"]').classList.contains("on") && !!r.querySelector('${card("ram")} .pl-ld')`));
+  check(`[${tag}] am Ende steht "3 Monate" (die überholte Antwort für 30 Tage ändert nichts)`, await wait(`return !r.querySelector('${card("ram")} .pl-ld') && r.querySelector('${card("ram")} .st-sys-foot').textContent.includes(${JSON.stringify(lang === "de" ? "vor 3 Monaten" : "3 months ago")})`, 4000));
   check(`[${tag}] keine Fehler`, errors.length === 0, errors.join("|"));
   await ctx.close();
 }

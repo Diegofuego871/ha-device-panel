@@ -261,49 +261,6 @@ export class StatusUi {
     this.loadSystem(kind);
   }
 
-  // Ladeanzeige: drei Punkte als Dreieck, das sich ohne festen Rhythmus um alle Achsen dreht (Summe von Sinuswellen je Achse); was näher ist, wirkt
-  // grösser und heller. Läuft nur, solange eine Karte lädt.
-  startLoader() {
-    if (this._ldRaf || window.matchMedia?.("(prefers-reduced-motion: reduce)").matches) return;
-    const K = { a: 1.7, b: 0.9, p: 0, c: 1.3, d: 1.3, q: 1.7, e: 0.9, f: 0.7, r: 3.1 };
-    const R = 26;
-    const rot = ([a, b, c], [x, y, z]) => {
-      let u = b * Math.cos(x) - c * Math.sin(x);
-      c = b * Math.sin(x) + c * Math.cos(x);
-      b = u;
-      u = a * Math.cos(y) + c * Math.sin(y);
-      c = -a * Math.sin(y) + c * Math.cos(y);
-      a = u;
-      u = a * Math.cos(z) - b * Math.sin(z);
-      b = a * Math.sin(z) + b * Math.cos(z);
-      return [u, b, c];
-    };
-    const tick = (now) => {
-      const boxes = this.dlg?.querySelectorAll(".st-ld");
-      if (!boxes?.length) {
-        this._ldRaf = 0;
-        return;
-      }
-      const t = now / 1000;
-      const ang = [K.a * t + 0.9 * Math.sin(K.b * t + K.p), K.c * t + 0.8 * Math.sin(K.d * t + K.q), K.e * t + 0.7 * Math.sin(K.f * t + K.r)];
-      const pos = [0, 1, 2].map((i) => {
-        const a = (i * 2 * Math.PI) / 3;
-        const p = rot([Math.cos(a) * R, Math.sin(a) * R, 0], ang);
-        const s = 1 / (1 - p[2] / (R * 4.2));
-        return { x: p[0] * s, y: p[1] * s, s, z: p[2] };
-      });
-      for (const box of boxes) {
-        box.querySelectorAll("s").forEach((dot, i) => {
-          const p = pos[i];
-          const size = 14 * p.s;
-          dot.style.cssText = `width:${size}px;height:${size}px;left:${36 + p.x - size / 2}px;top:${36 + p.y - size / 2}px;opacity:${0.55 + 0.45 * Math.min(1, Math.max(0, (p.z / R + 1) / 2))}`;
-        });
-      }
-      this._ldRaf = requestAnimationFrame(tick);
-    };
-    this._ldRaf = requestAnimationFrame(tick);
-  }
-
   mergeMetric(metric) {
     const i = this.sys.metrics.findIndex((x) => x.id === metric.id);
     if (i >= 0) this.sys.metrics[i] = metric;
@@ -507,7 +464,6 @@ export class StatusUi {
     const sc = body.closest(".dlg-body");
     if (sc) sc.scrollTop = scroll;
     this.renderFoot();
-    if (body.querySelector(".st-ld")) this.startLoader();
   }
 
   // Leiste unten mit Speichern: nur im Reiter "Einstellungen", getrennt vom Rest, damit das Tippen in einem Feld sie nachführen kann
@@ -761,8 +717,8 @@ export class StatusUi {
     else if (m.off) body = `<p class="st-sys-note warn">${escape(t("stSysOwnOff"))}</p>${this.enableHtml(m)}`;
     else if (this.sysLoading[m.id]) {
       // Zeitraum gewechselt, Kurve lädt: die alte bleibt gedimmt stehen, die Ladeanzeige liegt darüber (Reiter und Fuss zeigen schon den neuen Zeitraum)
-      const loader = `<span class="st-ld" role="status" aria-label="${escape(t("stSysLoading"))}"><s></s><s></s><s></s></span>`;
-      body = `<div class="st-sys-ldwrap">${m.points.length ? this.plotHtml(m) : `<div class="st-sys-plot"></div>`}${loader}</div><div class="st-sys-foot"><span>${escape(t(`stSysAgo_${range}`))}</span><span class="mid"></span></div>`;
+      const loader = this.host._loaderHtml("var(--dp-primary)");
+      body = `<div class="pl-ldwrap">${m.points.length ? this.plotHtml(m) : `<div class="st-sys-plot"></div>`}${loader}</div><div class="st-sys-foot"><span>${escape(t(`stSysAgo_${range}`))}</span><span class="mid"></span></div>`;
     }
     else if (!m.points.length) body = `<p class="st-sys-note">${escape(t("stSysNoData"))}</p>`;
     else {

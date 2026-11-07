@@ -138,7 +138,8 @@ for (const lang of ["de", "en"]) {
     await wait(`return !!r.querySelector("dialog.stat-dlg .avail-pct") && r.querySelector('dialog.stat-dlg [data-stat="range"].on').dataset.range === "24h"`);
     check(`[${tag}] Verlauf geladen`, await wait(`return !!r.querySelector("dialog.stat-dlg .avail-pct")`));
     const hist = await calls("device_panel/availability");
-    check(`[${tag}] Verlauf per WebSocket`, hist.at(-1)?.device_id === "b" && hist.at(-1)?.range === "24h", JSON.stringify(hist));
+    // Zurück auf 24 Std. steht seit 2.209.0 eine Minute lang aus dem Zwischenspeicher da (keine neue Abfrage): geholt wurden 24h beim Öffnen und 365d
+    check(`[${tag}] Verlauf per WebSocket`, hist.every((h) => h.device_id === "b") && hist.some((h) => h.range === "24h") && hist.at(-1)?.range === "365d", JSON.stringify(hist));
     check(`[${tag}] Prozent`, (await text("dialog.stat-dlg .avail-pct")) === T.pct24, await text("dialog.stat-dlg .avail-pct"));
     const facts = await text("dialog.stat-dlg .avail-facts");
     check(`[${tag}] Fakten`, T.facts24.every((s) => facts.includes(s)), facts);

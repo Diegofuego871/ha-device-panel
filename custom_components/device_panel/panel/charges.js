@@ -131,7 +131,7 @@ export class ChargesUi {
       return;
     }
     if (!this.data) {
-      body.innerHTML = `<div class="ver-prog"><i></i></div>`;
+      body.innerHTML = `<div class="pl-ldwrap empty">${this.host._loaderHtml("var(--dp-success)")}</div>`;
       return;
     }
     const list = this.data.charges || [];

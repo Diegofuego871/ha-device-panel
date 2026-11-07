@@ -2306,16 +2306,18 @@ dialog.app-dlg::backdrop { background: rgba(0,0,0,0.5); }
 .st-sys-size { margin: 2px 0 0; font-size: 12.5px; color: var(--dp-text2); font-variant-numeric: tabular-nums; }
 .st-sys .sub-tabs { margin: 8px 0 0; }
 .st-sys-plot { position: relative; height: 84px; margin: 8px 0 0 30px; }
-/* Ladeanzeige beim Wechsel des Zeitraums (seit 2.208.0, docs/mockups/loader-v1, A): drei Punkte als Dreieck, das sich um alle Achsen dreht; die alte Kurve bleibt gedimmt */
-.st-sys-ldwrap { position: relative; }
-.st-sys-ldwrap .st-sys-plot { opacity: .28; filter: blur(1.2px); }
-.st-ld { position: absolute; left: 50%; top: 50%; width: 72px; height: 72px; margin: -36px 0 0 -36px; pointer-events: none; }
-/* Die Punkte setzt das Skript (status-ui.js, startLoader) im Raum; ohne Skript (oder bei "weniger Bewegung") stehen sie als Dreieck und pulsieren */
-.st-ld s { position: absolute; width: 14px; height: 14px; border-radius: 50%; background: var(--dp-primary); box-shadow: 0 0 12px color-mix(in srgb, var(--dp-primary) 55%, transparent); }
-.st-ld s:nth-child(1) { left: 55px; top: 29px; }
-.st-ld s:nth-child(2) { left: 17px; top: 51px; }
-.st-ld s:nth-child(3) { left: 17px; top: 7px; }
-@media (prefers-reduced-motion: reduce) { .st-ld s { animation: st-ld-pulse 1.4s ease-in-out infinite; } @keyframes st-ld-pulse { 50% { opacity: .35; } } }
+/* Ladeanzeige für Grafiken (seit 2.208.0, docs/mockups/loader-v1, A): die alte Grafik bleibt gedimmt, drei Punkte in der Farbe der Grafik (--ld) liegen darüber */
+.pl-ldwrap { position: relative; }
+.pl-ldwrap > :not(.pl-ld) { opacity: .28; pointer-events: none; user-select: none; }
+.pl-ldwrap.empty { min-height: 180px; }
+.pl-ld { position: absolute; left: 50%; top: 50%; width: 72px; height: 72px; margin: -36px 0 0 -36px; pointer-events: none; z-index: 2; }
+.pl-ld.top { top: 110px; }
+/* Die Punkte setzt das Skript (device-panel.js, _loaderStart) im Raum; ohne Skript (oder bei "weniger Bewegung") stehen sie als Dreieck und pulsieren */
+.pl-ld s { position: absolute; width: 14px; height: 14px; border-radius: 50%; background: var(--ld, var(--dp-primary)); box-shadow: 0 0 12px color-mix(in srgb, var(--ld, var(--dp-primary)) 55%, transparent); }
+.pl-ld s:nth-child(1) { left: 55px; top: 29px; }
+.pl-ld s:nth-child(2) { left: 17px; top: 51px; }
+.pl-ld s:nth-child(3) { left: 17px; top: 7px; }
+@media (prefers-reduced-motion: reduce) { .pl-ld s { animation: pl-ld-pulse 1.4s ease-in-out infinite; } @keyframes pl-ld-pulse { 50% { opacity: .35; } } }
 .st-sys-plot .bh-svg { position: absolute; inset: 0; width: 100%; height: 100%; overflow: visible; }
 .st-sys-y { position: absolute; left: -30px; width: 24px; transform: translateY(-50%); text-align: right; color: var(--dp-text3); font-size: 10.5px; }
 .st-sys-ticks { margin-left: 30px; }

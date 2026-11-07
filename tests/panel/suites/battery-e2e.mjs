@@ -44,7 +44,7 @@ for (const lang of ["de", "en"]) {
     const text = (sel) => ev(`return (r.querySelector(${JSON.stringify(sel)})?.textContent || "").replace(/\\s+/g," ").trim()`);
     const wait = (code) => f.waitForFunction(new Function(`const r=${R};` + code), null, { timeout: 5000 }).then(() => true, () => false);
     const calls = () => p.evaluate(() => window.__wsCalls.filter((m) => m.type === "device_panel/battery_history").map(({ device_id, range }) => `${device_id}:${range}`));
-    const range = async (r) => { await tap(`dialog.stat-dlg [data-stat="range"][data-range="${r}"]`); await wait(`return r.querySelector('dialog.stat-dlg [data-range="${r}"]')?.classList.contains("on") && !!r.querySelector("dialog.stat-dlg .bh-svg")`); };
+    const range = async (r) => { await ev(`r.host._histCache = null`); await tap(`dialog.stat-dlg [data-stat="range"][data-range="${r}"]`); await wait(`return r.querySelector('dialog.stat-dlg [data-range="${r}"]')?.classList.contains("on") && !!r.querySelector("dialog.stat-dlg .bh-svg")`); };
 
     // Fensterkontakt Küche (64 %, vor 74 Tagen gewechselt)
     await tap('.dev[data-open="e"]');

@@ -73,6 +73,14 @@ Bereich. Vorbild in Aufbau, Arbeitsweise und Design ist die Integration
 - Ausnahmen: Dropdowns und Auswahlfelder (`<select>`, Chips "Integration" und "Bereich", Sortierung, Auswahl-Knöpfe) behalten ihren kleinen Pfeil;
   ebenso Zeilen sehr langer Listen (Protokoll), damit die Seite ruhig bleibt. Mockup: `docs/mockups/chevron-v1`.
 
+## Design-Regel: Ladeanzeige bei Grafiken
+
+- Jede Grafik, die langsam laden könnte (Kurven, Verläufe, Diagramme, Listen mit Zeitraum, auch bei grossen Datenmengen), hält diese Regel: Der Reiter (Zeitraum,
+  Filter, Art) wechselt sofort; danach lädt es. Die alte Grafik bleibt gedimmt (`.pl-ldwrap`), darüber stehen die drei sich drehenden Punkte
+  (`host._loaderHtml(farbe)`) in der Farbe der Grafik selbst (Linie bzw. Füllung der Grafik, nicht fest die Akzentfarbe). Ohne alte Grafik (erstes Laden):
+  die Punkte allein in der Mitte (`.pl-ldwrap.empty`). Überholte Antworten verwerfen; schon geholte Zeiträume kurz zwischenspeichern. Nie einen Text
+  "Lädt …" oder einen Balken als Ersatz. Mockup: `docs/mockups/loader-v1`.
+
 ## Git und Releases
 
 - Nur auf `main` pushen, keine weiteren Branches. Gilt auch, wenn die

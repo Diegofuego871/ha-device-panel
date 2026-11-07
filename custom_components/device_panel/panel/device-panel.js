@@ -27,6 +27,8 @@ const [{ STRINGS, pickLang }, { PANEL_CSS }, { MagicPush }, { RoutineUi, DOMAIN_
 
 const POLL_INTERVAL_MS = 10000;
 // Live-Zeile im Fenster "Empfang": alle paar Sekunden neu, damit das Alter der Meldungen stimmt
+// So lange gilt ein geholter Verlauf beim Zurückwechseln des Zeitraums im Statistik-Fenster (Millisekunden)
+const HIST_CACHE_MS = 60000;
 const LIVE_MS = 5000;
 // Dauer-Anzeigen laufen weiter, ohne dafür neu abzufragen.
 const TICK_MS = 30000;
@@ -4547,6 +4549,8 @@ class DevicePanel extends HTMLElement {
     this._detailId = null;
     this._detail = null;
     this._hist = null;
+    this._histGhost = null;
+    this._histCache = null;
     this._magic.reset();
     this._routines.reset();
     // Im Popup können Meldungen geändert worden sein: die Fenster mit allen Meldungen und Routinen neu laden
@@ -5882,6 +5886,86 @@ class DevicePanel extends HTMLElement {
     }
   }
 
+  // --- Ladeanzeige für Grafiken (seit 2.208.0, überall seit 2.209.0) ----------------------------------------------------------
+  // Regel: Der Reiter (Zeitraum, Filter) wechselt sofort; was dahinter lädt, zeigt die alte Grafik gedimmt (".pl-ldwrap") mit drei Punkten darüber,
+  // die sich frei um alle Achsen drehen, in der Farbe der Grafik selbst (color: Linie bzw. Füllung der Grafik, nicht fest die Akzentfarbe).
+  // top: bei hohem Inhalt (Fenster mit Liste unter der Grafik) oben statt in der Mitte.
+  _loaderHtml(color = "var(--dp-primary)", top = false) {
+    // Das Zeichnen kann etwas später folgen als der Aufruf (Fenster zeichnen verzögert, wenn gerade getippt wird): darum mehrmals anstossen
+    queueMicrotask(() => this._loaderStart());
+    window.setTimeout(() => this._loaderStart(), 60);
+    window.setTimeout(() => this._loaderStart(), 400);
+    return `<span class="pl-ld${top ? " top" : ""}" role="status" aria-label="${escape(this._t("stSysLoading"))}" style="--ld:${color}"><s></s><s></s><s></s></span>`;
+  }
+
+  // Ein Zeitgeber für alle Ladeanzeigen des Panels; er endet, sobald keine mehr im Dokument steht
+  _loaderStart() {
+    if (this._ldRaf || window.matchMedia?.("(prefers-reduced-motion: reduce)").matches) return;
+    this._ldIdle = 0;
+    const K = { a: 1.7, b: 0.9, p: 0, c: 1.3, d: 1.3, q: 1.7, e: 0.9, f: 0.7, r: 3.1 };
+    const SPEED = 2.1; // Umdrehungen schneller als die ersten Entwürfe (zu langsam)
+    const R = 26;
+    const rot = ([a, b, c], [x, y, z]) => {
+      let u = b * Math.cos(x) - c * Math.sin(x);
+      c = b * Math.sin(x) + c * Math.cos(x);
+      b = u;
+      u = a * Math.cos(y) + c * Math.sin(y);
+      c = -a * Math.sin(y) + c * Math.cos(y);
+      a = u;
+      u = a * Math.cos(z) - b * Math.sin(z);
+      b = a * Math.sin(z) + b * Math.cos(z);
+      return [u, b, c];
+    };
+    const tick = (now) => {
+      const boxes = this.shadowRoot.querySelectorAll(".pl-ld");
+      if (!boxes.length) {
+        // Erst nach einer kurzen Pause enden (die nächste Ladeanzeige kann gleich folgen)
+        if (++this._ldIdle > 30) {
+          this._ldRaf = 0;
+          return;
+        }
+        this._ldRaf = requestAnimationFrame(tick);
+        return;
+      }
+      this._ldIdle = 0;
+      const t = (now / 1000) * SPEED;
+      const ang = [K.a * t + 0.9 * Math.sin(K.b * t + K.p), K.c * t + 0.8 * Math.sin(K.d * t + K.q), K.e * t + 0.7 * Math.sin(K.f * t + K.r)];
+      const pos = [0, 1, 2].map((i) => {
+        const a = (i * 2 * Math.PI) / 3;
+        const p = rot([Math.cos(a) * R, Math.sin(a) * R, 0], ang);
+        const s = 1 / (1 - p[2] / (R * 4.2));
+        return { x: p[0] * s, y: p[1] * s, s, z: p[2] };
+      });
+      for (const box of boxes) {
+        box.querySelectorAll("s").forEach((dot, i) => {
+          const p = pos[i];
+          const size = 14 * p.s;
+          dot.style.cssText = `width:${size}px;height:${size}px;left:${36 + p.x - size / 2}px;top:${36 + p.y - size / 2}px;opacity:${0.55 + 0.45 * Math.min(1, Math.max(0, (p.z / R + 1) / 2))}`;
+        });
+      }
+      this._ldRaf = requestAnimationFrame(tick);
+    };
+    this._ldRaf = requestAnimationFrame(tick);
+  }
+
+  // Verlauf im Statistik-Fenster, während er lädt: die Grafik des vorigen Zeitraums derselben Art gedimmt (wenn es sie gibt), die Ladeanzeige darüber
+  _histLoadingHtml(range, color, render) {
+    const g = this._histGhost;
+    let ghost = "";
+    if (g && g.id === this._detailId && g.kind === (this._statKind || "avail") && g.data) {
+      const keep = this._hist;
+      this._hist = { key: this._histKey(range), data: g.data, loading: false };
+      try {
+        ghost = render();
+      } catch (_err) {
+        ghost = "";
+      } finally {
+        this._hist = keep;
+      }
+    }
+    return `<div class="pl-ldwrap${ghost ? "" : " empty"}">${ghost}${this._loaderHtml(color, true)}</div>`;
+  }
+
   // --- Statistik-Fenster (über dem Popup) -----------------------------------
 
   _openStat(range, kind = "avail") {
@@ -5940,6 +6024,10 @@ class DevicePanel extends HTMLElement {
       const data = await this._hass.callWS({ type, device_id: id, range });
       if (this._hist?.key !== key) return;
       this._hist = { key, data, loading: false, at: Date.now() };
+      // Für die gedimmte Grafik beim nächsten Wechsel und für das sofortige Zurückwechseln (eine Minute)
+      this._histGhost = { id, kind: this._statKind || "avail", data };
+      (this._histCache ||= new Map()).set(key, { at: Date.now(), data });
+      if (this._histCache.size > 18) this._histCache.delete(this._histCache.keys().next().value);
     } catch (err) {
       if (this._hist?.key !== key) return;
       this._hist = { key, data: prev, loading: false, error: errText(err), at: Date.now() };
@@ -5981,7 +6069,7 @@ class DevicePanel extends HTMLElement {
   _historyHtml(range) {
     const h = this._hist;
     const key = this._histKey(range);
-    if (!h || h.key !== key || (!h.data && h.loading)) return `<div class="avail"><p class="dlg-note">${escape(this._t("loadingDetail"))}</p></div>`;
+    if (!h || h.key !== key || (!h.data && h.loading)) return this._histLoadingHtml(range, "var(--dp-success)", () => this._historyHtml(range));
     if (!h.data) return `<div class="dlg-error">${escape(this._t("error"))} ${escape(h.error || "")}</div>`;
     const { start, end, segments: segs = [], summary } = h.data;
     const span = end - start;
@@ -6059,7 +6147,7 @@ class DevicePanel extends HTMLElement {
     const t = (k, ...a) => this._t(k, ...a);
     const h = this._hist;
     const key = this._histKey(range);
-    if (!h || h.key !== key || (!h.data && h.loading)) return `<div class="avail"><p class="dlg-note">${escape(t("loadingDetail"))}</p></div>`;
+    if (!h || h.key !== key || (!h.data && h.loading)) return this._histLoadingHtml(range, "var(--dp-primary)", () => this._batteryHistHtml(range));
     if (!h.data) return `<div class="dlg-error">${escape(t("error"))} ${escape(h.error || "")}</div>`;
     const { start, end, points = [], changes = [], threshold, source, steady_since: steady, forecast, charging = false } = h.data;
     const cs = charging ? "C" : "";
@@ -6122,7 +6210,7 @@ class DevicePanel extends HTMLElement {
     const t = (k, ...a) => this._t(k, ...a);
     const h = this._hist;
     const key = this._histKey(range);
-    if (!h || h.key !== key || (!h.data && h.loading)) return `<div class="avail"><p class="dlg-note">${escape(t("loadingDetail"))}</p></div>`;
+    if (!h || h.key !== key || (!h.data && h.loading)) return this._histLoadingHtml(range, "var(--dp-primary)", () => this._signalHistHtml(range, d));
     if (!h.data) return `<div class="dlg-error">${escape(t("error"))} ${escape(h.error || "")}</div>`;
     const { start, end, points = [], kind, source, bucket, first, current, reason, steady_since: steady, via, smoothed } = h.data;
     const note = (text) => `<p class="dlg-note bh-src">${escape(text)}</p>`;
@@ -6349,6 +6437,14 @@ class DevicePanel extends HTMLElement {
     }
     else if (btn.dataset.stat === "range" && btn.dataset.range !== this._statRange) {
       this._statRange = btn.dataset.range;
+      // Schon geholt (letzte Minute): sofort, ohne neue Abfrage
+      const key = this._histKey(this._statRange);
+      const hit = this._histCache?.get(key);
+      if (hit && Date.now() - hit.at < HIST_CACHE_MS) {
+        this._hist = { key, data: hit.data, loading: false, at: hit.at };
+        this._renderStat();
+        return;
+      }
       this._renderStat();
       this._loadHistory(true);
     }

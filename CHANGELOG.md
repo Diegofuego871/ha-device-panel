@@ -7,6 +7,15 @@ All notable changes to this integration are documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/).
 
+## [2.209.0] - 2026-11-07
+
+The loading animation is faster, takes the colour of the graph, and now covers every graph that may load slowly.
+
+### Changed
+
+- **Loading animation, faster and in the colour of the graph:** The three dots turn about twice as fast. They no longer always use the accent colour but the colour of the graph they stand on (the line of the battery and status curves, green for availability and the charges curve); the rule is "colour of the graph".
+- **Loading animation on every graph that may be slow:** The same behaviour (the tab or filter switches at once, the old graph stays dimmed, three dots turn above it until the new one is there) now also applies to the statistics window of a device (availability, battery and reception, all periods), the history window (list and chart, also for Magic Push, routines and "System" when the tab, period, filter or search changes) and the window "Charges". A graph already fetched in the statistics window appears at once for a minute when you switch back, without a new request. The dimming no longer blurs the old graph, which was heavy on weak phones.
+
 ## [2.208.0] - 2026-11-07
 
 Switching the period in Status › System is instant, and only the chosen card loads, with a loading animation.
@@ -5856,6 +5865,7 @@ First pre-release.
   GitHub Actions for HACS/hassfest validation and tests.
 
 [2.6.0]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v2.6.0
+[2.209.0]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v2.209.0
 [2.208.0]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v2.208.0
 [2.205.0]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v2.205.0
 [2.204.1]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v2.204.1

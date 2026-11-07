@@ -282,6 +282,10 @@ export class ProtocolUi {
     if (!soft) {
       s.loading = true;
       this.renderFoot();
+      // Die alte Liste gedimmt mit Ladeanzeige (die Auswahl oben ist schon gewechselt); neu laden beginnt oben
+      this.renderBody();
+      const scroller = this.dlg?.querySelector("[data-pr-body]");
+      if (scroller) scroller.scrollTop = 0;
     }
     try {
       const r = await this.host._hass.callWS(msg);
@@ -668,19 +672,21 @@ export class ProtocolUi {
       body.scrollTop = 0;
       return;
     }
+    // Lädt gerade (Reiter, Zeitraum oder Filter gewechselt): die alte Liste gedimmt, die Ladeanzeige darüber (Regel für Grafiken, seit 2.209.0)
+    const loading = (html) => (s.loading ? `<div class="pl-ldwrap${html ? "" : " empty"}">${html}${this.host._loaderHtml("var(--dp-primary)", true)}</div>` : html);
     if (!s.data) {
       body.innerHTML = s.error
         ? `<div class="dlg-error">${this.esc(t("prError", s.error))}</div><button type="button" class="qbtn" data-pr="reload">${this.esc(t("prRetry"))}</button>`
-        : `<p class="mg-note">${this.esc(t("prLoading"))}</p>`;
+        : loading("") || `<p class="mg-note">${this.esc(t("prLoading"))}</p>`;
       return;
     }
     const d = s.data;
     if (s.kind === "all") {
-      body.innerHTML = this.allHtml(d);
+      body.innerHTML = loading(this.allHtml(d));
       return;
     }
     if (s.kind === "system") {
-      body.innerHTML = this.systemHtml(d);
+      body.innerHTML = loading(this.systemHtml(d));
       return;
     }
     const device = Boolean(s.deviceId && !s.item);
@@ -696,8 +702,8 @@ export class ProtocolUi {
     if (d.oldest) notes.push(t("prOldest", this.host._fmtDateY(d.oldest)));
     notes.push(t("prKeep", this.num(d.max_mb), this.num(d.max_entries)));
     const err = s.error ? `<div class="dlg-error">${this.esc(t("prError", s.error))}</div>` : "";
-    body.innerHTML = `${err}<div class="pr-kpis">${this.kpis(d)}</div>${this.chart(d)}
-      <div class="pr-table" role="list">${rows ? this.head() + rows : ""}</div>${empty}${more}<p class="pr-note">${this.esc(notes.join(" "))}</p>`;
+    body.innerHTML = loading(`${err}<div class="pr-kpis">${this.kpis(d)}</div>${this.chart(d)}
+      <div class="pr-table" role="list">${rows ? this.head() + rows : ""}</div>${empty}${more}<p class="pr-note">${this.esc(notes.join(" "))}</p>`);
   }
 
   // --- Liste "Alles" (Geräteprotokoll) ------------------------------------------------
