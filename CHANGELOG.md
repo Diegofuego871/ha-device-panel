@@ -37,7 +37,7 @@ Includes the changes from 2.206.0.
 
 ### Added
 
-- **Device, setting "Record charges":** In the device pop-up under Settings › Battery a new choice **Automatic / On / Off** decides whether the panel records the charges of this device. Automatic is as before: only devices the panel knows as rechargeable are recorded (the choice says which applies). **On** also records a device that is not seen as rechargeable, for example a sensor you charge yourself; the tile "Charges" then appears for it. **Off** records nothing, even for a rechargeable device. It applies to this device only (like the battery capacity). The value is part of the device settings: overview of own values, reset (together with the charging values of the device), backup and restore.
+- **Device, setting "Record charges":** In the device pop-up under Settings › Charging a new choice **Automatic / On / Off** decides whether the panel records the charges of this device. Automatic is as before: only devices the panel knows as rechargeable are recorded (the choice says which applies). **On** also records a device that is not seen as rechargeable, for example a sensor you charge yourself; the tile "Charges" then appears for it. **Off** records nothing, even for a rechargeable device. It applies to this device only (like the battery capacity). The value is part of the device settings: overview of own values, reset (together with the charging values of the device), backup and restore.
 
 ### Changed
 

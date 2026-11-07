@@ -1,4 +1,4 @@
-// "Ladungen aufzeichnen" am Gerät (2.207.0): Auswahl automatisch / ein / aus im Reiter Batterie (auch bei einem Gerät, das nicht als ladefähig gilt),
+// "Ladungen aufzeichnen" am Gerät (2.207.0): Auswahl automatisch / ein / aus im Reiter Laden (auch bei einem Gerät, das nicht als ladefähig gilt),
 // Speichern (true / false / null), die Kachel "Ladungen" folgt der Wahl (ein: auch ohne Ladefähigkeit; aus: nie; automatisch: nur ladefähig).
 // Deutsch und Englisch, Desktop und Handy.
 import { chromium } from "playwright-core";
@@ -49,7 +49,7 @@ for (const lang of ["de", "en"]) {
     await wait(`return r.querySelector('${D} .st-tiles')`);
     check(`[${tag}] automatisch, nicht ladefähig: keine Kachel "${L.tile}"`, !(await ev(`return !!r.querySelector(${JSON.stringify(tile)})`)));
     await tap(`${D} [data-tab="set"]`);
-    await tap(`${D} [data-stab="bat"]`);
+    await tap(`${D} [data-stab="chg"]`);
     check(`[${tag}] Auswahl "${L.label}" auch ohne Ladefähigkeit: ${L.opts.join(" / ")}`, (await wait(`return !!r.querySelector(${JSON.stringify(S)})`)) && JSON.stringify(await opts()) === JSON.stringify(L.opts), JSON.stringify(await opts()));
 
     // Ein: Kachel erscheint
@@ -61,7 +61,7 @@ for (const lang of ["de", "en"]) {
     // Aus bei einem ladefähigen Gerät: keine Kachel
     await p.evaluate(() => { window.__rechargeable = ["e"]; });
     await tap(`${D} [data-tab="set"]`);
-    await tap(`${D} [data-stab="bat"]`);
+    await tap(`${D} [data-stab="chg"]`);
     await (await handle(S)).selectOption("off");
     check(`[${tag}] "Aus": false gespeichert`, (await calls()).some((x) => x.charge_rec === false));
     await reopen();
@@ -69,11 +69,11 @@ for (const lang of ["de", "en"]) {
 
     // Automatisch: ladefähig, Kachel da; Text der Wahl nennt "ladefähig"
     await tap(`${D} [data-tab="set"]`);
-    await tap(`${D} [data-stab="bat"]`);
+    await tap(`${D} [data-stab="chg"]`);
     await (await handle(S)).selectOption("default");
     check(`[${tag}] "Automatisch": null gesendet`, (await calls()).some((x) => x.charge_rec === null));
     await reopen();
-    check(`[${tag}] automatisch, ladefähig: Kachel "${L.tile}" da, Auswahl nennt "${L.optsRech}"`, (await wait(`return !!r.querySelector(${JSON.stringify(tile)})`)) && (await (async () => { await tap(`${D} [data-tab="set"]`); await tap(`${D} [data-stab="bat"]`); await wait(`return !!r.querySelector(${JSON.stringify(S)})`); return (await opts())[0] === L.optsRech; })()));
+    check(`[${tag}] automatisch, ladefähig: Kachel "${L.tile}" da, Auswahl nennt "${L.optsRech}"`, (await wait(`return !!r.querySelector(${JSON.stringify(tile)})`)) && (await (async () => { await tap(`${D} [data-tab="set"]`); await tap(`${D} [data-stab="chg"]`); await wait(`return !!r.querySelector(${JSON.stringify(S)})`); return (await opts())[0] === L.optsRech; })()));
     check(`[${tag}] keine Fehler`, errors.length === 0, errors.join("|"));
     await ctx.close();
   }

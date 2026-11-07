@@ -4902,18 +4902,6 @@ class DevicePanel extends HTMLElement {
         whErr ? `<div class="opt-error" data-dev-range>${escape(whErr.message)}</div>` : ""
       }${origin(whSet != null, null, whSet != null ? "" : t("devChargeWhNone"), t("devChargeWhShort"))}</div>`;
     }
-    // Ladungen aufzeichnen (seit 2.207.0, nur am Gerät): automatisch (ladefähige Geräte), aus oder ein; "ein" auch für ein Gerät, das das Panel nicht
-    // als ladefähig kennt (dann erscheint die Kachel "Ladungen" mit dem, was aufgezeichnet wird)
-    {
-      const recSet = d.charge_rec_setting;
-      const recMode = recSet == null ? "default" : recSet ? "on" : "off";
-      parts.bat += `<div class="opt${recSet != null ? " changed" : ""}"><div class="opt-line"><span class="opt-label">${escape(t("devChargeRec"))}</span>${sel(
-        "dev-charge-rec",
-        [["default", t("devChargeRecAuto", Boolean(d.rechargeable))], ["on", t("devChargeOn")], ["off", t("devChargeOff")]],
-        recMode,
-        t("devChargeRec")
-      )}</div>${origin(recSet != null, null, "", t("devChargeRecShort"))}</div>`;
-    }
     // Lademeldung (seit 1.30.0): Push, sobald das Gerät voll geladen ist; ohne Wahl gilt die Integration.
     if (d.battery?.level != null) {
       const cd = d.charge_default || { on: false, integration: null };
@@ -5000,6 +4988,18 @@ class DevicePanel extends HTMLElement {
         }
       }
     }
+    // Ladungen aufzeichnen (seit 2.207.0, nur am Gerät): automatisch (ladefähige Geräte), aus oder ein; "ein" auch für ein Gerät, das das Panel nicht
+    // als ladefähig kennt; steht im Reiter "Laden" (dann erscheint die Kachel "Ladungen" mit dem, was aufgezeichnet wird)
+    {
+      const recSet = d.charge_rec_setting;
+      const recMode = recSet == null ? "default" : recSet ? "on" : "off";
+      parts.chg += `<div class="opt${recSet != null ? " changed" : ""}"><div class="opt-line"><span class="opt-label">${escape(t("devChargeRec"))}</span>${sel(
+        "dev-charge-rec",
+        [["default", t("devChargeRecAuto", Boolean(d.rechargeable))], ["on", t("devChargeOn")], ["off", t("devChargeOff")]],
+        recMode,
+        t("devChargeRec")
+      )}</div>${origin(recSet != null, null, "", t("devChargeRecShort"))}</div>`;
+    }
     // Stumm (Knopf "24 Std. stumm" in der Meldung): eigene Option mit Ende;
     // "Globale Einstellung" oder "Aus" hebt es auf.
     const muted = d.notify_mute_until && Date.parse(d.notify_mute_until) > Date.now() ? Date.parse(d.notify_mute_until) / 1000 : null;
@@ -5060,8 +5060,8 @@ class DevicePanel extends HTMLElement {
     };
     const ownTab = {
       out: d.offline_setting != null || d.notify_delay_setting != null || d.flaky_setting != null || d.liveness_conn_setting != null || silenced,
-      bat: d.battery_setting != null || d.charge_wh_setting != null || d.charge_rec_setting != null,
-      chg: [d.charge_setting, d.charge_full_setting, d.charge_rise_setting, d.charge_stall_setting, d.charge_stop_setting, d.charge_live_setting].some((v) => v != null),
+      bat: d.battery_setting != null || d.charge_wh_setting != null,
+      chg: [d.charge_setting, d.charge_full_setting, d.charge_rise_setting, d.charge_stall_setting, d.charge_stop_setting, d.charge_live_setting, d.charge_rec_setting].some((v) => v != null),
       sig: d.signal_setting != null,
     };
     // Reiter ohne Inhalt entfallen (seit 2.46.0): ohne Batterie, Ladestand oder Empfang bliebe nur der Hinweis.

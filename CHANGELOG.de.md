@@ -37,7 +37,7 @@ Enthält die Änderungen von 2.206.0.
 
 ### Hinzugefügt
 
-- **Gerät, Einstellung "Ladungen aufzeichnen":** Im Geräte-Popup unter Einstellungen › Batterie entscheidet eine neue Wahl **Automatisch / Ein / Aus**, ob das Panel die Ladungen dieses Geräts aufzeichnet. Automatisch ist wie bisher: nur Geräte, die das Panel als ladefähig kennt, werden aufgezeichnet (die Wahl nennt, was gilt). **Ein** zeichnet auch ein Gerät auf, das nicht als ladefähig gilt, zum Beispiel einen Sensor, den du selbst auflädst; die Kachel "Ladungen" erscheint dann dafür. **Aus** zeichnet nichts auf, auch bei einem ladefähigen Gerät. Sie gilt nur für dieses Gerät (wie die Akku-Kapazität). Der Wert gehört zu den Geräteeinstellungen: Übersicht der eigenen Werte, Zurücksetzen (mit den Lade-Werten des Geräts), Sicherung und Wiederherstellung.
+- **Gerät, Einstellung "Ladungen aufzeichnen":** Im Geräte-Popup unter Einstellungen › Laden entscheidet eine neue Wahl **Automatisch / Ein / Aus**, ob das Panel die Ladungen dieses Geräts aufzeichnet. Automatisch ist wie bisher: nur Geräte, die das Panel als ladefähig kennt, werden aufgezeichnet (die Wahl nennt, was gilt). **Ein** zeichnet auch ein Gerät auf, das nicht als ladefähig gilt, zum Beispiel einen Sensor, den du selbst auflädst; die Kachel "Ladungen" erscheint dann dafür. **Aus** zeichnet nichts auf, auch bei einem ladefähigen Gerät. Sie gilt nur für dieses Gerät (wie die Akku-Kapazität). Der Wert gehört zu den Geräteeinstellungen: Übersicht der eigenen Werte, Zurücksetzen (mit den Lade-Werten des Geräts), Sicherung und Wiederherstellung.
 
 ### Geändert
 
