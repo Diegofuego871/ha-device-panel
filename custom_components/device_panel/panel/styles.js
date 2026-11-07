@@ -1714,6 +1714,7 @@ button.lg-row:hover { background: var(--dp-hover); }
 .lg-foot .sp { margin-left: auto; }
 .lg-btn { display: inline-flex; align-items: center; gap: 6px; height: 36px; padding: 0 14px; border-radius: 12px; border: 1px solid var(--dp-divider); background: var(--dp-card); color: var(--dp-text); font: inherit; font-size: 13.5px; cursor: pointer; }
 .lg-btn:hover { background: var(--dp-hover); }
+.lg-icon { padding: 0 10px; }
 @media (max-width: 700px) {
   dialog.log-dlg { width: 100%; max-width: 100%; height: 100%; max-height: 100%; margin: 0; border-radius: 0; }
   .lg-bar { padding: 4px 16px 10px; }

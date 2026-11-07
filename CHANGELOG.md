@@ -7,6 +7,14 @@ All notable changes to this integration are documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/).
 
+## [2.205.0] - 2026-11-07
+
+The history can be downloaded completely as a text file.
+
+### Added
+
+- **History, download of everything:** In the footer of the window "History" a new button (arrow down) saves everything that is stored in the chosen tab as a text file, for example all up to 10,000 entries of "System" including debug entries. Until now only the entries shown (at most 500) could be copied with "Copy as text". The file ignores period, chips and search, has one line per entry in the same form as "Copy as text" (date, level, category, text), newest first, and is named like `device-panel-system-2026-11-07.txt`. It is fetched in pages of 500 entries; the button is locked meanwhile. On the phone the companion app does not always allow downloads; "Copy as text" remains for that.
+
 ## [2.204.1] - 2026-11-06
 
 Fixes and speed-ups from a code review: routines behave correctly at the change to winter time and when a target is replaced, the app "Updates" no longer gets stuck, charges are recognised by their curve, and the device list costs Home Assistant and the browser much less work.
@@ -5810,6 +5818,7 @@ First pre-release.
   GitHub Actions for HACS/hassfest validation and tests.
 
 [2.6.0]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v2.6.0
+[2.205.0]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v2.205.0
 [2.204.1]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v2.204.1
 [2.204.0]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v2.204.0
 [2.203.1]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v2.203.1

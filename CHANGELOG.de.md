@@ -7,6 +7,14 @@ Alle nennenswerten Änderungen an dieser Integration stehen in dieser Datei.
 Das Format folgt [Keep a Changelog](https://keepachangelog.com/de/1.1.0/),
 die Versionsnummern folgen [Semantic Versioning](https://semver.org/lang/de/).
 
+## [2.205.0] - 2026-11-07
+
+Das Protokoll lässt sich vollständig als Textdatei herunterladen.
+
+### Hinzugefügt
+
+- **Protokoll, Download von allem:** Im Fuss des Fensters "Protokoll" speichert ein neuer Knopf (Pfeil nach unten) alles, was im gewählten Reiter gespeichert ist, als Textdatei, zum Beispiel alle bis zu 10.000 Einträge von "System" samt Debug-Einträgen. Bisher liess sich mit "Als Text kopieren" nur kopieren, was angezeigt wird (höchstens 500 Einträge). Die Datei ignoriert Zeitraum, Chips und Suche, hat eine Zeile je Eintrag in derselben Form wie "Als Text kopieren" (Datum, Stufe, Kategorie, Text), neueste zuerst, und heisst zum Beispiel `device-panel-system-2026-11-07.txt`. Sie wird in Seiten zu 500 Einträgen geholt; der Knopf ist solange gesperrt. Auf dem Handy erlaubt die Companion-App Downloads nicht immer; dafür bleibt "Als Text kopieren".
+
 ## [2.204.1] - 2026-11-06
 
 Korrekturen und Beschleunigungen aus einem Code-Review: Routinen verhalten sich bei der Umstellung auf Winterzeit und beim Ersetzen eines Ziels richtig, die App "Updates" bleibt nicht mehr hängen, Ladungen werden an ihrer Kurve erkannt, und die Geräteliste kostet Home Assistant und den Browser deutlich weniger Arbeit.
@@ -5911,6 +5919,7 @@ Erste Vorabversion.
   GitHub Actions für die Prüfungen von HACS und hassfest sowie die Tests.
 
 [2.6.0]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v2.6.0
+[2.205.0]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v2.205.0
 [2.204.1]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v2.204.1
 [2.204.0]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v2.204.0
 [2.203.1]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v2.203.1

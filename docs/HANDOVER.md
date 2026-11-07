@@ -11,6 +11,10 @@ Einstieg für jede neue Claude-Code-Session. Zuerst diese Datei lesen, dann
 
 - `charge.py` `known_rechargeable`: Lademeldung gilt (global + Gerät/Integration), oder am Gerät ausdrücklich "Ein", oder Live-Aktivität für das Gerät an; `rechargeable()` und `charging_of()` nutzen sie (vorher nur `enabled()` mit globalem Schalter). Test `test_rechargeable_by_device_charge_or_live`.
 
+## Stand (2.205.0, Protokoll: Download von allem)
+
+- `protocol.js` `download()`: holt den Reiter seitenweise (`DOWNLOAD_PAGE` 500, höchstens `DOWNLOAD_PAGES_MAX` 40 Seiten) per `protocol_get` mit `offset`, ohne `since`, `filter`, `q` (Entscheid des Nutzers: ganzer Reiter, Textdatei), Text über `tableText(rows)`, Datei über `host._downloadText` (neu, `_downloadBlob`). Knopf `data-pr="download"`, nur Symbol. Suite `protocoldownload-e2e`. Kein neues Backend. 2.204.1 hat den Tag; PANEL_VERSION 472.
+
 ## Stand (2.204.1, Korrekturen aus dem Code-Review)
 
 - `update_queue.py`: Termine (`_timeout`, `_settled`) als `partial` auf `@callback`-Methoden. Eine lambda an `async_call_later` läuft als Executor-Job im Thread (siehe LEARNINGS); `hass.async_create_task` von dort wirft. Test `test_timeout_and_settle_start_the_next_update`.

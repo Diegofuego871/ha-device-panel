@@ -29,6 +29,9 @@ const RANGES = [
 const TABS = ["all", "magic", "routine", "system"];
 const PAGE = 100;
 const LIMIT_MAX = 500;
+// Download: Seitengrösse (Obergrenze des Servers) und höchste Zahl Seiten (10.000 Einträge im System-Protokoll)
+const DOWNLOAD_PAGE = 500;
+const DOWNLOAD_PAGES_MAX = 40;
 const DAY = 86400;
 const SEARCH_DELAY_MS = 250;
 const FILTERS = {
@@ -789,7 +792,7 @@ export class ProtocolUi {
     const d = s.data;
     const count = s.loading && !d ? t("prLoading") : d ? t("prShown", d.entries.length, this.num(d.total)) : "";
     foot.innerHTML = `<button type="button" class="lg-btn" data-pr="close">${mdi("arrowLeft", 16)}<span>${this.esc(t("prBack"))}</span></button><span class="pr-count">${this.esc(count)}</span><span class="sp"></span>
-      <button type="button" class="lg-btn" data-pr="copy"${d?.entries?.length ? "" : " disabled"}>${mdi("copy", 16)}<span>${this.esc(s.flash || t("prCopyText"))}</span></button>${s.kind === "system" ? `<button type="button" class="lg-btn" data-pr="clear-log">${this.esc(t("logClear"))}</button>` : ""}`;
+      <button type="button" class="lg-btn" data-pr="copy"${d?.entries?.length ? "" : " disabled"}>${mdi("copy", 16)}<span>${this.esc(s.flash || t("prCopyText"))}</span></button><button type="button" class="lg-btn lg-icon" data-pr="download" title="${this.esc(t("prDownload"))}" aria-label="${this.esc(t("prDownload"))}"${d?.entries?.length && !s.downloading ? "" : " disabled"}>${mdi("download", 16)}</button>${s.kind === "system" ? `<button type="button" class="lg-btn" data-pr="clear-log">${this.esc(t("logClear"))}</button>` : ""}`;
   }
 
   // --- Trace ---------------------------------------------------------------------
@@ -899,9 +902,9 @@ export class ProtocolUi {
     this.renderFoot();
   }
 
-  tableText() {
+  tableText(all = null) {
     const s = this.s;
-    const rows = s.data?.entries || [];
+    const rows = all || s.data?.entries || [];
     return rows
       .map((e) => {
         if (s.kind === "system") {
@@ -921,6 +924,39 @@ export class ProtocolUi {
         return [this.fmtStamp(e.at), this.t(`prSrc_${e.src}`) || e.src || "", e.name, this.actText(e), res, e.err ? this.host._t(`rtReason_${e.err}`) || e.err : ""].filter((x, i) => x || i < 3).join(" | ");
       })
       .join("\n");
+  }
+
+  // Alles Gespeicherte des Reiters als Textdatei (seit 2.205.0): ohne Zeitraum, Chips und Suche, in Seiten zu PAGE_MAX, bis alles da ist.
+  // Das Fenster zeigt höchstens LIMIT_MAX Einträge; die Datei hat alle, die der Server hält.
+  async download() {
+    const s = this.s;
+    if (!s || s.downloading) return;
+    s.downloading = true;
+    this.renderFoot();
+    const rows = [];
+    try {
+      const until = s.data?.until ?? Date.now() / 1000;
+      for (let page = 0; page < DOWNLOAD_PAGES_MAX; page++) {
+        const msg = { type: "device_panel/protocol_get", kind: s.kind, until, limit: DOWNLOAD_PAGE, offset: rows.length, q: "" };
+        if (s.kind !== "system") {
+          if (s.deviceId) msg.device_id = s.deviceId;
+          if ((s.kind === "magic" || s.kind === "routine") && s.item) msg.item_ids = [s.item];
+        }
+        const r = await this.host._hass.callWS(msg);
+        if (this.s !== s) return;
+        const got = r.entries || [];
+        rows.push(...got);
+        if (!got.length || rows.length >= (r.total || 0)) break;
+      }
+      this.host._downloadText(this.tableText(rows), `device-panel-${s.kind}-${this.host._bkDate()}.txt`);
+    } catch (err) {
+      s.error = this.h.errText(err);
+    }
+    s.downloading = false;
+    if (this.s === s) {
+      this.renderFoot();
+      this.render?.();
+    }
   }
 
   async action(name, el) {
@@ -1023,6 +1059,9 @@ export class ProtocolUi {
         break;
       case "copy":
         if (await this.host._copyText(this.tableText(), null)) this.flash(this.t("prCopied"));
+        break;
+      case "download":
+        await this.download();
         break;
       case "device":
         // Das Geräte-Popup öffnet über dem Protokoll; schliesst es, ist man wieder hier

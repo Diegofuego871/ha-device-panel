@@ -7042,7 +7042,14 @@ class DevicePanel extends HTMLElement {
 
   // Datei zum Herunterladen anbieten (Blob); die Companion-App auf dem Handy kann das nicht immer: dort "Kopieren"
   _downloadJson(obj, name) {
-    const blob = new Blob([JSON.stringify(obj, null, 2)], { type: "application/json" });
+    this._downloadBlob(new Blob([JSON.stringify(obj, null, 2)], { type: "application/json" }), name);
+  }
+
+  _downloadText(text, name) {
+    this._downloadBlob(new Blob([text], { type: "text/plain;charset=utf-8" }), name);
+  }
+
+  _downloadBlob(blob, name) {
     const url = URL.createObjectURL(blob);
     const a = document.createElement("a");
     a.href = url;
