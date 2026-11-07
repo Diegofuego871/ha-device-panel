@@ -13,6 +13,7 @@ The loading animation is faster, takes the colour of the graph, and now covers e
 
 ### Changed
 
+- **History, "Copy as text" removed:** The button "Copy as text" in the footer of the window "History" is gone. The download button (arrow down) saves what the window shows as a text file in the same line form, so it takes over; the footer holds only "Back", the count, "Clear" (tab "System") and the download.
 - **Loading animation, faster and in the colour of the graph:** The three dots turn about twice as fast. They no longer always use the accent colour but the colour of the graph they stand on (the line of the battery and status curves, green for availability and the charges curve); the rule is "colour of the graph".
 - **Loading animation on every graph that may be slow:** The same behaviour (the tab or filter switches at once, the old graph stays dimmed, three dots turn above it until the new one is there) now also applies to the statistics window of a device (availability, battery and reception, all periods), the history window (list and chart, also for Magic Push, routines and "System" when the tab, period, filter or search changes) and the window "Charges". A graph already fetched in the statistics window appears at once for a minute when you switch back, without a new request. The dimming no longer blurs the old graph, which was heavy on weak phones.
 

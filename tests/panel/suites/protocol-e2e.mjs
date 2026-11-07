@@ -110,7 +110,7 @@ for (const lang of ["de", "en"]) {
     check(`[${tag}] Magic Push: "Gerät öffnen" in der Zeile unter dem Namen (keine Fusszeile), kein "${T.device} ›" mehr`, await ev(`const c = [...r.querySelectorAll('dialog.mgall-dlg .mg-dcard:not(.closed)')]; return c.length > 0 && c.every((x) => !x.querySelector(".mg-dfoot") && !!x.querySelector(".mg-dhead .mg-dopen") && !x.querySelector("[data-proto='all']"))`));
     await tap('dialog.mgall-dlg [data-proto="magic"][data-id="r00000000001"]');
     check(`[${tag}] Protokoll öffnet (Titel "${T.title}", Unterzeile = Gerät und Zahl, die Meldung "Keller kalt" als gewählter Chip)`, await wait(`const d = r.querySelector('${P}'); return d.open && d.querySelector("h2").textContent === ${JSON.stringify(T.title)} && d.querySelector("[data-pr-sub]").textContent !== "Keller kalt" && d.querySelector("[data-pr-sub]").textContent.includes(" · ") && d.querySelector("[data-pr-items] .chip.on")?.textContent.trim() === "Keller kalt"`));
-    check(`[${tag}] Kreuz oben rechts und zusätzlich "${T.back}" unten links im Fuss (vor der Zahl der Einträge)`, await ev(`const d = r.querySelector('${P}'); const b = d.querySelector('[data-pr-foot] [data-pr="close"]'); const f = d.querySelector('[data-pr-foot]').getBoundingClientRect(); return !!d.querySelector('.dlg-head .dlg-close[data-pr="close"]') && !!b && b.textContent.trim() === ${JSON.stringify(T.back)} && b.getBoundingClientRect().left - f.left < 40 && b.getBoundingClientRect().left < d.querySelector('[data-pr="copy"]').getBoundingClientRect().left`));
+    check(`[${tag}] Kreuz oben rechts und zusätzlich "${T.back}" unten links im Fuss (vor der Zahl der Einträge)`, await ev(`const d = r.querySelector('${P}'); const b = d.querySelector('[data-pr-foot] [data-pr="close"]'); const f = d.querySelector('[data-pr-foot]').getBoundingClientRect(); return !!d.querySelector('.dlg-head .dlg-close[data-pr="close"]') && !!b && b.textContent.trim() === ${JSON.stringify(T.back)} && b.getBoundingClientRect().left - f.left < 40 && b.getBoundingClientRect().left < d.querySelector('[data-pr="download"]').getBoundingClientRect().left`));
     check(`[${tag}] Reiter oben: "Alles", "Magic Push", "Routinen" (seit 2.118.0), Magic Push gewählt, Kapsel vorhanden`, await ev(`const bar = r.querySelector('${P} [data-pr-kinds] .sub-tabs'); const t = [...bar.querySelectorAll(".sub-tab")]; return t.length === 3 && t[0].dataset.v === "all" && t[1].dataset.v === "magic" && t[1].textContent.trim() === "Magic Push" && t[2].dataset.v === "routine" && t[1].classList.contains("on") && !!bar.querySelector(".seg-pill") && r.querySelector('${P} .dlg-avatar svg') !== null`));
     check(`[${tag}] Abfrage: kind magic, item_ids, Zeitraum 30 Tage, Seite 100`, (await wait(`return !!r.querySelector('${P} .pr-kpis')`)) && (await calls()).some((c) => c.kind === "magic" && c.item_ids?.[0] === "r00000000001" && Math.abs((c.until - c.since) / DAY - 30) < 0.1 && c.limit === 100));
     check(`[${tag}] 30 Tage: zwei Einträge, Kennzahlen 2|1|1|0|1 Std.`, (await rows()) === 2 && /^2\|1\|1\|0\|1/.test(await kpis()), await kpis());
@@ -148,13 +148,10 @@ for (const lang of ["de", "en"]) {
     await ev(`const t = r.querySelector('${P} input[data-pr-date="to"]'); const f = r.querySelector('${P} input[data-pr-date="from"]'); t.value = "2000-01-01"; t.dispatchEvent(new Event("change", { bubbles: true }));`);
     check(`[${tag}] Von nach Bis: die Daten werden vertauscht, kein Fehler`, await wait(`const f = r.querySelector('${P} input[data-pr-date="from"]'), t = r.querySelector('${P} input[data-pr-date="to"]'); return f.value <= t.value`));
     await p.screenshot({ path: `${outDir}/protocol-${tag.replace("/", "-")}-magic.png` });
-    // Text kopieren
+    // "Als Text kopieren" gibt es nicht mehr (seit 2.209.0, der Download ersetzt ihn)
     await tap(`${P} .sub-tab[data-v="12m"]`);
     await wait(`return r.querySelectorAll('${P} .pr-item').length === 5`);
-    await tap(`${P} [data-pr="copy"]`);
-    const copied = await f.evaluate(() => window.__copied || "");
-    check(`[${tag}] "Als Text kopieren": fünf Zeilen mit Titel und Ergebnis`, copied.split("\n").length === 5 && /Keller ist kalt: 11,5 °C/.test(copied), copied.split("\n")[0]);
-    check(`[${tag}] Rückmeldung "${T.copied}" am Knopf`, await wait(`return r.querySelector('${P} [data-pr="copy"]').textContent.includes(${JSON.stringify(T.copied)})`));
+    check(`[${tag}] kein Knopf "Als Text kopieren" mehr, dafür der Download`, await ev(`return !r.querySelector('${P} [data-pr="copy"]') && !!r.querySelector('${P} [data-pr="download"]')`));
     // Fehler beim Laden
     await p.evaluate(() => { window.__protocolFails = "Protokoll kaputt"; });
     await tap(`${P} .sub-tab[data-v="6m"]`);

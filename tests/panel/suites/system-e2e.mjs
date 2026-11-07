@@ -109,13 +109,8 @@ for (const lang of ["de", "en"]) for (const mobile of [false, true]) {
   check(`[${tag}] zurück im Protokoll`, await ev(`return r.querySelector("${D}").open`));
   await tap(`${D} [data-pr-filters] [data-v="all"]`);
 
-  // Kopieren
-  await ev(`r.host._copyText = async (t) => { window.__copied = t; return true; }`);
-  await tap(`${D} [data-pr="copy"]`);
-  check(`[${tag}] Kopieren: Rückmeldung`, await wait(`return r.querySelector("${D} [data-pr='copy'] span").textContent === ${JSON.stringify(T_.copied)}`));
-  const copied = await ev(`return window.__copied ?? null`);
-  const lines = String(copied).split("\n");
-  check(`[${tag}] Zwischenablage: eine Zeile je gezeigtem Eintrag mit Stufe und Kategorie`, lines.length >= 4 && /\[(INFO|ERROR|WARNING|DEBUG)\] \[/.test(lines[0]), lines[0]);
+  // Kein Knopf "Als Text kopieren" mehr (seit 2.209.0); die Zeilenform prüft protocoldownload-e2e
+  check(`[${tag}] kein Knopf "Als Text kopieren", Download vorhanden`, await ev(`return !r.querySelector("${D} [data-pr='copy']") && !!r.querySelector("${D} [data-pr='download']")`));
 
   // Leeren fragt zuerst
   await tap(`${D} [data-pr="clear-log"]`);

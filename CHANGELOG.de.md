@@ -13,6 +13,7 @@ Die Ladeanimation ist schneller, nimmt die Farbe der Grafik an und gilt jetzt f�
 
 ### Geändert
 
+- **Protokoll, "Als Text kopieren" entfernt:** Der Knopf "Als Text kopieren" im Fuss des Fensters "Protokoll" entfällt. Der Download-Knopf (Pfeil nach unten) speichert, was das Fenster zeigt, als Textdatei in derselben Zeilenform und übernimmt damit die Aufgabe; der Fuss enthält nur noch "Zurück", die Anzahl, "Leeren" (Reiter "System") und den Download.
 - **Ladeanimation, schneller und in der Farbe der Grafik:** Die drei Punkte drehen sich etwa doppelt so schnell. Sie haben nicht mehr immer die Akzentfarbe, sondern die Farbe der Grafik, auf der sie stehen (die Linie der Batterie- und Status-Kurven, grün bei Verfügbarkeit und bei der Kurve der Ladungen); die Regel heisst "Farbe der Grafik".
 - **Ladeanimation bei jeder Grafik, die langsam sein könnte:** Dasselbe Verhalten (der Reiter oder Filter wechselt sofort, die alte Grafik bleibt gedimmt, drei Punkte drehen sich darüber, bis die neue da ist) gilt jetzt auch im Statistik-Fenster eines Geräts (Verfügbarkeit, Batterie und Empfang, alle Zeiträume), im Protokoll-Fenster (Liste und Diagramm, auch für Magic Push, Routinen und "System", wenn Reiter, Zeitraum, Filter oder Suche wechseln) und im Fenster "Ladungen". Eine im Statistik-Fenster schon geholte Grafik erscheint beim Zurückwechseln eine Minute lang sofort, ohne neue Abfrage. Das Dimmen verwischt die alte Grafik nicht mehr, was auf schwachen Handys aufwendig war.
 
