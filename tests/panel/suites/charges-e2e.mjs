@@ -71,6 +71,17 @@ for (const lang of ["de", "en"]) {
     await p.evaluate(() => { delete window.__devSettings.chargeWh.e; window.__charges.e = [{ start: Math.floor(Date.now() / 1000) - 86400, end: Math.floor(Date.now() / 1000) - 82000, minutes: 60, from: 20, to: 70, pts: [[0, 20], [1800, 45], [3600, 70]], watts: null, avg_w: null, peak_w: null }]; });
     await tap(tileSel);
     check(`[${tag}] ohne Akku-Grösse: zwei Kacheln, keine Watt-Kurve`, (await wait(`return r.querySelector('${C}')?.open && r.querySelectorAll('${C} .cg-row').length === 1`)) && (await ev(`return r.querySelectorAll('${C} .cg-tile').length === 2 && !r.querySelector('${C} .cg-wl')`)));
+    await tap(`${C} .dlg-close`);
+    await wait(`return !r.querySelector('${C}').open`);
+
+    // Späte Antwort (2.204.1): Ladungen von "e" kommen erst, nachdem das Fenster für ein anderes Gerät offen ist; sie dürfen dort nicht erscheinen
+    const other = await ev(`return r.host._devices.find((d) => d.id !== "e")?.id`);
+    await ev(`const h = r.host._hass; const orig = h.callWS.bind(h); window.__cgGate = new Promise((res) => (window.__cgRelease = res));
+      h.callWS = async (m) => { if (m.type === "device_panel/charges" && m.device_id === "e") await window.__cgGate; return orig(m); };
+      r.host._charges.open("e"); r.host._charges.close(); r.host._charges.open(${JSON.stringify(other)});`);
+    await wait(`return r.querySelector('${C} .dlg-note')`);
+    await ev(`window.__cgRelease(); return new Promise((res) => setTimeout(res, 100));`);
+    check(`[${tag}] späte Antwort eines anderen Geräts wird verworfen`, (await ev(`return r.querySelectorAll('${C} .cg-row').length === 0 && !!r.querySelector('${C} .dlg-note')`)) && (await ev(`return r.host._charges.deviceId`)) === other);
     check(`[${tag}] keine Fehler`, errors.length === 0, errors.join("|"));
     await ctx.close();
   }

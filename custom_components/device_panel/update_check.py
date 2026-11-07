@@ -442,8 +442,10 @@ def _schedule(hass: HomeAssistant) -> None:
         return
 
     async def _first(_now: Any) -> None:
-        await _run()
+        # Erst den Takt setzen, dann prüfen: setzt _schedule während der Prüfung neu (Uhrzeit geändert), räumt es den Takt mit ab;
+        # danach angehängt bliebe er neben dem neuen Zeitgeber stehen und es würde doppelt geprüft.
         unsubs.append(async_track_time_interval(hass, _run, DAILY))
+        await _run()
 
     unsubs.append(async_call_later(hass, random.randint(*FIRST_CHECK_DELAY), _first))
 

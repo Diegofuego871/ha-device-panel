@@ -906,3 +906,41 @@ async def test_installed_prerelease_follows_github_flag(hass: HomeAssistant, ent
     github_offline[RELEASES] = ([_release(f"v{installed}", prerelease=False)], None)
     hass.data.pop(update_check._PRE_CACHE_KEY, None)
     assert (await ask(False))["installed_prerelease"] is False
+
+
+async def test_reschedule_during_first_check_leaves_no_second_timer(hass: HomeAssistant, entry, github_offline, freezer, monkeypatch) -> None:
+    """Uhrzeit geändert, während die erste (zufällig verzögerte) Prüfung läuft: danach nur der neue Zeitgeber, kein Takt daneben."""
+    import asyncio
+    from datetime import timedelta
+
+    from pytest_homeassistant_custom_component.common import async_fire_time_changed
+
+    update_check.async_stop_daily(hass)
+    hass.config_entries.async_update_entry(entry, options={**entry.options, "update_check_time": ""})
+    await hass.async_block_till_done()
+    gate = asyncio.Event()
+    runs: list[int] = []
+
+    async def slow(_hass: HomeAssistant, release: Any = None) -> None:
+        runs.append(1)
+        await gate.wait()
+
+    monkeypatch.setattr(update_check, "async_refresh_issue", slow)
+    update_check.async_start_daily(hass)
+    freezer.tick(timedelta(seconds=update_check.FIRST_CHECK_DELAY[1] + 1))
+    async_fire_time_changed(hass)
+    await asyncio.sleep(0)
+    assert runs == [1]
+    # Während der Prüfung: feste Uhrzeit eingestellt
+    hass.config_entries.async_update_entry(entry, options={**entry.options, "update_check_time": "04:30"})
+    update_check.async_reschedule_daily(hass)
+    gate.set()
+    await hass.async_block_till_done()
+    assert len(hass.data[update_check._TIMER_KEY]) == 1
+    # Einen Tag später: kein 24-Std.-Takt mehr (vorher lief er neben der Uhrzeit weiter)
+    runs.clear()
+    freezer.tick(update_check.DAILY + timedelta(seconds=1))
+    async_fire_time_changed(hass)
+    await hass.async_block_till_done()
+    assert len(runs) <= 1
+    update_check.async_stop_daily(hass)

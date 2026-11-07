@@ -38,11 +38,17 @@ export class ChargesUi {
       if (typeof dlg.showModal === "function") dlg.showModal();
       else dlg.setAttribute("open", "");
     }
+    // Fenster inzwischen für ein anderes Gerät geöffnet: die späte Antwort gehört nicht mehr hierher
+    let data = null;
+    let error = "";
     try {
-      this.data = await this.host._hass.callWS({ type: "device_panel/charges", device_id: deviceId });
+      data = await this.host._hass.callWS({ type: "device_panel/charges", device_id: deviceId });
     } catch (err) {
-      this.error = this.h.errText(err);
+      error = this.h.errText(err);
     }
+    if (this.deviceId !== deviceId) return;
+    this.data = data;
+    this.error = error;
     this.render();
   }
 
