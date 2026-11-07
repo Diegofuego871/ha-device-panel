@@ -5261,29 +5261,25 @@ class DevicePanel extends HTMLElement {
     const on = typeof d.liveness_conn_setting === "boolean" ? d.liveness_conn_setting : ld.on !== false;
     const out = new Set([...off, ...(on ? [] : conn.map((e) => e.entity_id))]);
     const tier = (e) => (typeof e.liveness_tier === "number" ? e.liveness_tier : 1);
-    const rest = all.filter((e) => !e.connectivity);
-    const nat = (() => {
+    // Genau wie liveness_entities auf dem Server (seit 2.204.1): erst die Ausgeschlossenen weg, dann aus dem Rest wählen (Verbindungssensor vor
+    // den Stufen 1, 2, 3). Vorher wählte das Popup die Stufe vor dem Abziehen: Waren alle Entitäten der Stufe 1 ausgeschlossen, hiess es "gilt nicht"
+    // und Speichern war gesperrt, obwohl der Server die übrigen (zum Beispiel Diagnose) nahm.
+    const pick = (list) => {
+      const c = list.filter((e) => e.connectivity);
+      if (c.length) return c;
       for (const f of [(e) => tier(e) === 1, (e) => tier(e) <= 2, () => true]) {
-        const g = rest.filter(f);
+        const g = list.filter(f);
         if (g.length) return g;
       }
       return [];
-    })();
-    const connKept = conn.filter((e) => !out.has(e.entity_id));
-    const natKept = nat.filter((e) => !out.has(e.entity_id));
-    let group;
-    let ignored = false;
-    let applies = false;
-    if (connKept.length) group = connKept;
-    else if (!nat.length) group = conn;
-    else if (natKept.length) {
-      group = natKept;
-      applies = conn.length > 0 && !on;
-    } else {
-      group = nat;
-      ignored = off.size > 0;
-    }
+    };
+    const kept = all.filter((e) => !out.has(e.entity_id));
+    // Bliebe nichts übrig, gilt der Ausschluss nicht (der Server nimmt dann alle)
+    const group = pick(kept.length ? kept : all);
+    const ignored = !kept.length && off.size > 0;
+    const applies = kept.length > 0 && conn.length > 0 && !on;
     const ids = new Set(group.map((e) => e.entity_id));
+    const usesConn = group.some((e) => e.connectivity);
     return {
       conn,
       on,
@@ -5292,7 +5288,7 @@ class DevicePanel extends HTMLElement {
       locked: new Set(applies ? conn.filter((e) => !off.has(e.entity_id)).map((e) => e.entity_id) : []),
       ignored,
       // Verdeckt: Entitäten, die ohne den Verbindungssensor zählen würden, solange dieser allein entscheidet (nur Hinweis, nichts ist verstellt)
-      shadow: new Set(connKept.length ? nat.filter((e) => !off.has(e.entity_id)).map((e) => e.entity_id) : []),
+      shadow: new Set(usesConn ? pick(kept.filter((e) => !e.connectivity)).map((e) => e.entity_id) : []),
       counts: (e) => ids.has(e.entity_id),
     };
   }

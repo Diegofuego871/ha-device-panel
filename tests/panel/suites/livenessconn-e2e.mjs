@@ -125,7 +125,7 @@ for (const lang of ["de", "en"]) {
 
     // --- Einziges Lebenszeichen: bleibt nur der Verbindungssensor übrig, wirkt die Sperre nicht (der Sensor zählt trotzdem), der Hinweis sagt es
     await ev(`r.host._closeDevice?.()`);
-    await p.evaluate(([c]) => { window.__detailExtra = { b: [c] }; window.__devSettings.livenessExclude = { b: ["binary_sensor.bewegungsmelder_flur"] }; }, [{ ...cloud }]);
+    await p.evaluate(([c]) => { window.__detailExtra = { b: [c] }; window.__devSettings.livenessExclude = { b: ["binary_sensor.bewegungsmelder_flur", "sensor.bewegungsmelder_flur_batterie", "sensor.bewegungsmelder_flur_signal"] }; }, [{ ...cloud }]);
     await ev(`r.host._fetch(true)`);
     await ev(`r.host._openDevice("b")`);
     await wait(`return r.querySelector("dialog.device")?.open && r.querySelector('dialog.device .dev-tabs [data-tab="ent"]')`);
@@ -148,8 +148,12 @@ for (const lang of ["de", "en"]) {
     await tap('dialog.device [data-dlg="save"]');
     check(`[${tag}] ... Speichern geht: liveness_exclude gesendet, kein Sperrfenster`, (await wait(`return ${dev("b")}.liveness_exclude_setting?.includes("binary_sensor.geraet_cloud")`)) && !(await ev(`return !!r.querySelector("dialog.discard-dlg")?.open`)) && (await setCalls()).at(-1)?.liveness_exclude?.includes("binary_sensor.geraet_cloud"), JSON.stringify((await setCalls()).at(-1)));
     // Alle ausgeschlossen: weiter gesperrt
-    await tap('dialog.device [data-entity="switch.geraet_relais"][data-dlg="live-toggle"]');
-    await tap('dialog.device [data-entity="binary_sensor.bewegungsmelder_flur"][data-dlg="live-toggle"]');
+    // Alle übrigen ausschliessen, bis keine Marke mehr zählt (nach den Hauptentitäten zählen wie auf dem Server die Diagnose-Entitäten, seit 2.204.1)
+    for (let i = 0; i < 10; i++) {
+      const next = await ev(`return r.querySelector('dialog.device button.pill.live:not(.off):not(.locked)')?.dataset.entity || ""`);
+      if (!next) break;
+      await tap(`dialog.device [data-entity="${next}"][data-dlg="live-toggle"]`);
+    }
     check(`[${tag}] alle Lebenszeichen ausgeschlossen: Hinweis, Speichern gesperrt`, await wait(`return !!r.querySelector("dialog.device .dlg-note.warn")`));
     await ev(`r.host._devDiscard()`);
     await ev(`r.host._closeDevice?.()`);

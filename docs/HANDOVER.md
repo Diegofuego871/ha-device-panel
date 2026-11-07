@@ -22,6 +22,7 @@ Einstieg für jede neue Claude-Code-Session. Zuerst diese Datei lesen, dann
 - `routines.py` `occurrence_after`/`first_due`: Vergleich per `timestamp()` (gleiche tzinfo vergleicht Wanduhrzeit, doppelte Stunde der Winterzeit). Test `tests/test_routines_dst.py`.
 - `routines.py` `_prune_targets(routine, existing)`: Stand eines Ziels (Zurückschalten, Szene) folgt der Entität. Test `test_pending_revert_follows_its_entity`.
 - `routines.py` `clean_tree`: nur Arten aus `_LEAF_KINDS_ALL` (keine Zeit-Bedingung, sonst beim Laden verworfen).
+- `device-panel.js` `_lconnState`: wählt wie `liveness_entities` (erst ausschliessen, dann Stufe). Gemeinsame Falldatei `tests/panel/fixtures/liveness-cases.json`: `tests/test_liveness_cases.py` prüft den Server, Suite `liveness-cases-e2e` das Popup.
 - Review Weg A (2026-11-06) abgeschlossen: Backend gelesen; Panel gezielt (Entwurf ↔ Server bei Magic Push, Routinen, Assistent; Zeitzonen; Einstellungen speichern; Knöpfe ohne Handler). Querprüfungen ohne Befund: Platzhalter in activity/push-Texten, DE/EN gleich, Text-Schlüssel und WebSocket-Befehle des Panels vorhanden (`device_panel/get_log` unbenutzt). Offen als Idee: Zusammenfassungs-Entitäten bauen alle 30 s die ganze Geräteliste (29 ms bei 300 Geräten gemessen).
 
 ## Stand (2.204.0, Ladungen: die letzten fünf Ladungen als Kurve)

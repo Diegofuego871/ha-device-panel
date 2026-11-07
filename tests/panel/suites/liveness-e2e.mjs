@@ -85,8 +85,12 @@ for (const lang of ["de", "en"]) {
     check(`[${tag}] zweimal geschaltet: keine offene Änderung`, await wait(`return !r.querySelector('dialog.device [data-dlg="save"]')`));
     // alle ausschliessen: Hinweis, dass die Wahl dann nicht gilt
     for (const id of ["sensor.helfer_3", "sensor.helfer_4", "sensor.helfer_5"]) await tap(`dialog.device [data-entity="${id}"][data-dlg="live-toggle"]`);
-    const first = await ev(`return r.querySelector('dialog.device button.pill.live:not(.off)')?.dataset.entity || ""`);
-    if (first) await tap(`dialog.device [data-entity="${first}"][data-dlg="live-toggle"]`);
+    // Die übrigen ausschliessen, bis keine Marke mehr zählt: nach den Hauptentitäten zählen wie auf dem Server die Diagnose-Entitäten (seit 2.204.1)
+    for (let i = 0; i < 10; i++) {
+      const next = await ev(`return r.querySelector('dialog.device button.pill.live:not(.off)')?.dataset.entity || ""`);
+      if (!next) break;
+      await tap(`dialog.device [data-entity="${next}"][data-dlg="live-toggle"]`);
+    }
     check(`[${tag}] alle ausgeschlossen: Warnung "${L.ignored}"`, await wait(`return [...r.querySelectorAll("dialog.device .dlg-note.small.warn")].some((n) => ${L.ignored}.test(n.innerText))`));
     // "Speichern" bei allen ausgeschlossen (2.170.1): nichts wird gesendet, ein Hinweisfenster erklärt es, die Änderung bleibt als Entwurf
     const sent = (await calls()).length;
