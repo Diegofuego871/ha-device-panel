@@ -1,0 +1,64 @@
+<!doctype html>
+<html lang="de"><head><meta charset="utf-8"><title>Status › System: Ladeanzeige beim Wechsel des Zeitraums, drei Varianten</title>
+<style>
+:root{--bg:#121212;--card:#1c1c1c;--card2:#242424;--text:#e6e6e6;--t2:#a8a8a8;--t3:#7d7d7d;--div:#3a3a3a;--acc:#4caf7d}
+*{box-sizing:border-box}
+body{margin:0;background:#0b0b0b;color:var(--text);font:15px/1.4 -apple-system,Segoe UI,Roboto,sans-serif;padding:24px;width:1180px}
+h1{font-size:18px;font-weight:500;margin:0 0 4px}.sub{color:var(--t2);margin:0 0 16px;font-size:13px;max-width:1120px}
+.row{display:flex;gap:20px;align-items:flex-start;margin-bottom:22px}
+.col{width:360px;flex:none}.col h2{font-size:14px;margin:0 0 3px;font-weight:600}.col .why{font-size:12px;color:var(--t2);margin:0 0 8px;min-height:50px}.rec{color:var(--acc)}
+.card{background:var(--card);border-radius:18px;padding:14px 16px 12px}
+.head{display:flex;justify-content:space-between;align-items:flex-start}.head b{font-size:17px}.head small{display:block;color:var(--t2);font-size:12.5px}.val{font-size:30px;font-weight:300;line-height:1}.val small{display:inline;font-size:15px;color:var(--t2)}
+.tabs{display:grid;grid-template-columns:repeat(4,1fr);gap:2px;background:var(--card2);border-radius:14px;padding:5px;margin:12px 0 8px}
+.tabs i{font-style:normal;text-align:center;padding:9px 0;font-size:13.5px;color:var(--t2);border-radius:10px}.tabs i.on{background:#0f0f0f;color:var(--acc);box-shadow:0 1px 3px #0008}
+.plot{position:relative;height:150px}
+.plot svg{position:absolute;inset:0;width:100%;height:100%}
+.plot.ghost svg.curve{opacity:.28;filter:blur(1.2px)}
+.plot.empty svg.curve{display:none}
+.ld{position:absolute;left:50%;top:50%;width:96px;height:96px;margin:-48px 0 0 -48px}
+.ld div{position:absolute;border-radius:50%;background:var(--acc);box-shadow:0 0 12px color-mix(in srgb,var(--acc) 55%,transparent)}
+.ld svg{position:absolute;inset:0;width:100%;height:100%;overflow:visible}
+.foot{display:flex;justify-content:space-between;font-size:12px;color:var(--t3);margin-top:2px}
+.axis text{fill:var(--t3);font-size:10px}
+.frames{display:flex;gap:6px;margin-top:8px}.frames .f{position:relative;width:84px;height:84px;background:var(--card);border-radius:12px}.frames .ld{transform:scale(.78);margin:-48px 0 0 -48px}
+.frames small{position:absolute;left:6px;bottom:3px;font-size:9.5px;color:var(--t3)}
+.legend{font-size:12px;color:var(--t2);margin:2px 0 14px;max-width:1120px}
+</style></head><body>
+<h1>Status › System: Ladeanzeige beim Wechsel des Zeitraums, drei Varianten</h1>
+<p class="sub">Erfundene Daten. Neu in allen Varianten: Der Reiter springt sofort um, nur die Fläche der Kurve lädt (die anderen zwei Karten bleiben stehen). Die Punkte drehen sich ohne festen Rhythmus um alle drei Achsen, in der Akzentfarbe; was näher am Betrachter ist, erscheint grösser und heller. Die drei kleinen Felder unter jeder Karte zeigen drei Zeitpunkte derselben Bewegung.</p>
+<div class="row" id="vars"></div>
+<div class="legend"><b class="rec">Empfehlung: A</b> (wie dein Vorbild: ein Dreieck aus drei Punkten, das sich in alle Richtungen dreht). B zeigt die Bahnen mit dünnen Ringen und wirkt technischer; C hat einen Schweif und ist am lebendigsten, aber unruhiger, wenn mehrere Karten gleichzeitig laden.</div>
+<div class="row" id="modes"></div>
+<script>
+const NS="http://www.w3.org/2000/svg";
+// Gleichmässig "zufällige" Drehung: Summe von Sinuswellen je Achse (festes Muster, damit die Bilder wiederholbar sind)
+const ang=(t,k)=>[k.a*t+0.9*Math.sin(k.b*t+k.p),k.c*t+0.8*Math.sin(k.d*t+k.q),k.e*t+0.7*Math.sin(k.f*t+k.r)];
+const K={a:1.7,b:.9,p:0,c:1.3,d:1.3,q:1.7,e:.9,f:.7,r:3.1};
+function rot(v,[x,y,z]){let [a,b,c]=v;let t=b*Math.cos(x)-c*Math.sin(x);c=b*Math.sin(x)+c*Math.cos(x);b=t;t=a*Math.cos(y)+c*Math.sin(y);c=-a*Math.sin(y)+c*Math.cos(y);a=t;t=a*Math.cos(z)-b*Math.sin(z);b=a*Math.sin(z)+b*Math.cos(z);a=t;return[a,b,c]}
+const proj=(p,R)=>{const s=1/(1-p[2]/(R*4.2));return{x:p[0]*s,y:p[1]*s,s,z:p[2]}};
+function dot(host,p,base,alpha=1){const d=document.createElement("div");const sz=base*p.s*1.25;d.style.cssText=`width:${sz}px;height:${sz}px;left:${48+p.x-sz/2}px;top:${48+p.y-sz/2}px;opacity:${alpha*(0.55+0.45*Math.min(1,Math.max(0,(p.z/36+1)/2)))}`;host.appendChild(d)}
+const tri=i=>{const a=i*2*Math.PI/3;return[Math.cos(a)*30,Math.sin(a)*30,0]};
+function drawA(h,t){h.innerHTML="";const r=ang(t,K);for(let i=0;i<3;i++)dot(h,proj(rot(tri(i),r),30),11)}
+function drawB(h,t){h.innerHTML="";const s=document.createElementNS(NS,"svg");s.setAttribute("viewBox","0 0 96 96");
+ const tilt=[[0,0,0],[Math.PI/2,0,0],[0,Math.PI/2,0]];const wob=ang(t*.35,K);
+ for(let i=0;i<3;i++){const g=[tilt[i][0]+wob[i]*.5,tilt[i][1]+wob[(i+1)%3]*.5,tilt[i][2]];let pts=[];for(let k=0;k<=48;k++){const a=k/48*2*Math.PI;const p=proj(rot(rot([Math.cos(a)*32,Math.sin(a)*32,0],tilt[i]),[wob[0]*.5,wob[1]*.5,wob[2]*.5]),32);pts.push(`${48+p.x},${48+p.y}`)}
+  const pl=document.createElementNS(NS,"polyline");pl.setAttribute("points",pts.join(" "));pl.setAttribute("fill","none");pl.setAttribute("stroke","var(--acc)");pl.setAttribute("stroke-opacity",".2");pl.setAttribute("stroke-width","1");s.appendChild(pl)}
+ h.appendChild(s);
+ for(let i=0;i<3;i++){const a=t*(2.3+i*.55)+i*2.1;const p=proj(rot(rot([Math.cos(a)*32,Math.sin(a)*32,0],tilt[i]),[wob[0]*.5,wob[1]*.5,wob[2]*.5]),32);dot(h,p,10)}}
+function drawC(h,t){h.innerHTML="";for(let k=7;k>=0;k--){const tt=t-k*.045;const r=ang(tt,K);for(let i=0;i<3;i++){const p=proj(rot(tri(i),r),30);dot(h,p,k?11*(1-k*.09):11,k?(1-k/8)*.55:1)}}}
+const DRAW={A:drawA,B:drawB,C:drawC};
+const curve=()=>{const n=60;let d="";for(let i=0;i<=n;i++){const x=i/n*340;const y=118-(8+14*Math.abs(Math.sin(i*.7))+Math.max(0,22*Math.sin(i*.21))+((i*37)%11));d+=(i?"L":"M")+x.toFixed(1)+" "+y.toFixed(1)}return d};
+function card(v,mode,t,title){return`<div class="card"><div class="head"><span><b>Prozessor (CPU)</b><small>Host</small></span><span class="val">7<small>%</small></span></div>
+<div class="tabs"><i>24 Std.</i><i>7 Tage</i><i class="on">30 Tage</i><i>3 Monate</i></div>
+<div class="plot ${mode}"><svg class="curve" viewBox="0 0 340 150" preserveAspectRatio="none"><g class="axis"><line x1="0" x2="340" y1="20" y2="20" stroke="#333"/><line x1="0" x2="340" y1="70" y2="70" stroke="#333"/><line x1="0" x2="340" y1="120" y2="120" stroke="#333"/></g><path d="${curve()}" fill="rgba(76,175,125,.18)" stroke="#4caf7d" stroke-width="1.6"/></svg><div class="ld" data-v="${v}" data-t="${t}"></div></div>
+<div class="foot"><span>vor 30 Tagen</span><span>lädt …</span></div></div>`}
+const vars=document.getElementById("vars");
+const info={A:["A · Kreisendes Dreieck","Drei Punkte als starres Dreieck, das sich frei im Raum dreht (dein Vorbild). Ruhig, klar, passt zur App."],B:["B · Drei Bahnen","Jeder Punkt kreist auf seiner eigenen Ebene (X, Y, Z), dünne Ringe zeigen die Bahnen. Technischer Look."],C:["C · Mit Schweif","Wie A, aber jeder Punkt zieht einen kurzen Schweif. Am lebendigsten, etwas unruhiger."]};
+for(const v of["A","B","C"]){const c=document.createElement("div");c.className="col";c.innerHTML=`<h2 class="${v==="A"?"rec":""}">${info[v][0]}${v==="A"?" (Empfehlung)":""}</h2><p class="why">${info[v][1]}</p>${card(v,"ghost",0.9)}<div class="frames">${[0.9,1.6,2.4,3.3].map(t=>`<div class="f"><div class="ld" data-v="${v}" data-t="${t}"></div><small>t = ${t} s</small></div>`).join("")}</div>`;vars.appendChild(c)}
+const modes=document.getElementById("modes");
+for(const [m,h,w] of [["ghost","Während des Ladens: alte Kurve bleibt gedimmt (Empfehlung)","Das Layout springt nicht, man sieht, was gerade ersetzt wird. Bei der allerersten Anzeige (noch keine Kurve) gilt automatisch die leere Fläche."],["empty","Während des Ladens: leere Fläche","Klarer, aber die Karte wird kurz leer und die Höhe bleibt nur dank fester Höhe stabil."]]){const c=document.createElement("div");c.className="col";c.innerHTML=`<h2 class="${m==="ghost"?"rec":""}">${h}</h2><p class="why">${w}</p>${card("A",m,2.1)}`;modes.appendChild(c)}
+const note=document.createElement("div");note.className="col";note.style.width="400px";note.innerHTML=`<h2>Was sich beim Wechsel ändert</h2><p class="why" style="min-height:0;font-size:12.5px;line-height:1.55">• Der Reiter springt sofort um (heute erst, wenn die Daten da sind).<br>• Nur die gewählte Karte lädt; die anderen beiden bleiben stehen (heute werden alle drei neu geholt, nacheinander).<br>• Schon geladene Zeiträume erscheinen beim Zurückwechseln sofort (kurz zwischengespeichert).<br>• Dem Server sagen wir, welche Karte gemeint ist, und er holt nur diese.<br>• Lässt sich "7 Tage" schneller laden? Dort liest der Server heute jeden einzelnen Messwert der Woche aus dem Verlauf (ab 30 Tagen nimmt er die kleine Statistik). Das würde ich messen, bevor ich es ändere.</p>`;modes.appendChild(note);
+function paint(t0){document.querySelectorAll(".ld").forEach(h=>DRAW[h.dataset.v](h,t0===undefined?+h.dataset.t:+h.dataset.t+t0))}
+paint();
+if(!location.search.includes("still")){let s=performance.now();(function f(n){paint((n-s)/1000);requestAnimationFrame(f)})(s)}
+</script></body></html>
