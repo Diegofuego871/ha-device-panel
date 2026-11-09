@@ -2753,7 +2753,7 @@ dialog.updapp-dlg .dlg-error { font-size: 15px; }
 .ua-empty svg { color: var(--dp-success); }
 .ua-backup { display: flex; align-items: center; gap: 12px; margin: 14px 0 4px; font-size: 16px; }
 .ua-backup small { display: block; color: var(--dp-text2); font-size: 14px; }
-/* Fenster "Ladungen" (seit 2.204.0, docs/mockups/charges-v1, A): Kurve, vier Kacheln, Liste der letzten fünf Ladungen */
+/* Fenster "Ladungen" (seit 2.204.0, docs/mockups/charges-v1, A): Kurve, vier Kacheln, Liste der letzten 20 Ladungen */
 .dlg-avatar.app-charges { background: var(--dp-success); }
 .cg-card { margin-top: 4px; padding: 10px 8px 4px; border: 1px solid var(--dp-divider); border-radius: 14px; background: var(--dp-bg); }
 .cg-svg { display: block; width: 100%; height: auto; max-height: 230px; }

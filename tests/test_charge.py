@@ -564,22 +564,34 @@ def test_charge_recorded_on_discharge_and_not_when_tiny() -> None:
         n.step("a", level, t + i * 300, OPTS)
     n.step("a", 40, t + 2000, OPTS)  # Entladen beendet die kleine Schwankung
     assert "a" not in n._charges
-    # Fünf echte Ladungen plus eine sechste: nur die letzten fünf bleiben
+    # 21 echte Ladungen: nur die letzten 20 bleiben (CHARGES_KEEP)
     now = t
-    for k in range(6):
+    for k in range(21):
         for i, level in enumerate((20, 28, 37, 47, 58)):
             n.step("b", level, now + i * 300, OPTS)
         now += 5 * 300 + 100
         n.step("b", 10, now, OPTS)  # Entladen beendet diese Ladung
         now += 300
     starts = [c["start"] for c in n._charges["b"]]
-    assert len(starts) == 5 and starts == sorted(starts)
+    assert len(starts) == 20 and starts == sorted(starts)
     # derselbe Start ersetzt, statt doppelt zu stehen
     st = n._state["b"]
     st["pts"] = [[now, 10], [now + 300, 20], [now + 600, 30], [now + 900, 40]]
     n._record_charge("b", st, now + 1000)
     n._record_charge("b", st, now + 1100)
     assert len([c for c in n._charges["b"] if c["start"] == now]) == 1
+
+
+def test_thin_points_keeps_ends_and_shape() -> None:
+    """Gespeicherte Ladung: höchstens 120 Punkte, erster und letzter bleiben, aufsteigend; kürzere Kurven bleiben unverändert."""
+    from custom_components.device_panel.charge import CHARGE_POINTS_KEEP, thin_points
+
+    pts = [[1000.0 + i * 30, 20 + i * 0.1] for i in range(150)]
+    out = thin_points(pts)
+    assert len(out) == CHARGE_POINTS_KEEP and out[0] == pts[0] and out[-1] == pts[-1]
+    assert [p[0] for p in out] == sorted({p[0] for p in out})
+    short = pts[:50]
+    assert thin_points(short) == short and thin_points(short) is not short
 
 
 def test_charges_view_power_and_storage() -> None:

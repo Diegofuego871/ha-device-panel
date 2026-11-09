@@ -7,6 +7,14 @@ Alle nennenswerten Änderungen an dieser Integration stehen in dieser Datei.
 Das Format folgt [Keep a Changelog](https://keepachangelog.com/de/1.1.0/),
 die Versionsnummern folgen [Semantic Versioning](https://semver.org/lang/de/).
 
+## [2.213.0] - 2026-11-09
+
+Ein Gerät behält seine letzten 20 Ladungen statt fünf.
+
+### Geändert
+
+- **Ladungen, 20 je Gerät:** Das Panel hält jetzt die letzten 20 Ladungen eines Geräts (vorher fünf); die Kachel "Ladungen" zeigt die Zahl (bis 20), das Fenster listet alle nach Datum, und ein Tipp auf eine Zeile zeigt diese Ladung. Schon aufgezeichnete Ladungen bleiben. Damit die Datei nicht zu gross wird (sie wird bei jeder Änderung ganz geschrieben), behält eine gespeicherte Ladung höchstens 120 Messpunkte, gleichmässig verteilt, der erste und der letzte Punkt bleiben immer; die Kurve behält ihre Form. Die Schätzungen der Leistung sind dieselben.
+
 ## [2.212.0] - 2026-11-09
 
 Die App "Updates" erkennt von selbst, wenn eine aktualisierte Integration einen Neustart von Home Assistant braucht.
@@ -5999,6 +6007,7 @@ Erste Vorabversion.
   GitHub Actions für die Prüfungen von HACS und hassfest sowie die Tests.
 
 [2.6.0]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v2.6.0
+[2.213.0]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v2.213.0
 [2.212.0]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v2.212.0
 [2.211.0]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v2.211.0
 [2.210.0]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v2.210.0

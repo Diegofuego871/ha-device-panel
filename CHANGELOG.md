@@ -7,6 +7,14 @@ All notable changes to this integration are documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/).
 
+## [2.213.0] - 2026-11-09
+
+A device keeps its last 20 charges instead of five.
+
+### Changed
+
+- **Charges, 20 per device:** The panel now keeps the last 20 charges of a device (before five); the tile "Charges" shows the number (up to 20), the window lists them all by date, and a tap on a row shows that charge. Charges already recorded stay. So that the file does not grow too much (it is written whole at every change), a stored charge keeps at most 120 measuring points, evenly spread, with the first and the last point always kept; the curve keeps its shape. The estimates of the power are the same.
+
 ## [2.212.0] - 2026-11-09
 
 The app "Updates" notices on its own when an updated integration needs a restart of Home Assistant.
@@ -5898,6 +5906,7 @@ First pre-release.
   GitHub Actions for HACS/hassfest validation and tests.
 
 [2.6.0]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v2.6.0
+[2.213.0]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v2.213.0
 [2.212.0]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v2.212.0
 [2.211.0]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v2.211.0
 [2.210.0]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v2.210.0

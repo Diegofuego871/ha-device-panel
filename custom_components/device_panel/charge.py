@@ -87,7 +87,10 @@ ETA_TAPER_FACTOR = 2.0
 ETA_MAX = 12 * 3600.0
 ETA_ROUND = 300.0
 ETA_POINTS_MAX = 150
-CHARGES_KEEP = 5  # aufgezeichnete Ladungen pro Gerät (seit 2.204.0)
+CHARGES_KEEP = 20  # aufgezeichnete Ladungen pro Gerät (seit 2.204.0 fünf, seit 2.213.0 zwanzig)
+# Messpunkte je gespeicherter Ladung (seit 2.213.0): die Datei hält bis zu 20 Ladungen je Gerät und wird bei jeder Änderung ganz geschrieben; für die Kurve genügt
+# ein Bruchteil der bis zu ETA_POINTS_MAX Punkte der laufenden Ladung. Erster und letzter Punkt bleiben.
+CHARGE_POINTS_KEEP = 120
 POWER_WINDOW = 600.0  # Sekunden: Fenster für die Glättung der Leistung
 # Was als Ladung zählt (seit 2.204.1, Kurvenprüfung statt fester Schwelle; Simulation im Code-Review): unter dem "Anstieg" des Geräts nur eine
 # saubere, zügige Kurve, darüber darf sie leicht schwanken. Mit eigener Ladeanzeige bestimmt diese Beginn und Ende (ENTITY_MIN_*).
@@ -145,6 +148,15 @@ def _thin(pts: list[list[float]], now: float) -> None:
     if len(pts) > ETA_POINTS_MAX:
         # Mehr Punkte im Fenster als erlaubt (sehr häufige Meldungen): den ältesten nach dem Beginn weglassen
         del pts[1 : len(pts) - ETA_POINTS_MAX + 1]
+
+
+def thin_points(pts: list[list[float]], keep: int = CHARGE_POINTS_KEEP) -> list[list[float]]:
+    """Höchstens `keep` Punkte, gleichmässig verteilt; der erste und der letzte bleiben (die Kurve behält ihre Form, Anfang und Ende stimmen)."""
+    if len(pts) <= keep or keep < 2:
+        return [list(p) for p in pts]
+    last = len(pts) - 1
+    idx = sorted({round(i * last / (keep - 1)) for i in range(keep)})
+    return [list(pts[i]) for i in idx]
 
 
 def is_charge(pts: list[list[float]], device_rise: float) -> bool:
@@ -493,7 +505,7 @@ class ChargeNotifier:
             "end": max(p[0] for p in pts) if st.get("up_at") is None else min(float(st["up_at"]), now),
             "from": pts[0][1],
             "to": max(p[1] for p in pts),
-            "pts": [list(p) for p in pts],
+            "pts": thin_points(pts),
         })
 
     def _may_record(self, dev: str) -> bool:

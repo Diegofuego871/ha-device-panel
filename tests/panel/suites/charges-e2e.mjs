@@ -67,6 +67,19 @@ for (const lang of ["de", "en"]) {
     await tap(`${C} .dlg-close`);
     check(`[${tag}] Schliessen`, await wait(`return !r.querySelector('${C}').open`));
 
+    // Bis zu 20 Ladungen (2.213.0): alle in der Liste, kein seitliches Scrollen, die Liste lässt sich bis zur letzten scrollen
+    await p.evaluate((list) => { window.__charges = { e: list }; }, Array.from({ length: 20 }, (_, i) => mk(i + 1, 10 + (i % 5) * 5, 70 + (i % 4) * 8, 40 + i, 60)));
+    await ev(`r.host._fetch(true)`);
+    await wait(`return r.host._devices.find((d) => d.id === "e")?.charges_count === 20`);
+    await wait(`return /20/.test(r.querySelector('${tileSel} .st-v')?.textContent || '')`);
+    await tap(tileSel);
+    check(`[${tag}] 20 Ladungen: Kachel zeigt 20, Fenster hat 20 Zeilen`, (await wait(`return r.querySelector('${C}')?.open && r.querySelectorAll('${C} .cg-row').length === 20`)) && /20/.test(await text(`${tileSel} .st-v`)), `${await text(`${tileSel} .st-v`)} | rows ${await ev(`return r.querySelectorAll('${C} .cg-row').length`)}`);
+    check(`[${tag}] 20 Ladungen: kein seitliches Scrollen, letzte Zeile erreichbar`, await ev(`const b = r.querySelector('${C} .dlg-body'); const last = r.querySelector('${C} .cg-row:last-child'); b.scrollTop = b.scrollHeight; const lb = last.getBoundingClientRect(), bb = b.getBoundingClientRect(); return b.scrollWidth <= b.clientWidth + 1 && lb.bottom <= bb.bottom + 1`));
+    await tap(`${C} .cg-row:last-child`);
+    check(`[${tag}] 20 Ladungen: letzte Zeile wählbar`, await wait(`return r.querySelector('${C} .cg-row.on')?.dataset.i === "19"`));
+    await tap(`${C} .dlg-close`);
+    await wait(`return !r.querySelector('${C}').open`);
+
     // Ohne Akku-Grösse: keine Watt
     await p.evaluate(() => { delete window.__devSettings.chargeWh.e; window.__charges.e = [{ start: Math.floor(Date.now() / 1000) - 86400, end: Math.floor(Date.now() / 1000) - 82000, minutes: 60, from: 20, to: 70, pts: [[0, 20], [1800, 45], [3600, 70]], watts: null, avg_w: null, peak_w: null }]; });
     await tap(tileSel);

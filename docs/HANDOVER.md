@@ -11,6 +11,10 @@ Einstieg für jede neue Claude-Code-Session. Zuerst diese Datei lesen, dann
 
 - `charge.py` `known_rechargeable`: Lademeldung gilt (global + Gerät/Integration), oder am Gerät ausdrücklich "Ein", oder Live-Aktivität für das Gerät an; `rechargeable()` und `charging_of()` nutzen sie (vorher nur `enabled()` mit globalem Schalter). Test `test_rechargeable_by_device_charge_or_live`.
 
+## Stand (2.213.0, 20 Ladungen je Gerät)
+
+- `charge.py`: `CHARGES_KEEP` 20 (vorher 5), `CHARGE_POINTS_KEEP` 120 und `thin_points()` (gleichmässig, erster und letzter Punkt bleiben) beim Speichern einer Ladung; Bestehendes bleibt. Der Speicher (`self._store`, Ganzes bei jeder Änderung, 1 s verzögert) wächst damit auf bis zu etwa 20 × 120 Punkte je ladefähigem Gerät. Tests: `test_thin_points_keeps_ends_and_shape`, Anpassung der Fünf-Ladungen-Prüfung; Suite `charges-e2e` (20 Zeilen).
+
 ## Stand (2.212.0, Neustart nötig nach Update einer Integration)
 
 - `restart_pending.py`: `async_pending(hass)` vergleicht je geladener eigener Integration (`async_get_custom_components`, nur Domänen in `hass.config.components`) die laufende Version (`async_get_loaded_integration(...).version`, Fassung vom Start im Speicher) mit dem `manifest.json` auf der Platte (Executor). Unabhängig von HACS. `updates_list` liefert `restart_needed` (jetzt `async_response`). Panel `updapp.js` `restartHtml()` (`.ua-rst`, Knopf `data-ua="restart"`, gleiche Rückfrage); Neuladen über den Takt der App (`REFRESH_MS`). Tests: `tests/test_restart_pending.py`, Suite `updaterestart-e2e`.

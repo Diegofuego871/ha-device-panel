@@ -1,5 +1,5 @@
 /**
- * Fenster "Ladungen" (seit 2.204.0, docs/mockups/charges-v1, Variante A): die letzten fünf Ladungen eines Geräts. Oben die gewählte Ladung als Kurve
+ * Fenster "Ladungen" (seit 2.204.0, docs/mockups/charges-v1, Variante A): die letzten 20 Ladungen eines Geräts. Oben die gewählte Ladung als Kurve
  * (Stand grün, mit Akku-Grösse auch die Leistung gestrichelt), darunter Dauer, Stand und Leistung, unten die Liste der Ladungen nach Datum. Wenig Text,
  * keine Fussnoten. Die Daten kommen von device_panel/charges (charge.py, nur Administratoren); Watt sind Schätzungen und nur mit eingestellter Akku-Grösse da.
  */
