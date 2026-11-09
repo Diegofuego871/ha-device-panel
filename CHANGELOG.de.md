@@ -13,6 +13,7 @@ Ein Gerät behält seine letzten 20 Ladungen statt fünf.
 
 ### Geändert
 
+- **Launcher, Marke "Aktion" und "Verweis":** Das kleine Blitz- (Aktion) oder Verweis-Symbol einer Kachel im Launcher steht jetzt oben rechts statt unten rechts, damit ein langer Name es nicht überdeckt.
 - **Ladungen, 20 je Gerät:** Das Panel hält jetzt die letzten 20 Ladungen eines Geräts (vorher fünf); die Kachel "Ladungen" zeigt die Zahl (bis 20), das Fenster listet alle nach Datum, und ein Tipp auf eine Zeile zeigt diese Ladung. Schon aufgezeichnete Ladungen bleiben. Damit die Datei nicht zu gross wird (sie wird bei jeder Änderung ganz geschrieben), behält eine gespeicherte Ladung höchstens 120 Messpunkte, gleichmässig verteilt, der erste und der letzte Punkt bleiben immer; die Kurve behält ihre Form. Die Schätzungen der Leistung sind dieselben.
 
 ## [2.212.0] - 2026-11-09

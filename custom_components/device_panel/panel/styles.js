@@ -2361,7 +2361,7 @@ dialog.app-dlg::backdrop { background: rgba(0,0,0,0.5); }
 .ap-badge.bad { background: var(--dp-error-soft); color: var(--dp-error); }
 .ap-badge.info { background: var(--dp-primary-soft); color: var(--dp-primary); }
 .ap-t b .ap-badge { position: static; margin-left: 6px; }
-.ap-ext { position: absolute; right: 8px; bottom: 6px; display: inline-flex; color: var(--dp-text2); }
+.ap-ext { position: absolute; right: 8px; top: 6px; display: inline-flex; color: var(--dp-text2); }
 .ap-ext.in { position: static; margin-right: 4px; }
 
 .ap-rows { display: block; }
