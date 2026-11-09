@@ -7,7 +7,7 @@ const b = await chromium.launch(launchOptions);
 let ok = true;
 const check = (l, c, i = "") => { ok &&= !!c; console.log(`${c ? "PASS" : "FAIL"} ${l}${i ? " - " + i : ""}`); };
 const R = `document.querySelector("device-panel").shadowRoot`;
-const T = { de: { need: "Neustart nötig", label: "Home Assistant neu starten", title: "Home Assistant neu starten?", no: "Abbrechen", yes: "Neu starten" }, en: { need: "Restart needed", label: "Restart Home Assistant", title: "Restart Home Assistant?", no: "Cancel", yes: "Restart" } };
+const T = { de: { need: "Neustart nötig", label: "Home Assistant neu starten", title: "Home Assistant neu starten?", no: "Abbrechen", yes: "Neu starten", starting: "Home Assistant startet neu" }, en: { need: "Restart needed", label: "Restart Home Assistant", title: "Restart Home Assistant?", no: "Cancel", yes: "Restart", starting: "Home Assistant is restarting" } };
 for (const lang of ["de", "en"]) {
   const L = T[lang];
   for (const mobile of [false, true]) {
@@ -43,6 +43,7 @@ for (const lang of ["de", "en"]) {
     await wait(`return r.querySelector("dialog.discard-dlg").open`);
     await tap('dialog.discard-dlg [data-dd="yes"]');
     check(`[${tag}] "${L.yes}": homeassistant.restart genau einmal aufgerufen`, (await p.waitForFunction(() => window.__services.some((s) => s.service === "restart"), null, { timeout: 4000 }).then(() => true, () => false)) && (await restarts()) === 1);
+    check(`[${tag}] nach "${L.yes}": Hinweis "${L.starting}" im Fenster`, await wait(`return (r.querySelector("dialog[open] .dlg-note")?.textContent || "").includes(${JSON.stringify(L.starting)})`));
     // Neustart nötig (2.212.0): der Server meldet eine Integration, deren Dateien neuer sind als der laufende Code
     check(`[${tag}] ohne offene Neustarts: kein Hinweis "${L.need}"`, await ev(`return !r.querySelector(".ua-rst")`));
     await p.evaluate(() => { window.__restartNeeded = [{ domain: "alarmageddon", name: "Alarmageddon", running: "0.22.0", installed: "0.23.0" }]; });
@@ -57,6 +58,16 @@ for (const lang of ["de", "en"]) {
     await p.evaluate(() => { window.__restartNeeded = []; });
     await ev(`return r.host._updApp.load().then(() => { r.host._updApp.render(); return true; })`);
     check(`[${tag}] nach dem Neustart (nichts mehr offen): Hinweis weg`, await wait(`return !r.querySelector(".ua-rst")`));
+    // Während des Neustarts bricht die Verbindung ab (die Antwort ist ein Objekt ohne Text, vorher stand "result" rot im Fenster); ein echter Fehler bleibt sichtbar
+    await ev(`const h = r.host._hass; window.__origWS = h.callWS.bind(h); h.callWS = async (m) => { if (m.type === "device_panel/updates_list") throw window.__wsErr; return window.__origWS(m); };`);
+    await f.evaluate(() => { window.__wsErr = { type: "result", success: false }; });
+    await ev(`return r.host._updApp.load().then(() => true)`);
+    check(`[${tag}] Verbindung weg beim Laden: keine rote Zeile`, await ev(`return !r.querySelector("dialog[open] .dlg-error")`));
+    await f.evaluate(() => { window.__wsErr = { code: "unknown_error", message: "kaputt" }; });
+    await ev(`return r.host._updApp.load().then(() => true)`);
+    check(`[${tag}] echter Fehler des Servers: bleibt sichtbar`, await wait(`return (r.querySelector("dialog[open] .dlg-error")?.textContent || "").includes("kaputt")`));
+    await ev(`r.host._hass.callWS = window.__origWS; return r.host._updApp.load().then(() => true)`);
+    check(`[${tag}] danach wieder verbunden: Fehler weg`, await wait(`return !r.querySelector("dialog[open] .dlg-error")`));
     // Nicht-Administrator: kein Knopf
     await p.evaluate(() => { const ha = document.querySelector("home-assistant").hass; ha.user = { ...ha.user, is_admin: false }; });
     await ev(`r.host._hass = { ...r.host._hass, user: { ...r.host._hass.user, is_admin: false } }; r.host._updApp.frame()`);

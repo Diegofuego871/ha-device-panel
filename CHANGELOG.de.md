@@ -16,6 +16,10 @@ Ein Gerät behält seine letzten 20 Ladungen statt fünf.
 - **Launcher, Marke "Aktion" und "Verweis":** Das kleine Blitz- (Aktion) oder Verweis-Symbol einer Kachel im Launcher steht jetzt oben rechts statt unten rechts, damit ein langer Name es nicht überdeckt.
 - **Ladungen, 20 je Gerät:** Das Panel hält jetzt die letzten 20 Ladungen eines Geräts (vorher fünf); die Kachel "Ladungen" zeigt die Zahl (bis 20), das Fenster listet alle nach Datum, und ein Tipp auf eine Zeile zeigt diese Ladung. Schon aufgezeichnete Ladungen bleiben. Damit die Datei nicht zu gross wird (sie wird bei jeder Änderung ganz geschrieben), behält eine gespeicherte Ladung höchstens 120 Messpunkte, gleichmässig verteilt, der erste und der letzte Punkt bleiben immer; die Kurve behält ihre Form. Die Schätzungen der Leistung sind dieselben.
 
+### Behoben
+
+- **App "Updates", rote Zeile "result" nach einem Neustart:** Beim Neustart von Home Assistant (auch über den Knopf dieses Fensters) fragte das Fenster den Server nach der Liste, solange die Verbindung weg war, und zeigte die Antwort als rote Zeile "result". Eine verlorene Verbindung ist jetzt kein Fehler; das Fenster behält seinen Stand und holt ihn mit der nächsten Auffrischung neu. Ein echter Fehler des Servers erscheint weiter. Nach dem Tipp auf "Neu starten" steht der Hinweis "Home Assistant startet neu …" jetzt im Fenster selbst (vorher erschien er nur darunter, im Launcher, und war nicht zu sehen).
+
 ## [2.212.0] - 2026-11-09
 
 Die App "Updates" erkennt von selbst, wenn eine aktualisierte Integration einen Neustart von Home Assistant braucht.

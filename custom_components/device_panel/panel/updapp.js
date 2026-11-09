@@ -77,7 +77,7 @@ export class UpdApp {
       if (act === "close") this.close();
       else if (act === "check") this.check();
       // Wie in der Kopfzeile des Launchers: immer erst die Rückfrage, die sichere Antwort hat den Fokus (seit 2.211.0)
-      else if (act === "restart") this.host._askConfirm({ title: "restartTitle", note: "restartNote", no: "restartNo", yes: "restartYes", noIcon: "close", yesIcon: "power" }, () => this.host._restartHa());
+      else if (act === "restart") this.host._askConfirm({ title: "restartTitle", note: "restartNote", no: "restartNo", yes: "restartYes", noIcon: "close", yesIcon: "power" }, () => this.restartNow());
       else if (act === "filter") this.setFilter(el.dataset.key);
       else if (act === "next") {
         this.ui.step = "confirm";
@@ -131,7 +131,9 @@ export class UpdApp {
       const open = new Set(res.available.map((u) => u.entity_id));
       for (const id of [...this.ui.sel]) if (!open.has(id)) this.ui.sel.delete(id);
     } catch (err) {
-      this.error = this.h.errText(err);
+      // Verbindung weg (Home Assistant startet gerade neu, Handy im Ruhezustand): kein Fehlerbild, der nächste Takt holt den Stand neu (seit 2.213.0).
+      // Vorher stand nach einem Neustart aus diesem Fenster eine rote Zeile "result".
+      if (!this.h.isConnectionError?.(err)) this.error = this.h.errText(err);
     }
     this.render();
   }
@@ -164,6 +166,21 @@ export class UpdApp {
       this.ui.checkMsg = null;
       this.render();
     }, 6000);
+  }
+
+  // Neustart aus diesem Fenster (seit 2.213.0): der Hinweis steht hier im Fenster (der Hinweis des Launchers läge darunter); bricht die Verbindung ab,
+  // ist das der Neustart selbst und kein Fehler
+  async restartNow() {
+    window.clearTimeout(this._checkTimer);
+    this.ui.checkMsg = { kind: "ok", text: this.t("restartStarting") };
+    this.render();
+    try {
+      await this.host._callService("homeassistant", "restart", {});
+    } catch (err) {
+      if (this.h.isConnectionError?.(err)) return;
+      this.ui.checkMsg = { kind: "err", text: `${this.t("verRestartError")} ${this.h.errText(err)}` };
+      this.render();
+    }
   }
 
   byId(id) {

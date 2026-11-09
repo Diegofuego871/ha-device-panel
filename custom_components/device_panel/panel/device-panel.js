@@ -946,7 +946,7 @@ class DevicePanel extends HTMLElement {
     // App-Launcher (seit 2.31.0): Knopf in der Kopfzeile, Favoriten, eigene Links (apps.js)
     this._apps = new AppLauncher(this, { escape, mdi, accents: ACCENTS });
     this._status = new StatusUi(this, { escape, mdi, errText });
-    this._updApp = new UpdApp(this, { escape, mdi, errText });
+    this._updApp = new UpdApp(this, { escape, mdi, errText, isConnectionError });
     this._charges = new ChargesUi(this, { escape, mdi, errText });
     // Protokoll einer Meldung oder Routine (seit 2.104.0): eigenes Fenster, geöffnet von den Knöpfen mit data-proto
     this._protocol = new ProtocolUi(this, { escape, mdi, errText });

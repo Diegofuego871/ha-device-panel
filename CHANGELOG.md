@@ -16,6 +16,10 @@ A device keeps its last 20 charges instead of five.
 - **Launcher, mark "action" and "link":** The small bolt (action) or link symbol of a tile in the launcher now stands at the top right instead of the bottom right, so a long name no longer covers it.
 - **Charges, 20 per device:** The panel now keeps the last 20 charges of a device (before five); the tile "Charges" shows the number (up to 20), the window lists them all by date, and a tap on a row shows that charge. Charges already recorded stay. So that the file does not grow too much (it is written whole at every change), a stored charge keeps at most 120 measuring points, evenly spread, with the first and the last point always kept; the curve keeps its shape. The estimates of the power are the same.
 
+### Fixed
+
+- **App "Updates", red line "result" after a restart:** When Home Assistant restarted (also from the button of this window), the window asked the server for the list while the connection was down and showed the answer as a red line "result". A lost connection is now no error; the window keeps its state and fetches it again with the next refresh. A real error of the server still shows. After a tap on "Restart" the note "Home Assistant is restarting …" now stands in the window itself (before, it appeared only under it, in the launcher, and was not visible).
+
 ## [2.212.0] - 2026-11-09
 
 The app "Updates" notices on its own when an updated integration needs a restart of Home Assistant.
