@@ -76,6 +76,8 @@ export class UpdApp {
       const act = el.dataset.ua;
       if (act === "close") this.close();
       else if (act === "check") this.check();
+      // Wie in der Kopfzeile des Launchers: immer erst die Rückfrage, die sichere Antwort hat den Fokus (seit 2.211.0)
+      else if (act === "restart") this.host._askConfirm({ title: "restartTitle", note: "restartNote", no: "restartNo", yes: "restartYes", noIcon: "close", yesIcon: "power" }, () => this.host._restartHa());
       else if (act === "filter") this.setFilter(el.dataset.key);
       else if (act === "next") {
         this.ui.step = "confirm";
@@ -253,7 +255,7 @@ export class UpdApp {
     const { escape, mdi } = this.h;
     this.dlg.innerHTML = `<div class="dlg-head"><span class="dlg-avatar app app-updates">${mdi("verUp", 28)}</span>
         <div class="dlg-title"><h2>${escape(this.t("appupTitle"))}</h2><div class="dlg-sub" data-ua-sub></div></div>
-        <span class="dlg-acts"><button type="button" class="dlg-act" data-ua="check" data-ua-check title="${escape(this.t("appupCheck"))}" aria-label="${escape(this.t("appupCheck"))}">${mdi("reset", 18)}</button><span class="dlg-sep" aria-hidden="true"></span></span>
+        <span class="dlg-acts">${this.host._hass?.user?.is_admin !== false ? `<button type="button" class="dlg-act ua-pw" data-ua="restart" title="${escape(this.t("appsRestart"))}" aria-label="${escape(this.t("appsRestart"))}">${mdi("power", 18)}</button>` : ""}<button type="button" class="dlg-act" data-ua="check" data-ua-check title="${escape(this.t("appupCheck"))}" aria-label="${escape(this.t("appupCheck"))}">${mdi("reset", 18)}</button><span class="dlg-sep" aria-hidden="true"></span></span>
         <button type="button" class="dlg-close" data-ua="close" title="${escape(this.t("close"))}" aria-label="${escape(this.t("close"))}">${mdi("close", 18)}</button></div>
       <div class="dlg-body" data-ua-body></div><div class="dlg-actions" data-ua-foot></div>`;
     this.render();

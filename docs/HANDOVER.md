@@ -11,6 +11,11 @@ Einstieg für jede neue Claude-Code-Session. Zuerst diese Datei lesen, dann
 
 - `charge.py` `known_rechargeable`: Lademeldung gilt (global + Gerät/Integration), oder am Gerät ausdrücklich "Ein", oder Live-Aktivität für das Gerät an; `rechargeable()` und `charging_of()` nutzen sie (vorher nur `enabled()` mit globalem Schalter). Test `test_rechargeable_by_device_charge_or_live`.
 
+## Stand (2.211.0, Neustart-Knopf in der App "Updates")
+
+- `updapp.js`: `data-ua="restart"` (Klasse `ua-pw`, nur Administratoren) links vom Knopf "Nach Updates suchen", gleiche Rückfrage wie der Launcher (`_askConfirm` mit `restartTitle` usw., dann `_restartHa`). Suite `updaterestart-e2e`.
+- Offen (Frage des Nutzers): Die App erkennt nicht von selbst, dass eine eben aktualisierte Integration (HACS) einen Neustart braucht; nur Home Assistant Core und OS gelten als "restart" (`update_queue.RESTART_IDS`). Für Device Panel selbst gibt es die Reparatur `restart_required` (`update_check.py`) und die Zeile im Einstellungsfenster.
+
 ## Stand (2.210.0, ausgeschaltete Routine zeigt den nächsten Termin)
 
 - `routines.py` `_off_local` (Feld `off_local` im Payload, nur ausgeschaltet, nicht Countdown/Auslöser/erledigt); Panel `routines.js` `offHtml(rt, word)` in den vier Zeilen (Kopf im Popup, Karte, `nextHtml`, Karte der Liste), Klasse `.rt-offword`. Test `test_disabled_routine_shows_when_it_would_run`, Suite `routineoff-e2e`; Simulator liefert `off_local`.

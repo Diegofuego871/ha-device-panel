@@ -7,6 +7,14 @@ Alle nennenswerten Änderungen an dieser Integration stehen in dieser Datei.
 Das Format folgt [Keep a Changelog](https://keepachangelog.com/de/1.1.0/),
 die Versionsnummern folgen [Semantic Versioning](https://semver.org/lang/de/).
 
+## [2.211.0] - 2026-11-09
+
+Die App "Updates" hat einen Knopf, der Home Assistant neu startet, wie der Launcher.
+
+### Hinzugefügt
+
+- **App "Updates", Knopf "Home Assistant neu starten":** In der Kopfzeile, links von "Nach Updates suchen", startet ein runder Knopf Home Assistant neu, wie in der Kopfzeile des Launchers (gleiches Symbol, gleicher Abstand wie die anderen Knöpfe der Kopfzeile, rot beim Darüberfahren). Ein Tipp fragt zuerst "Home Assistant neu starten?" mit "Abbrechen" (Fokus) und "Neu starten"; erst "Neu starten" ruft `homeassistant.restart` auf. Den Knopf sehen nur Administratoren. Er hilft nach einem Update einer Integration, die erst nach einem Neustart aktiv wird.
+
 ## [2.210.0] - 2026-11-07
 
 Eine ausgeschaltete Routine zeigt weiterhin, wann sie als Nächstes laufen würde, und sagt klar, dass sie aus ist.
@@ -5983,6 +5991,7 @@ Erste Vorabversion.
   GitHub Actions für die Prüfungen von HACS und hassfest sowie die Tests.
 
 [2.6.0]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v2.6.0
+[2.211.0]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v2.211.0
 [2.210.0]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v2.210.0
 [2.209.1]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v2.209.1
 [2.209.0]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/2.209.0

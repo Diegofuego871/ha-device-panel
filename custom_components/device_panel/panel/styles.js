@@ -92,6 +92,7 @@ button { font: inherit; color: inherit; }
 /* Punkt am Launcher-Knopf und an angehefteten Apps (seit 2.62.0): rot = Störung des Status, orange = Debug-Modus */
 .apps-btn, .app-pin { position: relative; }
 /* Protokoll-Knöpfe in den Fenstern (seit 2.172.0): Punkt und Sternschnuppe bei einer fehlgeschlagenen Routine, Rand wie der Grund des Fensters */
+.dlg-act.ua-pw:hover { color: var(--dp-error); }
 .dlg-act.has-dot { position: relative; }
 .dlg-act.has-dot::after { content: ""; position: absolute; top: 3px; right: 3px; width: 10px; height: 10px; box-sizing: border-box; border-radius: 50%; background: var(--dp-error); border: 2px solid var(--dp-card); }
 .apps-btn.has-dot::after, .app-pin.has-dot::after { content: ""; position: absolute; top: 3px; right: 3px; width: 10px; height: 10px; box-sizing: border-box; border-radius: 50%; background: var(--dp-error); border: 2px solid var(--dp-bg); }

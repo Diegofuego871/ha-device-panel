@@ -7,6 +7,14 @@ All notable changes to this integration are documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/).
 
+## [2.211.0] - 2026-11-09
+
+The app "Updates" has a button that restarts Home Assistant, like the launcher.
+
+### Added
+
+- **App "Updates", button "Restart Home Assistant":** In the header, left of "Check for updates", a round button restarts Home Assistant, as in the header of the launcher (same symbol, same distance as the other header buttons, red on hover). A tap first asks "Restart Home Assistant?" with "Cancel" (focused) and "Restart"; only "Restart" calls `homeassistant.restart`. The button is only there for administrators. It helps after an update of an integration, which only becomes active after a restart.
+
 ## [2.210.0] - 2026-11-07
 
 A switched-off routine still shows when it would run next, and says clearly that it is off.
@@ -5882,6 +5890,7 @@ First pre-release.
   GitHub Actions for HACS/hassfest validation and tests.
 
 [2.6.0]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v2.6.0
+[2.211.0]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v2.211.0
 [2.210.0]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v2.210.0
 [2.209.1]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v2.209.1
 [2.209.0]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/2.209.0
