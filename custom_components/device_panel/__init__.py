@@ -120,6 +120,7 @@ from .summary import PLATFORMS, SUMMARY_STORE_KEY, SummaryCoordinator
 from .device_update import UpdateError, held_until
 from .device_update import last_error as update_last_error
 from .device_update import async_install as async_install_update
+from .restart_pending import async_pending as async_restart_needed
 from .update_queue import DATA_UPDATE_QUEUE, available as update_available, get_queue as get_update_queue
 from .devices import (
     DEVICES_STORE_KEY,
@@ -482,12 +483,15 @@ async def _ws_list_devices(
 
 @websocket_api.websocket_command({vol.Required("type"): f"{DOMAIN}/updates_list"})
 @websocket_api.require_admin
-@callback
-def _ws_updates_list(
+@websocket_api.async_response
+async def _ws_updates_list(
     hass: HomeAssistant, connection: websocket_api.ActiveConnection, msg: dict[str, Any]
 ) -> None:
-    """App "Geräte-Updates": offene Geräte-Updates und der Stand der Warteschlange."""
-    connection.send_result(msg["id"], {"available": update_available(hass), "queue": get_update_queue(hass).snapshot()})
+    """App "Updates": offene Updates, der Stand der Warteschlange und Integrationen, die einen Neustart brauchen (seit 2.212.0)."""
+    connection.send_result(
+        msg["id"],
+        {"available": update_available(hass), "queue": get_update_queue(hass).snapshot(), "restart_needed": await async_restart_needed(hass)},
+    )
 
 
 @websocket_api.websocket_command(

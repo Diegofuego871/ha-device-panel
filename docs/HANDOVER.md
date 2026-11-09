@@ -11,6 +11,11 @@ Einstieg für jede neue Claude-Code-Session. Zuerst diese Datei lesen, dann
 
 - `charge.py` `known_rechargeable`: Lademeldung gilt (global + Gerät/Integration), oder am Gerät ausdrücklich "Ein", oder Live-Aktivität für das Gerät an; `rechargeable()` und `charging_of()` nutzen sie (vorher nur `enabled()` mit globalem Schalter). Test `test_rechargeable_by_device_charge_or_live`.
 
+## Stand (2.212.0, Neustart nötig nach Update einer Integration)
+
+- `restart_pending.py`: `async_pending(hass)` vergleicht je geladener eigener Integration (`async_get_custom_components`, nur Domänen in `hass.config.components`) die laufende Version (`async_get_loaded_integration(...).version`, Fassung vom Start im Speicher) mit dem `manifest.json` auf der Platte (Executor). Unabhängig von HACS. `updates_list` liefert `restart_needed` (jetzt `async_response`). Panel `updapp.js` `restartHtml()` (`.ua-rst`, Knopf `data-ua="restart"`, gleiche Rückfrage); Neuladen über den Takt der App (`REFRESH_MS`). Tests: `tests/test_restart_pending.py`, Suite `updaterestart-e2e`.
+- Grenze: Läuft die Zwischenspeicherung von Home Assistant anders (Fassung der Integration erst nach dem Update erstmals gelesen), meldet es nichts; das ist der sichere Fall (kein falscher Alarm). Nicht geprüft in echtem HA mit HACS; auf der Testinstanz an einem Update zu prüfen.
+
 ## Stand (2.211.0, Neustart-Knopf in der App "Updates")
 
 - `updapp.js`: `data-ua="restart"` (Klasse `ua-pw`, nur Administratoren) links vom Knopf "Nach Updates suchen", gleiche Rückfrage wie der Launcher (`_askConfirm` mit `restartTitle` usw., dann `_restartHa`). Suite `updaterestart-e2e`.

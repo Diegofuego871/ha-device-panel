@@ -7,6 +7,14 @@ All notable changes to this integration are documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/).
 
+## [2.212.0] - 2026-11-09
+
+The app "Updates" notices on its own when an updated integration needs a restart of Home Assistant.
+
+### Added
+
+- **App "Updates", notice "Restart needed":** After an integration was updated (through HACS, by hand or by copying), its new code only runs after Home Assistant restarts. The panel now compares the version in the `manifest.json` on disk with the version Home Assistant loaded at start. If they differ, a notice stands at the top of the window: "Restart needed. The new version only runs after Home Assistant restarts: Alarmageddon (0.22.0 → 0.23.0)." with the button "Restart" (the same confirmation as before). It disappears after the restart. Only loaded integrations count (one that is not running needs no restart), and it works whatever way the update came. The notice follows the list every few seconds, so it appears soon after a finished update. For Device Panel itself nothing changes (repair and row in the settings). The server sends the list as `restart_needed` in `updates_list`.
+
 ## [2.211.0] - 2026-11-09
 
 The app "Updates" has a button that restarts Home Assistant, like the launcher.
@@ -5890,6 +5898,7 @@ First pre-release.
   GitHub Actions for HACS/hassfest validation and tests.
 
 [2.6.0]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v2.6.0
+[2.212.0]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v2.212.0
 [2.211.0]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v2.211.0
 [2.210.0]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v2.210.0
 [2.209.1]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v2.209.1

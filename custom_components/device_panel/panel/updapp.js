@@ -261,6 +261,16 @@ export class UpdApp {
     this.render();
   }
 
+  // Integrationen, deren Dateien neuer sind als der laufende Code (seit 2.212.0): erst ein Neustart von Home Assistant macht sie aktiv.
+  // Der Server vergleicht die Version im manifest.json auf der Platte mit der geladenen (restart_pending.py), egal woher das Update kam.
+  restartHtml() {
+    const list = this.data?.restart_needed || [];
+    if (!list.length || this.host._hass?.user?.is_admin === false) return "";
+    const { escape, mdi } = this.h;
+    const names = list.map((x) => `${x.name} (${x.running} → ${x.installed})`).join(", ");
+    return `<div class="ua-rst" role="status"><span class="ua-rst-ic" aria-hidden="true">${mdi("power", 18)}</span><div class="ua-rst-t"><b>${escape(this.t("appupRestartNeeded"))}</b><small>${escape(this.t("appupRestartWhich", names))}</small></div><button type="button" class="dlg-btn" data-ua="restart">${mdi("power", 16)}${escape(this.t("restartYes"))}</button></div>`;
+  }
+
   render() {
     const dlg = this.dlg;
     const body = dlg?.querySelector("[data-ua-body]");
@@ -282,6 +292,7 @@ export class UpdApp {
     }
     const closeBtn = (cls = "") => `<button type="button" class="dlg-btn${cls}" data-ua="close">${this.h.mdi("close", 18)}${escape(t("close"))}</button>`;
     const err = this.error ? `<div class="dlg-error">${escape(this.error)}</div>` : "";
+    const rst = this.restartHtml();
     if (!this.ui.loaded) {
       sub.textContent = "";
       body.innerHTML = `<div class="ver-prog"><i></i></div>`;
@@ -298,13 +309,13 @@ export class UpdApp {
         [count("failed"), "appupFailN"],
       ].filter(([n]) => n);
       sub.textContent = parts.map(([n, k]) => t(k, n)).join(" · ");
-      body.innerHTML = `${err}<div class="ua-list">${q.map((x) => this.runRow(x)).join("")}</div>`;
+      body.innerHTML = `${err}${rst}<div class="ua-list">${q.map((x) => this.runRow(x)).join("")}</div>`;
       const active = count("running") + count("waiting") > 0;
       const more = !active && avail.some((u) => !q.some((x) => x.entity_id === u.entity_id && (x.status === "waiting" || x.status === "running")));
       foot.innerHTML = `${more ? `<button type="button" class="dlg-btn" data-ua="tolist">${this.h.mdi("arrowLeft", 18)}${escape(t("appupToList"))}</button>` : ""}${closeBtn(more ? "" : " primary")}`;
     } else if (!avail.length) {
       sub.textContent = t("appupAllCurrent");
-      body.innerHTML = `${err}<div class="ua-empty">${this.h.mdi("check", 34)}<p>${escape(t("appupEmpty"))}</p></div>`;
+      body.innerHTML = `${err}${rst}<div class="ua-empty">${this.h.mdi("check", 34)}<p>${escape(t("appupEmpty"))}</p></div>`;
       foot.innerHTML = closeBtn(" primary");
     } else if (this.ui.step === "confirm") {
       const n = this.ui.sel.size;
@@ -314,7 +325,7 @@ export class UpdApp {
       const restart = picked.map((u) => this.restartKind(u)).find(Boolean);
       const hasApp = picked.some((u) => u.kind === "addons");
       const extra = [restart ? t(restart === "os" ? "appupConfirmRestartOs" : "appupConfirmRestartCore") : "", hasApp ? t("appupConfirmApps") : ""].filter(Boolean);
-      body.innerHTML = `${err}<div class="nf-note">${this.h.mdi("alert", 16)}<div><p><b>${escape(t("appupConfirmTitle", n))}</b></p><p>${escape(t("appupConfirmText"))}</p>${extra.map((x) => `<p>${escape(x)}</p>`).join("")}</div></div>
+      body.innerHTML = `${err}${rst}<div class="nf-note">${this.h.mdi("alert", 16)}<div><p><b>${escape(t("appupConfirmTitle", n))}</b></p><p>${escape(t("appupConfirmText"))}</p>${extra.map((x) => `<p>${escape(x)}</p>`).join("")}</div></div>
         ${backup ? `<label class="ua-backup"><span class="switch"><input type="checkbox" data-ua-backup ${this.ui.backup ? "checked" : ""}><span></span></span><span>${escape(t("appupBackup"))}<small>${escape(t("appupBackupHint"))}</small></span></label>` : ""}`;
       foot.innerHTML = `<button type="button" class="dlg-btn" data-ua="back">${this.h.mdi("arrowLeft", 18)}${escape(t("updBack"))}</button><button type="button" class="dlg-btn primary" data-ua="go" ${this.ui.busy ? "disabled" : ""}>${this.h.mdi("verDownload", 18)}${escape(t("appupConfirmYes", n))}</button>`;
     } else {
@@ -328,7 +339,7 @@ export class UpdApp {
         .map(([k, label, n]) => `<button type="button" class="chip${this.ui.filter === k ? " on" : ""}" data-ua="filter" data-key="${escape(k)}"><span>${escape(label)}</span><span class="n">${n}</span></button>`)
         .join("");
       const rows = avail.map((u) => this.listRow(u)).join("");
-      body.innerHTML = `${err}<div class="ua-chips">${chips}</div><div class="ua-list">${rows}</div>`;
+      body.innerHTML = `${err}${rst}<div class="ua-chips">${chips}</div><div class="ua-list">${rows}</div>`;
       const n = this.ui.sel.size;
       foot.innerHTML = `${closeBtn()}<button type="button" class="dlg-btn primary" data-ua="next" ${n ? "" : "disabled"}>${this.h.mdi("verDownload", 18)}${escape(t("appupStart", n))}</button>`;
     }

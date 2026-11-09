@@ -7,6 +7,14 @@ Alle nennenswerten Änderungen an dieser Integration stehen in dieser Datei.
 Das Format folgt [Keep a Changelog](https://keepachangelog.com/de/1.1.0/),
 die Versionsnummern folgen [Semantic Versioning](https://semver.org/lang/de/).
 
+## [2.212.0] - 2026-11-09
+
+Die App "Updates" erkennt von selbst, wenn eine aktualisierte Integration einen Neustart von Home Assistant braucht.
+
+### Hinzugefügt
+
+- **App "Updates", Hinweis "Neustart nötig":** Nach dem Update einer Integration (über HACS, von Hand oder durch Kopieren) läuft ihr neuer Code erst nach einem Neustart von Home Assistant. Das Panel vergleicht jetzt die Version im `manifest.json` auf der Platte mit der Version, die Home Assistant beim Start geladen hat. Weichen sie ab, steht oben im Fenster ein Hinweis: "Neustart nötig. Erst nach einem Neustart von Home Assistant läuft die neue Version: Alarmageddon (0.22.0 → 0.23.0)." mit dem Knopf "Neu starten" (dieselbe Rückfrage wie sonst). Nach dem Neustart verschwindet er. Es zählen nur geladene Integrationen (eine, die nicht läuft, braucht keinen Neustart), und es funktioniert unabhängig davon, wie das Update kam. Der Hinweis folgt der Liste alle paar Sekunden und erscheint deshalb kurz nach einem fertigen Update. Für Device Panel selbst ändert sich nichts (Reparatur und Zeile in den Einstellungen). Der Server schickt die Liste als `restart_needed` in `updates_list`.
+
 ## [2.211.0] - 2026-11-09
 
 Die App "Updates" hat einen Knopf, der Home Assistant neu startet, wie der Launcher.
@@ -5991,6 +5999,7 @@ Erste Vorabversion.
   GitHub Actions für die Prüfungen von HACS und hassfest sowie die Tests.
 
 [2.6.0]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v2.6.0
+[2.212.0]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v2.212.0
 [2.211.0]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v2.211.0
 [2.210.0]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v2.210.0
 [2.209.1]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v2.209.1

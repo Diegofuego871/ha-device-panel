@@ -2172,7 +2172,7 @@
       // App "Geräte-Updates" (2.164.0): window.__appUpdates überschreibt die Liste; window.__uq ist die Warteschlange des Servers
       if (msg.type === "device_panel/updates_list") {
         const list = window.__appUpdates || window.__devices.filter((d) => d.update_install && !d.disabled).map((d) => ({ entity_id: `update.${d.id}_fw`, device_id: d.id, platform: d.integration.domain, features: 13, installed: d.sw_version, latest: d.update, title: d.name }));
-        return { available: list.filter((u) => !(window.__uq || []).some((q) => q.entity_id === u.entity_id && q.status === "done")), queue: (window.__uq || []).map((q) => ({ ...q })) };
+        return { available: list.filter((u) => !(window.__uq || []).some((q) => q.entity_id === u.entity_id && q.status === "done")), queue: (window.__uq || []).map((q) => ({ ...q })), restart_needed: window.__restartNeeded || [] };
       }
       if (msg.type === "device_panel/updates_start") {
         if (window.__updFails) throw { code: "invalid_format", message: window.__updFails };

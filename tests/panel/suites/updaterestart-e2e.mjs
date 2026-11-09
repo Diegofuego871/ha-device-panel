@@ -1,13 +1,13 @@
 // App "Updates" (2.211.0): Neustart-Knopf in der Kopfzeile links neben "Nach Updates suchen", Lage wie die Symbole der anderen Fenster,
 // Rückfrage vor dem Neustart (Abbrechen, Escape, Bestätigen genau ein Aufruf), kein Knopf für Nicht-Administratoren. Deutsch und Englisch, Desktop und Handy.
 import { chromium } from "playwright-core";
-import { launchOptions } from "../lib.mjs";
+import { launchOptions, outDir } from "../lib.mjs";
 
 const b = await chromium.launch(launchOptions);
 let ok = true;
 const check = (l, c, i = "") => { ok &&= !!c; console.log(`${c ? "PASS" : "FAIL"} ${l}${i ? " - " + i : ""}`); };
 const R = `document.querySelector("device-panel").shadowRoot`;
-const T = { de: { label: "Home Assistant neu starten", title: "Home Assistant neu starten?", no: "Abbrechen", yes: "Neu starten" }, en: { label: "Restart Home Assistant", title: "Restart Home Assistant?", no: "Cancel", yes: "Restart" } };
+const T = { de: { need: "Neustart nötig", label: "Home Assistant neu starten", title: "Home Assistant neu starten?", no: "Abbrechen", yes: "Neu starten" }, en: { need: "Restart needed", label: "Restart Home Assistant", title: "Restart Home Assistant?", no: "Cancel", yes: "Restart" } };
 for (const lang of ["de", "en"]) {
   const L = T[lang];
   for (const mobile of [false, true]) {
@@ -43,6 +43,20 @@ for (const lang of ["de", "en"]) {
     await wait(`return r.querySelector("dialog.discard-dlg").open`);
     await tap('dialog.discard-dlg [data-dd="yes"]');
     check(`[${tag}] "${L.yes}": homeassistant.restart genau einmal aufgerufen`, (await p.waitForFunction(() => window.__services.some((s) => s.service === "restart"), null, { timeout: 4000 }).then(() => true, () => false)) && (await restarts()) === 1);
+    // Neustart nötig (2.212.0): der Server meldet eine Integration, deren Dateien neuer sind als der laufende Code
+    check(`[${tag}] ohne offene Neustarts: kein Hinweis "${L.need}"`, await ev(`return !r.querySelector(".ua-rst")`));
+    await p.evaluate(() => { window.__restartNeeded = [{ domain: "alarmageddon", name: "Alarmageddon", running: "0.22.0", installed: "0.23.0" }]; });
+    await ev(`return r.host._updApp.load().then(() => { r.host._updApp.render(); return true; })`);
+    check(`[${tag}] Hinweis "${L.need}" mit Name und Versionen (0.22.0 → 0.23.0)`, await wait(`const x = r.querySelector(".ua-rst"); return !!x && x.querySelector("b").textContent === ${JSON.stringify(L.need)} && /Alarmageddon \\(0\\.22\\.0 → 0\\.23\\.0\\)/.test(x.textContent)`));
+    await p.screenshot({ path: `${outDir}/updaterestart-${tag.replace("/", "-")}.png` });
+    check(`[${tag}] Hinweis passt in die Breite (kein seitliches Scrollen)`, await ev(`const b = r.querySelector("[data-ua-body]"); return b.scrollWidth <= b.clientWidth + 1`));
+    const before = await restarts();
+    await tap(".ua-rst [data-ua='restart']");
+    check(`[${tag}] Knopf im Hinweis fragt zuerst, sendet noch nichts`, (await wait(`return r.querySelector("dialog.discard-dlg")?.open && r.querySelector("#dd-t")?.textContent === ${JSON.stringify(L.title)}`)) && (await restarts()) === before);
+    await tap('dialog.discard-dlg [data-dd="no"]');
+    await p.evaluate(() => { window.__restartNeeded = []; });
+    await ev(`return r.host._updApp.load().then(() => { r.host._updApp.render(); return true; })`);
+    check(`[${tag}] nach dem Neustart (nichts mehr offen): Hinweis weg`, await wait(`return !r.querySelector(".ua-rst")`));
     // Nicht-Administrator: kein Knopf
     await p.evaluate(() => { const ha = document.querySelector("home-assistant").hass; ha.user = { ...ha.user, is_admin: false }; });
     await ev(`r.host._hass = { ...r.host._hass, user: { ...r.host._hass.user, is_admin: false } }; r.host._updApp.frame()`);

@@ -2721,6 +2721,12 @@ dialog.updapp-dlg .nf-note p b { font-size: 17px; }
 dialog.updapp-dlg .chip { height: 36px; font-size: 15px; padding: 0 14px; }
 dialog.updapp-dlg .dlg-error { font-size: 15px; }
 .ua-chips { display: flex; flex-wrap: wrap; gap: 8px; margin: 2px 0 12px; }
+.ua-rst { display: flex; align-items: center; gap: 10px; margin-bottom: 12px; padding: 10px 12px; border-radius: 12px; background: color-mix(in srgb, var(--dp-warning) 14%, var(--dp-card)); border: 1px solid color-mix(in srgb, var(--dp-warning) 40%, transparent); }
+.ua-rst-ic { flex: none; display: grid; place-items: center; color: var(--dp-warning); }
+.ua-rst-t { flex: 1; min-width: 0; display: flex; flex-direction: column; gap: 2px; }
+.ua-rst-t small { color: var(--dp-text2); font-size: 12px; line-height: 1.35; overflow-wrap: anywhere; }
+.ua-rst .dlg-btn { flex: none; }
+@media (max-width: 560px) { .ua-rst { flex-wrap: wrap; } .ua-rst .dlg-btn { width: 100%; } }
 .ua-list { display: flex; flex-direction: column; gap: 8px; }
 .ua-row { display: flex; align-items: center; gap: 10px; padding: 8px 10px; border-radius: 14px; background: var(--dp-subtle); }
 .ua-t { flex: 1 1 auto; min-width: 0; display: flex; flex-direction: column; gap: 2px; text-align: left; }
