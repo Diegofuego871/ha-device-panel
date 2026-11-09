@@ -7,6 +7,14 @@ Alle nennenswerten Änderungen an dieser Integration stehen in dieser Datei.
 Das Format folgt [Keep a Changelog](https://keepachangelog.com/de/1.1.0/),
 die Versionsnummern folgen [Semantic Versioning](https://semver.org/lang/de/).
 
+## [2.213.1] - 2026-11-10
+
+Im Fenster "Ladungen" bleiben die Kurve und die Kacheln stehen, nur die Liste scrollt.
+
+### Geändert
+
+- **Ladungen, nur die Liste scrollt:** Mit bis zu 20 Ladungen wurde die Liste lang und schob die Kurve und die vier Kacheln aus dem Bild. Sie bleiben jetzt oben stehen, und nur die Liste der Ladungen darunter scrollt (das Scrollen bleibt in der Liste). Ist das Fenster sehr niedrig (Handy quer), scrollt wie bisher das ganze Fenster, damit die Liste nie unter etwa drei Zeilen schrumpft.
+
 ## [2.213.0] - 2026-11-09
 
 Ein Gerät behält seine letzten 20 Ladungen statt fünf.
@@ -6012,6 +6020,7 @@ Erste Vorabversion.
   GitHub Actions für die Prüfungen von HACS und hassfest sowie die Tests.
 
 [2.6.0]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v2.6.0
+[2.213.1]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v2.213.1
 [2.213.0]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v2.213.0
 [2.212.0]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v2.212.0
 [2.211.0]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v2.211.0

@@ -7,6 +7,14 @@ All notable changes to this integration are documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/).
 
+## [2.213.1] - 2026-11-10
+
+In the window "Charges", the curve and the tiles stay in place and only the list scrolls.
+
+### Changed
+
+- **Charges, only the list scrolls:** With up to 20 charges the list got long and pushed the curve and the four tiles out of view. They now stay at the top and only the list of charges below scrolls (the scroll stays inside the list). If the window is very low (phone held sideways), the whole window scrolls as before, so the list never shrinks below about three rows.
+
 ## [2.213.0] - 2026-11-09
 
 A device keeps its last 20 charges instead of five.
@@ -5911,6 +5919,7 @@ First pre-release.
   GitHub Actions for HACS/hassfest validation and tests.
 
 [2.6.0]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v2.6.0
+[2.213.1]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v2.213.1
 [2.213.0]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v2.213.0
 [2.212.0]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v2.212.0
 [2.211.0]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v2.211.0

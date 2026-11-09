@@ -11,6 +11,10 @@ Einstieg für jede neue Claude-Code-Session. Zuerst diese Datei lesen, dann
 
 - `charge.py` `known_rechargeable`: Lademeldung gilt (global + Gerät/Integration), oder am Gerät ausdrücklich "Ein", oder Live-Aktivität für das Gerät an; `rechargeable()` und `charging_of()` nutzen sie (vorher nur `enabled()` mit globalem Schalter). Test `test_rechargeable_by_device_charge_or_live`.
 
+## Stand (2.213.1, Fenster "Ladungen": nur die Liste scrollt)
+
+- `styles.js`: `.charges-dlg .dlg-body` als Spalte, `.cg-card`/`.cg-tiles` fest, `.cg-list` mit `flex: 1 1 160px; min-height: 160px; overflow-y: auto`. Ist das Fenster zu niedrig, scrollt der Körper wie bisher. Test: `charges-e2e` (20 Zeilen, Kurve und Kacheln stehen, Liste scrollt).
+
 ## Stand (2.213.0, 20 Ladungen je Gerät)
 
 - `charge.py`: `CHARGES_KEEP` 20 (vorher 5), `CHARGE_POINTS_KEEP` 120 und `thin_points()` (gleichmässig, erster und letzter Punkt bleiben) beim Speichern einer Ladung; Bestehendes bleibt. Der Speicher (`self._store`, Ganzes bei jeder Änderung, 1 s verzögert) wächst damit auf bis zu etwa 20 × 120 Punkte je ladefähigem Gerät. Tests: `test_thin_points_keeps_ends_and_shape`, Anpassung der Fünf-Ladungen-Prüfung; Suite `charges-e2e` (20 Zeilen).

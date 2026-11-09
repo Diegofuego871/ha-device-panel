@@ -2768,7 +2768,11 @@ dialog.updapp-dlg .dlg-error { font-size: 15px; }
 .cg-k { font-size: 12px; color: var(--dp-text2); }
 .cg-v { font-size: 20px; font-weight: 500; color: var(--dp-text); white-space: nowrap; }
 .cg-v small { font-size: 12px; font-weight: 400; color: var(--dp-text2); margin: 0 2px; }
-.cg-list { display: flex; flex-direction: column; gap: 6px; margin-top: 14px; }
+/* Kurve und Kacheln bleiben oben stehen, nur die Liste scrollt (seit 2.213.0); ist das Fenster zu niedrig (Handy quer), scrollt wie bisher das ganze Fenster */
+.charges-dlg .dlg-body { display: flex; flex-direction: column; }
+.cg-card, .cg-tiles { flex: none; }
+.cg-list { display: flex; flex-direction: column; gap: 6px; flex: 1 1 160px; min-height: 160px; margin-top: 14px; overflow-y: auto; overscroll-behavior: contain; padding-bottom: 2px; }
+.cg-list .cg-row { flex: none; }
 .cg-row { display: grid; grid-template-columns: minmax(0, 1.4fr) auto auto; align-items: center; gap: 12px; width: 100%; padding: 11px 14px; border: 1px solid var(--dp-divider); border-radius: 12px;
   background: var(--dp-card); color: var(--dp-text); font: inherit; font-size: 14px; text-align: left; cursor: pointer; }
 .cg-row:hover { border-color: color-mix(in srgb, var(--dp-success) 50%, transparent); }

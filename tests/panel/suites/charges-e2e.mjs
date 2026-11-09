@@ -1,7 +1,7 @@
 // Fenster "Ladungen" (2.204.0): Kachel nur bei aufgezeichneten Ladungen, Fenster mit Kurve, Kacheln und Liste, Wahl einer Ladung, Watt nur mit Akku-Grösse,
 // leerer Zustand ohne Ladungen nicht erreichbar (keine Kachel). Deutsch und Englisch, Desktop und Handy.
 import { chromium } from "playwright-core";
-import { launchOptions } from "../lib.mjs";
+import { launchOptions, outDir } from "../lib.mjs";
 
 const b = await chromium.launch(launchOptions);
 let ok = true;
@@ -74,7 +74,8 @@ for (const lang of ["de", "en"]) {
     await wait(`return /20/.test(r.querySelector('${tileSel} .st-v')?.textContent || '')`);
     await tap(tileSel);
     check(`[${tag}] 20 Ladungen: Kachel zeigt 20, Fenster hat 20 Zeilen`, (await wait(`return r.querySelector('${C}')?.open && r.querySelectorAll('${C} .cg-row').length === 20`)) && /20/.test(await text(`${tileSel} .st-v`)), `${await text(`${tileSel} .st-v`)} | rows ${await ev(`return r.querySelectorAll('${C} .cg-row').length`)}`);
-    check(`[${tag}] 20 Ladungen: kein seitliches Scrollen, letzte Zeile erreichbar`, await ev(`const b = r.querySelector('${C} .dlg-body'); const last = r.querySelector('${C} .cg-row:last-child'); b.scrollTop = b.scrollHeight; const lb = last.getBoundingClientRect(), bb = b.getBoundingClientRect(); return b.scrollWidth <= b.clientWidth + 1 && lb.bottom <= bb.bottom + 1`));
+    check(`[${tag}] 20 Ladungen: Kurve und Kacheln bleiben stehen, nur die Liste scrollt, letzte Zeile erreichbar`, await ev(`const d = r.querySelector('${C}'); const b = d.querySelector('.dlg-body'); const list = d.querySelector('.cg-list'); const card = d.querySelector('.cg-card'); const tiles = d.querySelector('.cg-tiles'); const y0 = [card.getBoundingClientRect().top, tiles.getBoundingClientRect().top]; list.scrollTop = list.scrollHeight; const last = d.querySelector('.cg-row:last-child').getBoundingClientRect(), lb = list.getBoundingClientRect(); const y1 = [card.getBoundingClientRect().top, tiles.getBoundingClientRect().top]; return b.scrollWidth <= b.clientWidth + 1 && list.scrollHeight > list.clientHeight && list.scrollTop > 0 && y0[0] === y1[0] && y0[1] === y1[1] && b.scrollTop === 0 && last.bottom <= lb.bottom + 1`));
+    await p.screenshot({ path: `${outDir}/charges20-${tag.replace("/", "-")}.png` });
     await tap(`${C} .cg-row:last-child`);
     check(`[${tag}] 20 Ladungen: letzte Zeile wählbar`, await wait(`return r.querySelector('${C} .cg-row.on')?.dataset.i === "19"`));
     await tap(`${C} .dlg-close`);
