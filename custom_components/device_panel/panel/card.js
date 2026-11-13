@@ -77,6 +77,18 @@ class DevicePanelBaseCard extends HTMLElement {
   constructor() {
     super();
     this.attachShadow({ mode: "open" });
+    // Stile einmal: sie sind gross, nur der Inhalt wird neu gezeichnet. Tippen und Tasten einmal an der Wurzel (nicht je Kachel und Zeichnung)
+    this.shadowRoot.innerHTML = `<style>${PANEL_CSS}${CARD_CSS}</style><div class="body"></div>`;
+    this._body = this.shadowRoot.querySelector(".body");
+    this._body.addEventListener("click", (ev) => {
+      if (ev.target.closest(".kt.tap")) this._open();
+    });
+    this._body.addEventListener("keydown", (ev) => {
+      if ((ev.key === "Enter" || ev.key === " ") && ev.target.matches?.(".kt.tap")) {
+        ev.preventDefault();
+        this._open();
+      }
+    });
     this._config = {};
     this._hass = null;
     this._sig = null;
@@ -113,8 +125,9 @@ class DevicePanelBaseCard extends HTMLElement {
   }
 
   connectedCallback() {
-    // Die Dauer wächst mit der Zeit, auch ohne neuen Zustand: jede Minute nachführen
-    this._timer = setInterval(() => this._hass && this._draw(), 60000);
+    // Die Dauer eines Ausfalls wächst mit der Zeit, auch ohne neuen Zustand: nur dann jede Minute nachführen
+    clearInterval(this._timer);
+    this._timer = setInterval(() => this._live && this._hass && this._draw(), 60000);
   }
 
   disconnectedCallback() {
@@ -246,7 +259,11 @@ class DevicePanelBaseCard extends HTMLElement {
     if (!hass) return;
     const id = this._config.entity || findEntity(hass);
     const st = id ? hass.states[id] : null;
-    const a = st && st.state !== "unavailable" && st.state !== "unknown" ? { ...st.attributes, share: Number(st.state) } : null;
+    const a = st && st.state !== "unavailable" && st.state !== "unknown" && Number.isFinite(Number(st.state)) ? { ...st.attributes, share: Number(st.state) } : null;
+    // Alle Zahlen als Zahlen: nichts aus den Attributen gelangt ungeprüft ins HTML
+    if (a) for (const key of ["total", "online", "stable", "flaky", "offline", "no_data", "no_status", "paused", "warnings", "outages", "affected"]) a[key] = Math.max(0, Math.trunc(Number(a[key])) || 0);
+    if (a) a.avg24 = a.avg24 == null || !Number.isFinite(Number(a.avg24)) ? null : Number(a.avg24);
+    this._live = Boolean(a && a.offline > 0);
     let body;
     if (!a) {
       body = `<div class="msg">${escape(this._t("cardMissing"))}</div>`;
@@ -254,16 +271,7 @@ class DevicePanelBaseCard extends HTMLElement {
       const html = { ring: (x) => this._ringHtml(x), offline: (x) => this._offlineHtml(x), pulse: (x) => this._pulseHtml(x) };
       body = `<div class="cgrid">${this.constructor.parts.map((part) => html[part](a)).join("")}</div>`;
     }
-    this.shadowRoot.innerHTML = `<style>${PANEL_CSS}${CARD_CSS}</style>${body}`;
-    for (const tile of this.shadowRoot.querySelectorAll(".kt.tap")) {
-      tile.addEventListener("click", () => this._open());
-      tile.addEventListener("keydown", (ev) => {
-        if (ev.key === "Enter" || ev.key === " ") {
-          ev.preventDefault();
-          this._open();
-        }
-      });
-    }
+    this._body.innerHTML = body;
   }
 }
 

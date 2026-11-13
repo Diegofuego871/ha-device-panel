@@ -7,6 +7,14 @@ Alle nennenswerten Änderungen an dieser Integration stehen in dieser Datei.
 Das Format folgt [Keep a Changelog](https://keepachangelog.com/de/1.1.0/),
 die Versionsnummern folgen [Semantic Versioning](https://semver.org/lang/de/).
 
+## [2.216.1] - 2026-11-13
+
+Code-Review: Dashboard-Karten leichter und sicherer, der Wächter der Pause robuster.
+
+### Geändert
+
+- **Code-Review:** Die Dashboard-Karten zeichnen nur ihren Inhalt (das grosse Stylesheet wird einmal gesetzt, Tippen einmal behandelt) und übernehmen jede Zahl des Sensors als Zahl, nie als HTML; die Auffrischung jede Minute läuft nur, solange ein Gerät ausgefallen ist. Der Wächter der Überwachungs-Pause prüft jedes Gerät für sich, ein fehlerhaftes Gerät hält die anderen nicht mehr auf. Eine ungenutzte Funktion wurde entfernt.
+
 ## [2.216.0] - 2026-11-13
 
 Drei Dashboard-Karten: Verfügbarkeit, Gerade ausgefallen und eine Übersicht mit dem Ausfall-Puls.
@@ -6071,6 +6079,7 @@ Erste Vorabversion.
   GitHub Actions für die Prüfungen von HACS und hassfest sowie die Tests.
 
 [2.6.0]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v2.6.0
+[2.216.1]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v2.216.1
 [2.216.0]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v2.216.0
 [2.215.1]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v2.215.1
 [2.215.0]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v2.215.0

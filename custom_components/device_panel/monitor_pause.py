@@ -75,34 +75,41 @@ class MonitorPauseWatch:
         ent_reg = er.async_get(self.hass)
         opts = effective(self.hass)
         for dev, pause in list(pauses.items()):
-            device = registry.async_get(dev)
-            if device is None:
-                # Gelöschtes Gerät: nichts zu beenden, der Eintrag bleibt wie die anderen Einstellungen (HA stellt dasselbe Gerät mit gleicher ID wieder her)
-                continue
-            if pause["mode"] == PAUSE_DATE:
-                if pause["until"] <= now:
-                    await self._resume(device, "date", now)
-                continue
-            if pause["mode"] != PAUSE_ONLINE:
-                continue
-            entries = er.async_entries_for_device(ent_reg, dev)
-            exclude = liveness_exclude(self.hass, dev, entries, opts, device)
-            # Ohne Schwelle ("Ausgefallen nach"): für diese Pause zählt, ob jetzt ein Lebenszeichen da ist; ein kurzes Ausbleiben ist schon "weg"
-            reachable, _since = device_status(self.hass, entries, dt_util.utc_from_timestamp(now), 0, exclude)
-            if not pause["seen_off"]:
-                # Erst muss das Gerät weg gewesen sein, sonst endete die Pause bei einem Gerät, das noch läuft, gleich wieder
-                if reachable is False:
-                    await async_set_device_settings(self.hass, dev, monitor_pause={"mode": PAUSE_ONLINE, "seen_off": True})
-                continue
-            if reachable:
-                first = self._online_since.setdefault(dev, now)
-                if now - first >= ONLINE_CONFIRM:
-                    await self._resume(device, "online", now)
-            else:
-                self._online_since.pop(dev, None)
+            # Ein Gerät mit Fehler darf die Pausen der anderen nicht aufhalten
+            try:
+                await self._check_one(dev, pause, now, registry, ent_reg, opts)
+            except Exception:  # noqa: BLE001
+                _LOGGER.exception("Pause von %s konnte nicht geprüft werden", dev)
         for dev in list(self._online_since):
             if dev not in pauses:
                 del self._online_since[dev]
+
+    async def _check_one(self, dev: str, pause: dict[str, Any], now: float, registry: dr.DeviceRegistry, ent_reg: er.EntityRegistry, opts: dict[str, Any]) -> None:
+        device = registry.async_get(dev)
+        if device is None:
+            # Gelöschtes Gerät: nichts zu beenden, der Eintrag bleibt wie die anderen Einstellungen (HA stellt dasselbe Gerät mit gleicher ID wieder her)
+            return
+        if pause["mode"] == PAUSE_DATE:
+            if pause["until"] <= now:
+                await self._resume(device, "date", now)
+            return
+        if pause["mode"] != PAUSE_ONLINE:
+            return
+        entries = er.async_entries_for_device(ent_reg, dev)
+        exclude = liveness_exclude(self.hass, dev, entries, opts, device)
+        # Ohne Schwelle ("Ausgefallen nach"): für diese Pause zählt, ob jetzt ein Lebenszeichen da ist; ein kurzes Ausbleiben ist schon "weg"
+        reachable, _since = device_status(self.hass, entries, dt_util.utc_from_timestamp(now), 0, exclude)
+        if not pause["seen_off"]:
+            # Erst muss das Gerät weg gewesen sein, sonst endete die Pause bei einem Gerät, das noch läuft, gleich wieder
+            if reachable is False:
+                await async_set_device_settings(self.hass, dev, monitor_pause={"mode": PAUSE_ONLINE, "seen_off": True})
+            return
+        if reachable:
+            first = self._online_since.setdefault(dev, now)
+            if now - first >= ONLINE_CONFIRM:
+                await self._resume(device, "online", now)
+        else:
+            self._online_since.pop(dev, None)
 
     async def _resume(self, device: dr.DeviceEntry, reason: str, now: float) -> None:
         self._online_since.pop(device.id, None)

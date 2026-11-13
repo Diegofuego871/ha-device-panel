@@ -953,12 +953,6 @@ def effective(hass: HomeAssistant) -> dict[str, Any]:
     return values_from(entry.options if entry else {})
 
 
-def exclusions(hass: HomeAssistant) -> tuple[set[str], set[str]]:
-    """Ausgeschlossene Integrationen und Typen."""
-    values = effective(hass)
-    return set(values[CONF_EXCLUDE_INTEGRATIONS]), set(values[CONF_EXCLUDE_TYPES])
-
-
 def notify_target(opts: Mapping[str, Any], topic: str) -> str:
     """Ziel der Meldungen eines Reiters (outage, battery, charge, new, updates, routines): das eigene, sonst das globale (seit 2.18.0)."""
     return str(opts.get(NOTIFY_TOPICS[topic]) or "") or opts[CONF_NOTIFY_SERVICE]

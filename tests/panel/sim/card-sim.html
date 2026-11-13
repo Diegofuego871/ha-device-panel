@@ -40,6 +40,12 @@ const attrs = state === "offline"
       longest_since: null, longest_at_least: false, pulse, offline_list: [] };
 const states = state === "missing" ? {} : { "sensor.device_panel_availability": { entity_id: "sensor.device_panel_availability", state: state === "offline" ? "98.2" : "100.0", last_updated: "2026-11-13T12:00:00Z", attributes: attrs } };
 const entities = state === "missing" ? {} : { "sensor.device_panel_availability": { entity_id: "sensor.device_panel_availability", platform: "device_panel", translation_key: "availability" } };
+// xss=1: vergiftete Namen und Zahlen; nichts davon darf als HTML gelten
+if (q.get("xss") === "1") {
+  attrs.offline_list[0].name = '<img src=x onerror="window.__xss=1">';
+  attrs.warnings = "2<img src=x onerror=\"window.__xss=2\">";
+  attrs.pulse = [0, "<b>", ...attrs.pulse.slice(2)];
+}
 const hass = { states, entities, locale: { language: lang }, language: lang, user: { is_admin: q.get("admin") !== "0" }, callService: () => Promise.reject(new Error("keine Dienste")) };
 const root = document.createElement("home-assistant");
 root.hass = hass;

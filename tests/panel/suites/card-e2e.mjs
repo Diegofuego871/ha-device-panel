@@ -25,7 +25,7 @@ for (const lang of ["de", "en"]) {
       await p.waitForFunction(() => window.__ready || window.__err, null, { timeout: 15000 });
       if (await p.evaluate(() => window.__err)) throw new Error(await p.evaluate(() => window.__err));
     };
-    const txt = (id) => p.evaluate((i) => (document.getElementById(i).shadowRoot.textContent || "").replace(/\s+/g, " ").trim(), id);
+    const txt = (id) => p.evaluate((i) => (document.getElementById(i).shadowRoot.querySelector(".body").innerText || "").replace(/\s+/g, " ").trim(), id);
     const has = (id, sel) => p.evaluate(([i, s]) => !!document.getElementById(i).shadowRoot.querySelector(s), [id, sel]);
 
     // Alles online (dunkel)
@@ -51,6 +51,11 @@ for (const lang of ["de", "en"]) {
     check(`[${tag}] Kein Administrator: kein Pfeil, Tippen tut nichts`, !(await has("o", ".kchev")) && !(await has("a", ".kt.tap")));
     await p.evaluate(() => document.getElementById("o").shadowRoot.querySelector(".kt").click());
     check(`[${tag}] Kein Administrator: Panel wird nicht geöffnet`, (await p.evaluate(() => window.__nav)).length === 0);
+
+    // Vergiftete Attribute: Namen und Zahlen werden nie zu HTML
+    await open("state=offline&xss=1");
+    await p.waitForTimeout(300);
+    check(`[${tag}] vergiftete Namen und Zahlen laufen nicht als HTML`, !(await p.evaluate(() => window.__xss)) && !(await has("o", "img")) && !(await has("all", "img")));
 
     // Sensor fehlt
     await open("state=missing");

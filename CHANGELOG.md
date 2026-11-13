@@ -7,6 +7,14 @@ All notable changes to this integration are documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/).
 
+## [2.216.1] - 2026-11-13
+
+Code review: dashboard cards lighter and safer, the pause watcher more robust.
+
+### Changed
+
+- **Code review:** The dashboard cards draw only their content (the large style sheet is set once, taps are handled once) and take every number from the sensor as a number, never as HTML; the minute refresh runs only while a device is offline. The watcher of the monitoring pause checks each device on its own, so one faulty device no longer holds up the others. An unused function was removed.
+
 ## [2.216.0] - 2026-11-13
 
 Three dashboard cards: Availability, Offline right now and an overview with the outage pulse.
@@ -5970,6 +5978,7 @@ First pre-release.
   GitHub Actions for HACS/hassfest validation and tests.
 
 [2.6.0]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v2.6.0
+[2.216.1]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v2.216.1
 [2.216.0]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v2.216.0
 [2.215.1]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v2.215.1
 [2.215.0]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v2.215.0
