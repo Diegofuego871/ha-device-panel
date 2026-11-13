@@ -4459,7 +4459,7 @@ class DevicePanel extends HTMLElement {
         <label class="pu-field${bad ? " bad" : ""}"><span>${escape(t("dpzCustom"))}</span><input type="date" data-dpz-field value="${escape(day)}" aria-label="${escape(t("dpzCustom"))}"></label>
         <div class="pu-res${bad || none ? " bad" : ""}" data-dpz-res>${escape(bad ? t("pauseUntilPast") : none ? t("dpzPickDate") : t("dpzResultDate", this._fmtDateY(z.until)))}</div>`;
     }
-    setHtml(dlg, `<div class="dd-card pu-card" role="dialog" aria-labelledby="dpz-t"><b id="dpz-t">${escape(t("dpzTitle"))}</b><small>${escape(t("dpzNote"))}</small>
+    setHtml(dlg, `<div class="dd-card pu-card" role="dialog" aria-labelledby="dpz-t"><b id="dpz-t">${escape(t("dpzTitle"))}</b><small>${escape(z.quick ? t("dpzNote") : `${t("dpzNote")} ${t("dpzNoteSave")}`)}</small>
       <div class="sub-tabs" role="tablist">${modes.map(([k, label]) => `<button type="button" role="tab" class="sub-tab${z.mode === k ? " on" : ""}" data-dlg="dpz-mode" data-v="${k}" aria-selected="${z.mode === k}">${escape(t(label))}</button>`).join("")}</div>
       ${body}
       ${z.active ? `<button type="button" class="dlg-btn danger dpz-end" data-dpz="end">${mdi("play", 18)}${escape(t("dpzEnd"))}</button>` : ""}

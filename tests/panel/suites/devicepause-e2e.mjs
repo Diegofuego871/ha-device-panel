@@ -39,6 +39,7 @@ for (const lang of ["de", "en"]) {
     check(`[${tag}] Chip "${L.chip}" in der Herkunftszeile der Zeile "Überwachen" (keine zusätzliche Zeile)`, (await wait(`return !!r.querySelector('${chip}')`)) && (await text(chip)) === L.chip && (await ev(`const c = r.querySelector('${chip}'); return !!c.closest(".opt-origin") && c.closest(".opt").querySelector(".switch") !== null`)));
     await p.screenshot({ path: `${outDir}/devicepause-${tag.replace("/", "-")}-1.png` });
     await tap(chip);
+    check(`[${tag}] Chip: der Hinweis nennt "Speichern" (Entwurf)`, await ev(`return /Speichern|Save/.test(r.querySelector('${Z} .pu-card small').textContent)`));
     check(`[${tag}] Fenster "${L.title}": zwei Reiter "${L.online}" und "${L.date}", "${L.online}" gewählt`, (await wait(`return r.querySelector('${Z}')?.open`)) && (await text(`${Z} #dpz-t`)) === L.title && (await ev(`const t = [...r.querySelectorAll('${Z} [data-dlg="dpz-mode"]')]; return t.length === 2 && t[0].textContent.trim() === ${JSON.stringify(L.online)} && t[0].classList.contains("on") && t[1].textContent.trim() === ${JSON.stringify(L.date)}`)));
     check(`[${tag}] noch keine Pause: kein Knopf "${L.end}"`, await ev(`return !r.querySelector('${Z} [data-dpz="end"]')`));
 
@@ -93,6 +94,7 @@ for (const lang of ["de", "en"]) {
     const before = await p.evaluate(() => window.__wsCalls.filter((m) => m.type === "device_panel/set_device_settings" && "monitor_pause" in m).length);
     await tap(`${D} .dlg-sub .dpz-head`);
     check(`[${tag}] Knopf im Kopf öffnet das Fenster mit "${L.online}"`, (await wait(`return r.querySelector('${Z}')?.open`)) && (await ev(`return r.querySelector('${Z} [data-dlg="dpz-mode"].on').dataset.v === "online"`)));
+    check(`[${tag}] Kopf-Knopf: der Hinweis nennt kein "Speichern" (gilt gleich)`, await ev(`return !/Speichern|Save/.test(r.querySelector('${Z} .pu-card small').textContent)`));
     await tap(`${Z} [data-dpz="apply"]`);
     check(`[${tag}] gilt gleich ohne "Speichern": monitor_pause {mode: online} gesendet`, await p.waitForFunction((n) => window.__wsCalls.filter((m) => m.type === "device_panel/set_device_settings" && "monitor_pause" in m).length > n, before, { timeout: 4000 }).then(() => true, () => false));
     check(`[${tag}] danach Pille im Kopf, Knopf weg`, (await wait(`return !!r.querySelector('${D} .dlg-sub .pill.pz') && !r.querySelector('${D} .dlg-sub .dpz-head')`)));
