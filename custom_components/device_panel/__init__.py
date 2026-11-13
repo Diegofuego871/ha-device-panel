@@ -106,6 +106,8 @@ from .const import (
     PANEL_HTML_FILE,
     PANEL_ICON,
     PANEL_PAGE_URL,
+    CARD_URL,
+    DATA_CARDS,
     PANEL_STATIC_URL_PATH,
     PANEL_TITLE,
     PANEL_URL_PATH,
@@ -442,6 +444,20 @@ async def _async_register_push_icons(hass: HomeAssistant) -> None:
     hass.data[DATA_PUSH_ICONS] = {"dir": folder, "lock": asyncio.Lock(), "missing": {}}
 
 
+def _register_cards(hass: HomeAssistant) -> None:
+    """Dashboard-Karten anmelden (seit 2.216.0): HA bindet das Modul beim Laden der Seite ein, dann erscheinen die Karten im Auswahldialog.
+
+    Zusatz: ein Fehler hier darf die Integration nie mitnehmen. Die Adresse wird nur einmal je Lauf von HA angemeldet (sie lässt sich nicht abmelden).
+    """
+    if hass.data.get(DATA_CARDS):
+        return
+    try:
+        frontend.add_extra_js_url(hass, CARD_URL)
+        hass.data[DATA_CARDS] = True
+    except Exception:  # noqa: BLE001
+        _LOGGER.exception("Die Dashboard-Karten konnten nicht angemeldet werden; das Panel läuft weiter")
+
+
 async def _async_register_panel(hass: HomeAssistant) -> None:
     """
     Eingebautes iframe-Panel statt Custom Panel: HA rendert Kopfzeile,
@@ -460,6 +476,7 @@ async def _async_register_panel(hass: HomeAssistant) -> None:
     except RuntimeError:
         # Pfad nach einem Reload schon registriert.
         pass
+    _register_cards(hass)
     frontend.async_register_built_in_panel(
         hass,
         component_name="iframe",

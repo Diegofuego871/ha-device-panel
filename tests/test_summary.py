@@ -36,7 +36,7 @@ async def test_entities_exist_with_service_device(hass: HomeAssistant, setup) ->
     keys = {e.unique_id.split("_", 1)[1] for e in ent_reg.entities.values() if e.platform == DOMAIN}
     assert keys == {
         "active", "hidden", "offline", "warning", "battery", "battery_low", "charging", "signal_weak", "new", "updates", "errors",
-        "outage", "problem", "acknowledge_errors", "routines_paused",
+        "outage", "problem", "acknowledge_errors", "routines_paused", "availability",
     }
     device = dr.async_get(hass).async_get_device(identifiers={(DOMAIN, "panel")})
     assert device is not None and device.entry_type is dr.DeviceEntryType.SERVICE and device.name == "Device Panel"
@@ -134,3 +134,34 @@ async def test_identifiers_with_more_than_two_parts(hass: HomeAssistant, setup) 
     assert _state(hass, "active") == "1"
     detail = await async_device_detail(hass, device.id)
     assert any(x.startswith("shelly: abc") for x in detail["identifiers"])
+
+
+async def test_availability_sensor_for_the_dashboard_cards(hass: HomeAssistant, setup, freezer) -> None:  # noqa: F811
+    from .test_outage_notify import _tick
+
+    lamp = _device(hass, "Lampe")
+    plug = _device(hass, "Steckdose")
+    _entity(hass, lamp, "light", "l", "on")
+    plug_ent = _entity(hass, plug, "switch", "s", "on")
+    setup.evaluate()
+    await _refresh(hass)
+    assert _state(hass, "availability") == "100.0"
+    hass.states.async_set(plug_ent, "unavailable")
+    await _tick(hass, setup, freezer, 3)
+    await _refresh(hass)
+    entry = next(e for e in er.async_get(hass).entities.values() if e.platform == DOMAIN and e.unique_id.endswith("_availability"))
+    state = hass.states.get(entry.entity_id)
+    assert state.state == "50.0"
+    a = state.attributes
+    assert (a["total"], a["online"], a["offline"], a["paused"], a["warnings"]) == (2, 1, 1, 0, 0)
+    assert a["offline_list"][0]["name"] == "Steckdose" and a["longest_since"]
+    assert len(a["pulse"]) == 48 and a["pulse"][-1] == 1
+    # Kurve und Liste kommen nicht in den Verlauf
+    assert {"pulse", "offline_list"} <= entry_unrecorded(hass, entry.entity_id)
+
+
+def entry_unrecorded(hass: HomeAssistant, entity_id: str) -> frozenset[str]:
+    from homeassistant.helpers.entity_component import EntityComponent  # noqa: F401
+
+    ent = hass.data["sensor"].get_entity(entity_id)
+    return ent._unrecorded_attributes

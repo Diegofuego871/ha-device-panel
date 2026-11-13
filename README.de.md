@@ -374,10 +374,28 @@ Die Integration legt ein eigenes Dienst-Gerät **"Device Panel"** mit Entitäten
 <summary><b>Die Entitäten im Detail</b></summary>
 
 - **Sensoren (Zähler):** Geräte aktiv, ausgeblendet, ausgefallen, mit Warnung, mit Batterie, mit schwacher Batterie, am Laden, mit schwachem Empfang, neu (letzte 3 Tage) und mit Update. Jeder Sensor trägt die Namen der Geräte im Attribut `names` (höchstens 20, `more` zählt den Rest). Eine Warnung zählt wie im Panel (instabil, Batterie niedrig, schwacher Empfang oder keine Daten; ein Ausfall zählt als Ausfall, nicht als Warnung). Deaktivierte und nicht überwachte Geräte zählen nicht.
+- **Verfügbarkeit:** der Sensor **"Verfügbarkeit"** (Prozent der Geräte, die gerade online sind) mit den Zahlen der Dashboard-Karten als Attribute (Durchschnitt 24 Std., stabil, instabil, ausgefallen, ohne Daten, ohne Online-Status, pausiert, Warnungen, Unterbrüche, Puls der letzten 24 Std., der längste Ausfall und bis zu vier ausgefallene Geräte). Puls und Liste kommen nicht in den Verlauf.
 - **Binäre Sensoren:** **Ausfall** (an, wenn mindestens ein Gerät ausgefallen ist) und **Problem** (an bei einem Fehler im Log oder wenn ein Teil der Integration nicht läuft, siehe Status-App).
 - **Schalter:** **Routinen pausiert** (immer; dasselbe wie "Alle Routinen pausieren" im Panel, Attribut `paused_until`) und, wenn du im Assistenten einer Routine "Als Schalter und Knopf in Home Assistant" anhakst, je Routine ein Schalter, der sie ein- und ausschaltet (Attribute `next_run`, `last_run`, `last_result`, `failed`), und ein Knopf, der sie jetzt ausführt (auch bei Pause oder ausgeschalteter Routine); beide verschwinden mit der Routine oder wenn die Option ausgeschaltet wird
 - **Fehlerzähler:** der Sensor **"Fehler (24 Stunden)"** zählt die Einträge der Stufe "error" im Panel-Log der letzten 24 Stunden, mit `last`, `last_category` und `last_at` als Attributen. Als Fehler zählt (Einträge der Stufe "error", Warnungen zählen nicht): eine Routine, die endgültig fehlgeschlagen ist (nach den Wiederholungen, auch beim Zurückschalten und beim Ausführen von Hand), ein Push, der nicht zugestellt werden konnte (Versand fehlgeschlagen, Ziel fehlt oder ungültig), eine fehlgeschlagene oder nicht unterstützte Lade-Live-Meldung und ein fehlgeschlagener Neustart eines von der Status-App überwachten Teils. Der Knopf **"Fehler quittieren"** setzt den Zähler auf null: Er merkt sich den Zeitpunkt des Drückens (auch über Neustarts), danach zählen nur neuere Fehler. Das Log bleibt unberührt, es wird nichts behoben oder neu gestartet, und keine Meldung wird gesendet oder zurückgenommen. **"Problem"** (binärer Sensor) ist an, solange der Zähler über null liegt oder ein Teil der Status-App ein Problem hat; Quittieren kann ihn also ausschalten.
 - Entitäten, die du nicht brauchst, deaktivierst du wie gewohnt in Home Assistant. Das eigene Dienst-Gerät erscheint nicht in der Geräteliste des Panels.
+
+</details>
+
+## Dashboard-Karten
+
+Die Integration bringt drei Karten für jedes Dashboard von Home Assistant mit. Sie erscheinen im Dialog "Karte hinzufügen" (Suche "Device Panel") mit Vorschau, einrichten musst du nichts:
+
+- **Device Panel: Verfügbarkeit:** der Ring mit dem Anteil der Geräte, die gerade online sind, der Durchschnitt der letzten 24 Stunden und die Zeilen stabil, instabil, ausgefallen und ohne Online-Status.
+- **Device Panel: Gerade ausgefallen:** wie viele Geräte ausgefallen sind, der längste Ausfall, bis zu vier Geräte mit ihrer Dauer, die pausierten Geräte und die Warnungen.
+- **Device Panel: Übersicht:** beides zusammen mit dem Ausfall-Puls der letzten 24 Stunden.
+
+Die Karten sehen aus wie die Kacheln des Panels und lesen nur den Sensor **"Verfügbarkeit"** (Zustand: Prozent jetzt online; Attribute mit den Zahlen, dem Puls und den ausgefallenen Geräten). Sie brauchen keine Administratorrechte, wer das Dashboard sieht, sieht also die Zahlen. Nur Administratoren erhalten den Pfeil, ein Tipp auf eine Kachel öffnet das Panel. Im Editor kannst du den Sensor wählen; ohne Wahl findet ihn die Karte selbst.
+
+<details>
+<summary><b>Die Karte fehlt unter "Karte hinzufügen"</b></summary>
+
+Der Dialog kennt nur Module, die mit der Seite geladen wurden. 1. Home Assistant neu starten (ein Neuladen der Integration reicht nicht). 2. `/device_panel/panel/card.js` im Browser öffnen: es muss Quelltext erscheinen. 3. Browser hart neu laden (Strg+Shift+R); in der App: Einstellungen › Fehlerbehebung › "Frontend-Cache zurücksetzen", dann die App ganz schliessen. 4. Die Karte als YAML einfügen (`type: custom:device-panel-card`): "Das Custom-Element existiert nicht" heisst, das Modul wurde nicht geladen. 5. Notfalls unter Einstellungen › Dashboards › Ressourcen `/device_panel/panel/card.js` als JavaScript-Modul eintragen.
 
 </details>
 

@@ -323,6 +323,9 @@
       },
       "errors": {
         "name": "Errors (24 hours)"
+      },
+      "availability": {
+        "name": "Availability"
       }
     },
     "binary_sensor": {

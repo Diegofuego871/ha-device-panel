@@ -7,6 +7,15 @@ All notable changes to this integration are documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/).
 
+## [2.216.0] - 2026-11-13
+
+Three dashboard cards: Availability, Offline right now and an overview with the outage pulse.
+
+### Added
+
+- **Dashboard cards:** The integration delivers three cards for every dashboard, they appear in the dialog "Add card" with a preview: "Device Panel: Availability" (ring, percent online now, average of 24 hours, stable / unstable / offline / without online status), "Device Panel: Offline right now" (count, longest outage, up to four devices with their duration, paused devices, warnings) and "Device Panel: Overview" (both plus the outage pulse of 24 hours). They look like the tiles of the panel and speak German and English. They need no administrator rights; only administrators get the arrow and a tap opens the panel. If the card is missing in the dialog, the README lists the steps.
+- **Sensor "Availability":** The cards read the new sensor "Availability" (state: percent of the devices online right now). Its attributes carry the numbers (average of 24 hours, stable, unstable, offline, without data, without online status, paused, warnings, outages, pulse of 24 hours, longest outage, up to four offline devices); pulse and list are not written to the history. Only numbers, times and the names of the offline devices, which the sensor "Devices offline" shows already.
+
 ## [2.215.1] - 2026-11-13
 
 The tile "Currently failed" also shows how many devices are paused.
@@ -5961,6 +5970,7 @@ First pre-release.
   GitHub Actions for HACS/hassfest validation and tests.
 
 [2.6.0]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v2.6.0
+[2.216.0]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v2.216.0
 [2.215.1]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v2.215.1
 [2.215.0]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v2.215.0
 [2.214.1]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v2.214.1

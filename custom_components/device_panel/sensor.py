@@ -7,6 +7,7 @@ from typing import Any
 
 from homeassistant.components.sensor import SensorEntity, SensorEntityDescription, SensorStateClass
 from homeassistant.config_entries import ConfigEntry
+from homeassistant.const import PERCENTAGE
 from homeassistant.core import HomeAssistant
 from homeassistant.helpers.entity import EntityCategory
 from homeassistant.helpers.entity_platform import AddEntitiesCallback
@@ -40,7 +41,7 @@ SENSORS = (
 
 async def async_setup_entry(hass: HomeAssistant, entry: ConfigEntry, async_add_entities: AddEntitiesCallback) -> None:
     coordinator: SummaryCoordinator = hass.data[DATA_SUMMARY]
-    async_add_entities(PanelSensor(coordinator, entry, description) for description in SENSORS)
+    async_add_entities([*(PanelSensor(coordinator, entry, description) for description in SENSORS), AvailabilitySensor(coordinator, entry)])
 
 
 class PanelSensor(CoordinatorEntity[SummaryCoordinator], SensorEntity):
@@ -67,3 +68,32 @@ class PanelSensor(CoordinatorEntity[SummaryCoordinator], SensorEntity):
         if self.entity_description.key == "errors":
             return {k: part.get(k) for k in ("last", "last_category", "last_at")} | {"status_problems": (self.coordinator.data or {}).get("status_problems", 0)}
         return {k: part[k] for k in ("names", "more") if k in part} or None
+
+
+class AvailabilitySensor(CoordinatorEntity[SummaryCoordinator], SensorEntity):
+    """Verfügbarkeit jetzt in Prozent; die Attribute tragen die Zahlen der Dashboard-Karten (seit 2.216.0), siehe summary._availability."""
+
+    _attr_has_entity_name = True
+    _attr_translation_key = "availability"
+    _attr_icon = "mdi:chart-donut"
+    _attr_native_unit_of_measurement = PERCENTAGE
+    _attr_state_class = SensorStateClass.MEASUREMENT
+    # Kurve und Liste gehören den Karten, nicht dem Verlauf: ohne sie bliebe die Datenbank bei jeder Änderung grösser
+    _unrecorded_attributes = frozenset({"pulse", "offline_list"})
+
+    def __init__(self, coordinator: SummaryCoordinator, entry: ConfigEntry) -> None:
+        super().__init__(coordinator)
+        self._attr_unique_id = f"{entry.entry_id}_availability"
+        self._attr_device_info = coordinator.device_info
+
+    @property
+    def _part(self) -> dict[str, Any]:
+        return (self.coordinator.data or {}).get("availability") or {}
+
+    @property
+    def native_value(self) -> float | None:
+        return self._part.get("share")
+
+    @property
+    def extra_state_attributes(self) -> dict[str, Any] | None:
+        return {k: v for k, v in self._part.items() if k != "share"} or None

@@ -323,6 +323,9 @@
       },
       "errors": {
         "name": "Fehler (24 Stunden)"
+      },
+      "availability": {
+        "name": "Verfügbarkeit"
       }
     },
     "binary_sensor": {

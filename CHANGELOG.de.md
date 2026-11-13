@@ -7,6 +7,15 @@ Alle nennenswerten Änderungen an dieser Integration stehen in dieser Datei.
 Das Format folgt [Keep a Changelog](https://keepachangelog.com/de/1.1.0/),
 die Versionsnummern folgen [Semantic Versioning](https://semver.org/lang/de/).
 
+## [2.216.0] - 2026-11-13
+
+Drei Dashboard-Karten: Verfügbarkeit, Gerade ausgefallen und eine Übersicht mit dem Ausfall-Puls.
+
+### Hinzugefügt
+
+- **Dashboard-Karten:** Die Integration liefert drei Karten für jedes Dashboard, sie erscheinen im Dialog "Karte hinzufügen" mit Vorschau: "Device Panel: Verfügbarkeit" (Ring, Prozent jetzt online, Durchschnitt 24 Stunden, stabil / instabil / ausgefallen / ohne Online-Status), "Device Panel: Gerade ausgefallen" (Zahl, längster Ausfall, bis zu vier Geräte mit ihrer Dauer, pausierte Geräte, Warnungen) und "Device Panel: Übersicht" (beides plus der Ausfall-Puls der letzten 24 Stunden). Sie sehen aus wie die Kacheln des Panels und sprechen Deutsch und Englisch. Sie brauchen keine Administratorrechte; nur Administratoren erhalten den Pfeil, ein Tipp öffnet das Panel. Fehlt die Karte im Dialog, nennt die README die Schritte.
+- **Sensor "Verfügbarkeit":** Die Karten lesen den neuen Sensor "Verfügbarkeit" (Zustand: Prozent der Geräte, die gerade online sind). Seine Attribute tragen die Zahlen (Durchschnitt 24 Stunden, stabil, instabil, ausgefallen, ohne Daten, ohne Online-Status, pausiert, Warnungen, Unterbrüche, Puls der letzten 24 Stunden, längster Ausfall, bis zu vier ausgefallene Geräte); Puls und Liste kommen nicht in den Verlauf. Nur Zahlen, Zeiten und die Namen der ausgefallenen Geräte, die der Sensor "Geräte ausgefallen" schon zeigt.
+
 ## [2.215.1] - 2026-11-13
 
 Die Kachel "Gerade ausgefallen" zeigt auch, wie viele Geräte pausiert sind.
@@ -6062,6 +6071,7 @@ Erste Vorabversion.
   GitHub Actions für die Prüfungen von HACS und hassfest sowie die Tests.
 
 [2.6.0]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v2.6.0
+[2.216.0]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v2.216.0
 [2.215.1]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v2.215.1
 [2.215.0]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v2.215.0
 [2.214.1]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v2.214.1

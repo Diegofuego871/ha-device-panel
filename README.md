@@ -374,10 +374,28 @@ The integration creates its own service device **"Device Panel"** with entities,
 <summary><b>The entities in detail</b></summary>
 
 - **Sensors (counts):** devices active, hidden, offline, with warning, with battery, with low battery, charging, with weak reception, new (last 3 days) and with an update. Every sensor carries the names of the devices as attribute `names` (at most 20, `more` counts the rest). A warning is counted like in the panel (unstable, low battery, weak reception or no data; an outage counts as outage, not as warning). Disabled and unmonitored devices are not counted.
+- **Availability:** the sensor **"Availability"** (percent of the devices online right now) with the numbers of the dashboard cards as attributes (average of 24 hours, stable, unstable, offline, without data, without online status, paused, warnings, outages, pulse of 24 hours, the longest outage and up to four offline devices). Pulse and list are not written to the history.
 - **Binary sensors:** **Outage** (on when at least one device is offline) and **Problem** (on when there is an error in the log or a part of the integration is not running, see the status app).
 - **Switches:** **Routines paused** (always; the same as "Pause all routines" in the panel, attribute `paused_until`) and, if you tick "As a switch and button in Home Assistant" in the assistant of a routine, one switch per routine that turns it on and off (attributes `next_run`, `last_run`, `last_result`, `failed`) and one button that runs it now (also while paused or when the routine is off); both are removed with the routine or when the option is switched off
 - **Error counter:** the sensor **"Errors (24 hours)"** counts the entries of level "error" in the panel log of the last 24 hours, with `last`, `last_category` and `last_at` as attributes. What counts as an error (entries of level "error", warnings do not count): a routine that failed for good (after its retries, also when switching back or when run by hand), a push that could not be delivered (the sending failed, or the target is missing or invalid), a failed or unsupported live charging notification, and a failed restart of a part watched by the status app. The button **"Acknowledge errors"** sets the counter to zero: it remembers the moment of pressing (also across restarts), from then on only newer errors count. The log stays untouched, nothing is fixed or restarted, no notification is sent or withdrawn. **"Problem"** (binary sensor) is on while the counter is above zero or a part of the status app has a problem, so acknowledging can switch it off.
 - Entities you do not need, you can disable in Home Assistant as usual. The own service device does not appear in the device list of the panel.
+
+</details>
+
+## Dashboard cards
+
+The integration brings three cards for every Home Assistant dashboard. They appear in the dialog "Add card" (search "Device Panel") with a preview, nothing to set up:
+
+- **Device Panel: Availability:** the ring with the share of devices online right now, the average of the last 24 hours and the lines stable, unstable, offline and without online status.
+- **Device Panel: Offline right now:** how many devices are offline, the longest outage, up to four devices with their duration, the paused devices and the warnings.
+- **Device Panel: Overview:** both together with the outage pulse of the last 24 hours.
+
+The cards look like the tiles of the panel and read only the sensor **"Availability"** (state: percent online now; attributes with the numbers, the pulse and the offline devices). They need no administrator rights, so everyone who sees the dashboard sees the numbers. Only administrators get the arrow, a tap on a tile opens the panel. In the editor you can choose the sensor; without a choice the card finds it itself.
+
+<details>
+<summary><b>The card is missing in "Add card"</b></summary>
+
+The dialog knows only modules that were loaded together with the page. 1. Restart Home Assistant (reloading the integration is not enough). 2. Open `/device_panel/panel/card.js` in the browser: it must show source text. 3. Reload the browser hard (Ctrl+Shift+R); in the app: Settings › Troubleshooting › "Reset frontend cache", then close the app completely. 4. Paste the card as YAML (`type: custom:device-panel-card`): "Custom element doesn't exist" means the module was not loaded. 5. As a last resort add `/device_panel/panel/card.js` under Settings › Dashboards › Resources as JavaScript module.
 
 </details>
 

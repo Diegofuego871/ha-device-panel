@@ -11,6 +11,12 @@ Einstieg für jede neue Claude-Code-Session. Zuerst diese Datei lesen, dann
 
 - `charge.py` `known_rechargeable`: Lademeldung gilt (global + Gerät/Integration), oder am Gerät ausdrücklich "Ein", oder Live-Aktivität für das Gerät an; `rechargeable()` und `charging_of()` nutzen sie (vorher nur `enabled()` mit globalem Schalter). Test `test_rechargeable_by_device_charge_or_live`.
 
+## Stand (2.216.0, Dashboard-Karten)
+
+- `panel/card.js`: drei Elemente (`device-panel-availability-card`, `device-panel-offline-card`, `device-panel-card`) mit gemeinsamer Basisklasse; nutzt `PANEL_CSS` und `STRINGS` des Panels (Cache-Buster `?v=` aus `import.meta.url`), eigene kleine Fassung von Ring und Puls-Kurve. Liest nur den Sensor "Verfügbarkeit" (`summary._availability`, `sensor.AvailabilitySensor`, Attribute `pulse`/`offline_list` nicht im Recorder). Registrierung `_register_cards` in `__init__.py` (`frontend.add_extra_js_url`, einmal je Lauf, in try/except). Pfeil und Tippen nur für Administratoren; kein Tiefenlink mit Filter (das Panel kennt nur `device`, `app`, `tab`).
+- Quelle der Vorgabe: ha-alarmageddon `docs/INFO-DASHBOARD-KARTEN-DEVICE-PANEL.md`. Offen: Darstellung im dunklen Thema eines echten Home Assistant prüfen; das Stylesheet kennt kein `:host([dark])` für die Kacheln.
+- Tests: `tests/test_dashboard_card.py`, `tests/test_summary.py`, Nachbau `tests/panel/sim/card-sim.html`, Suite `card-e2e.mjs`. Ohne Mockup gebaut: die Karten übernehmen die Kacheln des Panels 1:1.
+
 ## Stand (2.215.1, pausierte Geräte in der Kachel "Gerade ausgefallen")
 
 - `_heroHtml(all, offline, noStatus, paused)`: `paused` zählt aus dem Bereichs-Umfang (nicht aus `monitored`, das pausierte ausschliesst); Knopf `.kpause` mit `data-hint="paused"` (der vorhandene Chip-Handler schaltet den Filter), in beiden Fassungen der Kachel über der Warnzeile. Test: `devicepause-e2e`.
