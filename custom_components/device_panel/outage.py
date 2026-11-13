@@ -28,12 +28,13 @@ from __future__ import annotations
 
 import logging
 import time
+from datetime import timedelta
 from typing import Any
 
 from homeassistant.components import persistent_notification
 from homeassistant.core import CALLBACK_TYPE, Event, HomeAssistant, callback
 from homeassistant.helpers import device_registry as dr
-from homeassistant.helpers.event import async_call_later
+from homeassistant.helpers.event import async_call_later, async_track_time_interval
 from homeassistant.helpers.storage import Store
 from homeassistant.util import dt as dt_util
 
@@ -77,6 +78,10 @@ EVENT_ACTION = "mobile_app_notification_action"
 
 def _local_time(ts: float) -> str:
     return dt_util.as_local(dt_util.utc_from_timestamp(ts)).strftime("%H:%M")
+
+
+# Abstand der Selbstbereinigung (Geräte, die es nicht mehr gibt oder die nicht mehr überwacht werden)
+SWEEP_INTERVAL = timedelta(minutes=15)
 
 
 class OutageNotifier:
@@ -124,6 +129,8 @@ class OutageNotifier:
         self._unsubs.append(self._log.add_listener(self._on_changes))
         self._unsubs.append(self.hass.bus.async_listen(EVENT_ACTION, self._on_action))
         self._unsubs.append(persistent_notification.async_register_callback(self.hass, self._on_notification))
+        # Selbstbereinigung (seit 2.215.1): auch ohne neuen Wechsel regelmässig prüfen, ob die ausgefallenen Geräte noch überwacht werden
+        self._unsubs.append(async_track_time_interval(self.hass, self._on_sweep, SWEEP_INTERVAL))
         # Beim Start von HA meldet die erste Bewertung des Protokolls jedes
         # Gerät, danach folgt ein Durchlauf hier. Läuft HA schon (Integration
         # neu geladen), hat das Protokoll vor uns bewertet: gleich nachholen
@@ -143,6 +150,11 @@ class OutageNotifier:
         # Sofort schreiben: ein verzögerter Termin legte die Datei nach dem
         # Entfernen der Integration sonst neu an.
         await self._store.async_save(self._data())
+
+    @callback
+    def _on_sweep(self, _now: Any) -> None:
+        if self._forget_unmonitored(effective(self.hass)):
+            self.hass.async_create_task(self.async_flush())
 
     @callback
     def _on_changes(self, changes: list[tuple[str, Any, float]]) -> None:
@@ -257,23 +269,24 @@ class OutageNotifier:
         self._update_persistent(opts, new_outage)
         self._schedule(opts, now)
 
-    def _forget_unmonitored(self, opts: dict[str, Any]) -> None:
+    def _forget_unmonitored(self, opts: dict[str, Any]) -> bool:
         """Geräte vergessen, die nicht mehr überwacht werden (gelöscht, deaktiviert, ohne Entitäten, ausgeschlossen).
 
         Der Wechsel "gone" des Protokolls kommt nur einmal und nur, solange der letzte Eintrag ein Zustand ist. Ging er verloren (Neustart,
         Integration neu geladen, Entitäten schon vorher weg), blieb der Ausfall in der eigenen Datei stehen und kam bei jedem Start wieder.
         """
         if not self._offline and not self._notified:
-            return
+            return False
         monitored = {device.id for device, _entries in status_devices(self.hass, opts)}
         stale = [dev for dev in self._offline if dev not in monitored]
         if not stale and not (self._notified - monitored):
-            return
+            return False
         for dev in stale:
             self._offline.pop(dev, None)
             self._debug(dev, "outage_gone")
         self._notified &= monitored
         self._store.async_delay_save(self._data, 1)
+        return True
 
     def _delay(self, opts: dict[str, Any], dev: str) -> int:
         """"Erst melden nach" des Geräts in Sekunden; ein Gerät, das es nicht mehr gibt, folgt dem globalen Wert."""

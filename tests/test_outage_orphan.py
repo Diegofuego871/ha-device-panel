@@ -84,3 +84,19 @@ async def test_restart_no_log_entry(hass: HomeAssistant, hass_storage, freezer) 
     log = await _restart(hass, hass_storage, dev, None)
     await _tick(hass, log, freezer, 3)
     assert dev.id not in hass.data[DATA_OUTAGE].offline
+
+
+async def test_sweep_removes_device_deleted_in_between(hass: HomeAssistant, setup, freezer) -> None:
+    from datetime import timedelta
+
+    from pytest_homeassistant_custom_component.common import async_fire_time_changed
+
+    dev, ent, notifier = await _outage(hass, setup, freezer)
+    # Das Signal "gone" geht verloren: Eintrag von Hand zurücklegen, das Gerät gibt es nicht mehr
+    dr.async_get(hass).async_remove_device(dev.id)
+    notifier._offline[dev.id] = 1.0
+    notifier._notified.add(dev.id)
+    freezer.tick(timedelta(minutes=16))
+    async_fire_time_changed(hass)
+    await hass.async_block_till_done()
+    assert dev.id not in notifier.offline and dev.id not in notifier.notified

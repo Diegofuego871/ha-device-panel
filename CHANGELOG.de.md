@@ -17,7 +17,7 @@ Die Kachel "Gerade ausgefallen" zeigt auch, wie viele Geräte pausiert sind.
 
 ### Behoben
 
-- **Entferntes oder deaktiviertes Gerät wurde weiter als ausgefallen gemeldet (Issue 5):** Fiel ein Gerät aus und wurde dann gelöscht, deaktiviert oder verlor alle Entitäten, während der Ausfall schon bekannt war, nannte die anhaltende Benachrichtigung "Device Panel: Geräte ausgefallen" es bei jedem Start von Home Assistant wieder. Ursache: Der Ausfall steht in der eigenen Datei der Meldungen, und der einmalige Hinweis "nicht mehr überwacht" des Verfügbarkeitsprotokolls konnte verloren gehen (Neustart, Neuladen, Entitäten schon vorher weg); der Eintrag wurde dann nie entfernt. Die Meldungen vergessen nun bei jeder Prüfung und beim Start jedes Gerät, das nicht mehr überwacht wird, ohne Meldung; die anhaltende Benachrichtigung nennt deaktivierte Geräte nicht mehr. Danke an owl70 für die Meldung.
+- **Entferntes oder deaktiviertes Gerät wurde weiter als ausgefallen gemeldet (Issue 5):** Fiel ein Gerät aus und wurde dann gelöscht, deaktiviert oder verlor alle Entitäten, während der Ausfall schon bekannt war, nannte die anhaltende Benachrichtigung "Device Panel: Geräte ausgefallen" es bei jedem Start von Home Assistant wieder. Ursache: Der Ausfall steht in der eigenen Datei der Meldungen, und der einmalige Hinweis "nicht mehr überwacht" des Verfügbarkeitsprotokolls konnte verloren gehen (Neustart, Neuladen, Entitäten schon vorher weg); der Eintrag wurde dann nie entfernt. Die Meldungen vergessen nun bei jeder Prüfung, beim Start und in einer Selbstbereinigung alle 15 Minuten jedes Gerät, das nicht mehr überwacht wird, ohne Meldung; die anhaltende Benachrichtigung nennt deaktivierte Geräte nicht mehr. Danke an owl70 für die Meldung.
 
 ## [2.215.0] - 2026-11-13
 
