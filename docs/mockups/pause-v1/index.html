@@ -1,0 +1,120 @@
+<!doctype html><meta charset="utf-8"><title>Gerät zeitweise nicht überwachen, Mockup</title><style>
+:root{--p:#43a047;--bg:#1c1c1c;--card:#2a2a2a;--ln:#3a3a3a;--t2:#9a9a9a;--red:#e5534b;--warn:#f5a524}
+*{box-sizing:border-box}
+body{margin:0;background:#0d0d0d;font:14px/1.35 Roboto,Arial,sans-serif;color:#e6e6e6;padding:24px;width:1560px}
+h1{margin:0 0 4px;font-size:22px}
+h2{margin:30px 0 4px;font-size:17px}h2 .rec{color:var(--p)}
+.sub{color:var(--t2);font-size:13px;margin:0 0 12px;max-width:1450px}
+.row4{display:grid;grid-template-columns:repeat(4,360px);gap:18px;align-items:start}
+.ph{background:var(--bg);border:1px solid var(--ln);border-radius:18px;padding:14px;display:flex;flex-direction:column;gap:9px;position:relative;height:600px;overflow:hidden}
+.cap{color:#8a8a8a;font-size:12px;letter-spacing:.04em;text-transform:uppercase;min-height:16px}
+.hd{display:flex;align-items:center;gap:10px}.hi{width:44px;height:44px;border-radius:12px;background:#1f3a24;display:grid;place-items:center;color:var(--p);font-size:20px}
+.hd .nm{flex:1}.hd b{font-size:19px}.hd small{display:flex;gap:8px;align-items:center;color:var(--t2);font-size:12px;margin-top:3px}
+.pill{display:inline-flex;align-items:center;gap:5px;border-radius:99px;padding:2px 9px;background:#1f3a24;color:var(--p);font-size:12px}
+.pill.pz{background:#3a2c10;color:var(--warn)}
+.ib{width:34px;height:34px;border-radius:50%;border:1px solid #4a4a4a;display:grid;place-items:center;color:#bbb;font-size:15px}
+.ib.pz{border-color:var(--warn);color:var(--warn)}
+.tabs{display:flex;background:#161616;border-radius:14px;padding:3px;font-size:14px;color:var(--t2)}.tabs span{flex:1;text-align:center;padding:7px 0;border-radius:11px}.tabs .on{background:#0b0b0b;color:var(--p)}
+.sec{color:#8a8a8a;font-size:12px;letter-spacing:.05em;text-transform:uppercase;margin-top:4px}
+.box{border:1px solid var(--ln);border-radius:16px;padding:12px 14px;display:flex;flex-direction:column;gap:6px}
+.pr{display:flex;align-items:center;gap:10px;min-height:32px}.pr .l{flex:1;font-size:16px}
+.sw{width:42px;height:24px;border-radius:99px;background:#555;position:relative;flex:none}.sw::after{content:"";position:absolute;top:3px;left:3px;width:18px;height:18px;border-radius:50%;background:#fff}
+.sw.on{background:var(--p)}.sw.on::after{left:21px}
+.desc{color:var(--t2);font-size:12.5px}
+.org{display:flex;gap:8px;align-items:center;flex-wrap:wrap}
+.std{background:#262626;color:#a0a0a0;border-radius:99px;padding:3px 10px;font-size:12px}
+.chip{border:1px solid var(--p);color:var(--p);border-radius:99px;padding:3px 10px;font-size:12.5px;white-space:nowrap}
+.chip.pz{border-color:var(--warn);color:var(--warn);background:#2e2410}
+.line{border-top:1px solid var(--ln);margin:2px 0}
+.sub-tabs{display:flex;background:#161616;border-radius:14px;padding:3px;font-size:13px;color:var(--t2)}.sub-tabs span{flex:1;text-align:center;padding:7px 0;border-radius:11px}.sub-tabs .on{background:#0b0b0b;color:var(--p)}
+.dim{opacity:.38}
+.row{display:flex;align-items:center;gap:10px;border-top:1px solid var(--ln);padding:11px 0}.row .l{flex:1}.row small{display:block;color:var(--t2);font-size:12px}.row .cv{color:var(--p)}
+.scrim{position:absolute;inset:0;background:rgba(0,0,0,.58);display:flex;align-items:flex-end;padding:12px}
+.dlg{background:#2b2b2b;border:1px solid #444;border-radius:18px;padding:16px;width:100%;display:flex;flex-direction:column;gap:11px}
+.dlg h3{margin:0;font-size:18px}.dlg p{margin:0;color:var(--t2);font-size:13px}
+.seg{display:flex;background:#161616;border-radius:14px;padding:3px;gap:2px}.seg span{flex:1;text-align:center;padding:8px 2px;border-radius:11px;font-size:13px;color:var(--t2)}.seg .on{background:#0b0b0b;color:var(--p)}
+.fld{display:flex;align-items:center;justify-content:space-between;border:1px solid var(--p);border-radius:10px;padding:9px 12px;background:#202020}
+.res{color:var(--p);font-size:13px}.res.w{color:var(--warn)}
+.btns{display:flex;gap:10px}.btns span{flex:1;text-align:center;padding:10px;border-radius:12px;border:1px solid #555}.btns .pri{background:#2e6b33;border-color:#2e6b33;color:#fff}.btns .del{color:var(--red);border-color:#5a2f2c}
+.card{background:var(--card);border-radius:14px;padding:10px 12px;display:flex;align-items:center;gap:10px}.card .t{flex:1}.card .t b{display:block}.card .t small{color:var(--t2);font-size:12px}
+.grp{color:#8a8a8a;font-size:12px;letter-spacing:.05em;text-transform:uppercase;margin-top:4px}
+.cost{display:inline-block;background:#333;border-radius:8px;padding:1px 8px;font-size:11px;color:#aaa;margin-left:6px}
+.note{color:var(--t2);font-size:12.5px}
+.arrow{position:absolute;color:#f5a524;font-size:12px}
+</style><body>
+<h1>Gerät zeitweise nicht überwachen</h1>
+<p class="sub">Ausgangslage: Issue 4 (Gardena-Geräte im Winter im Haus). Heute gibt es nur "Überwachen aus" ohne Ende, man müsste im Frühling daran denken. Neu: eine Pause mit Ende, entweder an einem Datum oder "bis das Gerät wieder online ist". Während der Pause verhält sich das Gerät wie "Überwachen aus": keine Ausfälle, keine Batterie-Warnung, keine Meldungen, keine Statistik.</p>
+
+<h2>A · Chip in der Zeile unter "Überwachen" <span class="rec">(Empfehlung)</span><span class="cost">Platz: 0 zusätzliche Zeilen</span></h2>
+<p class="sub">In der Zeile mit "Standard" steht ein zweiter Chip "Pausieren …". Er öffnet ein Fenster mit der Wahl. Bei aktiver Pause wird er orange ("Pausiert bis 1.4.2027") und ändert oder beendet die Pause. Der Schalter bleibt an, weil "Überwachen" als Einstellung gilt, die Pause ist nur zeitlich darüber. Oben im Kopf kommt neben "Online" ein kleines "Pausiert".</p>
+<div class="row4">
+<div class="ph"><div class="cap">1 · Normal</div>
+<div class="hd"><div class="hi">🌿</div><div class="nm"><b>Bewässerung Garten</b><small><span class="pill">● Online</span>Ventil · Garten</small></div><div class="ib">▤</div><div class="ib">♡</div></div>
+<div class="tabs"><span>📊</span><span class="on">⚙ Einstellungen</span><span>🧩</span><span>🔔</span><span>⚡</span></div>
+<div class="sec">Einstellungen für dieses Gerät</div>
+<div class="box"><div class="pr"><span class="l">Überwachen</span><div class="sw on"></div></div>
+<div class="desc">Aus: Die Geräte bleiben im Panel, ohne Ausfälle, Batterie-Warnung, Statistik und Meldungen.</div>
+<div class="org"><span class="std">Standard</span><span class="chip">⏸ Pausieren …</span></div>
+<div class="line"></div>
+<div class="sub-tabs"><span class="on">Ausfall</span><span>Batterie</span><span>Laden</span><span>Empfang</span></div>
+<div class="pr"><span class="l">Online-Status beobachten</span><div class="sw on"></div></div><div class="org"><span class="std">Standard</span></div>
+</div></div>
+
+<div class="ph"><div class="cap">2 · Chip antippen: bis wieder online</div>
+<div class="hd"><div class="hi">🌿</div><div class="nm"><b>Bewässerung Garten</b><small><span class="pill">● Online</span>Ventil · Garten</small></div><div class="ib">▤</div><div class="ib">♡</div></div>
+<div class="tabs dim"><span>📊</span><span class="on">⚙ Einstellungen</span><span>🧩</span><span>🔔</span><span>⚡</span></div>
+<div class="box dim"><div class="pr"><span class="l">Überwachen</span><div class="sw on"></div></div><div class="desc">Aus: Die Geräte bleiben im Panel, …</div></div>
+<div class="scrim"><div class="dlg"><h3>Überwachung pausieren</h3><p>Das Gerät bleibt im Panel, meldet aber nichts, bis die Pause endet.</p>
+<div class="seg"><span class="on">Bis wieder online</span><span>Bis Datum</span></div>
+<p>Ideal für Geräte, die du im Winter ins Haus nimmst: Sobald das Gerät im Frühling wieder erreichbar ist, wird es von selbst wieder überwacht.</p>
+<div class="res">Pause endet, sobald das Gerät wieder online ist</div>
+<div class="btns"><span>Abbrechen</span><span class="pri">Pausieren</span></div></div></div></div>
+
+<div class="ph"><div class="cap">3 · Chip antippen: bis Datum</div>
+<div class="hd"><div class="hi">🌿</div><div class="nm"><b>Bewässerung Garten</b><small><span class="pill">● Online</span>Ventil · Garten</small></div><div class="ib">▤</div><div class="ib">♡</div></div>
+<div class="tabs dim"><span>📊</span><span class="on">⚙ Einstellungen</span><span>🧩</span><span>🔔</span><span>⚡</span></div>
+<div class="box dim"><div class="pr"><span class="l">Überwachen</span><div class="sw on"></div></div><div class="desc">Aus: Die Geräte bleiben im Panel, …</div></div>
+<div class="scrim"><div class="dlg"><h3>Überwachung pausieren</h3><p>Das Gerät bleibt im Panel, meldet aber nichts, bis die Pause endet.</p>
+<div class="seg"><span>Bis wieder online</span><span class="on">Bis Datum</span></div>
+<div class="seg"><span>1 Monat</span><span>3 Monate</span><span class="on">1. April</span><span>Ohne Ende</span></div>
+<div class="fld"><span>Eigenes Datum: Do., 1.4.2027</span><span>📅</span></div>
+<div class="res">Pausiert bis Do., 1.4.2027, 00:00</div>
+<div class="btns"><span>Abbrechen</span><span class="pri">Pausieren</span></div></div></div></div>
+
+<div class="ph"><div class="cap">4 · Pausiert (Einstellungen und Liste)</div>
+<div class="hd"><div class="hi">🌿</div><div class="nm"><b>Bewässerung Garten</b><small><span class="pill pz">⏸ Pausiert</span>Ventil · Garten</small></div><div class="ib">▤</div><div class="ib">♡</div></div>
+<div class="box"><div class="pr"><span class="l">Überwachen</span><div class="sw on"></div></div>
+<div class="org"><span class="std">Standard</span><span class="chip pz">⏸ Pausiert bis 1.4.2027</span></div>
+<div class="desc">Tippen zum Ändern oder Beenden. Ausfall, Batterie und Empfang ruhen.</div></div>
+<div class="grp">Nicht überwacht</div>
+<div class="card"><span style="font-size:20px">🌿</span><div class="t"><b>Bewässerung Garten</b><small>Gardena · Garten</small></div><span class="pill pz">⏸ bis 1.4.2027</span></div>
+<div class="card"><span style="font-size:20px">🌱</span><div class="t"><b>Bodenfeuchte Beet</b><small>Gardena · Garten</small></div><span class="pill pz">⏸ bis online</span></div>
+<p class="note">Läuft die Pause ab oder kommt das Gerät wieder online, steht ein Eintrag im Protokoll ("Überwachung wieder aufgenommen") und das Gerät erscheint wieder bei den normalen Geräten.</p></div>
+</div>
+
+<h2>B · Eigene Zeile "Pausieren bis …" unter "Überwachen" <span class="cost">Platz: 1 zusätzliche Zeile (bei Pause 2)</span></h2>
+<p class="sub">Sichtbarer, aber die Karte oben wird länger. Das Fenster ist dasselbe wie in A.</p>
+<div class="row4">
+<div class="ph" style="height:430px"><div class="cap">1 · Normal</div>
+<div class="sec">Einstellungen für dieses Gerät</div>
+<div class="box"><div class="pr"><span class="l">Überwachen</span><div class="sw on"></div></div>
+<div class="desc">Aus: Die Geräte bleiben im Panel, ohne Ausfälle, Batterie-Warnung, Statistik und Meldungen.</div><div class="org"><span class="std">Standard</span></div>
+<div class="row"><div class="l">Pausieren bis …<small>Zeitweise nicht überwachen</small></div><span class="cv">›</span></div>
+<div class="sub-tabs"><span class="on">Ausfall</span><span>Batterie</span><span>Laden</span><span>Empfang</span></div></div></div>
+<div class="ph" style="height:430px"><div class="cap">2 · Pausiert</div>
+<div class="sec">Einstellungen für dieses Gerät</div>
+<div class="box"><div class="pr"><span class="l">Überwachen</span><div class="sw on"></div></div>
+<div class="desc">Aus: Die Geräte bleiben im Panel, ohne Ausfälle, Batterie-Warnung, Statistik und Meldungen.</div><div class="org"><span class="std">Standard</span></div>
+<div class="row"><div class="l" style="color:var(--warn)">⏸ Pausiert bis 1.4.2027<small>Tippen zum Ändern oder Beenden</small></div><span class="cv">›</span></div>
+<div class="sub-tabs dim"><span class="on">Ausfall</span><span>Batterie</span><span>Laden</span><span>Empfang</span></div></div></div>
+</div>
+
+<h2>C · Knopf im Kopf des Geräts (neben Protokoll und Herz) <span class="cost">Platz: 0 Zeilen, dafür ein vierter Knopf im Kopf</span></h2>
+<p class="sub">Kein Platz in den Einstellungen, aber schwerer zu finden und der Kopf ist auf dem Handy schon voll (Stift, Protokoll, Herz, Kreuz). Das Fenster ist dasselbe wie in A.</p>
+<div class="row4">
+<div class="ph" style="height:230px"><div class="cap">1 · Normal</div>
+<div class="hd"><div class="hi">🌿</div><div class="nm"><b>Bewässerung Garten</b><small><span class="pill">● Online</span>Ventil · Garten</small></div><div class="ib">⏸</div><div class="ib">▤</div><div class="ib">♡</div></div></div>
+<div class="ph" style="height:230px"><div class="cap">2 · Pausiert</div>
+<div class="hd"><div class="hi">🌿</div><div class="nm"><b>Bewässerung Garten</b><small><span class="pill pz">⏸ bis 1.4.2027</span>Ventil · Garten</small></div><div class="ib pz">⏸</div><div class="ib">▤</div><div class="ib">♡</div></div></div>
+</div>
+</body>
