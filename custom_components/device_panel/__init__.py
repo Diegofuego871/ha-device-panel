@@ -5,6 +5,7 @@ from __future__ import annotations
 import asyncio
 import logging
 import shutil
+import time
 from pathlib import Path
 from typing import Any
 
@@ -77,6 +78,7 @@ from .const import (
     INT_RANGES,
     DATA_AVAILABILITY,
     DATA_BATTERY,
+    DATA_MONITOR_PAUSE,
     DATA_NEW,
     DATA_ACTIVITY,
     DATA_CHARGE,
@@ -120,6 +122,7 @@ from .summary import PLATFORMS, SUMMARY_STORE_KEY, SummaryCoordinator
 from .device_update import UpdateError, held_until
 from .device_update import last_error as update_last_error
 from .device_update import async_install as async_install_update
+from .monitor_pause import MonitorPauseWatch, async_set_pause
 from .restart_pending import async_pending as async_restart_needed
 from .update_queue import DATA_UPDATE_QUEUE, available as update_available, get_queue as get_update_queue
 from .devices import (
@@ -197,6 +200,10 @@ async def async_setup_entry(hass: HomeAssistant, entry: ConfigEntry) -> bool:
         notifier = OutageNotifier(hass, hass.data[DATA_AVAILABILITY])
         await notifier.async_start()
         hass.data[DATA_OUTAGE] = notifier
+    if DATA_MONITOR_PAUSE not in hass.data:
+        pause_watch = MonitorPauseWatch(hass)
+        await pause_watch.async_start()
+        hass.data[DATA_MONITOR_PAUSE] = pause_watch
     if DATA_BATTERY not in hass.data:
         watch = BatteryWatch(hass)
         await watch.async_start()
@@ -316,6 +323,8 @@ async def async_unload_entry(hass: HomeAssistant, entry: ConfigEntry) -> bool:
         await update_notifier.async_stop()
     if (charge_notifier := hass.data.pop(DATA_CHARGE, None)) is not None:
         await charge_notifier.async_stop()
+    if (pause_watch := hass.data.pop(DATA_MONITOR_PAUSE, None)) is not None:
+        await pause_watch.async_stop()
     if (watch := hass.data.pop(DATA_BATTERY, None)) is not None:
         await watch.async_stop()
     if (signal_log := hass.data.pop(DATA_SIGNAL, None)) is not None:
@@ -1082,6 +1091,13 @@ def _notify_delay_setting(value: Any) -> Any:
     return value
 
 
+def _pause_future(value: dict[str, Any]) -> dict[str, Any]:
+    """Pause bis ein Datum (seit 2.214.0): das Ende muss in der Zukunft liegen."""
+    if value["until"] <= time.time():
+        raise vol.Invalid("Ende liegt nicht in der Zukunft")
+    return value
+
+
 def _flaky_setting(value: Any) -> Any:
     """"Instabil ab" des Geräts (seit 2.182.0): ganze Zahl von 2 bis 50 Unterbrüche in 24 Std."""
     if not valid_flaky_setting(value):
@@ -1133,6 +1149,12 @@ def _signal_setting(value: Any) -> Any:
         vol.Optional("charge_wh"): vol.Any(None, vol.All(vol.Coerce(float), vol.Range(min=CHARGE_WH_MIN, max=CHARGE_WH_MAX))),
         # Ladungen aufzeichnen (seit 2.207.0): None = automatisch (ladefähige Geräte), True = ein, False = aus; nur am Gerät.
         vol.Optional("charge_rec"): vol.Any(None, bool),
+        # Pause der Überwachung (seit 2.214.0): None = keine, "date" mit Zeit (Sekunden, in der Zukunft) oder "online" (bis das Gerät wieder erreichbar ist); nur am Gerät.
+        vol.Optional("monitor_pause"): vol.Any(
+            None,
+            vol.All({vol.Required("mode"): "date", vol.Required("until"): vol.All(vol.Coerce(float), vol.Range(min=1, max=4_102_444_800))}, _pause_future),
+            {vol.Required("mode"): "online"},
+        ),
         # Entitäten, die am Gerät nicht als Lebenszeichen zählen (seit 2.165.0): None oder leer = alle zählen.
         vol.Optional("liveness_exclude"): vol.Any(None, vol.All([str], vol.Length(max=500))),
     }
@@ -1146,12 +1168,16 @@ async def _ws_set_device_settings(
     if dr.async_get(hass).async_get(msg["device_id"]) is None:
         connection.send_error(msg["id"], websocket_api.ERR_NOT_FOUND, "device not found")
         return
-    changes = {k: msg[k] for k in ("battery", "notify", "signal", "offline", "notify_delay", "flaky", "liveness_conn", "charge", "charge_full", "charge_rise", "charge_stall", "charge_stop", "charge_live", "charge_wh", "charge_rec", "liveness_exclude") if k in msg}
+    changes = {k: msg[k] for k in ("battery", "notify", "signal", "offline", "notify_delay", "flaky", "liveness_conn", "charge", "charge_full", "charge_rise", "charge_stall", "charge_stop", "charge_live", "charge_wh", "charge_rec", "monitor_pause", "liveness_exclude") if k in msg}
     # "Erst melden nach" des Geräts nie kürzer als sein "Ausgefallen nach" (seit 2.91.0, wie global und pro Integration): Fehler, nichts gespeichert
     if error := await async_notify_delay_error(hass, msg["device_id"], changes):
         connection.send_error(msg["id"], websocket_api.ERR_INVALID_FORMAT, error)
         return
-    await async_set_device_settings(hass, msg["device_id"], **changes)
+    # Pause der Überwachung (seit 2.214.0): mit Eintrag im Protokoll
+    if "monitor_pause" in changes:
+        await async_set_pause(hass, msg["device_id"], changes.pop("monitor_pause"))
+    if changes:
+        await async_set_device_settings(hass, msg["device_id"], **changes)
     device = dr.async_get(hass).async_get(msg["device_id"])
     activity.record(hass, "debug", "system", "device_settings_saved", (device.name_by_user or device.name or "") if device else "", msg["device_id"], keys=", ".join(sorted(changes)))
     # Batterie-Warnung sofort nachführen (Push, anhaltende Benachrichtigung).

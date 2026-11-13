@@ -42,7 +42,7 @@ from homeassistant.helpers.event import async_call_later, async_track_time_inter
 from homeassistant.helpers.storage import Store
 from homeassistant.util import dt as dt_util
 
-from .const import CONF_AVAIL_DAYS, CONF_AVAIL_MB, CONF_OFFLINE_AFTER, CONF_STARTUP_GRACE, DOMAIN
+from .const import CONF_AVAIL_DAYS, CONF_AVAIL_MB, CONF_OFFLINE_AFTER, CONF_STARTUP_GRACE, DATA_MONITOR_PAUSE, DOMAIN
 from .devices import device_back_since, device_down_since, device_offline_after, device_status, liveness_exclude, status_devices
 from .options_api import effective
 from .storage_util import PeriodicSaver
@@ -376,6 +376,9 @@ class AvailabilityLog:
                 if in_grace:
                     continue
                 at = since.timestamp() if since else now
+                # Pause der Überwachung eben beendet (seit 2.214.0): ein noch laufender Ausfall beginnt jetzt, nicht schon mit der Pause
+                if (watch := self.hass.data.get(DATA_MONITOR_PAUSE)) is not None and (resumed := watch.resumed_at.pop(device.id, None)) is not None:
+                    at = max(at, resumed)
             elif state == ONLINE:
                 back = device_back_since(self.hass, entries, exclude)
                 at = back.timestamp() if back else now

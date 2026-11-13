@@ -13,7 +13,7 @@ PANEL_HTML_FILE = "panel.html"
 STATIC_URL_PATH = f"/{DOMAIN}"
 PANEL_STATIC_URL_PATH = f"{STATIC_URL_PATH}/panel"
 # Cache-Buster: bei jeder Änderung unter panel/ von Hand erhöhen.
-PANEL_VERSION = "485"
+PANEL_VERSION = "486"
 PANEL_PAGE_URL = f"{PANEL_STATIC_URL_PATH}/{PANEL_HTML_FILE}?v={PANEL_VERSION}"
 
 # Mitgeliefertes Bild für Push-Meldungen (Companion-App, "icon_url"), wie in
@@ -403,6 +403,12 @@ PERSISTENT_OUTAGE_ID = f"{DOMAIN}_outage"
 # mobile_app_notification_action mit diesem Präfix und der Geräte-ID.
 MUTE_ACTION_PREFIX = "DEVICE_PANEL_MUTE_"
 MUTE_HOURS = 24
+# Aktion "Überwachung pausieren bis wieder online" in der Ausfall-Meldung (seit 2.214.0): gleiches Ereignis, Präfix und Geräte-ID.
+PAUSE_ACTION_PREFIX = "DEVICE_PANEL_PAUSE_"
+# Pause der Überwachung eines Geräts (seit 2.214.0): bis ein Datum oder bis das Gerät wieder online ist
+PAUSE_DATE = "date"
+PAUSE_ONLINE = "online"
+DATA_MONITOR_PAUSE = f"{DOMAIN}_monitor_pause"
 # Batterie-Push: sofort oder einmal täglich um eine Uhrzeit (lokale Zeit),
 # täglich mit den neu betroffenen oder allen schwachen Geräten.
 CONF_BATTERY_PUSH_MODE = "battery_push_mode"

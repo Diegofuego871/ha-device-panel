@@ -7,7 +7,19 @@ Alle nennenswerten Änderungen an dieser Integration stehen in dieser Datei.
 Das Format folgt [Keep a Changelog](https://keepachangelog.com/de/1.1.0/),
 die Versionsnummern folgen [Semantic Versioning](https://semver.org/lang/de/).
 
+## [2.214.0] - 2026-11-13
+
+Ein Gerät lässt sich zeitweise aus der Überwachung nehmen: bis zu einem Datum oder bis es wieder online ist, auch per Knopf in der Ausfall-Meldung.
+
+### Hinzugefügt
+
+- **Gerät, Überwachung pausieren (Issue 4):** In den Einstellungen des Geräte-Popups steht in der Zeile "Überwachen" neben "Standard" ein kleiner Chip **"Pausieren …"** (keine zusätzliche Zeile). Er öffnet ein Fenster mit zwei Wahlen: **"Bis wieder online"** (für Geräte, die du im Winter ins Haus nimmst: die Pause endet von selbst, sobald das Gerät wieder erreichbar ist, mindestens zwei Minuten am Stück; war es beim Pausieren noch online, endet sie erst, nachdem es einmal weg war und wieder da ist) und **"Bis Datum"** (Schnellwahl 1 Monat, 3 Monate, 1. April oder ein eigenes Datum; die Pause endet um 00:00 Uhr dieses Tages). Die Wahl geht in den Entwurf und gilt nach "Speichern", wie die übrigen Einstellungen. Während der Pause gilt das Gerät als "nicht überwacht" wie bei "Überwachen: aus": Es bleibt in der Liste mit einer orangen Pille "Pausiert bis …", ohne Ausfälle, Batterie-Warnung, Statistik und Meldungen, und die Reiter darunter ruhen. Der Chip wird orange ("Pausiert bis 1.4.2027"); ein Tipp ändert die Pause oder beendet sie mit "Pause beenden". Endet die Pause (Datum erreicht oder Gerät wieder online), beginnt die Überwachung von selbst wieder, und ein Eintrag im Protokoll sagt es. Ist das Gerät dann noch weg, beginnt sein Ausfall mit dem Ende der Pause, nicht mit ihrem Beginn; so zählt der Winter nicht als ein langer Ausfall in der Statistik. Die Pause gehört zu den Einstellungen des Geräts: eigene Werte, Sicherung und Wiederherstellung (nur eine gültige, laufende Pause) und "Zurücksetzen" von "Ausgefallen nach" nimmt sie mit. Es gibt sie nur am Gerät (nicht global, pro Integration oder pro Label).
+- **Push-Meldung "Offline", Knopf "Pausieren bis online":** Die Meldung über ein ausgefallenes Gerät hat neben "Öffnen" und "24 Std. stumm" einen dritten Knopf **"Pausieren bis online"**: Er pausiert die Überwachung dieses Geräts wie oben, ohne Datum, bis es wieder erreichbar ist. Das Geräte-Popup zeigt die Pause dann an. Der Server nimmt dafür die App-Aktion `DEVICE_PANEL_PAUSE_<Gerät>` der Companion-App an.
+- **Protokoll:** Einträge "Überwachung pausiert bis …" / "pausiert, bis das Gerät wieder online ist", "Pause von Hand beendet" und "Überwachung wieder aufgenommen (Pause abgelaufen / Gerät wieder online)" im Protokoll des Geräts und unter "System".
+
 ## [2.213.1] - 2026-11-10
+
+Nicht veröffentlicht; enthalten in 2.214.0.
 
 Im Fenster "Ladungen" bleiben die Kurve und die Kacheln stehen, nur die Liste scrollt.
 
@@ -6020,7 +6032,7 @@ Erste Vorabversion.
   GitHub Actions für die Prüfungen von HACS und hassfest sowie die Tests.
 
 [2.6.0]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v2.6.0
-[2.213.1]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v2.213.1
+[2.214.0]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v2.214.0
 [2.213.0]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v2.213.0
 [2.212.0]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v2.212.0
 [2.211.0]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v2.211.0

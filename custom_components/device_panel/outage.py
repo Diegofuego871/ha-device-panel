@@ -54,11 +54,14 @@ from .const import (
     DOMAIN,
     MUTE_ACTION_PREFIX,
     MUTE_HOURS,
+    PAUSE_ACTION_PREFIX,
+    PAUSE_ONLINE,
     GROUP_WAIT_SECONDS,
     NOTIFY_NONE,
     PERSISTENT_OUTAGE_ID,
     STORAGE_VERSION,
 )
+from .monitor_pause import async_set_pause
 from .devices import async_device_facts, async_mute_device, device_notify_delay, device_settings, liveness_report, notify_muted_until, primary_domain
 from .scope import listed
 from .options_api import notify_target, effective
@@ -154,6 +157,12 @@ class OutageNotifier:
     async def _on_action(self, event: Event) -> None:
         """Knopf "24 Std. stumm" unter einer Meldung: Push für das Gerät stumm."""
         action = str(event.data.get("action") or "")
+        # Knopf "Pausieren bis wieder online" (seit 2.214.0): die Überwachung des Geräts ruht, bis es wieder erreichbar ist
+        if action.startswith(PAUSE_ACTION_PREFIX):
+            pause_id = action[len(PAUSE_ACTION_PREFIX):]
+            if dr.async_get(self.hass).async_get(pause_id) is not None:
+                await async_set_pause(self.hass, pause_id, {"mode": PAUSE_ONLINE})
+            return
         if not action.startswith(MUTE_ACTION_PREFIX):
             return
         device_id = action[len(MUTE_ACTION_PREFIX):]

@@ -834,6 +834,12 @@ button.ai-head:focus-visible { outline: 2px solid #7c4dff; outline-offset: -2px;
 .rt-pause .pu-chip { margin: 0 12px 0 auto; }
 .opt-line > .pu-val { margin-left: auto; color: var(--dp-text2); font-size: 13.5px; text-align: right; }
 .opt-line > .pu-val + .pu-chip { margin: 0 0 0 10px; }
+/* Pause der Überwachung eines Geräts (seit 2.214.0): Chip in der Zeile "Überwachen", orange bei aktiver Pause; Pille in der Liste */
+.opt-origin .dpz-chip { margin-left: 0; }
+.dpz-chip.on { border-color: var(--dp-warning); color: var(--dp-warning); background: var(--dp-warning-soft); }
+.dpz-note { margin-top: 6px; }
+.pu-card .dpz-note { display: block; color: var(--dp-text2); line-height: 1.4; }
+.pill.pz { display: inline-flex; align-items: center; gap: 4px; background: var(--dp-warning-soft); color: var(--dp-warning); }
 .pu-card { text-align: left; display: flex; flex-direction: column; gap: 12px; }
 .pu-card small { margin-top: 0; }
 .pu-quick { width: 100%; }

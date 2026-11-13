@@ -57,9 +57,12 @@ from .devices import (
     async_set_type_override,
     connection_overrides,
     device_settings,
+    monitor_pause,
+    pause_expired,
     type_overrides,
     valid_charge_wh,
     valid_flaky_setting,
+    valid_monitor_pause,
     valid_notify_delay_setting,
     valid_offline_setting,
     valid_signal_setting,
@@ -126,6 +129,7 @@ _DEVICE_SETTING_KEYS = (
     "charge_live",
     "charge_wh",
     "charge_rec",
+    "monitor_pause",
     "liveness_exclude",
 )
 _ITEMS_MAX = 400
@@ -169,6 +173,10 @@ def _current_device_settings(hass: HomeAssistant, device_id: str) -> dict[str, A
         if key == "notify":
             if device_id in settings["notify_off"]:
                 own["notify"] = False
+        elif key == "monitor_pause":
+            # Nur eine geltende Pause (ein abgelaufenes Datum ist keine Einstellung mehr)
+            if (pause := monitor_pause(hass, device_id)) is not None and not pause_expired(pause):
+                own[key] = dict(pause)
         elif device_id in (settings.get(key) or {}):
             own[key] = settings[key][device_id]
     return own
@@ -400,6 +408,8 @@ async def _panel_part(hass: HomeAssistant, file_options: Any, dry_run: bool, rep
 def _valid_device_setting(key: str, value: Any) -> bool:
     if key in ("notify", "charge", "charge_stop", "charge_live", "charge_rec", "liveness_conn"):
         return isinstance(value, bool)
+    if key == "monitor_pause":
+        return valid_monitor_pause(value)
     if key == "liveness_exclude":
         return isinstance(value, list) and 0 < len(value) <= 500 and all(isinstance(v, str) and 0 < len(v) < 256 for v in value)
     if key == "battery":

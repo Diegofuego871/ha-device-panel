@@ -29,6 +29,8 @@ from .device_update import held_until, installable_updates
 from .battery_history import async_last_known, battery_entity
 from .compat import device_entry_ids, device_primary_entry_id, registry_devices
 from .const import (
+    PAUSE_DATE,
+    PAUSE_ONLINE,
     MARKET_PLATFORMS,
     CONF_AI_ASSESSMENT,
     CONF_AI_TASK,
@@ -1039,6 +1041,8 @@ async def async_load_type_overrides(hass: HomeAssistant) -> None:
             "notify_delay": {str(k): v for k, v in (stored.get("notify_delay") or {}).items() if valid_notify_delay_setting(v)},
             # "Instabil ab" des Geräts: ganze Zahl Unterbrüche in 24 Std. (seit 2.182.0).
             "flaky": {str(k): v for k, v in (stored.get("flaky") or {}).items() if valid_flaky_setting(v)},
+            # Pause der Überwachung (seit 2.214.0): {"mode": "date", "until": Zeit} oder {"mode": "online", "seen_off": bool}.
+            "monitor_pause": {str(k): v for k, v in (stored.get("monitor_pause") or {}).items() if valid_monitor_pause(v)},
             # "Verbindungssensor zählt" des Geräts: Ein/Aus (seit 2.184.0).
             "liveness_conn": {str(k): v for k, v in (stored.get("liveness_conn") or {}).items() if isinstance(v, bool)},
             # Lademeldung des Geräts: True/False, ohne Eintrag gilt die Integration (seit 1.30.0).
@@ -1083,6 +1087,8 @@ async def _async_save_devices(hass: HomeAssistant) -> None:
         data["flaky"] = dict(settings["flaky"])
     if settings.get("liveness_conn"):
         data["liveness_conn"] = dict(settings["liveness_conn"])
+    if pause := dict(settings.get("monitor_pause", {})):
+        data["monitor_pause"] = pause
     if settings.get("charge"):
         data["charge"] = dict(settings["charge"])
     for key in ("charge_full", "charge_rise", "charge_stall", "charge_stop", "charge_live", "charge_wh", "charge_rec", "liveness_exclude"):
@@ -1132,7 +1138,7 @@ def device_settings(hass: HomeAssistant) -> dict[str, Any]:
     "notify_mute": {Gerät: bis}, "signal": {Gerät: Schwelle | "off"},
     "offline": {Gerät: Minuten | "off"}, "charge": {Gerät: bool}}.
     """
-    return hass.data.get(DATA_DEVICE_SETTINGS) or {"battery": {}, "notify_off": set(), "notify_mute": {}, "signal": {}, "offline": {}, "notify_delay": {}, "flaky": {}, "liveness_conn": {}, "charge": {}, "charge_full": {}, "charge_rise": {}, "charge_stall": {}, "charge_stop": {}, "charge_live": {}, "charge_wh": {}, "charge_rec": {}, "liveness_exclude": {}}
+    return hass.data.get(DATA_DEVICE_SETTINGS) or {"battery": {}, "notify_off": set(), "notify_mute": {}, "signal": {}, "offline": {}, "monitor_pause": {}, "notify_delay": {}, "flaky": {}, "liveness_conn": {}, "charge": {}, "charge_full": {}, "charge_rise": {}, "charge_stall": {}, "charge_stop": {}, "charge_live": {}, "charge_wh": {}, "charge_rec": {}, "liveness_exclude": {}}
 
 
 def signal_limit(d: dict[str, Any]) -> Any:
@@ -1186,6 +1192,43 @@ def valid_charge_wh(value: Any) -> bool:
     return isinstance(value, (int, float)) and not isinstance(value, bool) and CHARGE_WH_MIN <= value <= CHARGE_WH_MAX
 
 
+def valid_monitor_pause(value: Any) -> bool:
+    """Pause der Überwachung (seit 2.214.0): bis ein Datum (Zeit in Sekunden) oder bis das Gerät wieder online ist (mit Merker, ob es schon weg war)."""
+    if not isinstance(value, dict):
+        return False
+    if value.get("mode") == PAUSE_DATE:
+        until = value.get("until")
+        return isinstance(until, (int, float)) and not isinstance(until, bool) and 0 < until < 4_102_444_800  # bis 2100
+    if value.get("mode") == PAUSE_ONLINE:
+        return isinstance(value.get("seen_off"), bool)
+    return False
+
+
+def monitor_pause(hass: HomeAssistant, device_id: str) -> dict[str, Any] | None:
+    """
+    Die Pause der Überwachung eines Geräts oder None. Sie gilt, bis der Wächter (monitor_pause.py) sie beendet: so hält er den Zeitpunkt des Endes
+    fest (der Verfügbarkeitslauf braucht ihn), auch wenn das Datum schon erreicht ist (höchstens eine Minute Verzug).
+    """
+    return device_settings(hass).get("monitor_pause", {}).get(device_id)
+
+
+def pause_expired(pause: dict[str, Any], now: float | None = None) -> bool:
+    """Ein Datum, das erreicht ist (der Wächter räumt die Pause gleich weg)."""
+    return pause["mode"] == PAUSE_DATE and pause["until"] <= (now if now is not None else time.time())
+
+
+def device_seen_off(hass: HomeAssistant, device_id: str) -> bool:
+    """Ist das Gerät gerade weg (alle Lebenszeichen nicht erreichbar)? Ohne Schwelle: für "bis wieder online" zählt, dass es einmal weg war."""
+    registry = dr.async_get(hass)
+    device = registry.async_get(device_id)
+    if device is None:
+        return False
+    entries = er.async_entries_for_device(er.async_get(hass), device_id)
+    exclude = liveness_exclude(hass, device_id, entries, effective(hass), device)
+    online, _since = device_status(hass, entries, dt_util.utcnow(), 0, exclude)
+    return online is False
+
+
 def valid_flaky_setting(value: Any) -> bool:
     """"Instabil ab" des Geräts (seit 2.182.0): ganze Zahl im Bereich der Option."""
     return _in_range(value, CONF_FLAKY_OUTAGES)
@@ -1225,12 +1268,16 @@ async def async_notify_delay_error(hass: HomeAssistant, device_id: str, changes:
     return None
 
 
-def device_offline_after(hass: HomeAssistant, opts: dict[str, Any], device: dr.DeviceEntry) -> float | None:
+def device_offline_after(hass: HomeAssistant, opts: dict[str, Any], device: dr.DeviceEntry, ignore_pause: bool = False) -> float | None:
     """
     Wirksames "Ausgefallen nach" eines Geräts in Sekunden: eigenes des Geräts,
     sonst das der Integration, sonst das globale; None = nicht überwacht. Das
-    Gerät geht vor, auch gegen "Nicht überwachen" der Integration.
+    Gerät geht vor, auch gegen "Nicht überwachen" der Integration. Eine Pause
+    der Überwachung (seit 2.214.0) gilt wie "nicht überwachen"; ignore_pause
+    liefert den Wert ohne sie (für das Ende der Pause und die Anzeige).
     """
+    if not ignore_pause and monitor_pause(hass, device.id) is not None:
+        return None
     own = device_settings(hass).get("offline", {}).get(device.id)
     if own == MONITOR_OFF:
         return None
@@ -1250,6 +1297,16 @@ def device_status_off(hass: HomeAssistant, opts: dict[str, Any], device: dr.Devi
     if own is not None:
         return own == MONITOR_NOSTATUS
     return status_off_for(opts, primary_domain(hass, device))
+
+
+def _pause_view(hass: HomeAssistant, device_id: str) -> dict[str, Any] | None:
+    """Pause im Format der Einstellung (wie das Panel sie sendet): Datum mit Zeit in Sekunden, oder "online"; mit dem Merker, ob das Gerät schon weg war."""
+    pause = monitor_pause(hass, device_id)
+    if pause is None:
+        return None
+    if pause["mode"] == PAUSE_DATE:
+        return {"mode": PAUSE_DATE, "until": pause["until"]}
+    return {"mode": PAUSE_ONLINE, "seen_off": pause["seen_off"]}
 
 
 def _iso(ts: float | None) -> str | None:
@@ -1296,6 +1353,7 @@ async def async_set_device_settings(hass: HomeAssistant, device_id: str, **chang
     charge_live=None (Integration bzw. global), True/False (Live-Aktivität beim Laden, seit 2.19.0);
     charge_wh=None (nicht angegeben) oder Akku-Kapazität in Wh (seit 2.203.0, nur am Gerät);
     charge_rec=None (automatisch), True (Ladungen immer aufzeichnen) oder False (nie), seit 2.207.0, nur am Gerät;
+    monitor_pause=None (keine), {"mode": "date", "until": Zeit} oder {"mode": "online"} (seit 2.214.0, nur am Gerät);
     liveness_exclude=Liste von Entitäten, die nicht als Lebenszeichen zählen (leer = alle zählen, seit 2.165.0).
     """
     await async_load_type_overrides(hass)
@@ -1305,6 +1363,16 @@ async def async_set_device_settings(hass: HomeAssistant, device_id: str, **chang
             settings.setdefault("offline", {}).pop(device_id, None)
         else:
             settings.setdefault("offline", {})[device_id] = changes["offline"]
+    if "monitor_pause" in changes:
+        pause = changes["monitor_pause"]
+        if pause is None:
+            settings.setdefault("monitor_pause", {}).pop(device_id, None)
+        elif pause["mode"] == PAUSE_DATE:
+            settings.setdefault("monitor_pause", {})[device_id] = {"mode": PAUSE_DATE, "until": float(pause["until"])}
+        else:
+            # Schon weg? Dann endet die Pause beim nächsten Online (sonst erst, wenn es einmal weg war und wieder da ist)
+            seen = bool(pause.get("seen_off")) or device_seen_off(hass, device_id)
+            settings.setdefault("monitor_pause", {})[device_id] = {"mode": PAUSE_ONLINE, "seen_off": seen}
     if "notify_delay" in changes:
         if changes["notify_delay"] is None:
             settings.setdefault("notify_delay", {}).pop(device_id, None)
@@ -1414,6 +1482,9 @@ async def async_reset_device_settings(
     done_signal = sum(1 for dev in set(signal or []) if sig.pop(dev, None) is not None)
     off = settings.setdefault("offline", {})
     done_offline = sum(1 for dev in set(offline or []) if off.pop(dev, None) is not None)
+    # Eine Pause der Überwachung gehört zu "Ausgefallen nach": wer es zurücksetzt, nimmt sie mit
+    for dev in set(offline or []):
+        settings.setdefault("monitor_pause", {}).pop(dev, None)
     delays = settings.setdefault("notify_delay", {})
     done_delay = sum(1 for dev in set(notify_delay or []) if delays.pop(dev, None) is not None)
     flakies = settings.setdefault("flaky", {})
@@ -1858,6 +1929,8 @@ async def async_list_devices(hass: HomeAssistant, log: Any = None) -> dict[str, 
                     "integration": listed(opts[CONF_CHARGE_INTEGRATIONS], scope),
                 },
                 "notify_mute_until": _iso(notify_muted_until(hass, device.id)),
+                # Pause der Überwachung (seit 2.214.0): Art, Ende (bei "date") und ob das Gerät schon weg war (bei "online"); None = keine
+                "monitor_pause_setting": _pause_view(hass, device.id),
                 # Lädt gerade (seit 1.35.0): Ladeanzeige des Geräts oder Anstieg des Stands.
                 "charging": _charging(hass, opts, device, entries, now_ts),
                 "update": _update(hass, entries),

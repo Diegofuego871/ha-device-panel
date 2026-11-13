@@ -301,6 +301,7 @@ function releaseMarkdownHtml(markdown) {
 
 // --- Symbole (Material Design Icons als Pfad, Funkarten als Strichzeichnung)
 const MDI = {
+  pause: "M14,19H18V5H14M6,19H10V5H6V19Z",
   plus: "M19,13H13V19H11V13H5V11H11V5H13V11H19V13Z",
   circleOutline: "M12,20A8,8 0 0,1 4,12A8,8 0 0,1 12,4A8,8 0 0,1 20,12A8,8 0 0,1 12,20M12,2A10,10 0 0,0 2,12A10,10 0 0,0 12,22A10,10 0 0,0 22,12A10,10 0 0,0 12,2Z",
   tag: "M21.41,11.58L12.41,2.58C12.05,2.22 11.55,2 11,2H4C2.9,2 2,2.9 2,4V11C2,11.55 2.22,12.05 2.59,12.42L11.59,21.42C11.95,21.78 12.45,22 13,22C13.55,22 14.05,21.78 14.41,21.41L21.41,14.41C21.78,14.05 22,13.55 22,13C22,12.45 21.77,11.94 21.41,11.58M13,20L4,11V4H11L20,13M6.5,5A1.5,1.5 0 0,1 8,6.5A1.5,1.5 0 0,1 6.5,8A1.5,1.5 0 0,1 5,6.5A1.5,1.5 0 0,1 6.5,5Z",
@@ -811,9 +812,10 @@ const devOwnCount = (d) =>
     d.charge_live_setting != null,
     d.charge_wh_setting != null,
     d.charge_rec_setting != null,
+    d.monitor_pause_setting != null,
     d.notify_off || (d.notify_mute_until && Date.parse(d.notify_mute_until) > Date.now()),
   ].filter(Boolean).length;
-const hasOverride = (d) => d.offline_setting != null || d.notify_delay_setting != null || d.flaky_setting != null || d.liveness_conn_setting != null || d.battery_setting != null || Boolean(d.notify_off) || Boolean(d.connection_manual) || d.signal_setting != null;
+const hasOverride = (d) => d.offline_setting != null || d.monitor_pause_setting != null || d.notify_delay_setting != null || d.flaky_setting != null || d.liveness_conn_setting != null || d.battery_setting != null || Boolean(d.notify_off) || Boolean(d.connection_manual) || d.signal_setting != null;
 
 const defaultView = () => ({
   sort: "default",
@@ -1658,7 +1660,7 @@ class DevicePanel extends HTMLElement {
       </div>
       <div class="area-pop" role="dialog" aria-label="${escape(this._t("areaTitle"))}" hidden></div>
       <div class="content"><div class="hstrip"></div><div class="hero"></div><div class="chips"></div><div class="viewline"></div><div class="list"></div><div class="foot"></div></div>
-      <dialog class="device"></dialog><dialog class="magic-dlg"></dialog><dialog class="magic-dlg routine-dlg"></dialog><dialog class="stat-dlg"></dialog><dialog class="settings"></dialog><dialog class="area-sheet"></dialog><dialog class="pulse-dlg"></dialog><dialog class="log-dlg proto-dlg"></dialog><dialog class="apps-dlg"></dialog><dialog class="app-dlg"></dialog><dialog class="rtall-dlg"></dialog><dialog class="mgall-dlg"></dialog><dialog class="status-dlg"></dialog><dialog class="prompt-dlg"></dialog><dialog class="notes-dlg"></dialog><dialog class="notes-dlg backup-dlg"></dialog><dialog class="notes-dlg upd-dlg"></dialog><dialog class="updapp-dlg"></dialog><dialog class="charges-dlg"></dialog><dialog class="rename-dlg"></dialog><dialog class="discard-dlg"></dialog><dialog class="discard-dlg pause-dlg"></dialog><dialog class="wizard-dlg"></dialog>
+      <dialog class="device"></dialog><dialog class="magic-dlg"></dialog><dialog class="magic-dlg routine-dlg"></dialog><dialog class="stat-dlg"></dialog><dialog class="settings"></dialog><dialog class="area-sheet"></dialog><dialog class="pulse-dlg"></dialog><dialog class="log-dlg proto-dlg"></dialog><dialog class="apps-dlg"></dialog><dialog class="app-dlg"></dialog><dialog class="rtall-dlg"></dialog><dialog class="mgall-dlg"></dialog><dialog class="status-dlg"></dialog><dialog class="prompt-dlg"></dialog><dialog class="notes-dlg"></dialog><dialog class="notes-dlg backup-dlg"></dialog><dialog class="notes-dlg upd-dlg"></dialog><dialog class="updapp-dlg"></dialog><dialog class="charges-dlg"></dialog><dialog class="rename-dlg"></dialog><dialog class="discard-dlg"></dialog><dialog class="discard-dlg pause-dlg"></dialog><dialog class="discard-dlg dpz-dlg"></dialog><dialog class="wizard-dlg"></dialog>
       <div class="toast" role="status" aria-live="polite" hidden></div>`;
     const root = this.shadowRoot;
     this._apps.bind(root);
@@ -1690,8 +1692,9 @@ class DevicePanel extends HTMLElement {
       run();
     });
     this._bindSettings(root.querySelector("dialog.settings"));
-    this._bindDiscard(root.querySelector("dialog.discard-dlg:not(.pause-dlg)"));
+    this._bindDiscard(root.querySelector("dialog.discard-dlg:not(.pause-dlg):not(.dpz-dlg)"));
     this._bindPauseUntil(root.querySelector("dialog.pause-dlg"));
+    this._bindDevicePause(root.querySelector("dialog.dpz-dlg"));
     this._bindRename(root.querySelector("dialog.rename-dlg"));
     this._wizard.bind(root.querySelector("dialog.wizard-dlg"));
     const search = root.querySelector(".search");
@@ -3945,6 +3948,10 @@ class DevicePanel extends HTMLElement {
 
   _statusHtml(d) {
     if (d.disabled) return `<span class="pill none">${escape(this._t("statusDisabled"))}</span>`;
+    if (d.monitor_pause_setting) {
+      const p = d.monitor_pause_setting;
+      return `<span class="pill none pz">${mdi("pause", 11)}${escape(p.mode === "date" ? this._t("dpzPill", this._fmtDateY(p.until)) : this._t("dpzPillOnline"))}</span>`;
+    }
     if (d.unmonitored) return `<span class="pill none">${escape(this._t("statusUnmonitored"))}</span>`;
     if (d.no_status) return `<span class="pill none ns"><span class="pd ring"></span>${escape(this._t("statusNoStatus"))}</span>`;
     if (d.online === false) return `<div class="dur">${this._durationHtml(d)}</div><div class="durs">${escape(this._t("statusOffline"))}</div>`;
@@ -4372,7 +4379,7 @@ class DevicePanel extends HTMLElement {
 
   // Dieselbe Rückfrage für andere Entscheidungen (zum Beispiel "Home Assistant neu starten?"); keys: Textschlüssel
   _askConfirm(keys, onYes, onSave = null) {
-    const dlg = this.shadowRoot.querySelector("dialog.discard-dlg:not(.pause-dlg)");
+    const dlg = this.shadowRoot.querySelector("dialog.discard-dlg:not(.pause-dlg):not(.dpz-dlg)");
     if (!dlg) {
       onYes();
       return;
@@ -4401,6 +4408,124 @@ class DevicePanel extends HTMLElement {
     } catch (err) {
       if (!isConnectionError(err)) apps?.snack(`${this._t("verRestartError")} ${errText(err)}`);
     }
+  }
+
+  // Überwachung eines Geräts pausieren (seit 2.214.0, Issue 4, docs/mockups/pause-v1, A): kleines Fenster mit "Bis wieder online" oder "Bis Datum".
+  // Der Entwurf des Geräts nimmt die Wahl auf (gilt nach "Speichern" wie die übrigen Einstellungen); "Pause beenden" nimmt sie zurück.
+  _openDevicePause(id) {
+    const dlg = this.shadowRoot.querySelector("dialog.dpz-dlg");
+    const d = this._devices.find((x) => x.id === id);
+    if (!dlg || !d) return;
+    const cur = d.monitor_pause_setting;
+    const until = cur?.mode === "date" && cur.until * 1000 > Date.now() ? cur.until : 0;
+    this._dpz = { id, mode: cur?.mode === "date" ? "date" : "online", sel: null, until, active: Boolean(cur) };
+    this._renderDevicePause();
+    if (!dlg.open) {
+      if (typeof dlg.showModal === "function") dlg.showModal();
+      else dlg.setAttribute("open", "");
+    }
+    dlg.querySelector('[data-dpz="cancel"]')?.focus({ preventScroll: true });
+  }
+
+  // Schnellwahlen: 1 Monat, 3 Monate, 1. April (nächster, für den Winterschlaf der Gartengeräte); jeweils 00:00 Uhr Zeit des Browsers
+  _devicePausePreset(key) {
+    const d = new Date();
+    d.setHours(0, 0, 0, 0);
+    if (key === "month") d.setMonth(d.getMonth() + 1);
+    else if (key === "quarter") d.setMonth(d.getMonth() + 3);
+    else {
+      d.setMonth(3, 1);
+      if (d.getTime() <= Date.now()) d.setFullYear(d.getFullYear() + 1);
+    }
+    return Math.floor(d.getTime() / 1000);
+  }
+
+  _renderDevicePause() {
+    const dlg = this.shadowRoot.querySelector("dialog.dpz-dlg");
+    const z = this._dpz;
+    if (!dlg || !z) return;
+    const t = (k, ...a) => this._t(k, ...a);
+    const modes = [["online", "dpzModeOnline"], ["date", "dpzModeDate"]];
+    const bad = z.mode === "date" && z.until > 0 && z.until * 1000 <= Date.now();
+    const none = z.mode === "date" && !(z.until > 0);
+    let body;
+    if (z.mode === "online") {
+      body = `<small class="dpz-note">${escape(t("dpzOnlineNote"))}</small><div class="pu-res" data-dpz-res>${escape(t("dpzResultOnline"))}</div>`;
+    } else {
+      const quick = [["month", "dpzMonth"], ["quarter", "dpzQuarter"], ["spring", "dpzSpring"]];
+      const day = z.until > 0 ? this._localInput(z.until).slice(0, 10) : "";
+      body = `<div class="sub-tabs pu-quick" role="tablist">${quick.map(([k, label]) => `<button type="button" role="tab" class="sub-tab${z.sel === k ? " on" : ""}" data-dlg="dpz-q" data-v="${k}" aria-selected="${z.sel === k}">${escape(t(label))}</button>`).join("")}</div>
+        <label class="pu-field${bad ? " bad" : ""}"><span>${escape(t("dpzCustom"))}</span><input type="date" data-dpz-field value="${escape(day)}" aria-label="${escape(t("dpzCustom"))}"></label>
+        <div class="pu-res${bad || none ? " bad" : ""}" data-dpz-res>${escape(bad ? t("pauseUntilPast") : none ? t("dpzPickDate") : t("dpzResultDate", this._fmtDateY(z.until)))}</div>`;
+    }
+    setHtml(dlg, `<div class="dd-card pu-card" role="dialog" aria-labelledby="dpz-t"><b id="dpz-t">${escape(t("dpzTitle"))}</b><small>${escape(t("dpzNote"))}</small>
+      <div class="sub-tabs" role="tablist">${modes.map(([k, label]) => `<button type="button" role="tab" class="sub-tab${z.mode === k ? " on" : ""}" data-dlg="dpz-mode" data-v="${k}" aria-selected="${z.mode === k}">${escape(t(label))}</button>`).join("")}</div>
+      ${body}
+      ${z.active ? `<button type="button" class="lnk" data-dpz="end">${escape(t("dpzEnd"))}</button>` : ""}
+      <div class="dd-btns"><button type="button" class="dlg-btn" data-dpz="cancel">${mdi("close", 18)}${escape(t("puCancel"))}</button><button type="button" class="dlg-btn primary" data-dpz="apply"${bad || none ? " disabled" : ""}>${mdi("pause", 18)}${escape(t("dpzApply"))}</button></div></div>`);
+  }
+
+  _bindDevicePause(dlg) {
+    if (!dlg) return;
+    const close = () => {
+      this._dpz = null;
+      if (typeof dlg.close === "function") dlg.close();
+      else dlg.removeAttribute("open");
+    };
+    dlg.addEventListener("click", (ev) => {
+      const z = this._dpz;
+      if (!z) return;
+      const mode = ev.target.closest('[data-dlg="dpz-mode"]');
+      if (mode) {
+        z.mode = mode.dataset.v;
+        this._renderDevicePause();
+        return;
+      }
+      const q = ev.target.closest('[data-dlg="dpz-q"]');
+      if (q) {
+        z.sel = z.sel === q.dataset.v ? null : q.dataset.v;
+        z.until = z.sel ? this._devicePausePreset(z.sel) : 0;
+        this._renderDevicePause();
+        return;
+      }
+      const btn = ev.target.closest("[data-dpz]");
+      if (!btn || btn.disabled) return;
+      if (btn.dataset.dpz === "cancel") close();
+      else if (btn.dataset.dpz === "end") {
+        const id = z.id;
+        close();
+        this._devEdit(id, { monitor_pause: null });
+      } else if (btn.dataset.dpz === "apply") {
+        const id = z.id;
+        const value = z.mode === "online" ? { mode: "online" } : { mode: "date", until: z.until };
+        close();
+        this._devEdit(id, { monitor_pause: value });
+      }
+    });
+    // Eigenes Datum: iOS meldet es oft erst beim Schliessen der Auswahl ("change"), andere Browser schon beim Tippen ("input")
+    const field = (ev) => {
+      const z = this._dpz;
+      const el = ev.target;
+      if (!z || !el.matches?.("[data-dpz-field]")) return;
+      const ms = el.value ? new Date(`${el.value}T00:00:00`).getTime() : NaN;
+      z.until = Number.isFinite(ms) ? Math.floor(ms / 1000) : 0;
+      z.sel = null;
+      if (ev.type === "change") this._renderDevicePause();
+    };
+    dlg.addEventListener("input", field);
+    dlg.addEventListener("change", field);
+    dlg.addEventListener("close", () => {
+      this._dpz = null;
+    });
+  }
+
+  // Chip in der Zeile "Überwachen" (Variante A): "Pausieren …" oder, bei einer Pause, orange mit dem Ende
+  _devicePauseChip(d) {
+    const t = (k, ...a) => this._t(k, ...a);
+    const p = d.monitor_pause_setting;
+    if (!p) return `<button type="button" class="pu-chip dpz-chip" data-dlg="dev-pause">${mdi("pause", 13)}<span>${escape(t("dpzChip"))}</span></button>`;
+    const when = p.mode === "date" ? this._fmtDateY(p.until) : t("dpzWhenOnline");
+    return `<button type="button" class="pu-chip dpz-chip on" data-dlg="dev-pause">${mdi("pause", 13)}<span>${escape(t("dpzChipOn", when))}</span></button>`;
   }
 
   // "Pausieren bis" als kleines Fenster (seit 2.176.0, docs/mockups/routine-pause-v1, A): Schnellwahl, eigene Zeit, "Ohne Ende".
@@ -4748,7 +4873,10 @@ class DevicePanel extends HTMLElement {
       const own = d.offline_setting;
       const inhOff = od.minutes === "off";
       const inhNo = od.minutes === "nostatus";
-      const monitored = !d.unmonitored;
+      // Pause der Überwachung (seit 2.214.0): das Gerät zählt dann als nicht überwacht (`unmonitored`), die Einstellung "Überwachen" bleibt an
+      const paused = Boolean(d.monitor_pause_setting);
+      const monBase = own === "off" ? false : own != null ? true : od.minutes !== "off";
+      const monitored = monBase;
       const noStatus = Boolean(d.no_status);
       const monOwn = monitored === inhOff;
       const statOwn = monitored && noStatus !== inhNo;
@@ -4762,7 +4890,12 @@ class DevicePanel extends HTMLElement {
       // "Überwachen" gilt für alle Reiter und steht darum über der Reiterleiste (seit 2.159.0, docs/mockups/monitor-v1, A)
       monRow = line(monOwn, t("optMonitor"), swit("dev-mon", monitored, t("optMonitor"), false), t("optMonitorShort"), inhOff ? t("offlineNone") : t("devMonOn"));
       monRow = monRow.replace('<div class="opt-origin">', `<div class="opt-short">${escape(t("optMonitorShort"))}</div><div class="opt-origin">`);
-      monOff = !monitored;
+      // Chip "Pausieren …" in der Herkunftszeile; bei einer Pause ruhen die Reiter darunter wie bei "Überwachen aus"
+      if (monitored) {
+        const note = paused ? `<div class="opt-short dpz-note">${escape(t("dpzActiveNote"))}</div>` : "";
+        monRow = monRow.replace(/<\/div><\/div>$/, `${this._devicePauseChip(d)}</div>${note}</div>`);
+      }
+      monOff = !monitored || paused;
       parts.out += line(statOwn, t("optStatus"), swit("dev-stat", !noStatus, t("optStatus"), !monitored), t("optStatusShort"), inhNo ? t("offlineNoStatus") : t("devStatOn"));
       const timeLocked = !monitored || noStatus;
       parts.out += `<div class="${timeLocked ? "mon-dis" : ""}"><div class="opt${timeOwn ? " changed" : ""}"><div class="opt-line"><span class="opt-label">${escape(t("devOffline"))}</span>${sel(
@@ -5059,7 +5192,7 @@ class DevicePanel extends HTMLElement {
       sig: hasSignal ? parts.sig : note("devNoSignal"),
     };
     const ownTab = {
-      out: d.offline_setting != null || d.notify_delay_setting != null || d.flaky_setting != null || d.liveness_conn_setting != null || silenced,
+      out: d.offline_setting != null || d.monitor_pause_setting != null || d.notify_delay_setting != null || d.flaky_setting != null || d.liveness_conn_setting != null || silenced,
       bat: d.battery_setting != null || d.charge_wh_setting != null,
       chg: [d.charge_setting, d.charge_full_setting, d.charge_rise_setting, d.charge_stall_setting, d.charge_stop_setting, d.charge_live_setting, d.charge_rec_setting].some((v) => v != null),
       sig: d.signal_setting != null,
@@ -5624,6 +5757,7 @@ class DevicePanel extends HTMLElement {
     const action = btn.dataset.dlg;
     if (action === "close") this._requestCloseDevice();
     else if (action === "save") this._devSave();
+    else if (action === "dev-pause") this._openDevicePause(this._detailId);
     else if (action === "ent-live") {
       // Ein gewählter Chip wird mit dem zweiten Tipp wieder abgewählt (= alle), wie alle Chips im Panel
       const v = ["on", "off", "rest"].includes(btn.dataset.val) ? btn.dataset.val : "all";

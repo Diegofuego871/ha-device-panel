@@ -730,7 +730,7 @@
   const EMOJI_DEFAULTS = { outage: "🔴", group: "🚨", online: "🟢", battery: "🪫", charge: "🔋", charge_stop: "🔌", new: "✨", updates: "⬆️" };
   window.__services = [];
   // Einstellungen pro Gerät (Batterie, Meldungen), wie .storage/device_panel.devices.
-  window.__devSettings = { battery: {}, notifyOff: new Set(), mute: {}, signal: {}, offline: {}, notifyDelay: {}, flaky: {}, lconn: {}, charge: {}, chargeLive: {}, chargeFull: {}, chargeRise: {}, chargeStall: {}, chargeStop: {}, chargeWh: {}, chargeRec: {}, livenessExclude: {} };
+  window.__devSettings = { battery: {}, notifyOff: new Set(), mute: {}, signal: {}, offline: {}, notifyDelay: {}, flaky: {}, lconn: {}, charge: {}, chargeLive: {}, chargeFull: {}, chargeRise: {}, chargeStall: {}, chargeStop: {}, chargeWh: {}, chargeRec: {}, monitorPause: {}, livenessExclude: {} };
   window.__connOverrides = {};
   // Labels von Home Assistant (seit 2.155.0): window.__labels = [{ id, name }], window.__devLabels = { Geräte-ID: [Label-IDs] }
   window.__labels = [];
@@ -1343,6 +1343,13 @@
           if (msg.charge_wh === null) delete window.__devSettings.chargeWh[msg.device_id];
           else window.__devSettings.chargeWh[msg.device_id] = msg.charge_wh;
           out.charge_wh = msg.charge_wh;
+        }
+        if ("monitor_pause" in msg) {
+          const p = msg.monitor_pause;
+          if (p !== null && !(p && (p.mode === "online" || (p.mode === "date" && p.until * 1000 > Date.now())))) throw { code: "invalid_format", message: "monitor_pause" };
+          if (p === null) delete window.__devSettings.monitorPause[msg.device_id];
+          else window.__devSettings.monitorPause[msg.device_id] = p.mode === "online" ? { mode: "online", seen_off: false } : { mode: "date", until: p.until };
+          out.monitor_pause = p;
         }
         if ("charge_rec" in msg) {
           if (!(msg.charge_rec === null || typeof msg.charge_rec === "boolean")) throw { code: "invalid_format", message: "charge_rec" };
@@ -2063,7 +2070,9 @@
         const devOff = window.__devSettings.offline;
         // Gerät vor Integration vor global (wie devices.device_offline_after)
         const offEff = (d) => (d.id in devOff ? devOff[d.id] : window.__scopePick(offMap, d, window.__strictestTime)[1] ?? window.__opts.offline_after);
-        const unmon = (d) => offEff(d) === "off" && !d.disabled;
+        // Pause der Überwachung (2.214.0): das Gerät gilt dann als nicht überwacht
+        const paused = (d) => Boolean(window.__devSettings.monitorPause[d.id]);
+        const unmon = (d) => (offEff(d) === "off" || paused(d)) && !d.disabled;
         // Ohne Online-Status (2.156.0): überwacht, aber ohne Status, Ausfälle und Ausfall-Meldungen
         const nost = (d) => offEff(d) === "nostatus" && !d.disabled;
         const offMinutes = (d) => (offEff(d) === "nostatus" ? window.__opts.offline_after : offEff(d));
@@ -2123,6 +2132,7 @@
             // Akku-Kapazität (2.203.0): window.__devSettings.chargeWh; rechargeable: ladendes Gerät oder in window.__rechargeable
             charge_wh_setting: window.__devSettings.chargeWh[d.id] ?? null,
             charge_rec_setting: window.__devSettings.chargeRec[d.id] ?? null,
+            monitor_pause_setting: window.__devSettings.monitorPause[d.id] ?? null,
             rechargeable: Boolean(window.__charging?.[d.id]) || (window.__rechargeable || []).includes(d.id),
             // Ladungen (2.204.0): window.__charges = { Geräte-ID: [ { start (Epoch-Sekunden), minutes, from, to, pts, watts, avg_w, peak_w } ] }, neueste zuerst
             charges_count: (window.__charges?.[d.id] || []).length,

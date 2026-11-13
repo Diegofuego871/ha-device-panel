@@ -159,6 +159,7 @@ async def test_fields_and_actions(hass: HomeAssistant, setup, freezer) -> None:
     assert calls[0].data["data"]["actions"] == [
         {"action": "URI", "title": "Open", "uri": f"/device-panel?device={sensor.id}"},
         {"action": f"DEVICE_PANEL_MUTE_{sensor.id}", "title": "Mute 24 h"},
+        {"action": f"DEVICE_PANEL_PAUSE_{sensor.id}", "title": "Pause until online"},
     ]
 
 

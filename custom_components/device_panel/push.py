@@ -16,7 +16,7 @@ from homeassistant.exceptions import ServiceValidationError
 
 from . import activity
 from .options_api import emoji_for
-from .const import CLICK_DEVICE, DATA_PUSH_IMAGE, DATA_PUSHLOG, DATA_QUIET, MUTE_ACTION_PREFIX, NOTIFY_NONE, PANEL_URL_PATH
+from .const import CLICK_DEVICE, DATA_PUSH_IMAGE, DATA_PUSHLOG, DATA_QUIET, MUTE_ACTION_PREFIX, NOTIFY_NONE, PANEL_URL_PATH, PAUSE_ACTION_PREFIX
 
 _LOGGER = logging.getLogger(__name__)
 
@@ -137,6 +137,7 @@ TEXTS: dict[str, dict[str, str]] = {
         "routine_reason_timeout": "keine Antwort des Geräts",
         "action_open": "Öffnen",
         "action_mute": "24 Std. stumm",
+        "action_pause": "Pausieren bis online",
         "field_battery": "Batterie {level}",
         "field_signal": "Empfang zuletzt {value}",
         "conn_zigbee": "Zigbee",
@@ -284,6 +285,7 @@ TEXTS: dict[str, dict[str, str]] = {
         "routine_reason_timeout": "the device did not answer",
         "action_open": "Open",
         "action_mute": "Mute 24 h",
+        "action_pause": "Pause until online",
         "field_battery": "battery {level}",
         "field_signal": "last signal {value}",
         "conn_zigbee": "Zigbee",
@@ -422,10 +424,11 @@ def critical_data(volume: int) -> dict[str, Any]:
 
 
 def device_actions(hass: HomeAssistant, url: str, device_id: str) -> list[dict[str, str]]:
-    """Knöpfe einer Ausfall-Meldung: öffnen und 24 Std. stumm (Bild 5)."""
+    """Knöpfe einer Ausfall-Meldung: öffnen, 24 Std. stumm (Bild 5) und, seit 2.214.0, Überwachung pausieren bis das Gerät wieder online ist."""
     return [
         {"action": "URI", "title": text(hass, "action_open"), "uri": url},
         {"action": f"{MUTE_ACTION_PREFIX}{device_id}", "title": text(hass, "action_mute")},
+        {"action": f"{PAUSE_ACTION_PREFIX}{device_id}", "title": text(hass, "action_pause")},
     ]
 
 

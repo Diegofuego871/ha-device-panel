@@ -11,6 +11,15 @@ Einstieg für jede neue Claude-Code-Session. Zuerst diese Datei lesen, dann
 
 - `charge.py` `known_rechargeable`: Lademeldung gilt (global + Gerät/Integration), oder am Gerät ausdrücklich "Ein", oder Live-Aktivität für das Gerät an; `rechargeable()` und `charging_of()` nutzen sie (vorher nur `enabled()` mit globalem Schalter). Test `test_rechargeable_by_device_charge_or_live`.
 
+## Stand (2.214.0, Überwachung eines Geräts pausieren, Issue 4)
+
+- Einstellung `monitor_pause` in `device_settings` (nur am Gerät): `{"mode": "date", "until": Sekunden}` oder `{"mode": "online", "seen_off": bool}`; `devices.py` `monitor_pause()`, `valid_monitor_pause()`, `device_seen_off()`, `device_offline_after(..., ignore_pause)` liefert bei einer Pause None (wie "Überwachen aus": alle Verbraucher von `monitored_devices`/`status_devices`/`unmonitored` folgen). Detailfeld `monitor_pause_setting` (Format wie die Einstellung).
+- `monitor_pause.py`: `MonitorPauseWatch` (Takt 60 s) beendet die Pause am Datum oder bei "online" (erst `seen_off`, dann mindestens `ONLINE_CONFIRM` 120 s erreichbar, ohne Schwelle gemessen); `resumed_at` → `availability.evaluate` setzt einen noch laufenden Ausfall auf das Ende der Pause (sonst stünde der Winter als Ausfall in der Statistik). `async_set_pause` schreibt ins Protokoll (Kategorie system, Codes `monitor_*`).
+- WS `set_device_settings` nimmt `monitor_pause` (None, `{mode: date, until}` in der Zukunft, `{mode: online}`); Backup (`_DEVICE_SETTING_KEYS`, nur gültige laufende Pause), Reset von "offline" nimmt sie mit. Nicht in der Übersicht "eigene Werte" zum Zurücksetzen (zeitlich begrenzt).
+- Push: Aktion `DEVICE_PANEL_PAUSE_<id>` (`PAUSE_ACTION_PREFIX`, `push.device_actions`, `outage._on_action`).
+- Panel: Chip `.dpz-chip` in der Herkunftszeile von "Überwachen" (`_devicePauseChip`), Fenster `dialog.dpz-dlg` (`_openDevicePause`, `_renderDevicePause`, `_bindDevicePause`), Entwurf über `_devEdit` (`monitor_pause`), Pille in `_statusHtml`. Tests: `tests/test_monitor_pause.py`, Suite `devicepause-e2e`; Simulator `monitorPause`. Mockup `docs/mockups/pause-v1`.
+- Offen/Beobachten: "Bis wieder online" braucht Lebenszeichen-Entitäten (ohne Online-Status endet die Pause nie von selbst); Echtbetrieb mit einem Gardena-Gerät noch nicht geprüft.
+
 ## Stand (2.213.1, Fenster "Ladungen": nur die Liste scrollt)
 
 - `styles.js`: `.charges-dlg .dlg-body` als Spalte, `.cg-card`/`.cg-tiles` fest, `.cg-list` mit `flex: 1 1 160px; min-height: 160px; overflow-y: auto`. Ist das Fenster zu niedrig, scrollt der Körper wie bisher. Test: `charges-e2e` (20 Zeilen, Kurve und Kacheln stehen, Liste scrollt).

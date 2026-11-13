@@ -7,7 +7,19 @@ All notable changes to this integration are documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/).
 
+## [2.214.0] - 2026-11-13
+
+A device can be taken out of monitoring for a while: until a date or until it is online again, also by a button in the outage push.
+
+### Added
+
+- **Device, pause monitoring (issue 4):** In the Settings of the device pop-up, in the line of "Monitor", a small chip **"Pause …"** stands next to "Default" (no extra row). It opens a window with two choices: **"Until online again"** (for devices you take indoors for the winter: the pause ends on its own as soon as the device is reachable again, at least two minutes in a row; if it was still online when you paused, it ends only after it has been gone once and is back) and **"Until date"** (quick choices 1 month, 3 months, 1 April, or your own date; the pause ends at 00:00 of that day). The choice goes into the draft and applies after "Save", like the other settings. While paused, the device counts as "not monitored" like with "Monitor: off": it stays in the list with an orange pill "Paused until …", without outages, battery warning, statistics and push messages, and the tabs below rest. The chip turns orange ("Paused until 1.4.2027"); a tap changes the pause or ends it with "End pause". When the pause ends (date reached or device online again) the monitoring starts again by itself and an entry in the log says so. If the device is still gone then, its outage begins at the end of the pause, not at its start, so the winter does not count as one long outage in the statistics. The pause is part of the device settings: own values, backup and restore (only a valid, running pause), and "Reset" of "Offline after" takes it along. It exists only on the device (not globally, per integration or per label).
+- **Push message "Offline", button "Pause until online":** The message about a failed device has a third button next to "Open" and "Mute 24 h": **"Pause until online"** pauses the monitoring of this device as above, without a date, until it is reachable again. The device pop-up then shows the pause. The server takes the app action `DEVICE_PANEL_PAUSE_<device>` of the companion app.
+- **Log:** Entries "Monitoring paused until …" / "paused, until the device is online again", "Pause ended by hand" and "Monitoring resumed (pause expired / device online again)" in the log of the device and under "System".
+
 ## [2.213.1] - 2026-11-10
+
+Not released; included in 2.214.0.
 
 In the window "Charges", the curve and the tiles stay in place and only the list scrolls.
 
@@ -5919,7 +5931,7 @@ First pre-release.
   GitHub Actions for HACS/hassfest validation and tests.
 
 [2.6.0]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v2.6.0
-[2.213.1]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v2.213.1
+[2.214.0]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v2.214.0
 [2.213.0]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v2.213.0
 [2.212.0]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v2.212.0
 [2.211.0]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v2.211.0
