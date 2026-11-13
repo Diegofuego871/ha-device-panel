@@ -14,6 +14,7 @@ A failed device offers "Pause" right in the header of its pop-up.
 ### Changed
 
 - **Device pop-up, failed device:** Next to the status "Failed for 52 min." (and the type and area) a small button **"Pause"** stands in the header. It opens the window "Pause monitoring" with "Until online again" selected; "Pause" applies at once, without tapping "Save" first (if other changes are still open, it stays a draft like the other settings). The button is only there while the device is failed (not for devices that are not monitored or already paused) and only for administrators.
+- **Pause window, "End pause":** With an active pause, "End pause" is now a full-width button with a red border (before a small text link that was easy to miss), above "Cancel" and "Pause".
 
 ## [2.214.0] - 2026-11-13
 

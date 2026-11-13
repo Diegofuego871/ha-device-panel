@@ -4462,7 +4462,7 @@ class DevicePanel extends HTMLElement {
     setHtml(dlg, `<div class="dd-card pu-card" role="dialog" aria-labelledby="dpz-t"><b id="dpz-t">${escape(t("dpzTitle"))}</b><small>${escape(t("dpzNote"))}</small>
       <div class="sub-tabs" role="tablist">${modes.map(([k, label]) => `<button type="button" role="tab" class="sub-tab${z.mode === k ? " on" : ""}" data-dlg="dpz-mode" data-v="${k}" aria-selected="${z.mode === k}">${escape(t(label))}</button>`).join("")}</div>
       ${body}
-      ${z.active ? `<button type="button" class="lnk" data-dpz="end">${escape(t("dpzEnd"))}</button>` : ""}
+      ${z.active ? `<button type="button" class="dlg-btn danger dpz-end" data-dpz="end">${mdi("play", 18)}${escape(t("dpzEnd"))}</button>` : ""}
       <div class="dd-btns"><button type="button" class="dlg-btn" data-dpz="cancel">${mdi("close", 18)}${escape(t("puCancel"))}</button><button type="button" class="dlg-btn primary" data-dpz="apply"${bad || none ? " disabled" : ""}>${mdi("pause", 18)}${escape(t("dpzApply"))}</button></div></div>`);
   }
 

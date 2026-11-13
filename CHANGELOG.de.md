@@ -14,6 +14,7 @@ Ein ausgefallenes Gerät bietet "Pausieren" gleich im Kopf seines Popups an.
 ### Geändert
 
 - **Geräte-Popup, ausgefallenes Gerät:** Neben dem Status "Ausgefallen seit 52 Min." (und Typ und Bereich) steht im Kopf ein kleiner Knopf **"Pausieren"**. Er öffnet das Fenster "Überwachung pausieren" mit "Bis wieder online" gewählt; "Pausieren" gilt gleich, ohne dass man erst "Speichern" tippt (sind noch andere Änderungen offen, bleibt es wie bei den übrigen Einstellungen ein Entwurf). Den Knopf gibt es nur, solange das Gerät ausgefallen ist (nicht bei nicht überwachten oder schon pausierten Geräten) und nur für Administratoren.
+- **Pausen-Fenster, "Pause beenden":** Bei einer aktiven Pause ist "Pause beenden" jetzt ein Knopf in voller Breite mit rotem Rand (vorher ein kleiner Textlink, der leicht übersehen wurde), über "Abbrechen" und "Pausieren".
 
 ## [2.214.0] - 2026-11-13
 

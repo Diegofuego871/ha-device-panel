@@ -55,7 +55,9 @@ for (const lang of ["de", "en"]) {
 
     // Pause beenden
     await tap(chip);
+    await p.screenshot({ path: `${outDir}/devicepause-${tag.replace("/", "-")}-4.png` }).catch(() => {});
     check(`[${tag}] Fenster bei aktiver Pause: Knopf "${L.end}", "${L.online}" gewählt`, (await wait(`return r.querySelector('${Z}')?.open && !!r.querySelector('${Z} [data-dpz="end"]')`)) && (await ev(`return r.querySelector('${Z} [data-dlg="dpz-mode"].on').dataset.v === "online"`)));
+    check(`[${tag}] "${L.end}" ist ein deutlich sichtbarer Knopf (volle Breite, Rand, gleiche Höhe wie die anderen)`, await ev(`const e = r.querySelector('${Z} [data-dpz="end"]'); const a = r.querySelector('${Z} [data-dpz="apply"]'); const c = r.querySelector('${Z} .pu-card'); return e.classList.contains("dlg-btn") && e.getBoundingClientRect().width > c.getBoundingClientRect().width * 0.8 && Math.abs(e.getBoundingClientRect().height - a.getBoundingClientRect().height) < 4 && parseFloat(getComputedStyle(e).borderTopWidth) >= 1`));
     await tap(`${Z} [data-dpz="end"]`);
     check(`[${tag}] "${L.end}": Chip wieder "${L.chip}", Reiter wieder da`, (await wait(`return !r.querySelector('${chip}')?.classList.contains("on")`)) && (await text(chip)) === L.chip && (await wait(`return !!r.querySelector('${D} .lvl-body')`)));
     check(`[${tag}] gespeichert: monitor_pause null`, (await calls()).some((x) => x.monitor_pause === null), JSON.stringify(await calls()));
