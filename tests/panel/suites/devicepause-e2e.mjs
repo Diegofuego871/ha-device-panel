@@ -75,6 +75,25 @@ for (const lang of ["de", "en"]) {
     check(`[${tag}] "1 Monat" übernommen: Chip orange mit Datum`, (await wait(`return r.querySelector('${chip}')?.classList.contains("on")`)) && /\d{4}/.test(await text(chip)), await text(chip));
     const sent = (await calls()).filter((x) => x.monitor_pause?.mode === "date");
     check(`[${tag}] gespeichert: monitor_pause {mode: date, until} in der Zukunft`, sent.length > 0 && sent.at(-1).monitor_pause.until * 1000 > Date.now() + 25 * 86400000 && sent.at(-1).monitor_pause.until * 1000 < Date.now() + 40 * 86400000, JSON.stringify(sent));
+    // Ausgefallenes Gerät (2.214.1): Knopf "Pausieren" gleich im Kopf, gilt ohne "Speichern"
+    await tap(`${D} .dlg-close`);
+    await wait(`return !r.querySelector('${D}')?.open`);
+    const down = await ev(`return r.host._devices.find((x) => x.online === false && !x.disabled && !x.unmonitored)?.id || ""`);
+    check(`[${tag}] ein ausgefallenes Gerät im Simulator gefunden`, !!down);
+    await ev(`r.host._openDevice(${JSON.stringify(down)})`);
+    await wait(`return r.querySelector('${D}')?.open`);
+    check(`[${tag}] ausgefallenes Gerät: Knopf "${L.apply}" im Kopf neben dem Status`, await wait(`return !!r.querySelector('${D} .dlg-sub .dpz-head')`) && (await text(`${D} .dlg-sub .dpz-head`)) === L.apply);
+    await ev(`r.host._openDevice("e")`);
+    await wait(`return r.querySelector('${D}')?.open`);
+    check(`[${tag}] Gerät online: kein Knopf im Kopf`, await ev(`return !r.querySelector('${D} .dlg-sub .dpz-head')`));
+    await ev(`r.host._openDevice(${JSON.stringify(down)})`);
+    await wait(`return !!r.querySelector('${D} .dlg-sub .dpz-head')`);
+    const before = await p.evaluate(() => window.__wsCalls.filter((m) => m.type === "device_panel/set_device_settings" && "monitor_pause" in m).length);
+    await tap(`${D} .dlg-sub .dpz-head`);
+    check(`[${tag}] Knopf im Kopf öffnet das Fenster mit "${L.online}"`, (await wait(`return r.querySelector('${Z}')?.open`)) && (await ev(`return r.querySelector('${Z} [data-dlg="dpz-mode"].on').dataset.v === "online"`)));
+    await tap(`${Z} [data-dpz="apply"]`);
+    check(`[${tag}] gilt gleich ohne "Speichern": monitor_pause {mode: online} gesendet`, await p.waitForFunction((n) => window.__wsCalls.filter((m) => m.type === "device_panel/set_device_settings" && "monitor_pause" in m).length > n, before, { timeout: 4000 }).then(() => true, () => false));
+    check(`[${tag}] danach Pille im Kopf, Knopf weg`, (await wait(`return !!r.querySelector('${D} .dlg-sub .pill.pz') && !r.querySelector('${D} .dlg-sub .dpz-head')`)));
     await tap(`${D} .dlg-close`);
     check(`[${tag}] keine Fehler`, errors.length === 0, errors.join("|"));
     await ctx.close();

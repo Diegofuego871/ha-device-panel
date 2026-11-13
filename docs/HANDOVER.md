@@ -11,6 +11,10 @@ Einstieg für jede neue Claude-Code-Session. Zuerst diese Datei lesen, dann
 
 - `charge.py` `known_rechargeable`: Lademeldung gilt (global + Gerät/Integration), oder am Gerät ausdrücklich "Ein", oder Live-Aktivität für das Gerät an; `rechargeable()` und `charging_of()` nutzen sie (vorher nur `enabled()` mit globalem Schalter). Test `test_rechargeable_by_device_charge_or_live`.
 
+## Stand (2.214.1, "Pausieren" im Kopf eines ausgefallenen Geräts)
+
+- `device-panel.js`: Knopf `.dpz-head` (`data-dlg="dev-pause-quick"`) in `.dlg-sub` des Geräte-Popups, nur bei `online === false`, nicht deaktiviert/nicht überwacht/nicht pausiert, nur Administratoren. `_openDevicePause(id, quick)`: bei quick speichert "Pausieren" sofort (`_devSave`), wenn es die einzige offene Änderung ist. Test: `devicepause-e2e`.
+
 ## Stand (2.214.0, Überwachung eines Geräts pausieren, Issue 4)
 
 - Einstellung `monitor_pause` in `device_settings` (nur am Gerät): `{"mode": "date", "until": Sekunden}` oder `{"mode": "online", "seen_off": bool}`; `devices.py` `monitor_pause()`, `valid_monitor_pause()`, `device_seen_off()`, `device_offline_after(..., ignore_pause)` liefert bei einer Pause None (wie "Überwachen aus": alle Verbraucher von `monitored_devices`/`status_devices`/`unmonitored` folgen). Detailfeld `monitor_pause_setting` (Format wie die Einstellung).

@@ -7,6 +7,14 @@ All notable changes to this integration are documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/).
 
+## [2.214.1] - 2026-11-13
+
+A failed device offers "Pause" right in the header of its pop-up.
+
+### Changed
+
+- **Device pop-up, failed device:** Next to the status "Failed for 52 min." (and the type and area) a small button **"Pause"** stands in the header. It opens the window "Pause monitoring" with "Until online again" selected; "Pause" applies at once, without tapping "Save" first (if other changes are still open, it stays a draft like the other settings). The button is only there while the device is failed (not for devices that are not monitored or already paused) and only for administrators.
+
 ## [2.214.0] - 2026-11-13
 
 A device can be taken out of monitoring for a while: until a date or until it is online again, also by a button in the outage push.
@@ -5931,6 +5939,7 @@ First pre-release.
   GitHub Actions for HACS/hassfest validation and tests.
 
 [2.6.0]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v2.6.0
+[2.214.1]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v2.214.1
 [2.214.0]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v2.214.0
 [2.213.0]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v2.213.0
 [2.212.0]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v2.212.0

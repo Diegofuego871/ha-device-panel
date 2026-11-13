@@ -4412,13 +4412,14 @@ class DevicePanel extends HTMLElement {
 
   // Überwachung eines Geräts pausieren (seit 2.214.0, Issue 4, docs/mockups/pause-v1, A): kleines Fenster mit "Bis wieder online" oder "Bis Datum".
   // Der Entwurf des Geräts nimmt die Wahl auf (gilt nach "Speichern" wie die übrigen Einstellungen); "Pause beenden" nimmt sie zurück.
-  _openDevicePause(id) {
+  _openDevicePause(id, quick = false) {
     const dlg = this.shadowRoot.querySelector("dialog.dpz-dlg");
     const d = this._devices.find((x) => x.id === id);
     if (!dlg || !d) return;
     const cur = d.monitor_pause_setting;
     const until = cur?.mode === "date" && cur.until * 1000 > Date.now() ? cur.until : 0;
-    this._dpz = { id, mode: cur?.mode === "date" ? "date" : "online", sel: null, until, active: Boolean(cur) };
+    // quick (Knopf im Kopf bei einem ausgefallenen Gerät, seit 2.214.1): gilt gleich, ohne dass man erst "Speichern" tippt
+    this._dpz = { id, mode: cur?.mode === "date" ? "date" : "online", sel: null, until, active: Boolean(cur), quick };
     this._renderDevicePause();
     if (!dlg.open) {
       if (typeof dlg.showModal === "function") dlg.showModal();
@@ -4498,8 +4499,11 @@ class DevicePanel extends HTMLElement {
       } else if (btn.dataset.dpz === "apply") {
         const id = z.id;
         const value = z.mode === "online" ? { mode: "online" } : { mode: "date", until: z.until };
+        const quick = z.quick;
         close();
         this._devEdit(id, { monitor_pause: value });
+        // Nur diese eine Änderung offen: gleich speichern (bei weiteren offenen Änderungen bleibt es ein Entwurf wie sonst)
+        if (quick && this._devChanges().length === 1) this._devSave();
       }
     });
     // Eigenes Datum: iOS meldet es oft erst beim Schliessen der Auswahl ("change"), andere Browser schon beim Tippen ("input")
@@ -5707,7 +5711,12 @@ class DevicePanel extends HTMLElement {
           <h3>${escape(this._t("secDevice"))}</h3>${this._deviceSectionHtml(d)}`;
       html = `<div class="dlg-head"><span class="dlg-avatar ${avatar}">${typeIcon(d.type, 28)}</span>
           <div class="dlg-title">${this._nameHtml(d)}
-            <div class="dlg-sub">${status}<span>${[this._t(typeKey(d.type)), d.area].filter(Boolean).map(escape).join(" · ")}</span></div></div>
+            <div class="dlg-sub">${status}<span>${[this._t(typeKey(d.type)), d.area].filter(Boolean).map(escape).join(" · ")}</span>${
+              // Ausgefallen: Pausieren gleich im Kopf anbieten (seit 2.214.1)
+              d.online === false && !d.disabled && !d.unmonitored && !d.monitor_pause_setting && this._hass?.user?.is_admin !== false
+                ? `<button type="button" class="pu-chip dpz-chip dpz-head" data-dlg="dev-pause-quick" title="${escape(this._t("dpzTitle"))}">${mdi("pause", 13)}<span>${escape(this._t("dpzApply"))}</span></button>`
+                : ""
+            }</div></div>
           ${logBtn}${heart}<span class="dlg-sep" aria-hidden="true"></span>${close}</div>${whyHtml}
         <div class="dlg-quick"><button type="button" class="qbtn" data-dlg="open-device">${mdi("open", 17)}<span class="q-t">${escape(this._t("openDevicePage"))}</span></button>${d.integration?.domain ? `<button type="button" class="qbtn" data-dlg="open-integration" data-domain="${escape(d.integration.domain)}">${mdi("open", 17)}<span class="q-t">${escape(this._t("openIntegPage"))}</span></button>` : ""}</div>
         <div class="dev-tabs">${tabs}</div>
@@ -5762,6 +5771,7 @@ class DevicePanel extends HTMLElement {
     if (action === "close") this._requestCloseDevice();
     else if (action === "save") this._devSave();
     else if (action === "dev-pause") this._openDevicePause(this._detailId);
+    else if (action === "dev-pause-quick") this._openDevicePause(this._detailId, true);
     else if (action === "ent-live") {
       // Ein gewählter Chip wird mit dem zweiten Tipp wieder abgewählt (= alle), wie alle Chips im Panel
       const v = ["on", "off", "rest"].includes(btn.dataset.val) ? btn.dataset.val : "all";

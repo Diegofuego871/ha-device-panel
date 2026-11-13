@@ -73,7 +73,7 @@ for (const lang of ["de", "en"]) {
     check(`[${tag}] Popup offen`, await isOpen("device"));
     check(`[${tag}] Name`, (await text("dialog.device h2")) === "Bewegungsmelder Flur");
     check(`[${tag}] Status-Pille`, (await text("dialog.device .dlg-sub .pill.off")) === T.pill, await text("dialog.device .dlg-sub"));
-    check(`[${tag}] Typ und Bereich`, (await text("dialog.device .dlg-sub")).endsWith(T.sub), await text("dialog.device .dlg-sub"));
+    check(`[${tag}] Typ und Bereich`, (await text("dialog.device .dlg-sub > span:not(.pill)")).endsWith(T.sub), await text("dialog.device .dlg-sub > span:not(.pill)"));
     check(`[${tag}] Knopf HA-Geräteseite`, (await text('[data-dlg="open-device"] .q-t')) === T.open);
     check(`[${tag}] Abschnitte`, await wait(`return [...r.querySelectorAll("dialog.device h3")].map(h=>h.textContent.trim()).join("|") === ${JSON.stringify(T.secs.join("|"))}`),
       JSON.stringify(await texts("dialog.device h3")));
