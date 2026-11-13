@@ -3259,7 +3259,7 @@ class DevicePanel extends HTMLElement {
     const monitored = scope.filter((d) => !d.disabled && !d.unmonitored && !d.no_status);
     // Geräte ohne Online-Status (seit 2.156.0) zählen weder online noch ausgefallen; die Kachel nennt ihre Zahl als eigene Zeile
     const noStatus = scope.filter((d) => d.no_status && !d.disabled && !d.unmonitored).length;
-    setHtml(root.querySelector(".hero"), this._loading ? "" : this._heroHtml(monitored, offline, noStatus));
+    setHtml(root.querySelector(".hero"), this._loading ? "" : this._heroHtml(monitored, offline, noStatus, scope.filter((d) => d.monitor_pause_setting && !d.disabled).length));
     setHtml(root.querySelector(".hstrip"), this._loading ? "" : this._stripHtml(monitored, offline));
     setHtml(root.querySelector(".chips"), this._loading ? "" : this._chipsHtml(all));
     this._guardPin();
@@ -3285,7 +3285,7 @@ class DevicePanel extends HTMLElement {
     this._renderDevice(soft);
   }
 
-  _heroHtml(all, offline, noStatus = 0) {
+  _heroHtml(all, offline, noStatus = 0, paused = 0) {
     const online = all.filter((d) => d.online === true);
     const flaky = online.filter((d) => d.flaky).length;
     const noData = all.filter((d) => d.online == null).length;
@@ -3321,15 +3321,19 @@ class DevicePanel extends HTMLElement {
     const warnLine = warn
       ? `<button type="button" class="kwarn" data-warn-open aria-label="${escape(this._t("warnOpen"))}"><span class="w-ic">${mdi("alert", 16)}</span><span><b>${warn}</b><span class="w-long"> ${escape(this._t("warnDevices", warn))}</span><span class="w-short"> ${escape(this._t("warnShort", warn))}</span></span><span class="w-go"><span class="cbtn" aria-hidden="true">${mdi("chevronRight", 16)}</span></span></button>`
       : `<div class="kwarn none"><span class="w-ic">${mdi("check", 16)}</span><span>${escape(this._t("warnNone"))}</span></div>`;
+    // Pausierte Geräte (seit 2.215.1): kleine orange Zeile in der Kachel; ein Tipp setzt den Filter-Chip "Pausiert" (data-hint), noch einmal hebt ihn auf
+    const pausedLine = paused
+      ? `<button type="button" class="kpause${this._hint === "paused" ? " on" : ""}" data-hint="paused" aria-pressed="${this._hint === "paused"}">${mdi("pause", 14)}<span><b>${paused}</b> ${escape(this._t("pausedNow", paused))}</span></button>`
+      : "";
     const off = offline.length
       ? `<div class="kt err offl"><div class="k"><span class="pulse"></span>${escape(this._t("offlineNow"))}${this._scopeHtml()}</div>
         <div class="top"><span class="num">${offline.length}</span><span class="lbl">${escape(this._t("longest", `${offline[0].since_at_least ? "≥ " : ""}${this._duration(offline[0].offline_since)}`))}</span></div>
         <div class="olist">${offline.slice(0, 4).map((d) => `<button type="button" data-open="${escape(d.id)}"><span>${CONN[this._connOf(d)].icon(16)}</span><span class="name">${escape(d.name)}</span><b>${this._durationHtml(d, true)}</b></button>`).join("")}
         ${offline.length > 4 ? `<div class="more more-long">${escape(this._t("more", offline.length - 4))}</div>` : ""}
-        ${offline.length > 2 ? `<div class="more more-short">${escape(this._t("more", offline.length - 2))}</div>` : ""}</div>${warn ? warnLine : ""}</div>`
+        ${offline.length > 2 ? `<div class="more more-short">${escape(this._t("more", offline.length - 2))}</div>` : ""}</div>${pausedLine}${warn ? warnLine : ""}</div>`
       : `<div class="kt offl"><div class="k">${escape(this._t("offlineNow"))}${this._scopeHtml()}</div>
         <div class="top"><span class="num ok">0</span><span class="lbl">${escape(this._t("allOnline"))}</span></div>
-        <div class="durs">${escape(this._t("allOnlineSub"))}</div>${warnLine}</div>`;
+        <div class="durs">${escape(this._t("allOnlineSub"))}</div>${pausedLine}${warnLine}</div>`;
     return ring + off + this._pulseHtml(all);
   }
 

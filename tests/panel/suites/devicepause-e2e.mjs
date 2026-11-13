@@ -9,8 +9,8 @@ let ok = true;
 const check = (l, c, i = "") => { ok &&= !!c; console.log(`${c ? "PASS" : "FAIL"} ${l}${i ? " - " + i : ""}`); };
 const R = `document.querySelector("device-panel").shadowRoot`;
 const T = {
-  de: { chipLabel: "Pausiert", chip: "Pausieren …", title: "Überwachung pausieren", online: "Bis wieder online", date: "Bis Datum", chipOnline: "Pausiert bis wieder online", pill: "Pausiert bis online", end: "Pause beenden", apply: "Pausieren", past: "liegt in der Vergangenheit", pickDate: "Wähle ein Datum", april: "1. April" },
-  en: { chipLabel: "Paused", chip: "Pause …", title: "Pause monitoring", online: "Until online again", date: "Until date", chipOnline: "Paused until online again", pill: "Paused until online", end: "End pause", apply: "Pause", past: "past", pickDate: "Pick a date", april: "1 April" },
+  de: { kpause: "1 Gerät pausiert", chipLabel: "Pausiert", chip: "Pausieren …", title: "Überwachung pausieren", online: "Bis wieder online", date: "Bis Datum", chipOnline: "Pausiert bis wieder online", pill: "Pausiert bis online", end: "Pause beenden", apply: "Pausieren", past: "liegt in der Vergangenheit", pickDate: "Wähle ein Datum", april: "1. April" },
+  en: { kpause: "1 device paused", chipLabel: "Paused", chip: "Pause …", title: "Pause monitoring", online: "Until online again", date: "Until date", chipOnline: "Paused until online again", pill: "Paused until online", end: "End pause", apply: "Pause", past: "past", pickDate: "Pick a date", april: "1 April" },
 };
 for (const lang of ["de", "en"]) {
   const L = T[lang];
@@ -56,6 +56,21 @@ for (const lang of ["de", "en"]) {
     await ev(`r.querySelector('.chips [data-hint="paused"]').click(); return true`);
     check(`[${tag}] Filterpille wählt nur das pausierte Gerät`, await wait(`return r.querySelectorAll(".dev").length === 1 && r.querySelector('.chips [data-hint="paused"]').classList.contains("on")`));
     await ev(`r.querySelector('.chips [data-hint="paused"]').click(); return true`);
+    // Kachel "Gerade ausgefallen" (2.215.1): orange Zeile mit der Zahl, ein Tipp setzt den Filter
+    check(`[${tag}] Kachel "Gerade ausgefallen": Zeile "${L.kpause}"`, (await wait(`return !!r.querySelector('.kt.offl .kpause')`)) && (await text('.kt.offl .kpause')) === L.kpause, await text('.kt.offl .kpause'));
+    await ev(`r.querySelector('.kt.offl .kpause').click(); return true`);
+    check(`[${tag}] Tipp auf die Zeile setzt den Filter "${L.chipLabel}": nur das pausierte Gerät, Chip und Zeile aktiv`, await wait(`return r.querySelectorAll(".dev").length === 1 && r.querySelector('.chips [data-hint="paused"]').classList.contains("on") && r.querySelector('.kt.offl .kpause').classList.contains("on")`));
+    await ev(`r.querySelector('.kt.offl .kpause').click(); return true`);
+    check(`[${tag}] zweiter Tipp hebt den Filter auf`, await wait(`return r.querySelectorAll(".dev").length > 1 && !r.querySelector('.kt.offl .kpause').classList.contains("on")`));
+    // Bild der Kachel: Popup kurz zu, dann wieder auf
+    await ev(`r.host._closeDevice?.(); return true`);
+    await ev(`r.querySelector('.kt.offl .kpause')?.click(); return true`);
+    await wait(`return r.querySelector('.kt.offl .kpause')?.classList.contains("on")`);
+    await p.screenshot({ path: `${outDir}/devicepause-${tag.replace("/", "-")}-5.png` });
+    await ev(`r.querySelector('.kt.offl .kpause')?.click(); return true`);
+    await ev(`r.host._openDevice("e"); return true`);
+    await wait(`return r.querySelector('${D}')?.open`);
+    await tap(`${D} [data-tab="set"]`);
     check(`[${tag}] Pille in der Geräteliste "${L.pill}"`, await ev(`const d = r.host._devices.find((x) => x.id === "e"); return d.unmonitored === true && r.host._statusHtml(d).includes("pz") && r.host._statusHtml(d).includes(${JSON.stringify(L.pill)})`));
     const fits = await ev(`const b = r.querySelector('${D} .dlg-body'); return b.scrollWidth <= b.clientWidth + 1`);
     check(`[${tag}] kein seitliches Scrollen`, fits);

@@ -7,6 +7,14 @@ All notable changes to this integration are documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/).
 
+## [2.215.1] - 2026-11-13
+
+The tile "Currently failed" also shows how many devices are paused.
+
+### Changed
+
+- **Tile "Currently failed", paused devices:** If at least one device is paused, a small orange line "1 device paused" stands in the tile (above "N warnings"). A tap sets the filter "Paused" (the list shows only the paused devices); a second tap removes it. Without a paused device the line is not there.
+
 ## [2.215.0] - 2026-11-13
 
 A new filter chip "Paused" shows the devices whose monitoring is paused.
@@ -5949,6 +5957,7 @@ First pre-release.
   GitHub Actions for HACS/hassfest validation and tests.
 
 [2.6.0]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v2.6.0
+[2.215.1]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v2.215.1
 [2.215.0]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v2.215.0
 [2.214.1]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v2.214.1
 [2.214.0]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v2.214.0

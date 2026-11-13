@@ -7,6 +7,14 @@ Alle nennenswerten Änderungen an dieser Integration stehen in dieser Datei.
 Das Format folgt [Keep a Changelog](https://keepachangelog.com/de/1.1.0/),
 die Versionsnummern folgen [Semantic Versioning](https://semver.org/lang/de/).
 
+## [2.215.1] - 2026-11-13
+
+Die Kachel "Gerade ausgefallen" zeigt auch, wie viele Geräte pausiert sind.
+
+### Geändert
+
+- **Kachel "Gerade ausgefallen", pausierte Geräte:** Ist mindestens ein Gerät pausiert, steht in der Kachel eine kleine orange Zeile "1 Gerät pausiert" (über "N Warnungen"). Ein Tipp setzt den Filter "Pausiert" (die Liste zeigt nur die pausierten Geräte), ein zweiter hebt ihn auf. Ohne pausiertes Gerät fehlt die Zeile.
+
 ## [2.215.0] - 2026-11-13
 
 Ein neuer Filter-Chip "Pausiert" zeigt die Geräte, deren Überwachung pausiert ist.
@@ -6050,6 +6058,7 @@ Erste Vorabversion.
   GitHub Actions für die Prüfungen von HACS und hassfest sowie die Tests.
 
 [2.6.0]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v2.6.0
+[2.215.1]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v2.215.1
 [2.215.0]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v2.215.0
 [2.214.1]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v2.214.1
 [2.214.0]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v2.214.0

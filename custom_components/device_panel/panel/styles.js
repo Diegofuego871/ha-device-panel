@@ -167,6 +167,12 @@ button { font: inherit; color: inherit; }
 /* Zeile "Geräte mit Warnung" unten in der Kachel "Gerade ausgefallen" (seit 1.16.0) */
 .kt.offl { display: flex; flex-direction: column; }
 .kt.offl .durs, .kt.offl .olist { margin-bottom: 14px; }
+/* Pausierte Geräte (seit 2.215.1): kleine orange Zeile in der Kachel "Gerade ausgefallen", setzt den Filter "Pausiert" */
+.kpause { display: inline-flex; align-items: center; gap: 6px; align-self: flex-start; margin: 0 0 12px; padding: 5px 11px; border: 1px solid color-mix(in srgb, var(--dp-warning) 45%, transparent); border-radius: 999px;
+  background: var(--dp-warning-soft); color: var(--dp-warning); font: inherit; font-size: 13px; cursor: pointer; }
+.kpause b { font-weight: 600; font-variant-numeric: tabular-nums; }
+.kpause.on { background: var(--dp-warning); border-color: var(--dp-warning); color: #fff; }
+.kpause:focus-visible { outline: 2px solid var(--dp-primary); outline-offset: 2px; }
 .kwarn { display: flex; align-items: center; gap: 8px; width: auto; margin: auto -18px -16px; padding: 11px 18px; border: none; border-top: 1px solid var(--dp-divider); background: none;
   color: var(--dp-text); font: inherit; font-size: 13.5px; text-align: left; }
 button.kwarn { cursor: pointer; }
