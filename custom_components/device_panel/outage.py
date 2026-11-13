@@ -62,7 +62,7 @@ from .const import (
     STORAGE_VERSION,
 )
 from .monitor_pause import async_set_pause
-from .devices import async_device_facts, async_mute_device, device_notify_delay, device_settings, liveness_report, notify_muted_until, primary_domain
+from .devices import async_device_facts, async_mute_device, device_notify_delay, device_settings, liveness_report, notify_muted_until, primary_domain, status_devices
 from .scope import listed
 from .options_api import notify_target, effective
 
@@ -225,6 +225,7 @@ class OutageNotifier:
         """Fällige Ausfall-Meldungen, Online-Meldungen, anhaltende Benachrichtigung, nächster Termin."""
         opts = effective(self.hass)
         now = time.time()
+        self._forget_unmonitored(opts)
         # "Erst melden nach" je Gerät (seit 2.91.0): eigenes, sonst das der Integration, sonst das globale
         # Ein Gerät mit laufendem Update bleibt zurückgestellt (nicht erledigt): ist es nach der Wartezeit noch weg, kommt die Meldung dann
         due_all = [
@@ -255,6 +256,24 @@ class OutageNotifier:
             self._back_at.clear()
         self._update_persistent(opts, new_outage)
         self._schedule(opts, now)
+
+    def _forget_unmonitored(self, opts: dict[str, Any]) -> None:
+        """Geräte vergessen, die nicht mehr überwacht werden (gelöscht, deaktiviert, ohne Entitäten, ausgeschlossen).
+
+        Der Wechsel "gone" des Protokolls kommt nur einmal und nur, solange der letzte Eintrag ein Zustand ist. Ging er verloren (Neustart,
+        Integration neu geladen, Entitäten schon vorher weg), blieb der Ausfall in der eigenen Datei stehen und kam bei jedem Start wieder.
+        """
+        if not self._offline and not self._notified:
+            return
+        monitored = {device.id for device, _entries in status_devices(self.hass, opts)}
+        stale = [dev for dev in self._offline if dev not in monitored]
+        if not stale and not (self._notified - monitored):
+            return
+        for dev in stale:
+            self._offline.pop(dev, None)
+            self._debug(dev, "outage_gone")
+        self._notified &= monitored
+        self._store.async_delay_save(self._data, 1)
 
     def _delay(self, opts: dict[str, Any], dev: str) -> int:
         """"Erst melden nach" des Geräts in Sekunden; ein Gerät, das es nicht mehr gibt, folgt dem globalen Wert."""
@@ -456,7 +475,7 @@ class OutageNotifier:
         if opts[CONF_OUTAGE_PERSISTENT]:
             for dev, start in self._offline.items():
                 device = dev_reg.async_get(dev)
-                if device is None or dev in off or listed(opts[CONF_PERSISTENT_EXCLUDE], primary_domain(hass, device)):
+                if device is None or device.disabled or dev in off or listed(opts[CONF_PERSISTENT_EXCLUDE], primary_domain(hass, device)):
                     continue
                 name = device.name_by_user or device.name or dev
                 since = push.text(hass, "outage_persistent_since", time=_local_time(start))

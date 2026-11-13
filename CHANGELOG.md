@@ -15,6 +15,10 @@ The tile "Currently failed" also shows how many devices are paused.
 
 - **Tile "Currently failed", paused devices:** If at least one device is paused, a small orange line "1 device paused" stands in the tile (above "N warnings"). A tap sets the filter "Paused" (the list shows only the paused devices); a second tap removes it. Without a paused device the line is not there.
 
+### Fixed
+
+- **Removed or disabled device kept being reported as offline (issue 5):** If a device failed and was then deleted, disabled or lost all its entities while the failure was already known, the persistent notification "Device Panel: devices offline" listed it again at every start of Home Assistant. Cause: the failure state is kept in the notifier's own file, and the one-off "no longer monitored" signal of the availability log could get lost (restart, reload, entities gone beforehand), so the entry was never removed. The notifier now drops every device that is no longer monitored at each check and at start, without a notice; the persistent notification no longer lists disabled devices. Thanks to owl70 for the report.
+
 ## [2.215.0] - 2026-11-13
 
 A new filter chip "Paused" shows the devices whose monitoring is paused.

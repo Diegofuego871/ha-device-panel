@@ -133,6 +133,7 @@ async def test_pending_outage_survives_restart(hass: HomeAssistant, hass_storage
 
 async def test_old_store_counts_as_notified(hass: HomeAssistant, hass_storage: dict[str, Any]) -> None:
     lamp = _device(hass, "Lampe")
+    _entity(hass, lamp, "light", "l", "unavailable")  # ohne Entitäten wird das Gerät nicht überwacht (und vergessen)
     hass_storage[f"{DOMAIN}.notify"] = {"version": 1, "key": f"{DOMAIN}.notify", "data": {"offline": {lamp.id: time.time() - 600}}}
     entry = MockConfigEntry(domain=DOMAIN, title="Device Panel")
     entry.add_to_hass(hass)
