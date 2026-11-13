@@ -47,6 +47,7 @@ for (const lang of ["de", "en"]) {
     await tap(`${Z} [data-dpz="apply"]`);
     check(`[${tag}] "Bis wieder online" übernommen: Chip orange "${L.chipOnline}", Reiter darunter ruhen`, (await wait(`return r.querySelector('${chip}')?.classList.contains("on")`)) && (await text(chip)) === L.chipOnline && (await ev(`return !r.querySelector('${D} .lvl-body') && !!r.querySelector('${D} .dpz-note')`)));
     await p.screenshot({ path: `${outDir}/devicepause-${tag.replace("/", "-")}-3.png` });
+    check(`[${tag}] Kopf zeigt schon im Entwurf die Pille "${L.pill}" statt "Online"`, await ev(`const h = r.querySelector('${D} .dlg-head'); return h.textContent.includes(${JSON.stringify(L.pill)}) && !h.querySelector(".pill.on")`));
     check(`[${tag}] gespeichert: monitor_pause {mode: online}`, (await calls()).some((x) => x.monitor_pause?.mode === "online"), JSON.stringify(await calls()));
     check(`[${tag}] Pille in der Geräteliste "${L.pill}"`, await ev(`const d = r.host._devices.find((x) => x.id === "e"); return d.unmonitored === true && r.host._statusHtml(d).includes("pz") && r.host._statusHtml(d).includes(${JSON.stringify(L.pill)})`));
     const fits = await ev(`const b = r.querySelector('${D} .dlg-body'); return b.scrollWidth <= b.clientWidth + 1`);

@@ -5638,7 +5638,11 @@ class DevicePanel extends HTMLElement {
     } else {
       let status = `<span class="pill on"><span class="pd"></span>${escape(this._t("statusOnline"))}</span>`;
       let avatar = "";
-      if (d.online === false) {
+      if (d.monitor_pause_setting && !d.disabled) {
+        // Pause der Überwachung (seit 2.214.0), auch schon im Entwurf vor dem Speichern
+        status = this._statusHtml(d);
+        avatar = "none";
+      } else if (d.online === false) {
         status = `<span class="pill off"><span class="pd"></span>${escape(this._t("statusOfflinePill", `${d.since_at_least ? "≥ " : ""}${this._duration(d.offline_since)}`))}</span>`;
         avatar = "off";
       } else if (d.disabled || d.unmonitored || d.no_status || d.online == null) {
