@@ -11,6 +11,10 @@ Einstieg für jede neue Claude-Code-Session. Zuerst diese Datei lesen, dann
 
 - `charge.py` `known_rechargeable`: Lademeldung gilt (global + Gerät/Integration), oder am Gerät ausdrücklich "Ein", oder Live-Aktivität für das Gerät an; `rechargeable()` und `charging_of()` nutzen sie (vorher nur `enabled()` mit globalem Schalter). Test `test_rechargeable_by_device_charge_or_live`.
 
+## Stand (2.215.0, Filter-Chip "Pausiert")
+
+- Chip-Schlüssel `paused` überall wie `nostatus`: `const.CHIP_KEYS` (hinter "nostatus"), `strings.json`/`translations` (Auswahl "Ausgeblendete Filter-Chips"), Panel `CHIP_OTHER`, `CHIP_DEFAULT`, Migration in `chipOrder`, `HINTS` (`test: monitor_pause_setting`, erscheint nur bei einem pausierten Gerät), `chipOther`/`chipPaused` in strings.js, `.chip.hint.pz`. Simulator: Listen `known` bei hide_chips/chip_order. Tests: `devicepause-e2e`, angepasst `hidechips-e2e`, `chiporder-e2e` (Pfeiltasten 10, Ablegen unter "Lädt" auf dem Handy).
+
 ## Stand (2.214.1, "Pausieren" im Kopf eines ausgefallenen Geräts)
 
 - `device-panel.js`: Knopf `.dpz-head` (`data-dlg="dev-pause-quick"`) in `.dlg-sub` des Geräte-Popups, nur bei `online === false`, nicht deaktiviert/nicht überwacht/nicht pausiert, nur Administratoren. `_openDevicePause(id, quick)`: bei quick speichert "Pausieren" sofort (`_devSave`), wenn es die einzige offene Änderung ist. Test: `devicepause-e2e`.

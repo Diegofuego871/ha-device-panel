@@ -13,7 +13,7 @@ PANEL_HTML_FILE = "panel.html"
 STATIC_URL_PATH = f"/{DOMAIN}"
 PANEL_STATIC_URL_PATH = f"{STATIC_URL_PATH}/panel"
 # Cache-Buster: bei jeder Änderung unter panel/ von Hand erhöhen.
-PANEL_VERSION = "490"
+PANEL_VERSION = "491"
 PANEL_PAGE_URL = f"{PANEL_STATIC_URL_PATH}/{PANEL_HTML_FILE}?v={PANEL_VERSION}"
 
 # Mitgeliefertes Bild für Push-Meldungen (Companion-App, "icon_url"), wie in
@@ -523,7 +523,7 @@ CONF_HIDE_CHIPS = "hide_chips"
 # ("Warnungen": instabil, Batterie niedrig, schwacher Empfang, keine Daten, ohne
 # Ausfälle; der Schlüssel blieb, damit gespeicherte Einstellungen gültig bleiben).
 # Seit 2.155.0: "label" (Filter "Label", wie "Bereich" und "Integration" eine Auswahl; nur da, wenn es in Home Assistant ein Label mit Geräten gibt).
-CHIP_KEYS = ("area", "integration", "label", "offline", "nostatus", "problems", "batteries", "battery", "signal", "update", "override", "new", "charging", "favorites")
+CHIP_KEYS = ("area", "integration", "label", "offline", "nostatus", "paused", "problems", "batteries", "battery", "signal", "update", "override", "new", "charging", "favorites")
 CONNECTION_TYPES = ("zigbee", "thread", "zwave", "matter", "ble", "wifi", "ethernet", "network", "cloud", "unknown")
 # Reihenfolge aller Chips über der Liste (seit 1.13.0, seit 1.14.0 eine Folge):
 # "all" und jede Verbindungsart sind Einträge wie die übrigen Chips. Leer =

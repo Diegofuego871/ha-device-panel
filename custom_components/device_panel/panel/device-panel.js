@@ -538,7 +538,7 @@ const RESTART_WAIT_MS = 5 * 60 * 1000;
 // Übrige Filter-Chips, die sich ausblenden lassen (seit 1.11.0, wie const.CHIP_KEYS):
 // Schlüssel, Symbol. Die Texte stehen in strings.js (chipOther).
 const CHIP_OTHER = [
-  ["area", "home"], ["integration", "puzzle"], ["label", "tag"], ["offline", "closeCircle"], ["nostatus", "circleOutline"], ["problems", "alert"], ["batteries", "battery"], ["battery", "battery"],
+  ["area", "home"], ["integration", "puzzle"], ["label", "tag"], ["offline", "closeCircle"], ["nostatus", "circleOutline"], ["paused", "pause"], ["problems", "alert"], ["batteries", "battery"], ["battery", "battery"],
   ["signal", "signal"], ["update", "update"], ["override", "tune"], ["new", "sparkle"], ["charging", "batteryCharging"], ["favorites", "heart"],
 ];
 // Reihenfolge aller Chips über der Liste (seit 1.13.0, seit 1.14.0 eine Folge,
@@ -552,7 +552,7 @@ const chipKind = (key) => (key === "area" || key === "integration" || key === "l
 // Nutzers): "Alle" ist angeheftet, dann die Hinweise, dann die Verbindungsarten,
 // hinten die seltenen Chips.
 const CHIP_DEFAULT = [
-  "all", "pin", "favorites", "integration", "label", "new", "offline", "nostatus", "problems", "battery", "batteries", "charging", "area",
+  "all", "pin", "favorites", "integration", "label", "new", "offline", "nostatus", "paused", "problems", "battery", "batteries", "charging", "area",
   "thread", "wifi", "ble", "zigbee", "ethernet", "cloud", "matter", "network", "unknown", "zwave",
   "signal", "update", "override",
 ];
@@ -586,6 +586,8 @@ function chipOrder(order, connOrder, counts) {
   }
   // Der Chip "Ohne Online-Status" (seit 2.156.0) fehlt in älteren Folgen: gleich hinter "Ausgefallen"
   if (!out.includes("nostatus")) out.splice(out.includes("offline") ? out.indexOf("offline") + 1 : out.length, 0, "nostatus");
+  // Der Chip "Pausiert" (seit 2.215.0) fehlt in älteren Folgen: gleich hinter "Ohne Online-Status"
+  if (!out.includes("paused")) out.splice(out.includes("nostatus") ? out.indexOf("nostatus") + 1 : out.includes("offline") ? out.indexOf("offline") + 1 : out.length, 0, "paused");
   // Der Chip "Label" (seit 2.155.0) fehlt in älteren Folgen: gleich hinter "Integration"
   if (!out.includes("label")) out.splice(out.includes("integration") ? out.indexOf("integration") + 1 : out.length, 0, "label");
   const full = [...out, ...["area", "integration", "label", "all", ...CHIP_TAIL].filter((k) => !out.includes(k))];
@@ -905,6 +907,8 @@ const HINTS = [
   { key: "new", cls: "nw", icon: "sparkle", label: "hintNew", test: (d) => Boolean(d.new) },
   // Ohne Online-Status (seit 2.156.0): überwacht (Batterie, Laden, Empfang), aber ohne Status und Ausfälle; der Ring statt des Punkts
   { key: "nostatus", cls: "ns", icon: "circleOutline", label: "chipNoStatus", test: (d) => Boolean(d.no_status) && !d.disabled },
+  // Pausiert (seit 2.215.0): Geräte, deren Überwachung gerade pausiert; erscheint nur, wenn es eines gibt
+  { key: "paused", cls: "pz", icon: "pause", label: "chipPaused", test: (d) => Boolean(d.monitor_pause_setting) && !d.disabled },
   // Favoriten (seit 2.22.0): nur das rote Herz, ohne Text und Zahl; erscheint immer (auch ohne Favoriten), damit man es findet
   { key: "favorites", cls: "fv", icon: "heart", label: "hintFavorites", test: (d) => Boolean(d.fav), bare: true },
 ];

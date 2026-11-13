@@ -7,6 +7,14 @@ Alle nennenswerten Änderungen an dieser Integration stehen in dieser Datei.
 Das Format folgt [Keep a Changelog](https://keepachangelog.com/de/1.1.0/),
 die Versionsnummern folgen [Semantic Versioning](https://semver.org/lang/de/).
 
+## [2.215.0] - 2026-11-13
+
+Ein neuer Filter-Chip "Pausiert" zeigt die Geräte, deren Überwachung pausiert ist.
+
+### Hinzugefügt
+
+- **Filter-Chip "Pausiert":** Wie die übrigen Filter-Chips über der Liste zeigt er die Geräte, deren Überwachung gerade pausiert ist (mit ihrer Zahl) und filtert die Liste. Er erscheint nur, wenn mindestens ein Gerät pausiert ist. In den Einstellungen › Ansicht › Filter-Chips lässt er sich wie alle anderen Chips platzieren und ausblenden (er steht gleich hinter "Ohne Online-Status"; die gespeicherte Reihenfolge älterer Einstellungen bekommt ihn dort). Der Schlüssel `paused` gehört auch zur Option "Ausgeblendete Filter-Chips".
+
 ## [2.214.1] - 2026-11-13
 
 Ein ausgefallenes Gerät bietet "Pausieren" gleich im Kopf seines Popups an.
@@ -6042,6 +6050,7 @@ Erste Vorabversion.
   GitHub Actions für die Prüfungen von HACS und hassfest sowie die Tests.
 
 [2.6.0]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v2.6.0
+[2.215.0]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v2.215.0
 [2.214.1]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v2.214.1
 [2.214.0]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v2.214.0
 [2.213.0]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v2.213.0

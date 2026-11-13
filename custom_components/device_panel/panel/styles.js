@@ -278,6 +278,7 @@ button.kwarn:focus-visible { outline: 2px solid var(--dp-primary); outline-offse
 .chip.hint.u svg { color: var(--dp-primary); }
 .chip.hint.o svg { color: var(--dp-primary); }
 .chip.hint.nw svg { color: var(--dp-success); }
+.chip.hint.pz svg { color: var(--dp-warning); }
 /* Neu (seit 0.21.0): grün wie "online", unterscheidbar von den blauen
    Symbolen der eigenen Einstellungen. */
 .new-tag { display: inline-flex; align-items: center; height: 18px; margin-left: 8px; padding: 0 6px; border-radius: 6px; vertical-align: 1px;

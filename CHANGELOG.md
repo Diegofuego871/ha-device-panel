@@ -7,6 +7,14 @@ All notable changes to this integration are documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/).
 
+## [2.215.0] - 2026-11-13
+
+A new filter chip "Paused" shows the devices whose monitoring is paused.
+
+### Added
+
+- **Filter chip "Paused":** Like the other filter chips above the list it shows the devices whose monitoring is paused right now (with their number) and filters the list. It appears only when at least one device is paused. In Settings › View › Filter chips it can be placed and hidden like all other chips (it comes right behind "No online status"; the stored order of older settings gets it there). The key `paused` is also part of the option "Hidden filter chips".
+
 ## [2.214.1] - 2026-11-13
 
 A failed device offers "Pause" right in the header of its pop-up.
@@ -5941,6 +5949,7 @@ First pre-release.
   GitHub Actions for HACS/hassfest validation and tests.
 
 [2.6.0]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v2.6.0
+[2.215.0]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v2.215.0
 [2.214.1]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v2.214.1
 [2.214.0]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v2.214.0
 [2.213.0]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v2.213.0

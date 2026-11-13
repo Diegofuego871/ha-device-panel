@@ -255,6 +255,7 @@
         "label": "Label",
         "offline": "Ausgefallen",
         "nostatus": "Ohne Online-Status",
+        "paused": "Pausiert",
         "problems": "Warnungen",
         "batteries": "Batterie",
         "battery": "Batterie niedrig",

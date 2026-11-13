@@ -70,6 +70,7 @@ export const STRINGS = {
     chipOffline: "Ausgefallen",
     // Ohne Online-Status (seit 2.156.0)
     chipNoStatus: "Ohne Online-Status",
+    chipPaused: "Pausiert",
     statusNoStatus: "Ohne Online-Status",
     groupNoStatus: "Ohne Online-Status",
     groupNoStatusHint: "überwacht (Batterie, Laden, Empfang), aber ohne Ausfälle und Ausfall-Meldungen",
@@ -1012,6 +1013,7 @@ export const STRINGS = {
       integration: ["Integration", "Filter nach Integration"],
       label: ["Label", "Filter nach Label (erscheint nur, wenn ein Gerät ein Label hat)"],
       offline: ["Ausgefallen", "Geräte, die gerade offline sind"],
+      paused: ["Pausiert", "Geräte, deren Überwachung gerade pausiert ist (erscheint nur, wenn es eines gibt)"],
       nostatus: ["Ohne Online-Status", "Geräte, deren Online-Status nicht beobachtet wird (Batterie, Laden und Empfang gelten weiter)"],
       problems: ["Warnungen", "Instabil, Batterie niedrig, schwacher Empfang oder keine Daten (ohne Ausfälle)"],
       batteries: ["Batterie", "Alle Geräte mit Batterie"],
@@ -2912,6 +2914,7 @@ export const STRINGS = {
     chipOffline: "Offline",
     // No online status (since 2.156.0)
     chipNoStatus: "No online status",
+    chipPaused: "Paused",
     statusNoStatus: "No online status",
     groupNoStatus: "No online status",
     groupNoStatusHint: "monitored (battery, charging, signal), but without outages and outage notifications",
@@ -3854,6 +3857,7 @@ export const STRINGS = {
       integration: ["Integration", "Filter by integration"],
       label: ["Label", "Filter by label (only appears when a device has a label)"],
       offline: ["Offline", "Devices that are offline right now"],
+      paused: ["Paused", "Devices whose monitoring is paused right now (appears only if there is one)"],
       nostatus: ["No online status", "Devices whose online status is not watched (battery, charging and signal still apply)"],
       problems: ["Warnings", "Unstable, low battery, weak signal or no data (without outages)"],
       batteries: ["Battery", "All devices with a battery"],

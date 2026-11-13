@@ -9,8 +9,8 @@ let ok = true;
 const check = (l, c, i = "") => { ok &&= !!c; console.log(`${c ? "PASS" : "FAIL"} ${l}${i ? " - " + i : ""}`); };
 const R = `document.querySelector("device-panel").shadowRoot`;
 const T = {
-  de: { chip: "Pausieren …", title: "Überwachung pausieren", online: "Bis wieder online", date: "Bis Datum", chipOnline: "Pausiert bis wieder online", pill: "Pausiert bis online", end: "Pause beenden", apply: "Pausieren", past: "liegt in der Vergangenheit", pickDate: "Wähle ein Datum", april: "1. April" },
-  en: { chip: "Pause …", title: "Pause monitoring", online: "Until online again", date: "Until date", chipOnline: "Paused until online again", pill: "Paused until online", end: "End pause", apply: "Pause", past: "past", pickDate: "Pick a date", april: "1 April" },
+  de: { chipLabel: "Pausiert", chip: "Pausieren …", title: "Überwachung pausieren", online: "Bis wieder online", date: "Bis Datum", chipOnline: "Pausiert bis wieder online", pill: "Pausiert bis online", end: "Pause beenden", apply: "Pausieren", past: "liegt in der Vergangenheit", pickDate: "Wähle ein Datum", april: "1. April" },
+  en: { chipLabel: "Paused", chip: "Pause …", title: "Pause monitoring", online: "Until online again", date: "Until date", chipOnline: "Paused until online again", pill: "Paused until online", end: "End pause", apply: "Pause", past: "past", pickDate: "Pick a date", april: "1 April" },
 };
 for (const lang of ["de", "en"]) {
   const L = T[lang];
@@ -50,6 +50,12 @@ for (const lang of ["de", "en"]) {
     await p.screenshot({ path: `${outDir}/devicepause-${tag.replace("/", "-")}-3.png` });
     check(`[${tag}] Kopf zeigt schon im Entwurf die Pille "${L.pill}" statt "Online"`, await ev(`const h = r.querySelector('${D} .dlg-head'); return h.textContent.includes(${JSON.stringify(L.pill)}) && !h.querySelector(".pill.on")`));
     check(`[${tag}] gespeichert: monitor_pause {mode: online}`, (await calls()).some((x) => x.monitor_pause?.mode === "online"), JSON.stringify(await calls()));
+    // Filterpille "Pausiert" (2.215.0): nur sichtbar, wenn ein Gerät pausiert ist
+    await ev(`return r.host._fetch(true).then(() => true)`);
+    check(`[${tag}] Filterpille "${L.chipLabel}" erscheint, sobald ein Gerät pausiert ist (Zahl 1)`, (await wait(`const c = r.querySelector('.chips [data-hint="paused"]'); return !!c && /1$/.test(c.textContent.trim())`)) && (await text('.chips [data-hint="paused"]')).startsWith(L.chipLabel));
+    await ev(`r.querySelector('.chips [data-hint="paused"]').click(); return true`);
+    check(`[${tag}] Filterpille wählt nur das pausierte Gerät`, await wait(`return r.querySelectorAll(".dev").length === 1 && r.querySelector('.chips [data-hint="paused"]').classList.contains("on")`));
+    await ev(`r.querySelector('.chips [data-hint="paused"]').click(); return true`);
     check(`[${tag}] Pille in der Geräteliste "${L.pill}"`, await ev(`const d = r.host._devices.find((x) => x.id === "e"); return d.unmonitored === true && r.host._statusHtml(d).includes("pz") && r.host._statusHtml(d).includes(${JSON.stringify(L.pill)})`));
     const fits = await ev(`const b = r.querySelector('${D} .dlg-body'); return b.scrollWidth <= b.clientWidth + 1`);
     check(`[${tag}] kein seitliches Scrollen`, fits);
@@ -62,6 +68,8 @@ for (const lang of ["de", "en"]) {
     await tap(`${Z} [data-dpz="end"]`);
     check(`[${tag}] "${L.end}": Chip wieder "${L.chip}", Reiter wieder da`, (await wait(`return !r.querySelector('${chip}')?.classList.contains("on")`)) && (await text(chip)) === L.chip && (await wait(`return !!r.querySelector('${D} .lvl-body')`)));
     check(`[${tag}] gespeichert: monitor_pause null`, (await calls()).some((x) => x.monitor_pause === null), JSON.stringify(await calls()));
+    await ev(`return r.host._fetch(true).then(() => true)`);
+    check(`[${tag}] Pause beendet: Filterpille "${L.chipLabel}" verschwindet wieder`, await wait(`return !r.querySelector('.chips [data-hint="paused"]')`));
 
     // Bis Datum
     await tap(chip);
