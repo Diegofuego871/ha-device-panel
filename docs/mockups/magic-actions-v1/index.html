@@ -1,0 +1,128 @@
+<!doctype html><meta charset="utf-8"><title>Magic Push: Knöpfe in der Meldung, Mockup</title><style>
+:root{--p:#43a047;--bg:#1c1c1c;--card:#2a2a2a;--ln:#3a3a3a;--t2:#9a9a9a;--red:#e5534b;--warn:#f5a524;--vio:#a37fe0}
+*{box-sizing:border-box}
+body{margin:0;background:#0d0d0d;font:14px/1.35 Roboto,Arial,sans-serif;color:#e6e6e6;padding:24px;width:1560px}
+h1{margin:0 0 4px;font-size:22px}h2{margin:34px 0 4px;font-size:17px}h2 .rec{color:var(--p)}
+.sub{color:var(--t2);font-size:13px;margin:0 0 12px;max-width:1450px}
+.row4{display:grid;grid-template-columns:repeat(4,360px);gap:18px;align-items:start}
+.ph{background:var(--bg);border:1px solid var(--ln);border-radius:18px;padding:14px;display:flex;flex-direction:column;gap:9px;height:690px;overflow:hidden}
+.cap{color:#8a8a8a;font-size:12px;letter-spacing:.04em;text-transform:uppercase;min-height:16px}
+.hdr{display:flex;justify-content:space-between;align-items:flex-start}.hdr b{font-size:19px}.hdr small{display:block;color:var(--t2);font-size:12px}
+.x{width:34px;height:34px;border-radius:50%;border:1px solid #4a4a4a;display:grid;place-items:center;color:#bbb}
+.steps{display:flex;gap:6px}.steps i{flex:1;height:5px;border-radius:3px;background:#2f6b36}.steps i.o{background:#3a3a3a}
+.q{font-size:20px;font-weight:600;margin:2px 0}
+.lbl{color:var(--t2);font-size:12.5px;margin-top:2px}
+.in{border:1px solid var(--ln);border-radius:12px;padding:9px 12px;background:#202020;font-size:15px}
+.in.sm{padding:7px 10px;font-size:14px}.in.foc{border-color:var(--p)}
+.sw{width:42px;height:24px;border-radius:99px;background:#555;position:relative;flex:none}.sw::after{content:"";position:absolute;top:3px;left:3px;width:18px;height:18px;border-radius:50%;background:#fff}
+.sw.on{background:var(--p)}.sw.on::after{left:21px}
+.pr{display:flex;align-items:center;gap:10px;min-height:34px;border-top:1px solid var(--ln);padding-top:8px}.pr .l{flex:1;font-size:15.5px}.pr small{display:block;color:var(--t2);font-size:12px}
+.seg{display:flex;background:#161616;border-radius:14px;padding:3px;gap:2px}.seg span{flex:1;text-align:center;padding:6px 1px;border-radius:11px;font-size:12px;color:var(--t2);white-space:nowrap}.seg .on{background:#0b0b0b;color:var(--p)}
+.act{border:1px solid var(--ln);border-radius:14px;padding:10px;display:flex;flex-direction:column;gap:7px;background:#222}
+.act .top{display:flex;align-items:center;gap:8px}.act .n{width:22px;height:22px;border-radius:50%;background:#2f6b36;display:grid;place-items:center;font-size:12px;flex:none}
+.act .rm{margin-left:auto;color:#c66;font-size:16px}
+.srch{display:flex;align-items:center;gap:8px;border:1px solid var(--p);border-radius:12px;padding:7px 10px;background:#202020;color:#cfcfcf;font-size:14px}
+.res{border:1px solid var(--ln);border-radius:12px;overflow:hidden;background:#1a1a1a}.res div{padding:8px 11px;border-top:1px solid var(--ln);font-size:13.5px;display:flex;justify-content:space-between}.res div:first-child{border-top:none}.res small{color:var(--t2)}.res .sel{background:#1f3a24;color:var(--p)}
+.add{border:1px dashed #4b6b4f;border-radius:14px;padding:10px;text-align:center;color:var(--p);font-size:14px}
+.add.off{opacity:.4}
+.note{color:var(--t2);font-size:12.5px}
+.pv{background:#262626;border-radius:14px;padding:10px 12px}.pv .t{display:flex;gap:6px;align-items:center;color:#aaa;font-size:12px}.pv b{display:block;margin-top:5px}
+.btnrow{display:flex;gap:6px;margin-top:8px}.btnrow span{flex:1;text-align:center;border-radius:9px;background:#3a3a3a;padding:7px 4px;font-size:12.5px;color:#7fb7ff;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.nav{display:flex;gap:10px;margin-top:auto}.nav span{flex:1;text-align:center;padding:11px;border-radius:12px;border:1px solid #555}.nav .pri{background:#2e6b33;border-color:#2e6b33;color:#fff}
+.chip{display:inline-flex;gap:5px;align-items:center;border:1px solid var(--p);color:var(--p);border-radius:99px;padding:3px 10px;font-size:12.5px;white-space:nowrap}
+.dd{display:inline-flex;gap:6px;align-items:center;background:#161616;border:1px solid var(--ln);border-radius:10px;padding:6px 9px;font-size:13px;color:var(--p);white-space:nowrap}
+.cost{display:inline-block;background:#333;border-radius:8px;padding:1px 8px;font-size:11px;color:#aaa;margin-left:6px}
+.fol{background:#262626;border-radius:14px;padding:10px 12px;margin-top:4px}
+.dim{opacity:.4}
+</style><body>
+<h1>Magic Push: Knöpfe in der Meldung</h1>
+<p class="sub">Ausgangslage: Im Schritt "Was soll in der Meldung stehen?" lässt sich Titel und Inhalt festlegen. Neu: ein Schalter "Knöpfe in der Meldung" (bis zu 3). Jeder Knopf hat einen Titel (Variablen erlaubt) und eine Art: <b>Routine ausführen</b> (durchsuchbare Liste aller Routinen), <b>Erinnern in …</b> (die Meldung kommt später nochmals), <b>Öffnen</b> (Gerät im Panel oder in Home Assistant) oder <b>Erledigt</b> (Meldung schliessen und nicht mehr melden). Nach einem Routinen-Knopf kommt eine Folge-Meldung mit dem Ergebnis. Erfundene Daten.</p>
+
+<h2>A · Schalter im Schritt, Reiterleiste je Knopf <span class="rec">(Empfehlung)</span><span class="cost">Schritte: unverändert (5)</span></h2>
+<p class="sub">Alles bleibt im Schritt 4: Unter dem Schalter "Auch melden, wenn wieder normal" kommt "Knöpfe in der Meldung". Eingeschaltet wächst die Seite nach unten. Jeder Knopf ist eine Karte mit Titel und der Art als Reiterleiste (wie überall im Panel); darunter das passende Feld. Die Vorschau zeigt die Knöpfe unter der Meldung.</p>
+<div class="row4">
+<div class="ph"><div class="cap">1 · Aus (heutiger Stand)</div>
+<div class="hdr"><div><b>Meldung bearbeiten</b><small>Helios Lüftung</small></div><div class="x">✕</div></div>
+<div class="steps"><i></i><i></i><i></i><i></i><i class="o"></i></div>
+<div class="q">Was soll in der Meldung stehen?</div>
+<div class="lbl">Titel der Meldung</div><div class="in">🚨 Filterwechsel nötig</div>
+<div class="lbl">Inhalt der Meldung</div><div class="in">Der Filter der Lüftung muss getauscht werden! 🔄</div>
+<div class="pv"><div class="t">Home Assistant · jetzt</div><b>🚨 Filterwechsel nötig</b>Der Filter der Lüftung muss getauscht werden! 🔄</div>
+<div class="pr"><span class="l">Auch melden, wenn wieder normal</span><div class="sw"></div></div>
+<div class="pr"><span class="l">Knöpfe in der Meldung<small>Routine starten, später erinnern, öffnen</small></span><div class="sw"></div></div>
+<div class="nav"><span>← Zurück</span><span class="pri">Weiter →</span></div></div>
+
+<div class="ph"><div class="cap">2 · Ein, Knopf 1: Routine</div>
+<div class="pr" style="border:none"><span class="l">Knöpfe in der Meldung<small>bis zu 3, Titel mit Variablen möglich</small></span><div class="sw on"></div></div>
+<div class="act"><div class="top"><span class="n">1</span><b>Knopf</b><span class="rm">🗑</span></div>
+<div class="in sm foc">Filter bestellt</div>
+<div class="seg"><span class="on">Routine</span><span>Erinnern</span><span>Öffnen</span><span>Erledigt</span></div>
+<div class="srch">🔍 filt<span style="color:#777">|</span></div>
+<div class="res"><div class="sel">Filter-Bestellung auslösen<small>Skript</small></div><div>Filterwechsel-Erinnerung<small>Zeitplan</small></div><div>Lüftung Stufe 1<small>Szene</small></div></div></div>
+<div class="add">＋ Knopf hinzufügen (1 von 3)</div></div>
+
+<div class="ph"><div class="cap">3 · Knopf 2: Erinnern in …, Knopf 3: Erledigt</div>
+<div class="act"><div class="top"><span class="n">2</span><b>Knopf</b><span class="rm">🗑</span></div>
+<div class="in sm">Morgen nochmals</div>
+<div class="seg"><span>Routine</span><span class="on">Erinnern</span><span>Öffnen</span><span>Erledigt</span></div>
+<div class="seg"><span>15 Min.</span><span>1 Std.</span><span class="on">Morgen 8:00</span></div>
+<div class="note">Die Meldung kommt zur gewählten Zeit nochmals, mit dem dann gültigen Wert.</div></div>
+<div class="act"><div class="top"><span class="n">3</span><b>Knopf</b><span class="rm">🗑</span></div>
+<div class="in sm">Erledigt</div>
+<div class="seg"><span>Routine</span><span>Erinnern</span><span>Öffnen</span><span class="on">Erledigt</span></div>
+<div class="note">Schliesst die Meldung. Bis zur nächsten Änderung kommt sie nicht mehr.</div></div>
+<div class="add off">＋ Knopf hinzufügen (3 von 3)</div></div>
+
+<div class="ph"><div class="cap">4 · Vorschau und Folge-Meldung</div>
+<div class="pv"><div class="t">Home Assistant · jetzt</div><b>🚨 Filterwechsel nötig</b>Der Filter der Lüftung muss getauscht werden! 🔄
+<div class="btnrow"><span>Filter bestellt</span><span>Morgen nochmals</span><span>Erledigt</span></div></div>
+<div class="note">Vorschau mit dem aktuellen Wert; so kommt die Meldung an. Die Knöpfe sind in der Vorschau nicht tippbar, "Test senden" schickt sie echt.</div>
+<div class="cap" style="margin-top:12px">Nach dem Tippen auf "Filter bestellt"</div>
+<div class="fol"><div class="pv" style="padding:0;background:none"><div class="t">Home Assistant · jetzt</div><b>✅ Routine ausgeführt</b>"Filter-Bestellung auslösen" wurde ausgeführt (Meldung: Helios Lüftung).</div></div>
+<div class="cap" style="margin-top:8px">Fehlgeschlagen</div>
+<div class="fol"><div class="pv" style="padding:0;background:none"><div class="t">Home Assistant · jetzt</div><b>⚠ Routine fehlgeschlagen</b>"Filter-Bestellung auslösen": Ziel nicht erreichbar. Details im Protokoll.</div></div>
+<div class="note" style="margin-top:8px">Die Folge-Meldung geht an dasselbe Ziel wie die Magic-Push-Meldung und ersetzt sie nicht (eigener Tag).</div></div>
+</div>
+
+<h2>B · Knöpfe als kompakte Zeilen mit Aufklappen <span class="cost">Platz: kleiner, mehr Klicks</span></h2>
+<p class="sub">Jeder Knopf ist eine Zeile: links die Art als Auswahl (Symbol + Name), rechts der Titel. Die Einzelheiten (Routine suchen, Zeit) klappen erst beim Tippen auf die Zeile auf. Spart Platz bei drei Knöpfen, verbirgt aber, was ein Knopf tut.</p>
+<div class="row4">
+<div class="ph"><div class="cap">1 · Drei Knöpfe zugeklappt</div>
+<div class="pr" style="border:none"><span class="l">Knöpfe in der Meldung</span><div class="sw on"></div></div>
+<div class="act"><div class="top"><span class="dd">🔁 Routine ▾</span><div class="in sm" style="flex:1">Filter bestellt</div></div></div>
+<div class="act"><div class="top"><span class="dd">⏰ Erinnern ▾</span><div class="in sm" style="flex:1">Morgen nochmals</div></div></div>
+<div class="act"><div class="top"><span class="dd">✔ Erledigt ▾</span><div class="in sm" style="flex:1">Erledigt</div></div></div>
+<div class="add off">＋ Knopf hinzufügen (3 von 3)</div></div>
+<div class="ph"><div class="cap">2 · Knopf 1 aufgeklappt</div>
+<div class="act"><div class="top"><span class="dd">🔁 Routine ▾</span><div class="in sm" style="flex:1">Filter bestellt</div></div>
+<div class="srch">🔍 Routine suchen …</div>
+<div class="res"><div class="sel">Filter-Bestellung auslösen<small>Skript</small></div><div>Filterwechsel-Erinnerung<small>Zeitplan</small></div></div></div>
+<div class="act dim"><div class="top"><span class="dd">⏰ Erinnern ▾</span><div class="in sm" style="flex:1">Morgen nochmals</div></div></div></div>
+<div class="ph"><div class="cap">3 · Art wählen</div>
+<div class="act"><div class="top"><span class="dd">🔁 Routine ▾</span><div class="in sm" style="flex:1">Filter bestellt</div></div></div>
+<div class="res" style="margin-left:8px;width:210px"><div class="sel">🔁 Routine ausführen</div><div>⏰ Erinnern in …</div><div>↗ Öffnen</div><div>✔ Erledigt</div></div></div>
+<div class="ph"><div class="cap">Bewertung</div><div class="note" style="font-size:13.5px;line-height:1.5">+ braucht weniger Platz<br>+ Reihenfolge der Knöpfe gut sichtbar<br>− die Art steckt in einem Auswahlfeld (gegen unsere Regel, Auswahl als Reiterleiste zu zeigen)<br>− was ein Knopf tut, sieht man erst nach dem Aufklappen<br>− auf dem Handy wird der Titel schmal</div></div>
+</div>
+
+<h2>C · Eigener Schritt "Knöpfe" im Assistenten <span class="cost">Schritte: 6 statt 5</span></h2>
+<p class="sub">Der Assistent bekommt einen Schritt nach "Text": "Soll die Meldung Knöpfe haben?" mit dem Schalter und der Liste wie in A. Der Schritt "Text" bleibt schlank, die Meldung ist aber nicht mehr auf einer Seite zu sehen (Vorschau im neuen Schritt wiederholt).</p>
+<div class="row4">
+<div class="ph"><div class="cap">Schritt 4 von 6 · Text (unverändert)</div>
+<div class="hdr"><div><b>Meldung bearbeiten</b><small>Helios Lüftung</small></div><div class="x">✕</div></div>
+<div class="steps"><i></i><i></i><i></i><i></i><i class="o"></i><i class="o"></i></div>
+<div class="q">Was soll in der Meldung stehen?</div>
+<div class="lbl">Titel der Meldung</div><div class="in">🚨 Filterwechsel nötig</div>
+<div class="lbl">Inhalt der Meldung</div><div class="in">Der Filter der Lüftung muss getauscht werden! 🔄</div>
+<div class="nav"><span>← Zurück</span><span class="pri">Weiter →</span></div></div>
+<div class="ph"><div class="cap">Schritt 5 von 6 · Knöpfe</div>
+<div class="steps"><i></i><i></i><i></i><i></i><i></i><i class="o"></i></div>
+<div class="q">Soll die Meldung Knöpfe haben?</div>
+<div class="note">Mit einem Tipp unter der Meldung eine Routine starten, später erinnern oder das Gerät öffnen.</div>
+<div class="pr"><span class="l">Knöpfe in der Meldung</span><div class="sw on"></div></div>
+<div class="act"><div class="top"><span class="n">1</span><b>Knopf</b></div><div class="in sm">Filter bestellt</div><div class="seg"><span class="on">Routine</span><span>Erinnern</span><span>Öffnen</span><span>Erledigt</span></div></div>
+<div class="add">＋ Knopf hinzufügen (1 von 3)</div>
+<div class="nav"><span>← Zurück</span><span class="pri">Weiter →</span></div></div>
+<div class="ph"><div class="cap">Bewertung</div><div class="note" style="font-size:13.5px;line-height:1.5">+ Schritt "Text" bleibt wie er ist<br>+ viel Platz für die Knöpfe<br>− ein Schritt mehr für alle, auch wer nie Knöpfe will (Schritt lässt sich mit "Weiter" überspringen)<br>− Titel der Knöpfe und Text der Meldung nicht zusammen sichtbar; Variablen-Chips müssten in beiden Schritten stehen</div></div>
+<div class="ph"><div class="cap">Empfehlung</div><div class="note" style="font-size:14px;line-height:1.55"><b style="color:var(--p)">A.</b> Alles in einem Schritt, die Art als Reiterleiste (Panel-Regel), die Vorschau zeigt Text und Knöpfe zusammen. Wer keine Knöpfe will, sieht nur einen ausgeschalteten Schalter.<br><br>Zusatz in allen Varianten: Variablen-Chips (<code>{device}</code>, <code>{value}</code> …) gelten auch im Titel eines Knopfs; die Routinen-Liste ist durchsuchbar (Suchfeld-Regel).</div></div>
+</div>
+</body>

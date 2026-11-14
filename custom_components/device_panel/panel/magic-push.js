@@ -26,8 +26,10 @@ const HIST_DELAY_MS = 450;
 let LEAF_SEQ = 0;
 const leafId = () => `c${(LEAF_SEQ += 1)}`;
 const PREVIEW_DELAY_MS = 300;
+// Push-Aktionen: höchstens so viele Knöpfe unter einer Meldung (die Companion-App zeigt auf Android drei)
+const ACTIONS_MAX = 3;
 // Felder, die der Server in einer Meldung annimmt (alles andere, etwa "active", würde er ablehnen).
-const RULE_KEYS = ["id", "device_id", "entity_id", "name", "kind", "value", "for_s", "reset_value", "message", "body", "recover", "recover_message", "recover_body", "repeat_s", "target", "enabled", "critical", "critical_volume", "conditions", "reset_for_s", "send_at"];
+const RULE_KEYS = ["id", "device_id", "entity_id", "name", "kind", "value", "for_s", "reset_value", "message", "body", "recover", "recover_message", "recover_body", "repeat_s", "target", "enabled", "critical", "critical_volume", "conditions", "reset_for_s", "send_at", "push_actions"];
 
 // Zeichen vor dem Eintrag: nach Geräteklasse, sonst nach Art der Entität.
 const EMOJI_CLASS = {
@@ -736,6 +738,7 @@ export class MagicPush {
       recover_body: d.recover_body,
       repeat_s: d.kind === "change" ? 0 : d.repeat_s,
       send_at: d.sendAt ? d.send_at : "",
+      push_actions: d.pushOn ? d.actions.map((a) => ({ title: a.title, kind: a.kind, routine_id: a.kind === "routine" ? a.routine_id : "", after: a.after, open: a.open })) : [],
       target: d.target || null,
       enabled: d.enabled,
       critical: d.critical,
@@ -1070,6 +1073,9 @@ export class MagicPush {
       recover_body: "",
       // Von Hand geschriebene Texte werden nicht mehr durch Standardtexte ersetzt
       touched: { message: false, body: false, recover_message: false, recover_body: false },
+      // Push-Aktionen (seit 2.218.0): Knöpfe unter der Meldung; pushOn = Schalter, actions = bis zu drei Einträge {uid, title, kind, routine_id, after, open, q}
+      pushOn: false,
+      actions: [],
       repeat_s: 0,
       repeatOwn: { text: "", unit: 3600 },
       // Uhrzeit "HH:MM": die Meldung wird bis dahin zurückgehalten; "" = sofort. sendAt: Wahl "zu einer Uhrzeit" (auch noch ohne Zeit)
@@ -1109,6 +1115,8 @@ export class MagicPush {
       recover_message: rule.recover_message || "",
       recover_body: rule.recover_body || "",
       touched: { message: true, body: true, recover_message: true, recover_body: true },
+      pushOn: (rule.push_actions || []).length > 0,
+      actions: (rule.push_actions || []).map((a) => ({ uid: leafId(), title: a.title, kind: a.kind, routine_id: a.routine_id || "", after: a.after || "1h", open: a.open || "panel", q: "" })),
       repeat_s: rule.repeat_s || 0,
       send_at: rule.send_at || "",
       sendAt: Boolean(rule.send_at),
@@ -1159,6 +1167,8 @@ export class MagicPush {
     this.paint();
     this.scrollTop();
     this.requestLeafHistory();
+    // Push-Aktionen mit Routine: die Namen der Routinen holen (die Karten zeigen sie statt der Kennung)
+    if (this.wiz.draft.pushOn) this.loadRoutines();
   }
 
   // Neue Meldung aus dem Fenster aller Meldungen (seit 2.102.0): derselbe Assistent mit einem Schritt mehr davor, der das Gerät wählt
@@ -1488,8 +1498,13 @@ export class MagicPush {
     }
     if (step === 2) return !this.forError() && !this.resetForError();
     if (step === 3) return !this.repeatError() && (!d.sendAt || /^([01]\d|2[0-3]):[0-5]\d$/.test(d.send_at));
-    if (step === 4) return d.message.trim() !== "" && (!d.recover || d.kind === "change" || d.recover_message.trim() !== "");
+    if (step === 4) return d.message.trim() !== "" && (!d.recover || d.kind === "change" || d.recover_message.trim() !== "") && this.actionsValid(d);
     return d.name.trim() !== "";
+  }
+
+  // Push-Aktionen: jede braucht einen Titel, eine Routine-Aktion auch die Wahl der Routine
+  actionsValid(d) {
+    return !d.pushOn || d.actions.every((a) => a.title.trim() !== "" && (a.kind !== "routine" || a.routine_id));
   }
 
   syncNav() {
@@ -1623,7 +1638,7 @@ export class MagicPush {
     const one = async (which) => {
       try {
         const r = await this.call({ type: "device_panel/magic_preview", rule, which });
-        return { title: r.title, message: r.message };
+        return { title: r.title, message: r.message, actions: r.actions || [] };
       } catch (err) {
         return { error: this.h.errText(err) };
       }
@@ -2189,7 +2204,103 @@ export class MagicPush {
       <div class="mg-k">${esc(t("mgVarsFor", e?.name || "", t(`mgVarKind_${group}`)))}</div>${this.chipsHtml("main")}
       <p class="mg-hint">${esc(t("mgVarsWhere"))} ${esc(t(`mgVarHelp_${group}`))}</p>
       <div data-mg-zone="pv">${this.pvHtml("main")}</div>
-      ${change ? "" : this.recoverHtml()}`;
+      ${change ? "" : this.recoverHtml()}
+      <div data-mg-zone="pa">${this.pushActionsHtml()}</div>`;
+  }
+
+  // --- Push-Aktionen (seit 2.218.0, docs/mockups/magic-actions-v1, A) ---------------------------------------------
+
+  // Alle Routinen des Panels, einmal je Assistent geholt (durchsuchbare Auswahl der Art "Routine")
+  async loadRoutines() {
+    const w = this.wiz;
+    if (!w || w.routines !== undefined) return;
+    w.routines = null;
+    try {
+      const r = await this.call({ type: "device_panel/routine_list" });
+      if (this.wiz !== w) return;
+      w.routines = (r.routines || []).map((x) => ({ id: x.id, name: x.name, device_id: x.device_id }));
+    } catch (err) {
+      if (this.wiz !== w) return;
+      w.routines = [];
+      w.routinesError = this.h.errText(err);
+    }
+    this.paintZones(["pa"]);
+  }
+
+  routineName(id) {
+    return this.wiz?.routines?.find((r) => r.id === id)?.name || "";
+  }
+
+  deviceName(id) {
+    return this.host._devices?.find((d) => d.id === id)?.name || "";
+  }
+
+  routineListHtml(a) {
+    const esc = (v) => this.esc(v);
+    const t = (k, ...n) => this.t(k, ...n);
+    const w = this.wiz;
+    if (w.routines === null || w.routines === undefined) return `<div class="mg-pa-load">${this.host._loaderHtml("var(--dp-primary)")}</div>`;
+    if (w.routinesError) return `<div class="opt-error">${esc(w.routinesError)}</div>`;
+    if (!w.routines.length) return `<p class="mg-hint">${esc(t("mgPaNoRoutines"))}</p>`;
+    const q = a.q.trim().toLowerCase();
+    const rows = w.routines.filter((r) => !q || r.name.toLowerCase().includes(q) || this.deviceName(r.device_id).toLowerCase().includes(q));
+    if (!rows.length) return `<p class="mg-hint">${esc(t("mgPaNoMatch"))}</p>`;
+    return `<div class="mg-pa-res" role="listbox">${rows
+      .map((r) => `<button type="button" role="option" class="mg-pa-opt" data-mg="aroutine" data-uid="${esc(a.uid)}" data-id="${esc(r.id)}"><span>${esc(r.name)}</span><small>${esc(this.deviceName(r.device_id))}</small></button>`)
+      .join("")}</div>`;
+  }
+
+  actionDetailHtml(a) {
+    const esc = (v) => this.esc(v);
+    const t = (k, ...n) => this.t(k, ...n);
+    if (a.kind === "routine") {
+      if (a.routine_id) {
+        const name = this.routineName(a.routine_id) || (this.wiz.routines ? t("mgPaGone") : "…");
+        return `<div class="mg-pa-sel"><span>${this.h.mdi("check", 16)}${esc(name)}</span><button type="button" class="dlg-btn text" data-mg="aroutine-change" data-uid="${esc(a.uid)}">${esc(t("mgPaChange"))}</button></div>`;
+      }
+      return `<label class="list-search" data-for="pa-${esc(a.uid)}">${this.h.mdi("search", 18)}<input type="search" data-mg="aq" data-uid="${esc(a.uid)}" value="${esc(a.q)}" placeholder="${esc(t("mgPaSearch"))}" aria-label="${esc(t("mgPaSearch"))}" enterkeyhint="search" autocomplete="off" autocapitalize="off" spellcheck="false">${this.host._fieldClearHtml("data-fc", "", a.q)}</label>
+        <div data-mg-zone="parl-${esc(a.uid)}">${this.routineListHtml(a)}</div>`;
+    }
+    if (a.kind === "remind") {
+      const items = [["15m", "mgPaAfter15"], ["1h", "mgPaAfter1h"], ["morning", "mgPaAfterMorning"]].map(([v, k]) => ({ on: a.after === v, label: t(k), attrs: `data-mg="aafter" data-group="${esc(a.uid)}" data-uid="${esc(a.uid)}" data-v="${v}"` }));
+      return `${this.tabsHtml(items)}<p class="mg-hint">${esc(t("mgPaRemindHint"))}</p>`;
+    }
+    if (a.kind === "open") {
+      const items = [["panel", "mgPaOpenPanel"], ["ha", "mgPaOpenHa"]].map(([v, k]) => ({ on: a.open === v, label: t(k), attrs: `data-mg="aopen" data-group="${esc(a.uid)}" data-uid="${esc(a.uid)}" data-v="${v}"` }));
+      return `${this.tabsHtml(items)}<p class="mg-hint">${esc(t("mgPaOpenHint"))}</p>`;
+    }
+    return `<p class="mg-hint">${esc(t("mgPaDoneHint"))}</p>`;
+  }
+
+  pushActionsHtml() {
+    const esc = (v) => this.esc(v);
+    const t = (k, ...n) => this.t(k, ...n);
+    const d = this.wiz.draft;
+    let html = `<div class="mg-optrow"><div>${esc(t("mgPa"))}<small class="mg-optsub">${esc(t("mgPaSub"))}</small></div><label class="switch"><input type="checkbox" data-mg="apush"${d.pushOn ? " checked" : ""} aria-label="${esc(t("mgPa"))}"><span></span></label></div>`;
+    if (!d.pushOn) return html;
+    html += `<p class="mg-hint">${esc(t("mgPaIntro"))}</p>`;
+    html += d.actions
+      .map((a, i) => {
+        const kinds = [["routine", "mgPaKindRoutine"], ["remind", "mgPaKindRemind"], ["open", "mgPaKindOpen"], ["done", "mgPaKindDone"]].map(([v, k]) => ({ on: a.kind === v, label: t(k), attrs: `data-mg="akind" data-group="${esc(a.uid)}" data-uid="${esc(a.uid)}" data-v="${v}"` }));
+        return `<div class="mg-pa-card" data-uid="${esc(a.uid)}"><div class="mg-pa-head"><span class="mg-pa-n">${i + 1}</span><b>${esc(t("mgPaOne"))}</b><button type="button" class="mg-pa-del" data-mg="adel" data-uid="${esc(a.uid)}" title="${esc(t("mgPaRemove"))}" aria-label="${esc(t("mgPaRemove"))}">${this.h.mdi("trash", 18)}</button></div>
+          <label class="mg-k" for="mg-pa-t-${esc(a.uid)}">${esc(t("mgPaTitle"))}</label>
+          <input id="mg-pa-t-${esc(a.uid)}" class="mg-input" type="text" maxlength="${this.limit("action_title", 40)}" data-mg-atitle="${esc(a.uid)}" value="${esc(a.title)}" placeholder="${esc(t("mgPaTitlePh"))}" autocomplete="off">
+          ${this.tabsHtml(kinds)}
+          ${this.actionDetailHtml(a)}</div>`;
+      })
+      .join("");
+    html += d.actions.length < ACTIONS_MAX
+      ? `<button type="button" class="mg-pa-add" data-mg="aadd">${this.h.mdi("plus", 18)}${esc(t("mgPaAdd", d.actions.length, ACTIONS_MAX))}</button>`
+      : `<div class="mg-pa-add off" aria-disabled="true">${esc(t("mgPaAdd", d.actions.length, ACTIONS_MAX))}</div>`;
+    return html;
+  }
+
+  newAction() {
+    return { uid: leafId(), title: "", kind: "routine", routine_id: "", after: "1h", open: "panel", q: "" };
+  }
+
+  actionOf(uid) {
+    return this.wiz?.draft.actions.find((a) => a.uid === uid);
   }
 
   // "Auch melden, wenn wieder normal" mit eigenem Titel und Inhalt (gehört zum Text der Meldung)
@@ -2237,6 +2348,7 @@ export class MagicPush {
       else if (name === "rforhint") el.innerHTML = this.resetForHintHtml();
       else if (name === "resethint") el.innerHTML = this.resetHintHtml();
       else if (name === "pvr") el.innerHTML = this.pvHtml("recover");
+      else if (name === "pa") el.innerHTML = this.pushActionsHtml();
       else el.innerHTML = this.pvHtml(this.wiz.step === 4 ? "main" : undefined);
     }
   }
@@ -2314,7 +2426,7 @@ export class MagicPush {
       if (!p) inner = `<div class="pv-text">…</div>`;
       else if (p.error) inner = `<div class="opt-error">${esc(t("mgPvError", p.error))}</div>`;
       else if (!p.title) inner = `<div class="pv-text">${esc(t("mgPvEmpty"))}</div>`;
-      else inner = `<div class="pv-title">${esc(p.title)}</div><div class="pv-text">${esc(p.message)}</div>`;
+      else inner = `<div class="pv-title">${esc(p.title)}</div><div class="pv-text">${esc(p.message)}</div>${which === "main" && p.actions?.length ? `<div class="pv-actions">${p.actions.map((x) => `<span>${esc(x)}</span>`).join("")}</div>` : ""}`;
       const test = w.step === 4 ? this.testHtml(which) : "";
       return `<div class="mg-pv"><div class="pv-k">${esc(t("mgPvLabel"))}</div><div class="pv-card"><div class="pv-app">${this.pvIcon()}${esc(t("mgPvApp"))}${which === "main" && w.draft.critical ? ` · ${esc(t("mgPvCritical"))}` : ""}</div>${inner}</div><div class="opt-short">${esc(note)}</div>${test}</div>`;
     };
@@ -2369,6 +2481,8 @@ export class MagicPush {
     dlg.addEventListener("focusin", (ev) => {
       const el = ev.target;
       if (this.wiz && el.dataset?.mgText) (this.wiz.focus ||= {})[el.dataset.mgGroup] = el.dataset.mgText;
+      // Titel einer Push-Aktion: die Variablen der Meldung gelten auch dort
+      else if (this.wiz && el.dataset?.mgAtitle) (this.wiz.focus ||= {}).main = `action:${el.dataset.mgAtitle}`;
     });
     // Variablen einfügen, ohne dass das Textfeld den Fokus (und die Tastatur) verliert.
     dlg.addEventListener("mousedown", (ev) => {
@@ -2591,6 +2705,57 @@ export class MagicPush {
       case "var":
         this.insertVariable(el.dataset.group, el.dataset.var);
         break;
+      case "aadd":
+        if (this.wiz.draft.actions.length < ACTIONS_MAX) {
+          this.wiz.draft.actions.push(this.newAction());
+          this.loadRoutines();
+          this.paint();
+          this.syncNav();
+        }
+        break;
+      case "adel":
+        this.wiz.draft.actions = this.wiz.draft.actions.filter((a) => a.uid !== el.dataset.uid);
+        if (!this.wiz.draft.actions.length) this.wiz.draft.pushOn = false;
+        this.paint();
+        this.syncNav();
+        this.requestPreview();
+        break;
+      case "akind":
+      case "aafter":
+      case "aopen":
+        {
+          const a = this.actionOf(el.dataset.uid);
+          if (!a) break;
+          if (action === "akind") a.kind = el.dataset.v;
+          else if (action === "aafter") a.after = el.dataset.v;
+          else a.open = el.dataset.v;
+          if (a.kind === "routine") this.loadRoutines();
+          this.paint();
+          this.syncNav();
+        }
+        break;
+      case "aroutine":
+        {
+          const a = this.actionOf(el.dataset.uid);
+          if (!a) break;
+          a.routine_id = el.dataset.id;
+          // Ist der Titel noch leer, schlägt die Wahl den Namen der Routine vor
+          if (!a.title.trim()) a.title = this.routineName(a.routine_id).slice(0, this.limit("action_title", 40));
+          this.paint();
+          this.syncNav();
+          this.requestPreview();
+        }
+        break;
+      case "aroutine-change":
+        {
+          const a = this.actionOf(el.dataset.uid);
+          if (!a) break;
+          a.routine_id = "";
+          a.q = "";
+          this.paint();
+          this.syncNav();
+        }
+        break;
       case "test":
         this.sendTest(el.dataset.which);
         break;
@@ -2601,18 +2766,28 @@ export class MagicPush {
   // Die Variable kommt in das zuletzt gewählte Feld der Gruppe (Titel oder Inhalt); ohne Wahl in den Titel.
   insertVariable(group, name) {
     const field = this.wiz.focus?.[group] || (group === "recover" ? "recover_message" : "message");
-    const ta = this.q(`[data-mg-text="${field}"]`);
+    const isAction = field.startsWith("action:");
+    const ta = isAction ? this.q(`[data-mg-atitle="${field.slice(7)}"]`) : this.q(`[data-mg-text="${field}"]`);
     if (!ta) return;
     const token = `{${name}}`;
     const start = ta.selectionStart ?? ta.value.length;
     const end = ta.selectionEnd ?? start;
-    const limit = this.limit("text", 300);
+    const limit = isAction ? this.limit("action_title", 40) : this.limit("text", 300);
     const next = ta.value.slice(0, start) + token + ta.value.slice(end);
     if (next.length > limit) return;
     ta.value = next;
     ta.setSelectionRange(start + token.length, start + token.length);
     ta.focus({ preventScroll: true });
-    this.onText(ta);
+    if (isAction) this.onActionTitle(ta);
+    else this.onText(ta);
+  }
+
+  onActionTitle(el) {
+    const a = this.actionOf(el.dataset.mgAtitle);
+    if (!a) return;
+    a.title = el.value;
+    this.syncNav();
+    this.requestPreview();
   }
 
   onText(ta) {
@@ -2633,7 +2808,15 @@ export class MagicPush {
     }
     if (!this.wiz || !this.inScope(el)) return;
     if (el.dataset.mgText) this.onText(el);
-    else if (action === "tfrom" || action === "tto") {
+    else if (el.dataset.mgAtitle) this.onActionTitle(el);
+    else if (action === "aq") {
+      const a = this.actionOf(el.dataset.uid);
+      if (a) {
+        a.q = el.value;
+        const zone = this.q(`[data-mg-zone="parl-${a.uid}"]`);
+        if (zone) zone.innerHTML = this.routineListHtml(a);
+      }
+    } else if (action === "tfrom" || action === "tto") {
       const lf = this.curLeaf();
       if (lf?.kind === "time") {
         lf[action === "tfrom" ? "from" : "to"] = el.value;
@@ -2706,6 +2889,12 @@ export class MagicPush {
       d.critical = el.checked;
       this.paint();
       this.paintZones(["pv", "pvr"]);
+    } else if (action === "apush") {
+      d.pushOn = el.checked;
+      if (d.pushOn && !d.actions.length) d.actions.push(this.newAction());
+      if (d.pushOn) this.loadRoutines();
+      this.paint();
+      this.requestPreview();
     } else if (action === "recover") {
       d.recover = el.checked;
       if (d.recover && !d.recover_message) d.recover_message = this.defaultRecover(d);

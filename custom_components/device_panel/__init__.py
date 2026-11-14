@@ -769,10 +769,11 @@ def _ws_magic_preview(hass: HomeAssistant, connection: websocket_api.ActiveConne
         return
     try:
         title, message = push_rules.preview_raw(msg["rule"], msg["which"])
+        actions = push_rules.preview_actions(msg["rule"]) if msg["which"] == "main" and title else []
     except vol.Invalid as err:
         _magic_error(connection, msg, err)
         return
-    connection.send_result(msg["id"], {"title": title, "message": message})
+    connection.send_result(msg["id"], {"title": title, "message": message, "actions": actions})
 
 
 @websocket_api.websocket_command(

@@ -2795,4 +2795,26 @@ dialog.updapp-dlg .dlg-error { font-size: 15px; }
 .cg-row .cg-w { color: var(--dp-text2); white-space: nowrap; text-align: right; min-width: 64px; }
 .cg-row .cg-w small { font-size: 11px; margin-left: 2px; }
 @media (max-width: 600px) { .cg-tiles { grid-template-columns: repeat(2, minmax(0, 1fr)); } .cg-row { gap: 8px; padding: 11px 12px; } }
+
+/* Push-Aktionen im Schritt "Text" (seit 2.218.0, docs/mockups/magic-actions-v1, A) */
+.mg-pa-card { display: flex; flex-direction: column; gap: 8px; margin-top: 10px; padding: 12px; border: 1px solid var(--dp-divider); border-radius: 14px; background: var(--dp-subtle); }
+.mg-pa-head { display: flex; align-items: center; gap: 8px; }
+.mg-pa-n { width: 22px; height: 22px; border-radius: 50%; display: grid; place-items: center; font-size: 12px; background: var(--dp-success-soft); color: var(--dp-success); flex: none; }
+.mg-pa-del { margin-left: auto; width: 32px; height: 32px; display: grid; place-items: center; border: none; border-radius: 50%; background: none; color: var(--dp-error); cursor: pointer; }
+.mg-pa-del:hover { background: var(--dp-error-soft); }
+.mg-pa-card .mg-k { margin-top: 0; }
+.mg-pa-card .mg-hint { margin: 0; }
+.mg-pa-res { display: flex; flex-direction: column; max-height: 190px; overflow: auto; border: 1px solid var(--dp-divider); border-radius: 12px; background: var(--dp-card); }
+.mg-pa-opt { display: flex; justify-content: space-between; align-items: center; gap: 10px; padding: 9px 12px; border: none; border-top: 1px solid var(--dp-divider); background: none; text-align: left; font-size: 13.5px; cursor: pointer; }
+.mg-pa-opt:first-child { border-top: none; }
+.mg-pa-opt:hover { background: var(--dp-hover); }
+.mg-pa-opt small { color: var(--dp-text2); font-size: 12px; text-align: right; }
+.mg-pa-sel { display: flex; align-items: center; justify-content: space-between; gap: 8px; padding: 6px 4px 6px 12px; border: 1px solid var(--dp-success); border-radius: 12px; background: var(--dp-success-soft); font-size: 13.5px; }
+.mg-pa-sel > span { display: inline-flex; align-items: center; gap: 8px; min-width: 0; overflow-wrap: anywhere; }
+.mg-pa-load { display: grid; place-items: center; min-height: 48px; }
+.mg-pa-add { display: flex; align-items: center; justify-content: center; gap: 8px; width: 100%; margin-top: 10px; padding: 11px; border: 1px dashed color-mix(in srgb, var(--dp-success) 55%, transparent); border-radius: 14px; background: none; color: var(--dp-success); font: inherit; cursor: pointer; }
+.mg-pa-add.off { opacity: .45; cursor: default; }
+/* Knöpfe in der Vorschau der Meldung */
+.pv-actions { display: flex; gap: 6px; margin-top: 8px; }
+.pv-actions span { flex: 1 1 0; min-width: 0; padding: 7px 6px; border-radius: 9px; background: var(--dp-hover); color: var(--dp-primary); font-size: 12.5px; text-align: center; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
 `;

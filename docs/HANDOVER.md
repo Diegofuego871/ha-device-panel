@@ -11,6 +11,11 @@ Einstieg für jede neue Claude-Code-Session. Zuerst diese Datei lesen, dann
 
 - `charge.py` `known_rechargeable`: Lademeldung gilt (global + Gerät/Integration), oder am Gerät ausdrücklich "Ein", oder Live-Aktivität für das Gerät an; `rechargeable()` und `charging_of()` nutzen sie (vorher nur `enabled()` mit globalem Schalter). Test `test_rechargeable_by_device_charge_or_live`.
 
+## Stand (2.218.0, Push-Aktionen in Magic Push)
+
+- Name überall: "Push-Aktionen" (EN "push actions"), nicht "Knöpfe". Regelfeld `push_actions` (bis 3: `title`, `kind` routine/remind/open/done, `routine_id`, `after` 15m/1h/morning, `open` panel/ha) in `magic.py` (`ACTION_SCHEMA`, `clean_rule`, `_actions`, `_on_action`, `_async_do_action`, Erinnern mit `_reminders` im Store, `runtime["acked"]` für Erledigt). Kennung `MAGIC_ACTION_PREFIX` + Regel + Nr; die Art kommt aus der Regel, nie aus dem Ereignis. Folge-Meldung (`push.reason_text`, Texte `magic_action_*`), Vorschau `preview_actions` (WS `magic_preview` liefert `actions`).
+- Sicherung: `clean_rule(..., routine_ids=)` / `async_save_rule(..., routine_ids=)`: Routinen aus derselben Datei gelten als vorhanden. Tests: `tests/test_magic_actions.py`, `tests/test_backup.py`. Panel: `magic-push.js` (`pushActionsHtml`, `loadRoutines`, Zone `pa`), Suite `magicpa-e2e.mjs`, Mockup `docs/mockups/magic-actions-v1`.
+
 ## Stand (2.217.0, Pausieren aus der Karte)
 
 - `services.py`: Administrator-Dienst `device_panel.pause_monitoring` (`async_register_admin_service`; Prüfung durch HA, nicht durch die Karte), registriert in `async_setup_entry`, entfernt beim Entladen; rechnet danach den Koordinator der Sensoren neu. `services.yaml`, Texte in `strings.json`/Übersetzungen (services, exceptions, selector `pause_mode`). `summary._availability`: `offline_list` trägt die `id`.

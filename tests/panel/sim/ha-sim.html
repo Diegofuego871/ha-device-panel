@@ -1824,6 +1824,15 @@
           if (r.kind === "time" && !leavesOf(r).some((l) => l.kind === "time")) fail("Uhrzeit fehlt");
           if (r.recover && r.kind !== "change" && !String(r.recover_message || "").trim()) fail("Für die Meldung bei wieder normal fehlt der Text");
           if (r.for_s < 0 || r.for_s > 7 * 86400) fail("Dauer ungültig");
+          // Push-Aktionen (2.218.0): höchstens drei, Titel, Art, bei "routine" eine vorhandene Routine
+          const pa = r.push_actions || [];
+          if (pa.length > 3) fail("Höchstens 3 Push-Aktionen");
+          for (const a of pa) {
+            if (!String(a.title || "").trim() || String(a.title).length > 40) fail("Text mit 1 bis 40 Zeichen erwartet");
+            if (!["routine", "remind", "open", "done"].includes(a.kind)) fail("Art ungültig");
+            if (a.kind === "routine" && !a.routine_id) fail("Für die Push-Aktion fehlt die Routine");
+            if (a.kind === "routine" && !(window.__routines?.list || []).some((x) => x.id === a.routine_id)) fail("Die Routine der Push-Aktion gibt es nicht");
+          }
           // Mehrere Bedingungen: jede Entität gibt es, über/unter mit Zahl, "ändert sich" nur allein
           if (r.conditions?.items?.length) {
             const ls = leavesOf(r);
@@ -1878,6 +1887,7 @@
           r.reset_for_s ||= 0;
           if (r.reset_for_s < 0 || r.reset_for_s > 7 * 86400) fail("Dauer ungültig");
           r.recover_message ||= "";
+          r.push_actions = (r.push_actions || []).map((a) => ({ title: String(a.title).trim(), kind: a.kind, routine_id: a.kind === "routine" ? a.routine_id : "", after: a.after || "1h", open: a.open || "panel" }));
           r.target ||= null;
           r.name = String(r.name).trim().replace(/\s+/g, " ");
           if (r.id) {
@@ -1914,7 +1924,8 @@
           // Eigener Inhalt (2.7.0), mehrzeilig; leer = automatische Zeile
           const own = (msg.which === "recover" ? r.recover_body : r.body) || "";
           const body = String(own).split("\n").map((l) => fill(l, r)).join("\n").trim();
-          return { title, message: title ? body || line : "" };
+          const actions = msg.which === "recover" || !title ? [] : (r.push_actions || []).filter((a) => a && a.kind && String(a.title || "").trim()).slice(0, 3).map((a) => fill(a.title, r).slice(0, 40));
+          return { title, message: title ? body || line : "", actions };
         }
         if (msg.type.endsWith("magic_test")) {
           check(msg.rule);

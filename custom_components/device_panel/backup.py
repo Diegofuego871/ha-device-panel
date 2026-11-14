@@ -531,7 +531,7 @@ def _item_what(kind: str, item: dict[str, Any]) -> str:
     return f"{entity} · {cond}" + (f" → {item['target']}" if item.get("target") else "")
 
 
-async def _items_part(hass: HomeAssistant, kind: str, items: Any, dry_run: bool, replace: bool, rep: dict[str, Any]) -> None:
+async def _items_part(hass: HomeAssistant, kind: str, items: Any, dry_run: bool, replace: bool, rep: dict[str, Any], routine_ids: set[str] | None = None) -> None:
     """Routinen (kind "routines") oder Magic-Push-Meldungen ("magic"): jede wird wie im Panel geprüft; was fehlt, wird übersprungen."""
     manager = hass.data.get(DATA_ROUTINES if kind == "routines" else DATA_MAGIC)
     if manager is None or not isinstance(items, list):
@@ -548,7 +548,7 @@ async def _items_part(hass: HomeAssistant, kind: str, items: Any, dry_run: bool,
             if kind == "routines":
                 clean = manager.clean(dict(raw), existing=existing)
             else:
-                clean = clean_rule(hass, dict(raw))
+                clean = clean_rule(hass, dict(raw), routine_ids=routine_ids)
         except vol.Invalid as err:
             rep["skipped"].append({"what": name, "reason": str(getattr(err, "msg", err))})
             continue
@@ -569,7 +569,7 @@ async def _items_part(hass: HomeAssistant, kind: str, items: Any, dry_run: bool,
             if kind == "routines":
                 await manager.async_save_routine(dict(raw), adopt_id=True)
             else:
-                await manager.async_save_rule(dict(raw), adopt_id=True)
+                await manager.async_save_rule(dict(raw), adopt_id=True, routine_ids=routine_ids)
         except vol.Invalid as err:
             rep["changed"] -= 1
             rep["skipped"].append({"what": name, "reason": str(getattr(err, "msg", err))})
@@ -665,7 +665,10 @@ async def async_import(hass: HomeAssistant, data: Any, sections: list[str] | Non
         if section == "devices":
             await _devices_part(hass, body, dry_run, replace, rep)
         elif section in ("routines", "magic"):
-            await _items_part(hass, section, body.get("items"), dry_run, replace, rep)
+            # Eine Meldung mit Push-Aktion "Routine" gilt auch dann, wenn die Routine erst mit derselben Datei kommt (Vorschau und Wiederherstellung)
+            file_routines = file_sections.get("routines") if sections is None or "routines" in sections else None
+            known = {str(i.get("id")) for i in (file_routines.get("items") or []) if isinstance(i, dict) and i.get("id")} if isinstance(file_routines, dict) else None
+            await _items_part(hass, section, body.get("items"), dry_run, replace, rep, known if section == "magic" else None)
         elif section == "users":
             await _users_part(hass, body.get("items"), dry_run, replace, rep)
         report[section] = rep

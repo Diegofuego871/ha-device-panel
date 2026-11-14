@@ -7,6 +7,20 @@ Alle nennenswerten Änderungen an dieser Integration stehen in dieser Datei.
 Das Format folgt [Keep a Changelog](https://keepachangelog.com/de/1.1.0/),
 die Versionsnummern folgen [Semantic Versioning](https://semver.org/lang/de/).
 
+## [2.218.0] - 2026-11-14
+
+Eine Magic-Push-Meldung kann Push-Aktionen tragen: eine Routine ausführen, erinnern, das Gerät öffnen oder "erledigt".
+
+### Hinzugefügt
+
+- **Push-Aktionen in Magic Push:** Im Schritt "Text" fügt ein Schalter "Push-Aktionen" der Meldung bis zu drei Aktionen hinzu; jede erscheint als Schaltfläche unter der Meldung in der Companion-App. Jede hat einen Titel (mit denselben Variablen wie der Text) und eine Art, als Reiterleiste gewählt: **Routine** (durchsuchbare Liste aller Routinen des Panels; ein Tipp führt sie aus, eine Folge-Meldung sagt "Routine ausgeführt" oder warum sie fehlschlug), **Erinnern** (15 Minuten, 1 Stunde oder morgen um 8:00: die Meldung kommt nochmals mit dem dann gültigen Wert, nur solange die Bedingung noch gilt; Erinnerungen überstehen einen Neustart), **Öffnen** (das Gerät im Panel oder in Home Assistant) oder **Erledigt** (schliesst die Meldung; keine Wiederholung, bis das Gerät wieder normal ist). Die Vorschau zeigt die Schaltflächen. Die Meldung "wieder normal" trägt keine Push-Aktionen.
+- **Sicher gebaut:** Die Schaltfläche trägt nur eine Kennung; Art und Routine kommen beim Tippen aus der gespeicherten Meldung, ein gefälschter Tipp startet also nichts, was nicht eingerichtet ist. Push-Aktionen gehören zur Sicherung (eine Meldung mit Routine wird zusammen mit der Routine aus derselben Datei wiederhergestellt).
+- Das Aktivitätsprotokoll hält jeden Tipp fest (Routine ausgeführt oder fehlgeschlagen, Erinnerung geplant, erledigt) und jede gesendete Erinnerung; der Meldungsverlauf zeigt Erinnerungen als "Erinnerung".
+
+### Geändert
+
+- **Name:** Die Schaltflächen in Benachrichtigungen heissen überall "Push-Aktionen" (auch in der Vorschau der Ausfall-Meldung: "Push-Aktionen in der Companion-App").
+
 ## [2.217.0] - 2026-11-14
 
 Ein ausgefallenes Gerät lässt sich direkt in der Dashboard-Karte pausieren.
@@ -6098,6 +6112,7 @@ Erste Vorabversion.
   GitHub Actions für die Prüfungen von HACS und hassfest sowie die Tests.
 
 [2.6.0]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v2.6.0
+[2.218.0]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v2.218.0
 [2.217.0]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v2.217.0
 [2.216.2]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v2.216.2
 [2.216.1]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v2.216.1

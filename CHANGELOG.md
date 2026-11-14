@@ -7,6 +7,20 @@ All notable changes to this integration are documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/).
 
+## [2.218.0] - 2026-11-14
+
+A Magic Push message can carry push actions: a routine to run, a reminder, opening the device, or "done".
+
+### Added
+
+- **Push actions in Magic Push:** In the step "Text" a switch "Push actions" adds up to three actions to the message; each shows as a button under the notification in the companion app. Each has a title (with the same variables as the text) and a kind, shown as a row of tabs: **Routine** (a searchable list of all routines of the panel; a tap runs it, a follow-up notification says "Routine done" or why it failed), **Remind** (15 minutes, 1 hour or tomorrow at 8:00: the message comes again with the value valid then, only while the condition still holds; reminders survive a restart), **Open** (the device in the panel or in Home Assistant) or **Done** (closes the message; no repeat until the device is back to normal). The preview shows the buttons. The notification "back to normal" carries no push actions.
+- **Safe by design:** The button only carries a code; the kind and the routine come from the saved message when it is tapped, so a forged tap starts nothing that was not set up. Push actions are part of the backup (a message that runs a routine is restored together with the routine from the same file).
+- The activity log records each tap (routine run or failed, reminder planned, done) and each reminder sent; the message history shows reminders as "Reminder".
+
+### Changed
+
+- **Naming:** The buttons in notifications are called "push actions" everywhere (also the preview of the outage push: "Push actions in the companion app").
+
 ## [2.217.0] - 2026-11-14
 
 A device that is offline can be paused right from the dashboard card.
@@ -5997,6 +6011,7 @@ First pre-release.
   GitHub Actions for HACS/hassfest validation and tests.
 
 [2.6.0]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v2.6.0
+[2.218.0]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v2.218.0
 [2.217.0]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v2.217.0
 [2.216.2]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v2.216.2
 [2.216.1]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v2.216.1

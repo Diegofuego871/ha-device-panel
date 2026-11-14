@@ -393,3 +393,30 @@ async def test_charge_rec_in_backup(hass: HomeAssistant, setup) -> None:  # noqa
     report = await backup.async_import(hass, file, ["devices"], dry_run=False)
     assert hass.data[DATA_DEVICE_SETTINGS]["charge_rec"] == {a.id: False}
     assert any(s["what"] == "charge_rec" and s["reason"] == "invalid" for s in report["sections"]["devices"]["skipped"])
+
+
+async def test_push_actions_survive_the_backup(hass: HomeAssistant, setup) -> None:  # noqa: F811
+    device = _device(hass, "Steckdose")
+    plug = _switch(hass, device)
+    sensor = er.async_get(hass).async_get_or_create("sensor", "test", f"{device.id}-t", device_id=device.id, original_name="t")
+    hass.states.async_set(sensor.entity_id, "14", {"device_class": "temperature", "unit_of_measurement": "°C"})
+    routine = await hass.data[DATA_ROUTINES].async_save_routine(
+        {"device_id": device.id, "entity_id": plug, "name": "Licht", "action": "on", "kind": "countdown", "delay_s": 600}
+    )
+    actions = [{"title": "Licht an", "kind": "routine", "routine_id": routine["id"]}, {"title": "Später", "kind": "remind", "after": "15m"}, {"title": "Erledigt", "kind": "done"}]
+    rule = await hass.data[DATA_MAGIC].async_save_rule(
+        {"device_id": device.id, "entity_id": sensor.entity_id, "name": "Kalt", "kind": "below", "value": 12, "for_s": 600, "message": "kalt {value}", "push_actions": actions}
+    )
+    file = await backup.async_export(hass, ["routines", "magic"])
+    assert [a["title"] for a in file["sections"]["magic"]["items"][0]["push_actions"]] == ["Licht an", "Später", "Erledigt"]
+    await hass.data[DATA_ROUTINES].async_delete_routine(routine["id"])
+    await hass.data[DATA_MAGIC].async_delete_rule(rule["id"])
+    # Nur die Meldungen zurück, die Routine fehlt: übersprungen mit Grund
+    alone = await backup.async_import(hass, file, ["magic"], dry_run=False)
+    assert alone["sections"]["magic"]["changed"] == 0 and alone["sections"]["magic"]["skipped"][0]["reason"] == "Die Routine der Push-Aktion gibt es nicht"
+    # Beide zusammen: die Vorschau meldet keinen Fehler (die Routine kommt mit der Datei), danach stimmen die Push-Aktionen
+    preview = await backup.async_import(hass, file, ["routines", "magic"], dry_run=True)
+    assert preview["totals"]["skipped"] == 0
+    await backup.async_import(hass, file, ["routines", "magic"], dry_run=False)
+    restored = hass.data[DATA_MAGIC].get(rule["id"])
+    assert [(a["kind"], a["title"], a["routine_id"]) for a in restored["push_actions"]] == [("routine", "Licht an", routine["id"]), ("remind", "Später", ""), ("done", "Erledigt", "")]

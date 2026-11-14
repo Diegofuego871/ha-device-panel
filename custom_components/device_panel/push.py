@@ -135,6 +135,11 @@ TEXTS: dict[str, dict[str, str]] = {
         "routine_reason_missing": "Entität nicht gefunden",
         "routine_reason_error": "Fehler beim Schalten",
         "routine_reason_timeout": "keine Antwort des Geräts",
+        "magic_action_ok_title": "✅ Routine ausgeführt",
+        "magic_action_ok_text": "\"{routine}\" wurde ausgeführt (Meldung: {rule}).",
+        "magic_action_fail_title": "⚠️ Routine fehlgeschlagen",
+        "magic_action_fail_text": "\"{routine}\": {reason}. Details im Protokoll (Meldung: {rule}).",
+        "magic_action_missing_text": "Die Routine gibt es nicht mehr (Meldung: {rule}).",
         "action_open": "Öffnen",
         "action_mute": "24 Std. stumm",
         "action_pause": "Pausieren bis online",
@@ -283,6 +288,11 @@ TEXTS: dict[str, dict[str, str]] = {
         "routine_reason_missing": "entity not found",
         "routine_reason_error": "error while switching",
         "routine_reason_timeout": "the device did not answer",
+        "magic_action_ok_title": "✅ Routine done",
+        "magic_action_ok_text": "\"{routine}\" was run (notification: {rule}).",
+        "magic_action_fail_title": "⚠️ Routine failed",
+        "magic_action_fail_text": "\"{routine}\": {reason}. Details in the log (notification: {rule}).",
+        "magic_action_missing_text": "The routine no longer exists (notification: {rule}).",
         "action_open": "Open",
         "action_mute": "Mute 24 h",
         "action_pause": "Pause until online",
@@ -356,6 +366,14 @@ def md_text(value: Any) -> str:
 
 def text(hass: HomeAssistant, key: str, **kwargs: Any) -> str:
     return TEXTS[language(hass)][key].format(**kwargs)
+
+
+def reason_text(hass: HomeAssistant, reason: str | None) -> str:
+    """Grund eines fehlgeschlagenen Schaltens als Text; ein unbekannter Code bleibt wie er ist, ohne Grund ein Strich."""
+    if not reason:
+        return "–"
+    key = f"routine_reason_{reason}"
+    return TEXTS[language(hass)].get(key) or str(reason)
 
 
 def duration(hass: HomeAssistant, seconds: float) -> str:

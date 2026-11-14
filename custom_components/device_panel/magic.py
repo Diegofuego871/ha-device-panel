@@ -49,7 +49,7 @@ from homeassistant.util import dt as dt_util
 
 from . import activity, push, push_icon
 from .compat import registry_devices
-from .const import DATA_PROTOCOL, DOMAIN, NOTIFY_NONE, STORAGE_VERSION
+from .const import DATA_PROTOCOL, DATA_ROUTINES, DOMAIN, MAGIC_ACTION_PREFIX, NOTIFY_NONE, STORAGE_VERSION
 from .devices import async_integration_info, primary_domain
 from .options_api import effective
 
@@ -71,6 +71,14 @@ LEAF_KINDS = ("above", "below", "is", "time")
 MAX_LEAVES = 10
 MAX_GROUPS = 4
 IGNORED = ("unavailable", "unknown", "", None)
+# Push-Aktionen (seit 2.218.0): Knöpfe unter der Meldung. Art: Routine ausführen, später erinnern, öffnen, erledigt
+ACTION_KINDS = ("routine", "remind", "open", "done")
+ACTIONS_MAX = 3
+ACTION_TITLE_MAX = 40
+REMIND_AFTER = ("15m", "1h", "morning")
+REMIND_SECONDS = {"15m": 900, "1h": 3600}
+REMIND_MORNING = "08:00"
+OPEN_TARGETS = ("panel", "ha")
 
 _ID_RE = re.compile(r"^[0-9a-f]{12}$")
 _ENTITY_RE = re.compile(r"^[a-z0-9_]+\.[a-z0-9_]+$")
@@ -553,6 +561,17 @@ def _threshold(value: Any) -> float | str:
     raise vol.Invalid("Wert erwartet")
 
 
+ACTION_SCHEMA = vol.Schema(
+    {
+        vol.Required("title"): _text(ACTION_TITLE_MAX, 1),
+        vol.Required("kind"): vol.In(ACTION_KINDS),
+        vol.Optional("routine_id", default=""): vol.Any(None, "", vol.All(str, vol.Match(_ID_RE))),
+        vol.Optional("after", default="1h"): vol.In(REMIND_AFTER),
+        vol.Optional("open", default="panel"): vol.In(OPEN_TARGETS),
+    }
+)
+
+
 RULE_SCHEMA = vol.Schema(
     {
         vol.Optional("id"): vol.All(str, vol.Match(_ID_RE)),
@@ -582,6 +601,8 @@ RULE_SCHEMA = vol.Schema(
         vol.Optional("reset_for_s", default=0): _seconds(FOR_MAX),
         # Verknüpfte Bedingungen (seit 2.15.0), geprüft in clean_rule
         vol.Optional("conditions", default=None): vol.Any(None, dict),
+        # Push-Aktionen (seit 2.218.0): bis zu drei Knöpfe unter der Meldung (nicht unter "wieder normal")
+        vol.Optional("push_actions", default=list): vol.All(list, vol.Length(max=ACTIONS_MAX), [ACTION_SCHEMA]),
         vol.Optional("critical", default=False): bool,
         vol.Optional("critical_volume", default=push.CRITICAL_VOLUME_MAX): vol.All(int, vol.Range(min=1, max=push.CRITICAL_VOLUME_MAX)),
     }
@@ -604,8 +625,8 @@ def _clean_reset(reset: Any, kind: str, value: Any) -> float | str | None:
     return reset
 
 
-def clean_rule(hass: HomeAssistant, raw: dict[str, Any]) -> dict[str, Any]:
-    """Regel prüfen und bereinigen (Fehler als vol.Invalid mit Text für das Panel)."""
+def clean_rule(hass: HomeAssistant, raw: dict[str, Any], *, routine_ids: set[str] | None = None) -> dict[str, Any]:
+    """Regel prüfen und bereinigen (Fehler als vol.Invalid mit Text für das Panel). routine_ids: weitere Routinen, die als vorhanden gelten (Wiederherstellung: kommen mit derselben Datei)."""
     rule = RULE_SCHEMA(raw)
     # Bedingungen (seit 2.15.0): die erste steht in den alten Feldern und wird wie bisher geprüft
     raw_tree = rule.get("conditions")
@@ -660,6 +681,16 @@ def clean_rule(hass: HomeAssistant, raw: dict[str, Any]) -> dict[str, Any]:
     if rule["recover"] and not rule["recover_message"]:
         raise vol.Invalid("Für die Meldung bei wieder normal fehlt der Text")
     rule["target"] = rule.get("target") or None
+    # Push-Aktionen: je Art nur das Nötige behalten; eine Routine muss es geben
+    manager = hass.data.get(DATA_ROUTINES)
+    for action in rule["push_actions"]:
+        if action["kind"] == "routine":
+            if not action["routine_id"]:
+                raise vol.Invalid("Für die Push-Aktion fehlt die Routine")
+            if manager is not None and manager.get(action["routine_id"]) is None and action["routine_id"] not in (routine_ids or ()):
+                raise vol.Invalid("Die Routine der Push-Aktion gibt es nicht")
+        else:
+            action["routine_id"] = ""
     # Eine Zeit-Bedingung bleibt immer im Baum (die alten Felder können Zeiten nicht halten)
     if len(raw_leaves) > 1 or any(x.get("kind") == "time" for x in raw_leaves):
         tree = clean_conditions(hass, raw_tree)
@@ -785,6 +816,9 @@ class MagicPush:
         self._pending: dict[str, dict[str, Any]] = {}
         self._unsub_track: CALLBACK_TYPE | None = None
         self._unsubs: list[CALLBACK_TYPE] = []
+        # Erinnerungen aus der Push-Aktion "Erinnern" (seit 2.218.0): Regel → Zeitpunkt; überleben einen Neustart
+        self._reminders: dict[str, float] = {}
+        self._remind_timers: dict[str, CALLBACK_TYPE] = {}
         self._integration_names: dict[str, str] = {}
 
     # -- Start, Stopp -------------------------------------------------------------
@@ -808,6 +842,7 @@ class MagicPush:
                         "fired": bool(rt.get("fired")),
                         "last_sent": _float(rt.get("last_sent")),
                         "last_fired": _float(rt.get("last_fired")),
+                        "acked": bool(rt.get("acked")),
                     }
         pending = stored.get("pending") if isinstance(stored, dict) else None
         if isinstance(pending, dict):
@@ -816,8 +851,17 @@ class MagicPush:
                 due = _float(item.get("due")) if isinstance(item, dict) else None
                 if rule is not None and rule["kind"] == "change" and due is not None and isinstance(item.get("old"), str) and isinstance(item.get("new"), str):
                     self._pending[rule_id] = {"old": item["old"], "new": item["new"], "due": due}
+        reminders = stored.get("reminders") if isinstance(stored, dict) else None
+        if isinstance(reminders, dict):
+            for rule_id, at in reminders.items():
+                if rule_id in self._rules and _float(at) is not None:
+                    self._reminders[rule_id] = float(at)
         # Gelöschte Geräte nehmen ihre Regeln mit.
         self._unsubs.append(self.hass.bus.async_listen(dr.EVENT_DEVICE_REGISTRY_UPDATED, self._on_device_registry))
+        # Tippen auf eine Push-Aktion (die Companion-App meldet es als Ereignis; nur Administratoren und die App können Ereignisse auslösen)
+        self._unsubs.append(self.hass.bus.async_listen("mobile_app_notification_action", self._on_action))
+        for rule_id in self._reminders:
+            self._arm_remind(rule_id)
         self._retrack()
         await self.async_load_integration_names()
         async_at_started(self.hass, self._on_started)
@@ -829,8 +873,9 @@ class MagicPush:
         if self._unsub_track is not None:
             self._unsub_track()
             self._unsub_track = None
-        for cancel in (*self._timers.values(), *self._rtimers.values(), *self._clocks.values()):
+        for cancel in (*self._timers.values(), *self._rtimers.values(), *self._clocks.values(), *self._remind_timers.values()):
             cancel()
+        self._remind_timers = {}
         self._timers = {}
         self._rtimers = {}
         self._clocks = {}
@@ -847,7 +892,7 @@ class MagicPush:
         return state is None and bool(rule["entity_id"])
 
     def _data(self) -> dict[str, Any]:
-        return {"rules": self._rules, "runtime": self._runtime, "pending": self._pending}
+        return {"rules": self._rules, "runtime": self._runtime, "pending": self._pending, "reminders": self._reminders}
 
     def _save(self) -> None:
         self._store.async_delay_save(self._data, 5)
@@ -880,11 +925,11 @@ class MagicPush:
         return self._rules.get(rule_id)
 
     def runtime(self, rule_id: str) -> dict[str, Any]:
-        return self._runtime.setdefault(rule_id, {"since": None, "fired": False, "last_sent": None, "last_fired": None})
+        return self._runtime.setdefault(rule_id, {"since": None, "fired": False, "last_sent": None, "last_fired": None, "acked": False})
 
-    async def async_save_rule(self, raw: dict[str, Any], *, adopt_id: bool = False) -> dict[str, Any]:
+    async def async_save_rule(self, raw: dict[str, Any], *, adopt_id: bool = False, routine_ids: set[str] | None = None) -> dict[str, Any]:
         """Regel neu anlegen oder ändern (mit id). adopt_id: eine unbekannte id bei einer neuen Regel übernehmen (Wiederherstellung einer Sicherung)."""
-        rule = clean_rule(self.hass, raw)
+        rule = clean_rule(self.hass, raw, routine_ids=routine_ids)
         existing = self._rules.get(rule.get("id", ""))
         if "id" in rule and existing is None and not (adopt_id and _ID_RE.match(str(rule["id"]))):
             raise vol.Invalid("Meldung nicht gefunden")
@@ -935,6 +980,7 @@ class MagicPush:
         self._rules.pop(rule_id, None)
         self._runtime.pop(rule_id, None)
         self._pending.pop(rule_id, None)
+        self._cancel_remind(rule_id)
 
     def _reset(self, rule_id: str) -> None:
         """Laufende Dauer und "schon gemeldet" verwerfen (Regel geändert oder aus- und eingeschaltet)."""
@@ -943,6 +989,8 @@ class MagicPush:
         rt = self.runtime(rule_id)
         rt["since"] = None
         rt["fired"] = False
+        # "Erledigt" (Push-Aktion) gilt nur für diese Episode: nach "wieder normal" oder einer Änderung der Regel meldet sie wieder
+        rt["acked"] = False
 
     def _retrack(self) -> None:
         if self._unsub_track is not None:
@@ -1158,6 +1206,9 @@ class MagicPush:
         rt = self.runtime(rule_id)
         if rt["since"] is None or self._met(rule) is not True:
             return
+        # Mit "Erledigt" in einer Push-Aktion bestätigt: keine weitere Wiederholung in dieser Episode
+        if rt.get("acked"):
+            return
         self._fire(rule, state, now, repeat=rt["fired"])
 
     def _fire(self, rule: dict[str, Any], state: State | None, now: float, *, old: str | None = None, repeat: bool = False) -> None:
@@ -1202,6 +1253,110 @@ class MagicPush:
         info = await async_integration_info(self.hass, {d for d in domains if d})
         self._integration_names = {d: v.get("name", d) for d, v in info.items()}
 
+    # -- Push-Aktionen (seit 2.218.0) ---------------------------------------------
+
+    def _actions(self, rule: dict[str, Any], ctx: dict[str, str], device_id: str) -> list[dict[str, str]]:
+        """Knöpfe unter der Meldung. "Öffnen" braucht keine Rückmeldung (die App öffnet die Adresse selbst); die übrigen melden ihre Kennung zurück."""
+        out: list[dict[str, str]] = []
+        for i, action in enumerate(rule.get("push_actions") or []):
+            title = render(action["title"], ctx)[:ACTION_TITLE_MAX] or action["title"]
+            if action["kind"] == "open":
+                uri = f"/config/devices/device/{device_id}" if action["open"] == "ha" else push.panel_url(device_id)
+                out.append({"action": "URI", "title": title, "uri": uri})
+            else:
+                out.append({"action": f"{MAGIC_ACTION_PREFIX}{rule['id']}_{i}", "title": title})
+        return out
+
+    @callback
+    def _on_action(self, event: Event) -> None:
+        action = str(event.data.get("action") or "")
+        if not action.startswith(MAGIC_ACTION_PREFIX):
+            return
+        rule_id, _, index = action.removeprefix(MAGIC_ACTION_PREFIX).rpartition("_")
+        rule = self._rules.get(rule_id)
+        # Die Art kommt aus der gespeicherten Regel, nie aus dem Ereignis: eine gefälschte Kennung löst nichts aus, was nicht eingestellt ist
+        if rule is None or not index.isdigit() or int(index) >= len(rule.get("push_actions") or []):
+            return
+        self.hass.async_create_task(self._async_do_action(rule, rule["push_actions"][int(index)]))
+
+    async def _async_do_action(self, rule: dict[str, Any], action: dict[str, Any]) -> None:
+        hass = self.hass
+        kind = action["kind"]
+        if kind == "done":
+            self.runtime(rule["id"])["acked"] = True
+            self._cancel(rule["id"])
+            self._cancel_remind(rule["id"])
+            self._save_now()
+            activity.record(hass, "info", "magic", "magic_action_done", rule["name"], rule["device_id"], title=action["title"])
+        elif kind == "remind":
+            at = self._remind_at(action["after"])
+            self._reminders[rule["id"]] = at
+            self._arm_remind(rule["id"])
+            self._save_now()
+            activity.record(hass, "info", "magic", "magic_action_remind", rule["name"], rule["device_id"], title=action["title"], when=_clock(hass, at))
+        elif kind == "routine":
+            await self._async_run_routine(rule, action)
+
+    async def _async_run_routine(self, rule: dict[str, Any], action: dict[str, Any]) -> None:
+        """Routine jetzt ausführen und mit einer Folge-Meldung sagen, wie es ausging (an das Ziel der Meldung, eigener Tag)."""
+        hass = self.hass
+        manager = hass.data.get(DATA_ROUTINES)
+        routine = manager.get(action["routine_id"]) if manager is not None else None
+        result = await manager.async_run_now(action["routine_id"]) if routine is not None else None
+        name = routine["name"] if routine is not None else ""
+        if result is None:
+            ok, reason, text_key = False, None, "magic_action_missing_text"
+        else:
+            ok, reason = result
+            text_key = "magic_action_ok_text" if ok else "magic_action_fail_text"
+        activity.record(hass, "info" if ok else "error", "magic", "magic_action_routine" if ok else "magic_action_failed", rule["name"], rule["device_id"], title=name or action["title"])
+        target = self.target(rule)
+        if target == NOTIFY_NONE:
+            return
+        reason_text = push.reason_text(hass, reason)
+        title = push.text(hass, "magic_action_ok_title" if ok else "magic_action_fail_title")
+        message = push.text(hass, text_key, routine=name, rule=rule["name"], reason=reason_text)
+        data = push.notification_data(hass, f"{DOMAIN}_magic_{rule['id']}_action", push.panel_url(rule["device_id"]))
+        await push.async_push(hass, target, title, message, data)
+
+    # Erinnern: dieselbe Meldung nochmals, mit dem dann gültigen Wert; nur wenn die Bedingung dann noch gilt
+    @staticmethod
+    def _remind_at(after: str) -> float:
+        now = time.time()
+        if after in REMIND_SECONDS:
+            return now + REMIND_SECONDS[after]
+        return next_send(REMIND_MORNING, now)
+
+    def _arm_remind(self, rule_id: str) -> None:
+        self._cancel_remind(rule_id, forget=False)
+        at = self._reminders.get(rule_id)
+        if at is not None:
+            self._remind_timers[rule_id] = async_call_later(self.hass, max(1.0, at - time.time()), partial(self._on_remind, rule_id))
+
+    def _cancel_remind(self, rule_id: str, *, forget: bool = True) -> None:
+        if (cancel := self._remind_timers.pop(rule_id, None)) is not None:
+            cancel()
+        if forget:
+            self._reminders.pop(rule_id, None)
+
+    @callback
+    def _on_remind(self, rule_id: str, _now: Any) -> None:
+        self._remind_timers.pop(rule_id, None)
+        self._reminders.pop(rule_id, None)
+        self._save_now()
+        rule = self._rules.get(rule_id)
+        if rule is None or not rule["enabled"]:
+            return
+        rt = self.runtime(rule_id)
+        # Die Bedingung gilt nicht mehr (oder wurde erledigt): nichts zu erinnern. "ändert sich" und reine Zeit-Regeln erinnern immer.
+        if rt.get("acked") or (rule["kind"] not in ("change", "time") and (rt["since"] is None or self._met(rule) is not True)):
+            return
+        now = time.time()
+        state = self._state_of(rule)
+        ctx = self._context(rule, state, since=rt["since"] or now, now=now)
+        title = f"⏰ {render(rule['message'], ctx)}"
+        self.hass.async_create_task(self._async_send(rule, title, content(self.hass, rule, ctx), "magic_remind", ctx))
+
     # -- Senden -------------------------------------------------------------------
 
     def target(self, rule: dict[str, Any]) -> str:
@@ -1217,7 +1372,9 @@ class MagicPush:
             self._protocol(rule, code, title, message, target, ctx, {"err": "no_target"}, False, dur, res="no_target")
             return False
         icon = await push_icon.async_integration_icon(hass, primary_domain(hass, device))
-        data = push.notification_data(hass, f"{DOMAIN}_magic_{rule['id']}", push.device_url(opts["notify_click_target"], device.id), icon=icon)
+        data = push.notification_data(
+            hass, f"{DOMAIN}_magic_{rule['id']}", push.device_url(opts["notify_click_target"], device.id), self._actions(rule, ctx, device.id) if code != "magic_recovered" else None, icon=icon
+        )
         # Nur die Meldung selbst ist kritisch; "wieder normal" kommt als gewöhnliche Meldung
         if critical:
             data.update(push.critical_data(rule["critical_volume"]))
@@ -1248,11 +1405,23 @@ class MagicPush:
         """Vorschau für einen Entwurf: fehlende Texte und Namen sind erlaubt (dann ist der Text leer)."""
         draft = {**raw, "name": raw.get("name") or "Magic Push", "message": raw.get("message") or "x", "recover": False}
         draft["recover_message"] = raw.get("recover_message") or ""
+        # Push-Aktionen prüft die Vorschau nicht (ein halb ausgefüllter Entwurf ist erlaubt): ihre Titel liefert preview_actions
+        draft["push_actions"] = []
         rule = clean_rule(self.hass, draft)
         rule["message"] = " ".join(str(raw.get("message") or "").split())
         rule["recover_message"] = " ".join(str(raw.get("recover_message") or "").split())
         title, message, _ctx = self.preview(rule, which)
         return title, message if title else ""
+
+    def preview_actions(self, raw: dict[str, Any]) -> list[str]:
+        """Titel der Push-Aktionen eines Entwurfs mit eingesetzten Variablen (für die Vorschau); unvollständige Einträge fehlen."""
+        items = [a for a in (raw.get("push_actions") or []) if isinstance(a, dict) and a.get("kind") in ACTION_KINDS and isinstance(a.get("title"), str) and a["title"].strip()]
+        if not items:
+            return []
+        draft = {**raw, "name": raw.get("name") or "Magic Push", "message": raw.get("message") or "x", "recover": False, "push_actions": []}
+        rule = clean_rule(self.hass, draft)
+        _title, _message, ctx = self.preview(rule, "main")
+        return [render(" ".join(a["title"].split()), ctx)[:ACTION_TITLE_MAX] for a in items[:ACTIONS_MAX]]
 
     def preview(self, rule: dict[str, Any], which: str = "main") -> tuple[str, str, dict[str, str]]:
         """Titel und Zeile der Meldung mit dem jetzigen Wert; Dauer als Beispiel (Wartezeit der Regel)."""
