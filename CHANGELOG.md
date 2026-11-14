@@ -7,6 +7,14 @@ All notable changes to this integration are documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/).
 
+## [2.222.0] - 2026-11-14
+
+The title of a push action starts with a variable for the chosen kind.
+
+### Added
+
+- **Variable `{action}` in the title of a push action:** It stands for the kind you choose below: "Acknowledge", "Open", "Remind in 15 min" / "Remind in 1 h" / "Remind tomorrow 08:00" (with the time you set) or the name of the routine. A new push action starts with `{action}` as its title, so the title follows the choice by itself; you can change it, add words around it or delete it. `{action}` is the first chip under the title of a push action; the preview shows the real text. A title without the variable stays as you wrote it.
+
 ## [2.221.0] - 2026-11-14
 
 The push action "Undo" of Magic Push is gone; a routine notification can carry "Switch back now" instead.
@@ -6046,6 +6054,7 @@ First pre-release.
   GitHub Actions for HACS/hassfest validation and tests.
 
 [2.6.0]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v2.6.0
+[2.222.0]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v2.222.0
 [2.221.0]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v2.221.0
 [2.220.0]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v2.220.0
 [2.219.0]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v2.219.0

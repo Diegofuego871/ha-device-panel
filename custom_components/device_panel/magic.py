@@ -1267,11 +1267,24 @@ class MagicPush:
 
     # -- Push-Aktionen (seit 2.218.0) ---------------------------------------------
 
+    def action_label(self, action: dict[str, Any]) -> str:
+        """Wert der Variable {action} im Titel einer Push-Aktion (seit 2.222.0): sie steht für die gewählte Art, bei "Erinnern" mit dem Zeitpunkt, bei "Routine" mit deren Namen."""
+        hass = self.hass
+        kind = action.get("kind")
+        if kind == "routine":
+            manager = hass.data.get(DATA_ROUTINES)
+            found = manager.get(action.get("routine_id") or "") if manager is not None else None
+            return str(found["name"]) if found is not None else push.text(hass, "action_label_routine")
+        if kind == "remind":
+            after = action.get("after") or "1h"
+            return push.text(hass, "action_label_remind_morning", time=action.get("at") or REMIND_MORNING) if after == "morning" else push.text(hass, f"action_label_remind_{after}")
+        return push.text(hass, f"action_label_{kind}") if kind in ("open", "done") else ""
+
     def _actions(self, rule: dict[str, Any], ctx: dict[str, str], device_id: str) -> list[dict[str, str]]:
         """Knöpfe unter der Meldung. "Öffnen" braucht keine Rückmeldung (die App öffnet die Adresse selbst); die übrigen melden ihre Kennung zurück."""
         out: list[dict[str, str]] = []
         for i, action in enumerate(rule.get("push_actions") or []):
-            title = render(action["title"], ctx)[:ACTION_TITLE_MAX] or action["title"]
+            title = render(action["title"], {**ctx, "action": self.action_label(action)})[:ACTION_TITLE_MAX] or action["title"]
             if action["kind"] == "open":
                 uri = f"/config/devices/device/{device_id}" if action["open"] == "ha" else push.panel_url(device_id)
                 out.append({"action": "URI", "title": title, "uri": uri})
@@ -1435,7 +1448,7 @@ class MagicPush:
         draft = {**raw, "name": raw.get("name") or "Magic Push", "message": raw.get("message") or "x", "recover": False, "push_actions": []}
         rule = clean_rule(self.hass, draft)
         _title, _message, ctx = self.preview(rule, "main")
-        return [render(" ".join(a["title"].split()), ctx)[:ACTION_TITLE_MAX] for a in items[:ACTIONS_MAX]]
+        return [render(" ".join(a["title"].split()), {**ctx, "action": self.action_label(a)})[:ACTION_TITLE_MAX] for a in items[:ACTIONS_MAX]]
 
     def preview(self, rule: dict[str, Any], which: str = "main") -> tuple[str, str, dict[str, str]]:
         """Titel und Zeile der Meldung mit dem jetzigen Wert; Dauer als Beispiel (Wartezeit der Regel)."""

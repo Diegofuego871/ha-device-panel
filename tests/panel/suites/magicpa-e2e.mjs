@@ -9,8 +9,8 @@ let ok = true;
 const check = (l, c, i = "") => { ok &&= !!c; console.log(`${c ? "PASS" : "FAIL"} ${l}${i ? " - " + i : ""}`); };
 const R = `document.querySelector("device-panel").shadowRoot`;
 const T = {
-  de: { sw: "Push-Aktionen", kinds: ["Routine", "Erinnern", "Öffnen", "Quittieren"], add3: "Push-Aktion hinzufügen (3 von 3)", search: "Routine suchen", doneHint: "Bestätigt die Meldung", change: "Ändern" },
-  en: { sw: "Push actions", kinds: ["Routine", "Remind", "Open", "Acknowledge"], add3: "Add push action (3 of 3)", search: "Search routines", doneHint: "Acknowledges the notification", change: "Change" },
+  de: { sw: "Push-Aktionen", kinds: ["Routine", "Erinnern", "Öffnen", "Quittieren"], ackLabel: "Quittieren", openLabel: "Öffnen", remindLabel: "Erinnern morgen 08:00", add3: "Push-Aktion hinzufügen (3 von 3)", search: "Routine suchen", doneHint: "Bestätigt die Meldung", change: "Ändern" },
+  en: { sw: "Push actions", kinds: ["Routine", "Remind", "Open", "Acknowledge"], ackLabel: "Acknowledge", openLabel: "Open", remindLabel: "Remind tomorrow 08:00", add3: "Add push action (3 of 3)", search: "Search routines", doneHint: "Acknowledges the notification", change: "Change" },
 };
 const SEED = (id, name, extra = {}) => ({ id, device_id: "d", entity_id: "switch.plug", name, action: "on", back_s: null, kind: "repeat", delay_s: null, date: null, time: "06:30", repeat: "daily", weekdays: null, mday: null, enabled: true, push: false, target: null, created: Date.now() / 1000, ...extra });
 
@@ -70,14 +70,15 @@ for (const lang of ["de", "en"]) {
     await tap('[data-mg="apush"]');
     check(`[${tag}] Einschalten: eine Karte mit Titelfeld und vier Reitern ${L.kinds.join("/")}`, (await wait(`return r.querySelectorAll('${W} .mg-pa-card').length === 1`)) && (await ev(`return [...r.querySelectorAll('${W} .mg-pa-card [data-mg="akind"]')].map((x) => x.textContent.trim()).join()`)) === L.kinds.join());
     check(`[${tag}] Auswahl als Reiterleiste: .sub-tabs mit Kapsel, "Routine" gewählt`, await wait(`return !!r.querySelector('${W} .mg-pa-card .sub-tabs .seg-pill') && r.querySelector('${W} .mg-pa-card [data-mg="akind"].on').dataset.v === "routine"`));
-    check(`[${tag}] leerer Titel: "Weiter" gesperrt`, !(await nextOn()));
+    check(`[${tag}] Titel ist mit {action} vorbelegt, "{action}" ist der erste Chip, ohne Routine ist "Weiter" gesperrt`, (await ev(`return r.querySelector('${W} [data-mg-atitle]').value`)) === "{action}" && (await ev(`return r.querySelector('${W} .mg-pa-card .mg-chips [data-mg="var"]').dataset.var`)) === "action" && !(await nextOn()));
     check(`[${tag}] Minitext erklärt die Push-Aktionen`, (await text(`${W} .mg-pa-card`)).length > 0 && (await ev(`return r.querySelector('${W} [data-mg-zone="pa"]').textContent.length`)) > 150);
     // Routinen: Suchfeld mit Liste (alle drei), Suche filtert, Wahl übernimmt den Namen als Titel
     check(`[${tag}] Routinen-Liste: drei Routinen, Suchfeld ("${L.search}")`, (await wait(`return r.querySelectorAll('${W} .mg-pa-opt').length === 3`)) && (await ev(`return r.querySelector('${W} .mg-pa-card input[type="search"]').placeholder`)) === L.search);
     await fill('.mg-pa-card input[type="search"]', "filt");
     check(`[${tag}] Suche "filt" findet nur die Filter-Bestellung`, await wait(`return r.querySelectorAll('${W} .mg-pa-opt').length === 1 && r.querySelector('${W} .mg-pa-opt').textContent.includes("Filter-Bestellung")`));
     await tap('.mg-pa-opt');
-    check(`[${tag}] Routine gewählt: Auswahlzeile mit "${L.change}", Titel vorbelegt, "Weiter" frei`, (await wait(`return !!r.querySelector('${W} .mg-pa-sel') && r.querySelector('${W} [data-mg-atitle]').value === "Filter-Bestellung"`)) && (await text(`${W} .mg-pa-sel`)).includes(L.change) && (await nextOn()));
+    check(`[${tag}] Routine gewählt: Auswahlzeile mit "${L.change}", Titel vorbelegt, "Weiter" frei`, (await wait(`return !!r.querySelector('${W} .mg-pa-sel') && r.querySelector('${W} [data-mg-atitle]').value === "{action}"`)) && (await text(`${W} .mg-pa-sel`)).includes(L.change) && (await nextOn()));
+    check(`[${tag}] Vorschau: {action} wird zum Namen der Routine`, await wait(`return r.querySelector('${W} [data-mg-zone="pv"] .pv-actions')?.textContent.trim() === "Filter-Bestellung"`));
     await fill('[data-mg-atitle]', "Bestellt: {device}");
     check(`[${tag}] Vorschau zeigt den Knopf mit eingesetzter Variable`, await wait(`return r.querySelector('${W} [data-mg-zone="pv"] .pv-actions')?.textContent.includes("Bestellt: Klimasensor Keller")`));
 
@@ -94,6 +95,21 @@ for (const lang of ["de", "en"]) {
       await ev(`delete r.host._topWindow; r.host._magic.fitWindow();`);
       check(`[${tag}] Tastatur weg: Fusszeile und Fortschritt wieder da`, await ev(`const w=r.querySelector("${W}"); return !w.classList.contains("mg-kb") && getComputedStyle(r.querySelector('${W} .mgw-foot')).display !== "none"`));
     }
+
+    // {action} folgt der gewählten Art: Quittieren, Öffnen, Erinnern mit Zeit
+    const card0 = (code) => ev(`const c=r.querySelector('${W} .mg-pa-card'); ${code}`);
+    await setTitle(0, "{action}");
+    await card0(`c.querySelector('[data-mg="akind"][data-v="done"]').click();`);
+    const lbl = async () => ev(`return r.querySelector('${W} [data-mg-zone="pv"] .pv-actions').textContent.trim()`);
+    check(`[${tag}] {action} bei "${L.kinds[3]}": "${L.ackLabel}"`, await wait(`return r.querySelector('${W} [data-mg-zone="pv"] .pv-actions')?.textContent.trim() === ${JSON.stringify(L.ackLabel)}`), await lbl());
+    await card0(`c.querySelector('[data-mg="akind"][data-v="open"]').click();`);
+    check(`[${tag}] {action} bei "${L.kinds[2]}": "${L.openLabel}"`, await wait(`return r.querySelector('${W} [data-mg-zone="pv"] .pv-actions')?.textContent.trim() === ${JSON.stringify(L.openLabel)}`), await lbl());
+    await card0(`c.querySelector('[data-mg="akind"][data-v="remind"]').click();`);
+    await card0(`c.querySelector('[data-mg="aafter"][data-v="morning"]').click();`);
+    check(`[${tag}] {action} bei "${L.kinds[1]}" morgen: mit der Zeit 08:00`, await wait(`return r.querySelector('${W} [data-mg-zone="pv"] .pv-actions')?.textContent.trim() === ${JSON.stringify(L.remindLabel)}`), await lbl());
+    await card0(`c.querySelector('[data-mg="akind"][data-v="routine"]').click();`);
+    await wait(`return r.querySelector('${W} .mg-pa-sel')?.textContent.includes("Filter-Bestellung")`);
+    await setTitle(0, "Bestellt: {device}");
 
     // --- Zweite Karte: Erinnern; dritte: Quittieren; Grenze ---
     await tap('[data-mg="aadd"]');
@@ -140,7 +156,7 @@ for (const lang of ["de", "en"]) {
     await wait(`return !r.querySelector("${W}").open`);
     const saved = (await calls("magic_save")).at(-1)?.rule;
     const pa = saved?.push_actions || [];
-    check(`[${tag}] Speichern: push_actions mit drei Einträgen (Routine, Erinnern bis morgen?, Erledigt/Öffnen)`, pa.length === 3 && pa[0].kind === "routine" && pa[0].routine_id === "aaaaaaaaaaa1" && pa[0].title === "Titel {area}", JSON.stringify(pa));
+    check(`[${tag}] Speichern: push_actions mit drei Einträgen (Routine, Erinnern bis morgen?, Erledigt/Öffnen)`, pa.length === 3 && pa[0].kind === "routine" && pa[0].routine_id === "aaaaaaaaaaa1" && pa[0].title === "Bestellt: {device}", JSON.stringify(pa));
     check(`[${tag}] Erinnern übernimmt die Zeit, Öffnen das Ziel`, pa[1]?.kind === "done" || pa[1]?.kind === "remind" || pa[1]?.kind === "open", JSON.stringify(pa.map((x) => x.kind)));
 
     // --- Bearbeiten: Schalter an, Karten wie gespeichert, ohne Änderung kein Rückfragefenster ---

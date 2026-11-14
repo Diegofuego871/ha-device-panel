@@ -1541,6 +1541,7 @@ export const STRINGS = {
     mgVarHelp_number: "{value} zeigt die Zahl wie am Gerät, {unit} die Einheit und {threshold} deine Schwelle.",
     mgVarHelp_state: "{value} zeigt hier das Wort der Entität (zum Beispiel offen oder geschlossen), nicht on oder off.",
     mgVarHelp_change: "{old} ist der Wert vorher, {new} der Wert nachher.",
+    mgVar_action: "Die gewählte Art der Push-Aktion (Quittieren, Öffnen, Erinnern mit Zeit, Name der Routine)",
     mgVar_device: "Name des Geräts",
     mgVar_area: "Bereich des Geräts",
     mgVar_entity: "Name der Entität",
@@ -1616,7 +1617,7 @@ export const STRINGS = {
     // Push-Aktionen (seit 2.218.0): Schaltflächen unter der Meldung
     mgPa: "Push-Aktionen",
     mgPaSub: "Bis zu drei Aktionen unter der Meldung",
-    mgPaIntro: "Eine Push-Aktion erscheint als Schaltfläche unter der Meldung auf dem Handy. Ein Tipp führt eine Routine aus, erinnert später, öffnet das Gerät oder quittiert die Meldung. Im Titel gehen dieselben Variablen wie oben.",
+    mgPaIntro: "Eine Push-Aktion erscheint als Schaltfläche unter der Meldung auf dem Handy. Ein Tipp führt eine Routine aus, erinnert später, öffnet das Gerät oder quittiert die Meldung. Im Titel gehen dieselben Variablen wie oben, dazu {action}: sie steht für die gewählte Art (Quittieren, Öffnen, Erinnern mit der Zeit oder der Name der Routine).",
     mgPaOne: "Push-Aktion",
     mgPaRemove: "Push-Aktion entfernen",
     mgPaTitle: "Titel der Push-Aktion",
@@ -4428,6 +4429,7 @@ export const STRINGS = {
     mgVarHelp_number: "{value} shows the number as on the device, {unit} the unit and {threshold} your limit.",
     mgVarHelp_state: "{value} shows the entity's word here (for example open or closed), not on or off.",
     mgVarHelp_change: "{old} is the value before, {new} the value after.",
+    mgVar_action: "The chosen kind of the push action (Acknowledge, Open, Remind with time, name of the routine)",
     mgVar_device: "Device name",
     mgVar_area: "Device area",
     mgVar_entity: "Entity name",
@@ -4503,7 +4505,7 @@ export const STRINGS = {
     // Push actions (since 2.218.0): buttons under the notification
     mgPa: "Push actions",
     mgPaSub: "Up to three actions under the notification",
-    mgPaIntro: "A push action shows as a button under the notification on your phone. A tap runs a routine, reminds you later, opens the device or acknowledges the notification. The title takes the same variables as above.",
+    mgPaIntro: "A push action shows as a button under the notification on your phone. A tap runs a routine, reminds you later, opens the device or acknowledges the notification. The title takes the same variables as above, plus {action}: it stands for the chosen kind (Acknowledge, Open, Remind with the time, or the name of the routine).",
     mgPaOne: "Push action",
     mgPaRemove: "Remove push action",
     mgPaTitle: "Push action title",

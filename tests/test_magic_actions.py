@@ -209,3 +209,26 @@ async def test_removed_undo_actions_are_dropped_not_the_rule(hass: HomeAssistant
     assert [a["kind"] for a in saved["push_actions"]] == ["remind"]
     stored = magic_module.clean_stored({**saved, "push_actions": legacy})
     assert [a["kind"] for a in stored["push_actions"]] == ["remind"]
+
+
+async def test_action_variable_stands_for_the_chosen_kind(hass: HomeAssistant, setup, freezer) -> None:  # noqa: F811
+    hass.config.language = "de"
+    calls = async_mock_service(hass, "notify", "handy")
+    await _options(hass, notify_service="notify.handy")
+    device = _device(hass, "Lüftung")
+    temp = _sensor(hass, device, "temp", "14", "temperature", "°C")
+    plug = _switch(hass, device)
+    routine = await hass.data[DATA_ROUTINES].async_save_routine(_raw(device, plug, name="Filter-Bestellung", kind="repeat", repeat="daily", time="06:30", delay_s=None))
+    actions = [
+        {"title": "{action}", "kind": "routine", "routine_id": routine["id"]},
+        {"title": "{action}", "kind": "remind", "after": "morning", "at": "07:30"},
+        {"title": "{action}", "kind": "done"},
+    ]
+    await hass.data[DATA_MAGIC].async_save_rule(_rule(device, temp, push_actions=actions))
+    hass.states.async_set(temp, "11", {"device_class": "temperature", "unit_of_measurement": "°C"})
+    await _tick(hass, freezer, 601)
+    assert [a["title"] for a in calls[0].data["data"]["actions"]] == ["Filter-Bestellung", "Erinnern morgen 07:30", "Quittieren"]
+    magic = hass.data[DATA_MAGIC]
+    assert [magic.action_label({"kind": k, **extra}) for k, extra in (("open", {}), ("remind", {"after": "15m"}), ("remind", {"after": "1h"}))] == ["Öffnen", "Erinnern in 15 Min.", "Erinnern in 1 Std."]
+    # Mit Text daneben, und ein eigener Titel ohne die Variable bleibt wie er ist
+    assert magic.preview_actions({**_rule(device, temp), "push_actions": [{"title": "Jetzt: {action}!", "kind": "done"}, {"title": "Eigener Titel", "kind": "done"}]}) == ["Jetzt: Quittieren!", "Eigener Titel"]

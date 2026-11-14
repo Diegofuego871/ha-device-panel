@@ -1852,6 +1852,13 @@
             }
           }
         };
+        // {action} im Titel einer Push-Aktion (2.222.0): die gewählte Art, bei "Erinnern" mit Zeit, bei "Routine" mit deren Namen
+        const actionLabel = (a) => {
+          const de = new URLSearchParams(location.search).get("lang") !== "en";
+          if (a.kind === "routine") return (window.__routines?.list || []).find((x) => x.id === a.routine_id)?.name || "Routine";
+          if (a.kind === "remind") return a.after === "morning" ? `${de ? "Erinnern morgen" : "Remind tomorrow"} ${a.at || "08:00"}` : a.after === "15m" ? (de ? "Erinnern in 15 Min." : "Remind in 15 min") : de ? "Erinnern in 1 Std." : "Remind in 1 h";
+          return a.kind === "open" ? (de ? "Öffnen" : "Open") : de ? "Quittieren" : "Acknowledge";
+        };
         const fill = (text, r) => {
           const e = known(r.entity_id) || {};
           const vars = { value: e.value ?? "", unit: e.unit ?? "", threshold: r.value ?? "", device: "Klimasensor Keller", area: "Keller", entity: e.name ?? "", integration: "Zigbee", rule: r.name ?? "", duration: "10 Min.", since: "10:00", time: "10:10", old: "geschlossen", new: "offen", conditions: leavesOf(r).map((l) => `${(known(l.entity_id) || {}).name} ${l.kind === "above" ? "über" : l.kind === "below" ? "unter" : l.kind === "is" ? "ist" : "ändert sich"} ${l.value ?? ""}`.trim()).join(" und ") };
@@ -1924,7 +1931,7 @@
           // Eigener Inhalt (2.7.0), mehrzeilig; leer = automatische Zeile
           const own = (msg.which === "recover" ? r.recover_body : r.body) || "";
           const body = String(own).split("\n").map((l) => fill(l, r)).join("\n").trim();
-          const actions = msg.which === "recover" || !title ? [] : (r.push_actions || []).filter((a) => a && a.kind && String(a.title || "").trim()).slice(0, 3).map((a) => fill(a.title, r).slice(0, 40));
+          const actions = msg.which === "recover" || !title ? [] : (r.push_actions || []).filter((a) => a && a.kind && String(a.title || "").trim()).slice(0, 3).map((a) => fill(String(a.title).replace(/\{action\}/g, actionLabel(a)), r).slice(0, 40));
           return { title, message: title ? body || line : "", actions };
         }
         if (msg.type.endsWith("magic_test")) {

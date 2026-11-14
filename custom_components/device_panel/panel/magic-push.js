@@ -2131,7 +2131,8 @@ export class MagicPush {
   chipsHtml(group, target = "") {
     const esc = (v) => this.esc(v);
     const vars = this.data.variables;
-    const names = [...(vars[this.varGroup()] || []), ...vars.common];
+    // In der Karte einer Push-Aktion (target) steht zusätzlich {action}, die gewählte Art, als erster Chip
+    const names = [...(target ? ["action"] : []), ...(vars[this.varGroup()] || []), ...vars.common];
     return `<div class="mg-chips">${names
       .map((n) => `<button type="button" class="${(vars[this.varGroup()] || []).includes(n) ? "sug" : ""}" data-mg="var" data-group="${group}"${target ? ` data-target="${esc(target)}"` : ""} data-var="${esc(n)}" title="${esc(this.tt(`mgVar_${n}`))}">{${esc(n)}}</button>`)
       .join("")}</div>`;
@@ -2305,7 +2306,8 @@ export class MagicPush {
   }
 
   newAction() {
-    return { uid: leafId(), title: "", kind: "routine", routine_id: "", after: "1h", at: "08:00", open: "panel", q: "" };
+    // Titel vorbelegt mit {action}: steht für die gewählte Art (Quittieren, Öffnen, Erinnern mit Zeit, Name der Routine); der Nutzer kann ihn ändern oder löschen
+    return { uid: leafId(), title: "{action}", kind: "routine", routine_id: "", after: "1h", at: "08:00", open: "panel", q: "" };
   }
 
   actionOf(uid) {
@@ -2743,6 +2745,8 @@ export class MagicPush {
           if (a.kind === "routine") this.loadRoutines();
           this.paint();
           this.syncNav();
+          // {action} im Titel folgt der Art, der Zeit und dem Ziel
+          this.requestPreview();
         }
         break;
       case "aroutine":
@@ -2750,8 +2754,6 @@ export class MagicPush {
           const a = this.actionOf(el.dataset.uid);
           if (!a) break;
           a.routine_id = el.dataset.id;
-          // Ist der Titel noch leer, schlägt die Wahl den Namen der Routine vor
-          if (!a.title.trim()) a.title = this.routineName(a.routine_id).slice(0, this.limit("action_title", 40));
           this.paint();
           this.syncNav();
           this.requestPreview();
@@ -2826,6 +2828,7 @@ export class MagicPush {
       if (a) {
         a.at = el.value;
         this.syncNav();
+        this.requestPreview();
       }
     } else if (action === "aq") {
       const a = this.actionOf(el.dataset.uid);

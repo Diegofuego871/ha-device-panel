@@ -7,6 +7,14 @@ Alle nennenswerten Änderungen an dieser Integration stehen in dieser Datei.
 Das Format folgt [Keep a Changelog](https://keepachangelog.com/de/1.1.0/),
 die Versionsnummern folgen [Semantic Versioning](https://semver.org/lang/de/).
 
+## [2.222.0] - 2026-11-14
+
+Der Titel einer Push-Aktion beginnt mit einer Variablen für die gewählte Art.
+
+### Hinzugefügt
+
+- **Variable `{action}` im Titel einer Push-Aktion:** Sie steht für die Art, die du unten wählst: "Quittieren", "Öffnen", "Erinnern in 15 Min." / "Erinnern in 1 Std." / "Erinnern morgen 08:00" (mit der eingestellten Zeit) oder der Name der Routine. Eine neue Push-Aktion beginnt mit `{action}` als Titel, der Titel folgt der Wahl also von selbst; du kannst ihn ändern, Wörter dazusetzen oder ihn löschen. `{action}` ist der erste Chip unter dem Titel einer Push-Aktion; die Vorschau zeigt den echten Text. Ein Titel ohne die Variable bleibt, wie du ihn geschrieben hast.
+
 ## [2.221.0] - 2026-11-14
 
 Die Push-Aktion "Rückgängig" von Magic Push entfällt; die Meldung einer Routine kann dafür "Sofort zurückschalten" tragen.
@@ -6147,6 +6155,7 @@ Erste Vorabversion.
   GitHub Actions für die Prüfungen von HACS und hassfest sowie die Tests.
 
 [2.6.0]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v2.6.0
+[2.222.0]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v2.222.0
 [2.221.0]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v2.221.0
 [2.220.0]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v2.220.0
 [2.219.0]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v2.219.0

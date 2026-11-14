@@ -11,6 +11,10 @@ Einstieg für jede neue Claude-Code-Session. Zuerst diese Datei lesen, dann
 
 - `charge.py` `known_rechargeable`: Lademeldung gilt (global + Gerät/Integration), oder am Gerät ausdrücklich "Ein", oder Live-Aktivität für das Gerät an; `rechargeable()` und `charging_of()` nutzen sie (vorher nur `enabled()` mit globalem Schalter). Test `test_rechargeable_by_device_charge_or_live`.
 
+## Stand (2.222.0, Variable {action} im Titel der Push-Aktion)
+
+- `MagicPush.action_label` liefert den Wert (Texte `action_label_*` in `push.py`), `_actions` und `preview_actions` setzen `{"action": …}` in den Kontext; im Panel ist der Titel einer neuen Push-Aktion `{action}` vorbelegt, der Chip steht in der Karte zuerst (`chipsHtml(group, target)`), Art, Zeit und Ziel lösen die Vorschau neu aus. Tests: `test_magic_actions.py`, `magicpa-e2e.mjs`.
+
 ## Stand (2.221.0, "Rückgängig" aus Magic Push entfernt, "Sofort zurückschalten" bei Routinen)
 
 - Magic Push hat die Art `undo` nicht mehr (Nutzer: zu kompliziert). Dafür Routinen-Feld `push_back` (nur mit `push` und `back_kind != none`, sonst in `clean()` aus): die Meldung über das Schalten trägt die Push-Aktion `ROUTINE_BACK_ACTION_PREFIX` + Routine, solange `_pending`; `RoutineManager._on_push_action` → `_async_push_back` → `async_revert_now` (Fehlschlag: eigene Meldung `routine_back_fail_*`, Erfolg: die Meldung der Routine über das Zurückschalten genügt). Panel: Schalter in Schritt 3 der Routine (`push-back`), Vorschau mit Schaltfläche. Tests: `tests/test_routine_push_back.py`, `routine-e2e.mjs`.
