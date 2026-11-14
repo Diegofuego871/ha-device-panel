@@ -567,6 +567,8 @@ ACTION_SCHEMA = vol.Schema(
         vol.Required("kind"): vol.In(ACTION_KINDS),
         vol.Optional("routine_id", default=""): vol.Any(None, "", vol.All(str, vol.Match(_ID_RE))),
         vol.Optional("after", default="1h"): vol.In(REMIND_AFTER),
+        # Uhrzeit für "morgen" (seit 2.219.0)
+        vol.Optional("at", default=REMIND_MORNING): _clock_text,
         vol.Optional("open", default="panel"): vol.In(OPEN_TARGETS),
     }
 )
@@ -691,6 +693,9 @@ def clean_rule(hass: HomeAssistant, raw: dict[str, Any], *, routine_ids: set[str
                 raise vol.Invalid("Die Routine der Push-Aktion gibt es nicht")
         else:
             action["routine_id"] = ""
+        # Die Uhrzeit gilt nur für "Erinnern morgen"; sonst bleibt der Standard stehen
+        if action["kind"] != "remind" or action["after"] != "morning":
+            action["at"] = REMIND_MORNING
     # Eine Zeit-Bedingung bleibt immer im Baum (die alten Felder können Zeiten nicht halten)
     if len(raw_leaves) > 1 or any(x.get("kind") == "time" for x in raw_leaves):
         tree = clean_conditions(hass, raw_tree)
@@ -1289,7 +1294,7 @@ class MagicPush:
             self._save_now()
             activity.record(hass, "info", "magic", "magic_action_done", rule["name"], rule["device_id"], title=action["title"])
         elif kind == "remind":
-            at = self._remind_at(action["after"])
+            at = self._remind_at(action["after"], action.get("at") or REMIND_MORNING)
             self._reminders[rule["id"]] = at
             self._arm_remind(rule["id"])
             self._save_now()
@@ -1321,11 +1326,13 @@ class MagicPush:
 
     # Erinnern: dieselbe Meldung nochmals, mit dem dann gültigen Wert; nur wenn die Bedingung dann noch gilt
     @staticmethod
-    def _remind_at(after: str) -> float:
+    def _remind_at(after: str, clock: str = REMIND_MORNING) -> float:
+        """Zeitpunkt der Erinnerung: in 15 Minuten, in einer Stunde oder morgen zur gewählten Uhrzeit (Ortszeit)."""
         now = time.time()
         if after in REMIND_SECONDS:
             return now + REMIND_SECONDS[after]
-        return next_send(REMIND_MORNING, now)
+        local = dt_util.as_local(dt_util.utc_from_timestamp(now)) + timedelta(days=1)
+        return local.replace(hour=int(clock[:2]), minute=int(clock[3:5]), second=0, microsecond=0).timestamp()
 
     def _arm_remind(self, rule_id: str) -> None:
         self._cancel_remind(rule_id, forget=False)

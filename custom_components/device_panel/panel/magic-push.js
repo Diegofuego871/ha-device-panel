@@ -738,7 +738,7 @@ export class MagicPush {
       recover_body: d.recover_body,
       repeat_s: d.kind === "change" ? 0 : d.repeat_s,
       send_at: d.sendAt ? d.send_at : "",
-      push_actions: d.pushOn ? d.actions.map((a) => ({ title: a.title, kind: a.kind, routine_id: a.kind === "routine" ? a.routine_id : "", after: a.after, open: a.open })) : [],
+      push_actions: d.pushOn ? d.actions.map((a) => ({ title: a.title, kind: a.kind, routine_id: a.kind === "routine" ? a.routine_id : "", after: a.after, at: a.at, open: a.open })) : [],
       target: d.target || null,
       enabled: d.enabled,
       critical: d.critical,
@@ -1116,7 +1116,7 @@ export class MagicPush {
       recover_body: rule.recover_body || "",
       touched: { message: true, body: true, recover_message: true, recover_body: true },
       pushOn: (rule.push_actions || []).length > 0,
-      actions: (rule.push_actions || []).map((a) => ({ uid: leafId(), title: a.title, kind: a.kind, routine_id: a.routine_id || "", after: a.after || "1h", open: a.open || "panel", q: "" })),
+      actions: (rule.push_actions || []).map((a) => ({ uid: leafId(), title: a.title, kind: a.kind, routine_id: a.routine_id || "", after: a.after || "1h", at: a.at || "08:00", open: a.open || "panel", q: "" })),
       repeat_s: rule.repeat_s || 0,
       send_at: rule.send_at || "",
       sendAt: Boolean(rule.send_at),
@@ -1504,7 +1504,7 @@ export class MagicPush {
 
   // Push-Aktionen: jede braucht einen Titel, eine Routine-Aktion auch die Wahl der Routine
   actionsValid(d) {
-    return !d.pushOn || d.actions.every((a) => a.title.trim() !== "" && (a.kind !== "routine" || a.routine_id));
+    return !d.pushOn || d.actions.every((a) => a.title.trim() !== "" && (a.kind !== "routine" || a.routine_id) && (a.kind !== "remind" || a.after !== "morning" || /^([01]\d|2[0-3]):[0-5]\d$/.test(a.at)));
   }
 
   syncNav() {
@@ -2263,7 +2263,11 @@ export class MagicPush {
     }
     if (a.kind === "remind") {
       const items = [["15m", "mgPaAfter15"], ["1h", "mgPaAfter1h"], ["morning", "mgPaAfterMorning"]].map(([v, k]) => ({ on: a.after === v, label: t(k), attrs: `data-mg="aafter" data-group="${esc(a.uid)}" data-uid="${esc(a.uid)}" data-v="${v}"` }));
-      return `${this.tabsHtml(items)}<p class="mg-hint">${esc(t("mgPaRemindHint"))}</p>`;
+      // "Morgen" mit eigener Uhrzeit (seit 2.219.0): ein Zeitfeld unter der Leiste
+      const clock = a.after === "morning"
+        ? `<label class="pu-field"><span>${esc(t("mgPaAt"))}</span><input type="time" data-mg="aat" data-uid="${esc(a.uid)}" value="${esc(a.at)}" aria-label="${esc(t("mgPaAt"))}"></label>`
+        : "";
+      return `${this.tabsHtml(items)}${clock}<p class="mg-hint">${esc(t("mgPaRemindHint"))}</p>`;
     }
     if (a.kind === "open") {
       const items = [["panel", "mgPaOpenPanel"], ["ha", "mgPaOpenHa"]].map(([v, k]) => ({ on: a.open === v, label: t(k), attrs: `data-mg="aopen" data-group="${esc(a.uid)}" data-uid="${esc(a.uid)}" data-v="${v}"` }));
@@ -2296,7 +2300,7 @@ export class MagicPush {
   }
 
   newAction() {
-    return { uid: leafId(), title: "", kind: "routine", routine_id: "", after: "1h", open: "panel", q: "" };
+    return { uid: leafId(), title: "", kind: "routine", routine_id: "", after: "1h", at: "08:00", open: "panel", q: "" };
   }
 
   actionOf(uid) {
@@ -2809,7 +2813,13 @@ export class MagicPush {
     if (!this.wiz || !this.inScope(el)) return;
     if (el.dataset.mgText) this.onText(el);
     else if (el.dataset.mgAtitle) this.onActionTitle(el);
-    else if (action === "aq") {
+    else if (action === "aat") {
+      const a = this.actionOf(el.dataset.uid);
+      if (a) {
+        a.at = el.value;
+        this.syncNav();
+      }
+    } else if (action === "aq") {
       const a = this.actionOf(el.dataset.uid);
       if (a) {
         a.q = el.value;

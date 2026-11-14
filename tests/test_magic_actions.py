@@ -27,7 +27,7 @@ async def _fire_rule(hass: HomeAssistant, freezer, **extra: Any):
     routine = await hass.data[DATA_ROUTINES].async_save_routine(_raw(device, plug, name="Filter-Bestellung", kind="repeat", repeat="daily", time="06:30", delay_s=None))
     actions = [
         {"title": "Filter bestellt", "kind": "routine", "routine_id": routine["id"]},
-        {"title": "Morgen nochmals", "kind": "remind", "after": "morning"},
+        {"title": "Morgen nochmals", "kind": "remind", "after": "morning", "at": "07:30"},
         {"title": "Im Panel", "kind": "open", "open": "panel"},
     ]
     rule = await hass.data[DATA_MAGIC].async_save_rule(_rule(device, temp, push_actions=actions, **extra))
@@ -45,7 +45,12 @@ async def test_validation(hass: HomeAssistant, setup) -> None:  # noqa: F811
     temp = _sensor(hass, device, "temp", "14", "temperature", "°C")
     magic = hass.data[DATA_MAGIC]
     ok = await magic.async_save_rule(_rule(device, temp, push_actions=[{"title": "Später", "kind": "remind"}]))
-    assert ok["push_actions"] == [{"title": "Später", "kind": "remind", "routine_id": "", "after": "1h", "open": "panel"}]
+    assert ok["push_actions"] == [{"title": "Später", "kind": "remind", "routine_id": "", "after": "1h", "open": "panel", "at": "08:00"}]
+    # Uhrzeit nur bei "morgen"; ungültige Uhrzeit wird abgelehnt
+    morning = await magic.async_save_rule(_rule(device, temp, push_actions=[{"title": "M", "kind": "remind", "after": "morning", "at": "06:45"}, {"title": "S", "kind": "remind", "after": "1h", "at": "06:45"}]))
+    assert [a["at"] for a in morning["push_actions"]] == ["06:45", "08:00"]
+    with pytest.raises(vol.Invalid):
+        await magic.async_save_rule(_rule(device, temp, push_actions=[{"title": "M", "kind": "remind", "after": "morning", "at": "25:99"}]))
     for bad in (
         [{"title": "a", "kind": "done"}] * 4,  # höchstens drei
         [{"title": "", "kind": "done"}],  # Titel fehlt
@@ -99,7 +104,7 @@ async def test_remind_sends_again_with_the_current_value(hass: HomeAssistant, se
     magic = hass.data[DATA_MAGIC]
     assert rule["id"] in magic._reminders and magic._reminders[rule["id"]] > time.time()
     hass.states.async_set(temp, "10", {"device_class": "temperature", "unit_of_measurement": "°C"})
-    await _tick(hass, freezer, 86400 + 60)
+    await _tick(hass, freezer, 2 * 86400)
     assert len(calls) == 2
     assert calls[1].data["title"] == "⏰ Keller ist kalt: 10 °C"
     assert [a["title"] for a in calls[1].data["data"]["actions"]][0] == "Filter bestellt"
@@ -178,3 +183,16 @@ async def test_preview_titles_with_variables(hass: HomeAssistant, setup, hass_ws
     assert result["actions"] == ["Jetzt 14,2", "Routine?"]
     await client.send_json({"id": 2, "type": f"{DOMAIN}/magic_preview", "rule": draft, "which": "recover"})
     assert (await client.receive_json())["result"]["actions"] == []
+
+
+async def test_remind_tomorrow_at_the_chosen_time(hass: HomeAssistant, setup, freezer) -> None:  # noqa: F811
+    from datetime import datetime
+
+    from homeassistant.util import dt as dt_util
+
+    calls, rule, _r, _d, _t = await _fire_rule(hass, freezer)
+    magic = hass.data[DATA_MAGIC]
+    at = datetime.fromtimestamp(magic._remind_at("morning", "07:30"), dt_util.get_default_time_zone())
+    tomorrow = dt_util.now() + timedelta(days=1)
+    assert (at.year, at.month, at.day, at.hour, at.minute) == (tomorrow.year, tomorrow.month, tomorrow.day, 7, 30)
+    assert 3500 < magic._remind_at("1h") - time.time() < 3700 and 800 < magic._remind_at("15m") - time.time() < 1000

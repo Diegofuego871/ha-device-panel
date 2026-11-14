@@ -7,6 +7,14 @@ All notable changes to this integration are documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/).
 
+## [2.219.0] - 2026-11-14
+
+The push action "Remind" can remind tomorrow at a time you choose.
+
+### Changed
+
+- **Push action "Remind", tomorrow at your time:** The tab "Tomorrow" (before: "Tomorrow 8:00") shows a time field under the row of tabs, preset to 08:00. The message comes again tomorrow at that time (before: at the next 8:00, which could be today). "15 min." and "1 h" stay as they are. A tap on "Next" is blocked while the time is empty. Existing messages keep working and remind tomorrow at 08:00.
+
 ## [2.218.0] - 2026-11-14
 
 A Magic Push message can carry push actions: a routine to run, a reminder, opening the device, or "done".
@@ -6011,6 +6019,7 @@ First pre-release.
   GitHub Actions for HACS/hassfest validation and tests.
 
 [2.6.0]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v2.6.0
+[2.219.0]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v2.219.0
 [2.218.0]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v2.218.0
 [2.217.0]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v2.217.0
 [2.216.2]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v2.216.2

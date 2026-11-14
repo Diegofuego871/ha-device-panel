@@ -7,6 +7,14 @@ Alle nennenswerten Änderungen an dieser Integration stehen in dieser Datei.
 Das Format folgt [Keep a Changelog](https://keepachangelog.com/de/1.1.0/),
 die Versionsnummern folgen [Semantic Versioning](https://semver.org/lang/de/).
 
+## [2.219.0] - 2026-11-14
+
+Die Push-Aktion "Erinnern" kann morgen zu einer frei gewählten Uhrzeit erinnern.
+
+### Geändert
+
+- **Push-Aktion "Erinnern", morgen zu deiner Uhrzeit:** Der Reiter "Morgen" (vorher: "Morgen 8:00") zeigt unter der Reiterleiste ein Zeitfeld, vorbelegt mit 08:00. Die Meldung kommt morgen zu dieser Uhrzeit nochmals (vorher: zum nächsten 8:00 Uhr, das konnte heute sein). "15 Min." und "1 Std." bleiben wie sie sind. Solange die Uhrzeit leer ist, ist "Weiter" gesperrt. Bestehende Meldungen laufen weiter und erinnern morgen um 08:00.
+
 ## [2.218.0] - 2026-11-14
 
 Eine Magic-Push-Meldung kann Push-Aktionen tragen: eine Routine ausführen, erinnern, das Gerät öffnen oder "erledigt".
@@ -6112,6 +6120,7 @@ Erste Vorabversion.
   GitHub Actions für die Prüfungen von HACS und hassfest sowie die Tests.
 
 [2.6.0]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v2.6.0
+[2.219.0]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v2.219.0
 [2.218.0]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v2.218.0
 [2.217.0]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v2.217.0
 [2.216.2]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v2.216.2

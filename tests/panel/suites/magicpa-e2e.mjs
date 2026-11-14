@@ -87,6 +87,16 @@ for (const lang of ["de", "en"]) {
     await ev(`const c=r.querySelectorAll('${W} .mg-pa-card')[1]; c.querySelector('[data-mg="akind"][data-v="remind"]').click();`);
     await wait(`return !!r.querySelectorAll('${W} .mg-pa-card')[1].querySelector('[data-mg="aafter"]')`);
     await ev(`const c=r.querySelectorAll('${W} .mg-pa-card')[1]; c.querySelector('[data-mg="aafter"][data-v="morning"]').click();`);
+    check(`[${tag}] Erinnern "Morgen": Zeitfeld mit 08:00 unter der Leiste`, await wait(`const c=r.querySelectorAll('${W} .mg-pa-card')[1]; return c.querySelector('input[data-mg="aat"]')?.value === "08:00"`));
+    await ev(`const i=r.querySelectorAll('${W} .mg-pa-card')[1].querySelector('input[data-mg="aat"]'); i.value="07:30"; i.dispatchEvent(new Event("input",{bubbles:true}));`);
+    check(`[${tag}] eigene Uhrzeit 07:30 landet im Entwurf`, (await ev(`return r.host._magic.wiz.draft.actions[1].at`)) === "07:30");
+    await ev(`const i=r.querySelectorAll('${W} .mg-pa-card')[1].querySelector('input[data-mg="aat"]'); i.value=""; i.dispatchEvent(new Event("input",{bubbles:true}));`);
+    check(`[${tag}] ohne Uhrzeit ist "Weiter" gesperrt`, await wait(`return r.querySelector('${W} [data-mg="next"]').disabled === true`));
+    await ev(`const i=r.querySelectorAll('${W} .mg-pa-card')[1].querySelector('input[data-mg="aat"]'); i.value="07:30"; i.dispatchEvent(new Event("input",{bubbles:true}));`);
+    await ev(`const c=r.querySelectorAll('${W} .mg-pa-card')[1]; c.querySelector('[data-mg="aafter"][data-v="1h"]').click();`);
+    check(`[${tag}] "1 Std.": kein Zeitfeld`, await wait(`return !r.querySelectorAll('${W} .mg-pa-card')[1].querySelector('input[data-mg="aat"]')`));
+    await ev(`const c=r.querySelectorAll('${W} .mg-pa-card')[1]; c.querySelector('[data-mg="aafter"][data-v="morning"]').click();`);
+    check(`[${tag}] zurück auf "Morgen": die Uhrzeit 07:30 ist noch da`, await wait(`return r.querySelectorAll('${W} .mg-pa-card')[1].querySelector('input[data-mg="aat"]')?.value === "07:30"`));
     check(`[${tag}] Erinnern: drei Zeiten (15 Min., 1 Std., morgen), "morgen" gewählt`, await wait(`const c=r.querySelectorAll('${W} .mg-pa-card')[1]; return c.querySelectorAll('[data-mg="aafter"]').length === 3 && c.querySelector('[data-mg="aafter"].on').dataset.v === "morning"`));
     await setTitle(1, "Morgen nochmals");
     await tap('[data-mg="aadd"]');
