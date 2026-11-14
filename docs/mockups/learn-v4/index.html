@@ -1,0 +1,144 @@
+<!doctype html><html lang="de"><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>Mehr erfahren, Variante A2 klickbar</title><style>
+:root{--p:#43a047;--pd:#2e6b33;--bg:#1c1c1c;--card:#262626;--ln:#363636;--t2:#9a9a9a;--bl:#4a90e2}
+*{box-sizing:border-box}
+body{margin:0;background:#0d0d0d;font:14px/1.5 Roboto,Arial,sans-serif;color:#e8e8e8;padding:22px}
+h1{margin:0 0 4px;font-size:21px}.sub{color:var(--t2);font-size:13px;margin:0 0 14px;max-width:900px}
+.bar{display:flex;gap:14px;flex-wrap:wrap;align-items:center;margin-bottom:14px}.bar label{color:#8a8a8a;font-size:11.5px;letter-spacing:.04em;text-transform:uppercase;margin-right:6px}
+.grp{display:flex;align-items:center}.rs{border:1px solid #555;background:none;color:#ddd;border-radius:99px;padding:8px 14px;font:inherit;font-size:13px;cursor:pointer}
+.legend{color:var(--t2);font-size:12.5px;max-width:900px;margin-top:14px;line-height:1.6}.legend b{color:#ddd}
+/* Reiterleiste mit gleitender Kapsel */
+.sub-tabs{position:relative;display:flex;background:#2a2a2a;border:1px solid var(--ln);border-radius:99px;padding:4px}
+.m .sub-tab{font-size:12px;padding:8px 2px}.sub-tab{min-width:0;position:relative;z-index:1;flex:1;text-align:center;padding:8px 12px;border-radius:99px;border:0;background:none;color:#b5b5b5;font:inherit;font-size:13px;cursor:pointer;white-space:nowrap}
+.sub-tab.on{color:#fff}.seg-pill{position:absolute;top:4px;bottom:4px;left:0;width:0;border-radius:99px;background:var(--pd)}.seg-pill.sl{transition:left .26s cubic-bezier(.3,.8,.3,1),width .26s cubic-bezier(.3,.8,.3,1)}
+/* Rahmen */
+.stage{position:relative;background:var(--bg);border:1px solid var(--ln);border-radius:22px;overflow:hidden;transition:width .3s,height .3s}
+.stage.desktop{width:900px;height:720px}.stage.phone{width:390px;height:720px}
+.base{position:absolute;inset:0;display:flex;flex-direction:column}.base .bh{padding:18px 22px 8px;font-size:19px;font-weight:600}.base .scr{flex:1;overflow:auto;padding:6px 22px 18px;display:flex;flex-direction:column;gap:10px}
+.m .base .bh{padding:16px 18px 6px}.m .base .scr{padding:6px 16px 16px}
+.chap{background:var(--card);border:1px solid var(--ln);border-radius:16px;padding:13px 16px}.chap.row{display:flex;align-items:center;justify-content:space-between;color:#cfcfcf}.chap h4{margin:0 0 4px;font-size:15px}.chap p{margin:2px 0;color:var(--t2);font-size:12.5px;line-height:1.5}
+.btn{display:inline-flex;gap:8px;align-items:center;border:1px solid #555;border-radius:12px;padding:9px 14px;font-size:13.5px;margin-top:8px;background:none;color:#e8e8e8;font-family:inherit;cursor:pointer}.btn:hover{background:#2f2f2f}
+.ghost{filter:blur(1.5px);opacity:.45}.tiles{display:grid;grid-template-columns:repeat(3,1fr);gap:10px}.tiles i{display:block;height:84px;border-radius:16px;background:#2a2a2a}.m .tiles{grid-template-columns:repeat(2,1fr)}
+.snack{position:absolute;left:50%;transform:translateX(-50%);bottom:20px;background:#323232;border-radius:12px;padding:11px 18px;font-size:13.5px;box-shadow:0 4px 16px #000a;z-index:1;white-space:nowrap}
+.dim{position:absolute;inset:0;background:#000a;z-index:2}
+.dlg{position:absolute;z-index:3;background:var(--bg);display:flex;flex-direction:column;overflow:hidden}
+.desktop .dlg{left:56px;right:56px;top:26px;bottom:26px;border-radius:22px;border:1px solid var(--ln);box-shadow:0 10px 40px #000c}
+.phone .dlg{inset:0;border-radius:0}.dlg.fx{animation:up .28s cubic-bezier(.2,.8,.2,1)}@keyframes up{from{transform:translateY(24px);opacity:0}to{transform:none;opacity:1}}
+.head{display:flex;align-items:center;gap:10px;padding:16px 18px 8px;flex:none}.head b{font-size:18px;flex:1;line-height:1.2}.head small{display:block;color:var(--t2);font-size:12px;font-weight:400}
+.x,.back{width:34px;height:34px;border-radius:50%;border:1px solid #4a4a4a;display:grid;place-items:center;color:#bbb;flex:none;background:#222;cursor:pointer;font-size:15px;font:inherit}
+.x:hover,.back:hover{background:#333}
+.tabsbar{padding:4px 18px 8px;flex:none}.scroll{flex:1;overflow:auto;padding:4px 18px 16px;display:flex;flex-direction:column;gap:12px}.scroll.fx{animation:fd .22s ease-out}@keyframes fd{from{opacity:0;transform:translateY(8px)}to{opacity:1;transform:none}}
+.foot{padding:10px 18px 16px;border-top:1px solid var(--ln);flex:none;display:flex;gap:10px}.foot button{flex:1;padding:12px;border-radius:14px;border:1px solid #555;background:none;color:#e8e8e8;font:inherit;font-size:14px;cursor:pointer}.foot button:hover{background:#2f2f2f}.foot .pri{background:var(--pd);border-color:var(--pd);color:#fff}.foot .pri:hover{background:#38803e}
+.hint{color:var(--t2);font-size:12.5px;padding:0 2px}.lead{color:#cfcfcf;font-size:13.5px;margin:0}
+/* Karten (A2) */
+.cards{display:grid;grid-template-columns:1fr 1fr;gap:12px}.m .cards{grid-template-columns:1fr}
+.cd{all:unset;box-sizing:border-box;background:var(--card);border:1px solid var(--ln);border-radius:20px;overflow:hidden;display:flex;flex-direction:column;cursor:pointer;transition:transform .15s,border-color .15s}
+.cd:hover{transform:translateY(-2px);border-color:#555}.cd:focus-visible{outline:2px solid var(--bl)}
+.cd .sk{height:116px;display:grid;place-items:center;overflow:hidden}.m .cd .sk{height:112px}
+.cd .sketch{font-size:10.5px;width:25em}.m .cd .sketch{font-size:10px}
+.cd .tx{padding:9px 14px 11px;display:flex;flex-direction:column;gap:3px}.cd .tx b{font-size:15.5px}.cd .tx small{color:var(--t2);font-size:12.5px;line-height:1.4}.cd .meta{display:flex;justify-content:space-between;align-items:center;margin-top:5px;color:#7fb7ff;font-size:12px}
+.cbtn{width:24px;height:24px;border-radius:50%;border:1.5px solid var(--bl);background:#1b2a3d;display:grid;place-items:center;color:#7fb7ff;flex:none}
+.g1{background:linear-gradient(145deg,#4a3aa8,#2a2260)}.g2{background:linear-gradient(145deg,#b3571b,#5e2f10)}.g3{background:linear-gradient(145deg,#17788f,#0d3f4c)}.g4{background:linear-gradient(145deg,#a33463,#51182f)}
+/* Artikel */
+.art2{display:grid;grid-template-columns:1fr 330px;gap:22px;align-items:start}.m .art2{display:flex;flex-direction:column;gap:12px}.m .art2 aside{order:-1;width:100%}
+.art2 aside{position:sticky;top:0}.hero{border-radius:20px;padding:18px 14px;display:grid;place-items:center;overflow:hidden}.hero .sketch{font-size:11.5px;width:100%}.m .hero .sketch{font-size:12px}
+.fcap{color:#8a8a8a;font-size:11.5px;text-align:center;margin-top:7px}
+.txt{display:flex;flex-direction:column;gap:10px}.txt h2{margin:0;font-size:21px;letter-spacing:-.01em}.txt .meta2{color:var(--t2);font-size:12.5px;margin-top:-6px}.txt h3{margin:8px 0 0;font-size:15px}.txt p{margin:0;color:#d4d4d4;font-size:13.5px}.txt p b{color:#fff}
+.tl{display:flex;flex-direction:column;margin-left:2px}.tl .st{display:flex;gap:12px;padding:5px 0;position:relative}.tl .st::before{content:"";position:absolute;left:11px;top:30px;bottom:-5px;width:2px;background:#ffffff1f}.tl .st:last-child::before{display:none}
+.tl i{width:24px;height:24px;border-radius:50%;font-style:normal;display:grid;place-items:center;font-size:12px;flex:none;color:#fff}.tl p{font-size:13.5px}
+.tip{border-radius:14px;padding:10px 12px;font-size:13px;background:#ffffff0f;border-left:3px solid;color:#d4d4d4}.tip b{color:#fff}
+/* Skizzen (em-basiert) */
+.sketch>*+*{margin-top:.9em}
+.s-push{background:#2d2d30;border-radius:1.3em;padding:.9em 1em;color:#eee;box-shadow:0 .2em 1em #0008}.s-push .t{display:flex;align-items:center;gap:.5em;font-size:.9em;color:#9aa}.s-push .lg{width:1.5em;height:1.5em;border-radius:.45em;background:#43a047;display:grid;place-items:center;font-style:normal;font-size:.85em;color:#fff}
+.s-push b{display:block;font-size:1.1em;margin-top:.35em}.s-push p{margin:.1em 0 0;font-size:1em;color:#cfd2d6}.s-push .ac{display:flex;gap:.5em;margin-top:.7em;padding-top:.6em;border-top:1px solid #ffffff18;flex-wrap:wrap}.s-push u{text-decoration:none;font-size:.95em;font-weight:600;color:#8ab4f8;padding:.15em .6em;border-radius:.6em;background:#ffffff0d}
+.s-rt{background:#262626;border:1px solid #3a3a3a;border-radius:1.2em;padding:.8em 1em;display:flex;align-items:center;gap:.8em;color:#eee}.s-rt .ic{width:2.7em;height:2.7em;border-radius:.9em;background:#b3571b;display:grid;place-items:center;font-size:1.3em;flex:none}.s-rt b{font-size:1.1em;display:block}.s-rt small{color:#9a9a9a;font-size:.95em;display:block;line-height:1.35}.s-rt .sw{margin-left:auto;width:2.7em;height:1.6em;border-radius:1em;background:#43a047;position:relative;flex:none}.s-rt .sw::after{content:"";position:absolute;right:.25em;top:.25em;width:1.1em;height:1.1em;border-radius:50%;background:#fff}
+.s-dc{background:#fff;color:#222;border-radius:1.3em;padding:.9em 1em;display:flex;gap:1em;align-items:center}.s-dc .ring{width:6.6em;height:6.6em;border-radius:50%;background:conic-gradient(#43a047 0 94%,#e7e7e7 0);display:grid;place-items:center;flex:none}.s-dc .ring i{width:4.9em;height:4.9em;border-radius:50%;background:#fff;display:grid;place-items:center;font-style:normal;font-weight:700;font-size:1.3em}
+.s-dc ul{list-style:none;margin:0;padding:0;font-size:1.05em;flex:1}.s-dc li{display:flex;justify-content:space-between;padding:.15em 0}.s-dc li span::before{content:"";display:inline-block;width:.65em;height:.65em;border-radius:50%;margin-right:.55em;background:var(--c)}
+.s-dc2{background:#fff;color:#222;border-radius:1.3em;padding:.9em 1em;font-size:1em}.s-dc2 .n{font-size:2em;font-weight:700;color:#e53935;line-height:1}.s-dc2 .r{display:flex;justify-content:space-between;align-items:center;padding:.4em 0;border-top:1px solid #eee;margin-top:.4em}.s-dc2 em{font-style:normal;color:#777}.s-dc2 .pz{border:1px solid #bbb;border-radius:.7em;padding:.05em .6em;font-size:.9em}
+.s-lg{display:grid;grid-template-columns:repeat(4,1fr);gap:.8em;background:#00000030;border-radius:1.3em;padding:1em}.s-lg div{text-align:center;font-size:.85em;color:#fff;position:relative}.s-lg i{display:grid;place-items:center;aspect-ratio:1;border-radius:1.2em;font-style:normal;font-size:2.2em;margin-bottom:.15em}.s-lg .bd{position:absolute;top:-.4em;right:.1em;background:#e53935;color:#fff;border-radius:99px;font-size:.9em;padding:0 .45em;line-height:1.5}
+.s-kopf{display:flex;gap:.6em;justify-content:flex-end;align-items:center;font-size:.9em;color:#ffffffb0}.s-kopf i{font-style:normal;border:1px solid #ffffff55;border-radius:50%;width:2.2em;height:2.2em;display:grid;place-items:center;color:#fff}
+.s-note{font-size:.9em;color:#ffffffc0;text-align:center}
+</style><body>
+<h1>Mehr erfahren: Variante A2, klickbar</h1>
+<p class="sub">Karten mit einer kleinen Skizze der Funktion, Artikel mit Reitern, "Weiter" und "Zurück". Alles ist anklickbar. Die Daten in den Skizzen sind erfunden. Der Assistent gilt beim Schliessen immer als beendet.</p>
+<div class="bar">
+<div class="grp"><label>Ansicht</label><div class="sub-tabs" data-k="mode" style="width:220px"><div class="seg-pill"></div><button class="sub-tab on" data-act="mode" data-v="desktop">Desktop</button><button class="sub-tab" data-act="mode" data-v="phone">Handy</button></div></div>
+<div class="grp"><label>Einstieg</label><div class="sub-tabs" data-k="entry" style="width:380px"><div class="seg-pill"></div><button class="sub-tab on" data-act="entry" data-v="wizard">Nach dem Assistenten</button><button class="sub-tab" data-act="entry" data-v="settings">Einstellungen › Panel</button></div></div>
+<button class="rs" data-act="restart">↺ Von vorn</button></div>
+<div id="stage" class="stage desktop"></div>
+<div class="legend"><b>Klickbar:</b> Karten öffnen das Thema; Reiter oben, "←" und die Knöpfe unten wechseln zwischen den Themen; "✕" schliesst. Bei "Einstellungen › Panel" öffnet "Themen ansehen" dieselbe Übersicht (ganz unten im Panel, unter dem Einrichtungsassistenten). Nach dem Schliessen kann man die Demo mit "Von vorn" neu starten.<br><b>Schlichte Regeln aus dem Panel:</b> Reiter als Reiterleiste mit gleitender Kapsel, Pfeile als runder Pfeil-Knopf (<code>.cbtn</code>), auf dem Handy Vollbild.</div>
+<script>
+const T=[
+{id:"push",name:"Magic Push",tab:"✨ Magic Push",g:"g1",ac:"#7c5cff",title:"Meldungen nach Mass",short:"Eigene Meldungen für jeden Wert, mit Push-Aktionen unter der Meldung.",mins:2,
+ cap:"Beispiel mit erfundenen Daten: Meldung mit drei Push-Aktionen",
+ blocks:[
+ {h:"Wozu?",p:["Mit Magic Push sagst du dem Panel, wann es dir etwas melden soll und was in der Meldung steht, ohne Automation und ohne YAML. Eine Meldung gehört immer zu einem Gerät und steht in dessen Reiter \"Magic Push\".","Beispiele: \"Der Keller ist unter 12 °C.\" \"Der Filter des Luftreinigers ist seit 10 Tagen fällig.\" \"Jeden Montag um 10:00: Wäsche prüfen.\""]},
+ {h:"So legst du eine Meldung an",steps:[["Gerät öffnen","Reiter \"Magic Push\", \"Neue Meldung\". Oder in der App \"Magic Push\" im Launcher, dort für alle Geräte."],["Bedingungen","Einen Wert des Geräts oder eine beliebige Entität wählen, dann über, unter, ist oder ändert sich. Mehrere Bedingungen verknüpfst du mit \"und\" und \"oder\"."],["Wie lange","Die Bedingung muss zum Beispiel 10 Minuten gelten, bevor gemeldet wird. Ebenso, wie lange der Wert normal bleiben muss, bevor zurückgesetzt wird."],["Versand","Sofort oder erst zu einer Uhrzeit an gewählten Wochentagen. Das Ziel ist jedes Notify-Ziel, auf Wunsch als kritische Mitteilung."],["Text","Titel und Inhalt mit Variablen wie Name, Wert, Einheit, Schwelle und Bereich. Die Vorschau zeigt die Meldung, wie sie ankommt."]]},
+ {h:"Push-Aktionen",p:["Unter der Meldung stehen bis zu <b>drei Schaltflächen</b>. Jede hat einen Titel und eine Art: <b>Routine</b> (führt eine deiner Routinen aus, eine Folge-Meldung sagt, wie es ausging), <b>Erinnern</b> (die Meldung kommt nach 15 Minuten, 1 Stunde oder morgen zu einer Uhrzeit nochmals, solange die Bedingung gilt), <b>Öffnen</b> (das Gerät im Panel oder in Home Assistant) und <b>Quittieren</b> (bestätigt die Meldung, bis das Gerät wieder normal ist)."]},
+ {tip:"<b>Gut zu wissen:</b> Was ein Tipp tut, steht in der gespeicherten Meldung, nie in der Benachrichtigung. Ein gefälschter Tipp startet deshalb nichts."},
+ {h:"Alle Meldungen im Blick",p:["Die App \"Magic Push\" im Launcher zeigt alle Meldungen aller Geräte, eine Karte pro Gerät, mit Suche und Filter. Im Protokoll siehst du jede gesendete Meldung mit Wert, Empfänger und Ergebnis."]}]},
+{id:"rt",name:"Routinen",tab:"⚡ Routinen",g:"g2",ac:"#ff8a3d",title:"Schalten nach Plan",short:"Geräte einmalig, zeitgesteuert oder durch einen Auslöser schalten.",mins:2,
+ cap:"Beispiel mit erfundenen Daten: Routine und ihre Meldung",
+ blocks:[
+ {h:"Wozu?",p:["Eine Routine schaltet etwas in Home Assistant, einmalig oder nach Zeitplan, ohne Automation. Sie läuft in Home Assistant selbst, also auch bei geschlossenem Panel und nach einem Neustart."]},
+ {h:"So legst du eine Routine an",steps:[["Gerät, Gruppe oder Szene","Wählen. Bis zu 10 Geräte lassen sich in einer Routine verbinden."],["Was","Ein, aus, umschalten oder setzen, zum Beispiel Helligkeit und Farbe einer Lampe. Eine Vorschau zeigt das Ergebnis, ohne zu schalten."],["Wann","In X Minuten, an einem Datum, täglich, an Wochentagen oder monatlich, oder durch einen Auslöser wie \"Regensensor ist trocken\"."],["Zurückschalten","Nie, nach einer Dauer, zu einer Zeit oder durch einen Auslöser, auf \"aus\" oder \"wie vorher\"."]]},
+ {tip:"<b>Gut zu wissen:</b> \"Wie vorher\" merkt sich die Szene vor dem Schalten. So wird eine Lampe kurz heller und danach wieder genau wie vorher. \"Jetzt ausführen\" probiert eine Routine sofort aus."},
+ {h:"Sofort zurückschalten",p:["Auf Wunsch schickt die Routine einen Push im Moment des Schaltens. Wartet noch ein Zurückschalten, trägt er die Push-Aktion \"Sofort zurückschalten\"."]},
+ {h:"Kontrolle und Pause",p:["Jede Routine hat ein Protokoll mit Trace: jeder Schritt der Reihe nach, kopierbar für die Fehlersuche. Der Schalter \"Alle Routinen pausieren\" hält alles an, auf Wunsch bis zu einer Zeit."]}]},
+{id:"cards",name:"Dashboard-Karten",tab:"🧩 Karten",g:"g3",ac:"#2bb7da",title:"Dein Dashboard, live",short:"Verfügbarkeit und Ausfälle auf jedem Dashboard von Home Assistant.",mins:2,
+ cap:"Beispiel mit erfundenen Daten: Karten \"Verfügbarkeit\" und \"Gerade ausgefallen\"",
+ blocks:[
+ {h:"Wozu?",p:["Die Karten zeigen den Zustand deiner Geräte direkt auf einem Dashboard von Home Assistant, auch für Personen ohne Zugriff auf das Panel. Sie sehen aus wie die Kacheln des Panels und folgen dem hellen oder dunklen Design von Home Assistant."]},
+ {h:"So fügst du eine Karte hinzu",steps:[["Dashboard bearbeiten","\"Bearbeiten\", dann \"Karte hinzufügen\"."],["Suchen","Nach \"Device Panel\" suchen. Es erscheinen drei Karten mit Vorschau."],["Speichern","Einrichten musst du nichts."]]},
+ {h:"Die drei Karten",p:["<b>Verfügbarkeit:</b> der Ring mit dem Anteil der Geräte, die jetzt online sind, und die Zeilen stabil, instabil und ausgefallen.","<b>Gerade ausgefallen:</b> wie viele Geräte fehlen, der längste Ausfall und bis zu vier Geräte mit ihrer Dauer.","<b>Übersicht:</b> beides zusammen, mit dem Ausfall-Puls der letzten 24 Stunden."]},
+ {tip:"<b>Gut zu wissen:</b> Die Karten brauchen keine Administratorrechte. Nur Administratoren sehen den Knopf \"Pausieren\" und kommen mit einem Tipp ins Panel. Fehlt die Karte im Dialog, hilft ein Neustart von Home Assistant und ein hartes Neuladen des Browsers."}]},
+{id:"lau",name:"App-Launcher",tab:"🚀 Launcher",g:"g4",ac:"#e8528b",title:"Alles in einem Knopf",short:"Seiten, eigene Links und Aktionen, nach deinem Geschmack geordnet.",mins:2,
+ cap:"Beispiel mit erfundenen Daten: Launcher mit Favoriten und eigenen Einträgen",
+ blocks:[
+ {h:"Wozu?",p:["Der Knopf in der Kopfzeile öffnet den Launcher: nützliche Seiten von Device Panel und von Home Assistant, in den Symbolen und Farben der Einstellungen von Home Assistant. Du kannst eigene Seiten, Links und Aktionen anlegen."]},
+ {h:"Eigene Einträge",steps:[["Seite","Eine Seite in Home Assistant, zum Beispiel Automationen."],["Externer Link","Öffnet in einem neuen Tab, auf Wunsch mit Favicon."],["Aktion","Ruft einen Dienst von Home Assistant auf, auf Wunsch mit Rückfrage. Das Symbol dreht sich, dann folgt ein grüner Haken oder ein rotes Kreuz."]]},
+ {h:"Ordnung schaffen",p:["Im Bearbeiten-Modus sortierst du per Ziehen, blendest Apps aus und wählst Raster oder Liste. Ein Herz macht bis zu fünf Apps zu Favoriten mit eigenem Knopf in der Kopfzeile. Farbe und Bild jeder eigenen App wählst du aus neun Farben und 50 Bildern."]},
+ {tip:"<b>Gut zu wissen:</b> Die App \"Status\" (für Administratoren) zeigt, ob alle Teile der Integration laufen, und meldet per Push, wenn einer steht. Ansicht, Favoriten und Reihenfolge gelten pro Benutzer."}]}];
+const SK={
+ push:f=>`<div class="s-push"><div class="t"><i class="lg">D</i>Device Panel · jetzt</div><b>Keller Sensor: Temperatur zu tief</b><p>9.4 °C, seit 10 Min. unter 12 °C</p><div class="ac"><u>Heizung ein</u><u>Morgen 08:00</u><u>Quittieren</u></div></div>`,
+ rt:f=>`<div class="s-rt"><span class="ic">💨</span><div><b>Lüfter Bad</b><small>Täglich 20:00 · nach 30 Min. aus</small></div><span class="sw"></span></div>`+(f?`<div class="s-push"><div class="t"><i class="lg">D</i>Device Panel · 20:00</div><b>Routine "Lüfter Bad" gelaufen</b><p>Eingeschaltet, schaltet um 20:30 zurück.</p><div class="ac"><u>Sofort zurückschalten</u></div></div>`:""),
+ cards:f=>`<div class="s-dc"><div class="ring"><i>94 %</i></div><ul><li style="--c:#43a047"><span>Stabil</span><b>31</b></li><li style="--c:#f9a825"><span>Instabil</span><b>2</b></li><li style="--c:#e53935"><span>Ausgefallen</span><b>1</b></li></ul></div>`+(f?`<div class="s-dc2"><div class="n">2</div>Geräte ausgefallen, längster Ausfall 1 Std. 12 Min.<div class="r"><span>Garage Sensor</span><em>1 Std. 12 Min.</em><span class="pz">Pausieren</span></div><div class="r"><span>Gartenlicht</span><em>14 Min.</em><span class="pz">Pausieren</span></div></div>`:""),
+ lau:f=>(f?`<div class="s-kopf"><span>Favoriten</span><i>⚡</i><i>⚙</i><i>▦</i></div>`:"")+`<div class="s-lg"><div><i style="background:#b3571b">⚡</i>Routinen</div><div><i style="background:#4a3aa8">✨</i>Magic Push</div><div><i style="background:#2b6cb0">📋</i>Protokoll</div><div><i style="background:#2e7d32">⟳</i>Updates<span class="bd">3</span></div>`+(f?`<div><i style="background:#555">⚙</i>Einstellungen</div><div><i style="background:#0f7a8a">🏠</i>Dashboard</div><div><i style="background:#a33463">💡</i>Alle Lichter aus</div><div><i style="background:#7a5a10">🔗</i>Router</div>`:"")+`</div>`};
+const CH='<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round"><path d="M9 5l7 7-7 7"/></svg>';
+const S={mode:"desktop",entry:"wizard",open:true,view:"overview",i:0,fx:"dlg",pg:{}};
+const $=s=>document.querySelector(s),stage=$("#stage");
+function place(el,anim){const on=el.querySelector(".sub-tab.on"),p=el.querySelector(".seg-pill");if(!on||!p)return;const k=el.dataset.k;
+ const prev=S.pg[k];p.classList.remove("sl");
+ if(anim&&prev){p.style.left=prev[0]+"px";p.style.width=prev[1]+"px";void p.offsetWidth;p.classList.add("sl")}
+ p.style.left=on.offsetLeft+"px";p.style.width=on.offsetWidth+"px";S.pg[k]=[on.offsetLeft,on.offsetWidth]}
+function placeAll(anim){document.querySelectorAll(".sub-tabs").forEach(e=>place(e,anim))}
+function steps(a,c){return`<div class="tl">`+a.map((s,n)=>`<div class="st"><i style="background:${c}">${n+1}</i><p><b>${s[0]}:</b> ${s[1]}</p></div>`).join("")+`</div>`}
+function article(t,n){return`<div class="art2"><div class="txt"><h2>${t.title}</h2>`+t.blocks.map(b=>b.h?`<h3>${b.h}</h3>`+(b.p||[]).map(x=>`<p>${x}</p>`).join("")+(b.steps?steps(b.steps,t.ac):""):`<div class="tip" style="border-color:${t.ac}">${b.tip}</div>`).join("")+`</div><aside><div class="hero ${t.g}"><div class="sketch">${SK[t.id](true)}</div></div><div class="fcap">${t.cap}</div></aside></div>`}
+function dialog(){const w=S.entry==="wizard";let h="",b="",f="";
+ if(S.view==="overview"){
+  h=`<div class="head"><b>${w?"Einrichtung gespeichert ✓":"Mehr erfahren"}<small>${w?"Entdecke, was Device Panel noch kann. Schliessen ist jederzeit möglich.":"Vier Themen, je etwa 2 Minuten"}</small></b><button class="x" data-act="close" aria-label="Schliessen">✕</button></div>`;
+  b=`<div class="scroll ${S.fx==="page"?"fx":""}"><div class="cards">`+T.map((t,n)=>`<button class="cd" data-act="topic" data-i="${n}"><div class="sk ${t.g}"><div class="sketch">${SK[t.id](false)}</div></div><div class="tx"><b>${t.name}</b><small>${t.short}</small><div class="meta"><span>${t.mins} Min. · Lesen</span><span class="cbtn">${CH}</span></div></div></button>`).join("")+`</div>${w?`<div class="hint">Du findest das später unter Einstellungen › Panel › Mehr erfahren.</div>`:""}</div>`;
+  f=`<div class="foot"><button class="pri" data-act="close">${w?"Fertig":"Schliessen"}</button></div>`}
+ else{const t=T[S.i],last=S.i===T.length-1;
+  h=`<div class="head"><button class="back" data-act="overview" aria-label="Zur Übersicht">←</button><b>${t.name}<small>Thema ${S.i+1} von 4 · ${t.mins} Min.</small></b><button class="x" data-act="close" aria-label="Schliessen">✕</button></div><div class="tabsbar"><div class="sub-tabs" data-k="topics"><div class="seg-pill"></div>`+T.map((x,n)=>`<button class="sub-tab ${n===S.i?"on":""}" data-act="topic" data-i="${n}">${x.tab}</button>`).join("")+`</div></div>`;
+  b=`<div class="scroll ${S.fx==="page"?"fx":""}" id="sc">${article(t,S.i)}</div>`;
+  f=`<div class="foot"><button data-act="${S.i?"topic":"overview"}" data-i="${S.i-1}">← ${S.i?T[S.i-1].name:"Übersicht"}</button><button class="pri" data-act="${last?"close":"topic"}" data-i="${S.i+1}">${last?"Fertig ✓":T[S.i+1].name+" →"}</button></div>`}
+ return`<div class="dim"></div><div class="dlg ${S.fx==="dlg"?"fx":""}">${h}${b}${f}</div>`}
+function base(){
+ if(S.entry==="settings")return`<div class="base"><div class="bh">Einstellungen · Panel</div><div class="scr" id="bs"><div class="chap row">Anzeige<span class="cbtn">${CH}</span></div><div class="chap row">Speicher<span class="cbtn">${CH}</span></div><div class="chap row">Sichern und wiederherstellen<span class="cbtn">${CH}</span></div>
+ <div class="chap"><h4>Einrichtungsassistent</h4><p>Führt noch einmal durch Integrationen, Gerätetypen, Geräte und Meldungen.</p><p>Zuletzt abgeschlossen: 14. Nov. 2026</p><button class="btn" type="button">🚀 Assistent starten</button></div>
+ <div class="chap"><h4>Mehr erfahren</h4><p>Kurze Artikel mit Beispielen zu Magic Push, Routinen, Dashboard-Karten und dem App-Launcher.</p><button class="btn" data-act="open" type="button">📖 Themen ansehen</button></div></div></div>`;
+ return`<div class="base"><div class="bh">Device Panel</div><div class="scr"><div class="tiles ghost">${"<i></i>".repeat(6)}</div></div>${S.open?"":`<div class="snack">Einrichtung gespeichert ✓</div>`}</div>`}
+function render(){stage.className="stage "+S.mode+(S.mode==="phone"?" m":"");stage.innerHTML=base()+(S.open?dialog():"");
+ const bs=$("#bs");if(bs)bs.scrollTop=bs.scrollHeight;
+ placeAll(S.fx==="page");S.fx=null}
+document.addEventListener("click",e=>{const a=e.target.closest("[data-act]");if(!a)return;const k=a.dataset.act,v=a.dataset.v;
+ if(k==="mode"||k==="entry"){document.querySelectorAll(`[data-act="${k}"]`).forEach(x=>x.classList.toggle("on",x===a));S[k]=v;if(k==="entry"){S.open=v==="wizard";S.view="overview";S.fx="dlg"}placeAll(true);render();return}
+ if(k==="restart"){S.open=S.entry==="wizard";S.view="overview";S.fx="dlg"}
+ else if(k==="open"){S.open=true;S.view="overview";S.fx="dlg"}
+ else if(k==="close"){S.open=false}
+ else if(k==="overview"){S.view="overview";S.fx="page"}
+ else if(k==="topic"){S.i=+a.dataset.i;S.view="article";S.fx="page"}
+ render()});
+document.querySelectorAll(".sub-tabs").forEach(e=>place(e,false));
+render();
+</script></html>
