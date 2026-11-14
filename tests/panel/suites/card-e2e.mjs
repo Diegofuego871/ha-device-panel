@@ -57,6 +57,27 @@ for (const lang of ["de", "en"]) {
     await p.waitForTimeout(300);
     check(`[${tag}] vergiftete Namen und Zahlen laufen nicht als HTML`, !(await p.evaluate(() => window.__xss)) && !(await has("o", "img")) && !(await has("all", "img")));
 
+    // Dunkles Design von Home Assistant: Kacheln dunkel, helles Design: Kacheln hell, auch wenn das Thema keine Farben setzt (vars=0, Ersatzwerte)
+    const lum = () => p.evaluate(() => {
+      const el = getComputedStyle(document.getElementById("all").shadowRoot.querySelector(".kt")).backgroundColor;
+      const [r, g, b] = el.match(/[\d.]+/g).map(Number);
+      return (r + g + b) / 3;
+    });
+    for (const vars of ["1", "0"]) {
+      await open(`theme=dark&state=offline&vars=${vars}`);
+      const dark = await lum();
+      check(`[${tag}] Dunkles Design (Thema ${vars === "1" ? "mit" : "ohne"} Farben): Kacheln dunkel`, dark < 80, String(dark));
+      check(`[${tag}] Dunkles Design: Attribut "dark" am Element`, await p.evaluate(() => document.getElementById("all").hasAttribute("dark") && !document.getElementById("all").hasAttribute("light")));
+      await open(`theme=light&state=offline&vars=${vars}`);
+      const light = await lum();
+      check(`[${tag}] Helles Design (Thema ${vars === "1" ? "mit" : "ohne"} Farben): Kacheln hell`, light > 200, String(light));
+    }
+    // Wechsel zur Laufzeit (HA ruft hass mit neuem Thema auf): ohne Neuladen der Karte
+    await open("theme=light&state=offline");
+    await p.evaluate(() => { const el = document.getElementById("all"); el.hass = { ...el._hass, themes: { darkMode: true } }; });
+    check(`[${tag}] Wechsel zur Laufzeit auf dunkel: Attribut "dark" gesetzt`, await p.evaluate(() => document.getElementById("all").hasAttribute("dark")));
+    await p.screenshot({ path: `${outDir}/card-${tag.replace("/", "-")}-dark-novars.png`, fullPage: true });
+
     // Sensor fehlt
     await open("state=missing");
     check(`[${tag}] Sensor fehlt: Hinweis statt Fehler`, (await txt("all")).includes(L.missing) && (await txt("a")).includes(L.missing));

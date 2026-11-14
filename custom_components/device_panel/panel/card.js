@@ -29,7 +29,19 @@ const ESCAPES = { "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&
 const escape = (value) => (value == null ? "" : String(value)).replace(/[&<>"']/g, (c) => ESCAPES[c]);
 
 const CARD_CSS = `
-:host { display: block; height: auto; background: transparent; }
+:host { display: block; height: auto; background: transparent; color-scheme: light; }
+/* Dunkles Design von Home Assistant (seit 2.217.0): Die Farben kommen aus den Variablen des Themas und wechseln mit. Fehlt eine (Thema ohne eigene Farben),
+   gelten dunkle statt heller Ersatzwerte; sonst stünden helle Kacheln in einem dunklen Dashboard. */
+:host([dark]) {
+  color-scheme: dark;
+  --dp-bg: var(--primary-background-color, #111111);
+  --dp-card: var(--card-background-color, #1c1c1c);
+  --dp-text: var(--primary-text-color, #e1e1e1);
+  --dp-text2: var(--secondary-text-color, #9b9b9b);
+  --dp-text3: var(--disabled-text-color, #6f6f6f);
+  --dp-divider: var(--divider-color, rgba(255,255,255,0.12));
+  --dp-shadow: 0 10px 30px rgba(0,0,0,0.5);
+}
 .cgrid { display: grid; gap: 12px; grid-template-columns: repeat(auto-fit, minmax(260px, 1fr)); }
 .cgrid .kt.pul { grid-column: 1 / -1; }
 .kt.tap { cursor: pointer; }
@@ -115,6 +127,10 @@ class DevicePanelBaseCard extends HTMLElement {
 
   set hass(hass) {
     this._hass = hass;
+    // Hell oder dunkel wie das Dashboard (Thema von Home Assistant, sonst die Einstellung des Systems); Attribute wie am Panel
+    const dark = Boolean(hass.themes?.darkMode ?? window.matchMedia?.("(prefers-color-scheme: dark)").matches);
+    this.toggleAttribute("dark", dark);
+    this.toggleAttribute("light", !dark);
     const id = this._config.entity || findEntity(hass);
     const st = id ? hass.states[id] : null;
     // Nur neu zeichnen, wenn sich etwas ändert: HA ruft das bei jeder Zustandsänderung im ganzen System auf
