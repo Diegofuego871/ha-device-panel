@@ -15,7 +15,6 @@ The push action "Remind" can remind tomorrow at a time you choose.
 
 - **Push action "Remind", tomorrow at your time:** The tab "Tomorrow" (before: "Tomorrow 8:00") shows a time field under the row of tabs, preset to 08:00. The message comes again tomorrow at that time (before: at the next 8:00, which could be today). "15 min." and "1 h" stay as they are. A tap on "Next" is blocked while the time is empty. Existing messages keep working and remind tomorrow at 08:00.
 - **Push actions, variables at the title:** Each push action shows the variable chips under its own title field, so it is clear that they work there too; a tap inserts the variable into that title.
-
 - **Push action "Done" is now "Acknowledge":** It confirms the message; there is no repeat until the device is back to normal. The old name suggested the problem was solved. Saved messages keep working.
 
 ### Fixed
