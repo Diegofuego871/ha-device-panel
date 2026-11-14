@@ -161,7 +161,7 @@ Everything that notifies you follows one principle: you set a default once, chan
 - **Quiet time:** one global quiet time with its own times per weekday holds the chosen kinds of notifications (selectable per kind, including Magic Push and the status app) and sends them afterwards as one summary or one by one; critical Magic Push messages always come at once
 - **Back up and restore:** all settings (notifications, display, per device, AI, optionally routines and Magic Push) into one file and back, with a preview of what would change, a note for anything missing (device, integration, push target) and an undo; no credentials or tokens in the file
 - **Back online:** "Back online" with the duration of the outage replaces the outage message
-- **Buttons in the message:** open the device in the panel, or mute the device for 24 hours in the Companion app
+- **Push actions of an outage message:** open the device in the panel, mute the device for 24 hours, or pause its monitoring until it is online again (as buttons under the notification in the Companion app). Your own Magic Push messages can carry push actions too, see "Magic Push"
 - **Persistent notification:** optionally also one message in Home Assistant while devices are offline, per integration
 
 </details>

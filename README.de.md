@@ -161,7 +161,7 @@ Alles, was dich benachrichtigt, folgt einem Prinzip: Du setzt einmal eine Vorgab
 - **Ruhezeit:** eine globale Ruhezeit mit eigenen Zeiten je Wochentag hält die gewählten Meldungsarten zurück (je Art wählbar, auch Magic Push und Status-App) und sendet sie danach als Zusammenfassung oder einzeln; kritische Magic-Push-Meldungen kommen immer sofort
 - **Sichern und wiederherstellen:** alle Einstellungen (Meldungen, Anzeige, pro Gerät, KI, auf Wunsch Routinen und Magic Push) in eine Datei und zurück, mit Vorschau der Änderungen, Hinweis auf Fehlendes (Gerät, Integration, Push-Ziel) und Rückgängig; keine Zugangsdaten oder Tokens in der Datei
 - **Wieder online:** "Wieder online" mit der Dauer des Ausfalls ersetzt die Ausfall-Meldung
-- **Knöpfe in der Meldung:** das Gerät im Panel öffnen oder das Gerät in der Companion-App 24 Stunden stumm schalten
+- **Push-Aktionen einer Ausfall-Meldung:** das Gerät im Panel öffnen, das Gerät 24 Stunden stumm schalten oder seine Überwachung pausieren, bis es wieder online ist (als Schaltflächen unter der Meldung in der Companion-App). Auch deine eigenen Magic-Push-Meldungen können Push-Aktionen tragen, siehe "Magic Push"
 - **Anhaltende Benachrichtigung:** auf Wunsch zusätzlich eine Meldung in Home Assistant, solange Geräte ausgefallen sind, pro Integration
 
 </details>
