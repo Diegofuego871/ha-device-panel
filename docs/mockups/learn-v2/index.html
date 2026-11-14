@@ -1,0 +1,126 @@
+<!doctype html><meta charset="utf-8"><title>Mehr erfahren, moderner (Variante A), Mockup</title><style>
+:root{--p:#43a047;--bg:#1c1c1c;--card:#262626;--ln:#363636;--t2:#9a9a9a;--c1:#7c5cff;--c2:#ff8a3d;--c3:#2bb7da;--c4:#e8528b}
+*{box-sizing:border-box}
+body{margin:0;background:#0d0d0d;font:14px/1.4 Roboto,Arial,sans-serif;color:#e8e8e8;padding:24px;width:1500px}
+h1{margin:0 0 4px;font-size:22px}h2{margin:34px 0 4px;font-size:17px}h2 .rec{color:var(--p)}
+.sub{color:var(--t2);font-size:13px;margin:0 0 12px;max-width:1400px}
+.row{display:flex;gap:18px;align-items:flex-start;flex-wrap:wrap}
+.cap{color:#8a8a8a;font-size:12px;letter-spacing:.04em;text-transform:uppercase;margin:0 0 6px}
+.win{background:var(--bg);border:1px solid var(--ln);border-radius:22px;overflow:hidden;display:flex;flex-direction:column;position:relative}
+.win.d{width:720px;height:540px}.win.m{width:340px;height:640px}
+.head{display:flex;align-items:center;gap:10px;padding:16px 20px 6px}.head b{font-size:19px;flex:1}.head small{display:block;color:var(--t2);font-size:12px;font-weight:400}
+.x,.back{width:34px;height:34px;border-radius:50%;border:1px solid #4a4a4a;display:grid;place-items:center;color:#bbb;flex:none;background:#222}
+.body{flex:1;padding:6px 20px 14px;overflow:hidden;display:flex;flex-direction:column;gap:12px}
+.foot{padding:12px 20px 16px;display:flex;gap:10px}
+.btn{flex:1;text-align:center;padding:12px;border-radius:14px;border:1px solid #555}.btn.pri{background:#2e6b33;border-color:#2e6b33;color:#fff}
+.hello{font-size:13.5px;color:var(--t2)}.hello b{color:#e8e8e8;font-size:21px;display:block;margin-bottom:2px;letter-spacing:-.01em}
+.chip{display:inline-block;border-radius:99px;padding:2px 9px;font-size:11.5px;background:#ffffff14;color:#cfcfcf}
+.cost{display:inline-block;background:#333;border-radius:8px;padding:1px 8px;font-size:11px;color:#aaa;margin-left:6px}
+.note{color:var(--t2);font-size:12.5px;max-width:300px;line-height:1.5}
+/* A1 Bento */
+.bento{display:grid;grid-template-columns:1.3fr 1fr;grid-template-rows:1fr 1fr .62fr;gap:12px;flex:1}
+.bt.wide{grid-column:span 2;min-height:70px}
+.m .bento{grid-template-columns:1fr 1fr;grid-template-rows:auto auto auto}
+.m .bt.wide{display:none}
+.bt{border-radius:20px;padding:16px;position:relative;overflow:hidden;display:flex;flex-direction:column;justify-content:flex-end;gap:3px;min-height:110px}
+.bt.big{grid-row:span 2}.m .bt.big{grid-column:span 2;grid-row:auto;min-height:150px}
+.bt .em{position:absolute;top:12px;left:14px;font-size:30px}.bt b{font-size:16.5px}.bt small{font-size:12.5px;opacity:.85;line-height:1.35}
+.bt .go{position:absolute;top:12px;right:12px;width:28px;height:28px;border-radius:50%;background:#ffffff26;display:grid;place-items:center;font-size:14px}
+.g1{background:linear-gradient(145deg,#4a3aa8,#2a2260)}.g2{background:linear-gradient(145deg,#b3571b,#5e2f10)}.g3{background:linear-gradient(145deg,#17788f,#0d3f4c)}.g4{background:linear-gradient(145deg,#a33463,#51182f)}
+/* A2 Karten mit Skizze */
+.cards{display:grid;grid-template-columns:1fr 1fr;gap:12px;flex:1}.m .cards{grid-template-columns:1fr;gap:10px}
+.cd{background:var(--card);border:1px solid var(--ln);border-radius:20px;overflow:hidden;display:flex;flex-direction:column}
+.m .cd{flex-direction:row;height:96px}
+.sk{height:84px;display:grid;place-items:center;font-size:12px;color:#ffffffb0;position:relative}.m .sk{width:96px;height:auto;flex:none}
+.sk i{display:block;width:62%;height:10px;border-radius:6px;background:#ffffff40;margin:4px auto}.sk i.s{width:40%}.sk .bar{width:70%;height:34px;border-radius:10px;background:#ffffff30;display:flex;flex-direction:column;justify-content:center}
+.cd .tx{padding:11px 14px 12px;display:flex;flex-direction:column;gap:2px;flex:1;justify-content:center}.cd .tx b{font-size:15.5px}.cd .tx small{color:var(--t2);font-size:12.5px;line-height:1.35}.cd .tx .meta{margin-top:4px;font-size:11.5px;color:#7fb7ff}
+/* A3 Vollflächig */
+.stack{display:flex;flex-direction:column;gap:10px;flex:1}
+.fc{border-radius:20px;padding:14px 16px;display:flex;align-items:center;gap:14px;position:relative}
+.fc .em{width:48px;height:48px;border-radius:15px;background:#ffffff26;display:grid;place-items:center;font-size:25px;flex:none}.fc b{font-size:16.5px;display:block}.fc small{font-size:12.5px;opacity:.85;line-height:1.35;display:block}.fc .go{margin-left:auto;font-size:20px;opacity:.9}
+.dots{display:flex;gap:6px;justify-content:center}.dots i{width:7px;height:7px;border-radius:50%;background:#555}.dots i.on{background:#fff;width:20px;border-radius:5px}
+/* Artikel */
+.hero{border-radius:20px;padding:16px;height:128px;position:relative;display:flex;flex-direction:column;justify-content:flex-end}.hero .em{position:absolute;top:12px;right:16px;font-size:44px;opacity:.95}.hero b{font-size:21px;letter-spacing:-.01em}.hero small{opacity:.85}
+.art p{margin:0;color:#d8d8d8}.tl{display:flex;flex-direction:column;gap:0;position:relative;margin-left:4px}.tl .st{display:flex;gap:12px;padding:6px 0;position:relative}.tl .st::before{content:"";position:absolute;left:11px;top:30px;bottom:-6px;width:2px;background:#ffffff1f}.tl .st:last-child::before{display:none}
+.tl i{width:24px;height:24px;border-radius:50%;font-style:normal;display:grid;place-items:center;font-size:12px;flex:none;color:#fff}
+.tip{border-radius:14px;padding:10px 12px;font-size:13px;background:#ffffff0f;border-left:3px solid}
+.pill{display:flex;gap:8px;padding:6px;border-radius:99px;background:#2a2a2a;border:1px solid var(--ln);width:100%}.pill span{flex:1;text-align:center;padding:10px;border-radius:99px;font-size:13.5px}.pill .pri{background:#2e6b33;color:#fff}
+/* Einstellungen */
+.set{width:420px;height:370px}.set .body{gap:8px}.set-title{font-size:15px;font-weight:600;margin-top:6px}.sn{color:var(--t2);font-size:12.5px}
+.sbtn{display:inline-flex;gap:8px;align-items:center;border:1px solid #555;border-radius:12px;padding:9px 14px;font-size:13.5px;width:max-content}
+.sep{border-top:1px solid var(--ln);margin:6px 0}
+</style><body>
+<h1>Mehr erfahren, Variante A moderner</h1>
+<p class="sub">Gleicher Ablauf wie A (Kacheln → Artikel → zurück → nächstes Thema), dreimal in einem moderneren Stil. Jedes Thema hat eine eigene Farbe, grössere Flächen, weniger Rahmen. Der Assistent gilt unabhängig davon als beendet. Erfundene Texte.</p>
+
+<h2>A1 · Bento-Raster mit Farbverläufen <span class="rec">(Empfehlung)</span><span class="cost">gross, ruhig, ein Blick genügt</span></h2>
+<p class="sub">Eine grosse Fläche (Magic Push) und drei kleinere, je mit eigenem Farbverlauf und Symbol. Der Artikel beginnt mit einem Kopfbild in der Farbe des Themas, die Schritte stehen als Zeitleiste.</p>
+<div class="row">
+<div><p class="cap">Desktop · Übersicht</p><div class="win d"><div class="head"><b>Einrichtung gespeichert ✓<small>Entdecke, was Device Panel noch kann</small></b><div class="x">✕</div></div>
+<div class="body"><div class="bento">
+<div class="bt big g1"><span class="em">✨</span><span class="go">›</span><b>Magic Push</b><small>Eigene Meldungen für jeden Wert, mit Push-Aktionen unter der Meldung.</small></div>
+<div class="bt g2"><span class="em">⚡</span><span class="go">›</span><b>Routinen</b><small>Geräte zeitgesteuert schalten.</small></div>
+<div class="bt g3"><span class="em">🧩</span><span class="go">›</span><b>Dashboard-Karten</b><small>Ausfälle auf jedem Dashboard.</small></div>
+<div class="bt wide g4"><span class="em" style="top:50%;transform:translateY(-50%)">🚀</span><span class="go">›</span><b style="margin-left:46px">App-Launcher</b><small style="margin-left:46px">Eigene Apps und Aktionen.</small></div>
+</div></div><div class="foot"><div class="btn pri">Fertig</div></div></div></div>
+<div><p class="cap">Handy · Übersicht</p><div class="win m"><div class="head"><b>Einrichtung gespeichert ✓<small>Entdecke, was noch geht</small></b><div class="x">✕</div></div>
+<div class="body"><div class="bento"><div class="bt big g1"><span class="em">✨</span><span class="go">›</span><b>Magic Push</b><small>Eigene Meldungen für jeden Wert.</small></div>
+<div class="bt g2"><span class="em">⚡</span><span class="go">›</span><b>Routinen</b><small>Zeitgesteuert schalten</small></div>
+<div class="bt g3"><span class="em">🧩</span><span class="go">›</span><b>Karten</b><small>Für jedes Dashboard</small></div>
+<div class="bt g4" style="grid-column:span 2;min-height:90px"><span class="em">🚀</span><span class="go">›</span><b>App-Launcher</b><small>Eigene Apps und Aktionen</small></div></div></div>
+<div class="foot"><div class="btn pri">Fertig</div></div></div></div>
+<div><p class="cap">Handy · Artikel</p><div class="win m"><div class="head"><div class="back">←</div><b>Magic Push<small>Thema 1 von 4</small></b><div class="x">✕</div></div>
+<div class="body art"><div class="hero g1"><span class="em">✨</span><b>Meldungen nach Mass</b><small>1 Min. Lesezeit</small></div>
+<p>Eigene Meldungen pro Gerät, ohne Automation: "Sag mir Bescheid, wenn der Keller unter 12 °C fällt."</p>
+<div class="tl"><div class="st"><i style="background:var(--c1)">1</i><p>Gerät öffnen, Reiter "Magic Push", "Neue Meldung".</p></div><div class="st"><i style="background:var(--c1)">2</i><p>Wert, Bedingung und Dauer wählen, Text schreiben.</p></div><div class="st"><i style="background:var(--c1)">3</i><p>Optional Push-Aktionen: Routine, erinnern, öffnen, quittieren.</p></div></div>
+<div class="tip" style="border-color:var(--c1)">Tipp: {value} und {device} machen den Text persönlich.</div></div>
+<div class="foot"><div class="pill"><span>← Übersicht</span><span class="pri">Weiter →</span></div></div></div></div>
+</div>
+
+<h2>A2 · Karten mit kleiner Skizze der Funktion <span class="cost">zeigt, wie es aussieht</span></h2>
+<p class="sub">Jede Karte hat oben einen Farbstreifen mit einer stilisierten Skizze (zum Beispiel Karte, Zeitleiste, Meldung) und die Lesezeit. Etwas mehr Aufwand bei den Bildern, dafür versteht man das Thema schon vor dem Tippen.</p>
+<div class="row">
+<div><p class="cap">Desktop · Übersicht</p><div class="win d"><div class="head"><b>Einrichtung gespeichert ✓<small>Entdecke, was Device Panel noch kann</small></b><div class="x">✕</div></div>
+<div class="body"><div class="cards">
+<div class="cd"><div class="sk g1"><div class="bar"><i></i><i class="s"></i></div></div><div class="tx"><b>Magic Push</b><small>Eigene Meldungen für jeden Wert</small><span class="meta">1 Min. · Lesen ›</span></div></div>
+<div class="cd"><div class="sk g2"><div class="bar"><i></i><i class="s"></i></div></div><div class="tx"><b>Routinen</b><small>Geräte zeitgesteuert schalten</small><span class="meta">1 Min. · Lesen ›</span></div></div>
+<div class="cd"><div class="sk g3"><div class="bar"><i></i><i class="s"></i></div></div><div class="tx"><b>Dashboard-Karten</b><small>Ausfälle auf jedem Dashboard</small><span class="meta">1 Min. · Lesen ›</span></div></div>
+<div class="cd"><div class="sk g4"><div class="bar"><i></i><i class="s"></i></div></div><div class="tx"><b>App-Launcher</b><small>Eigene Apps und Aktionen</small><span class="meta">1 Min. · Lesen ›</span></div></div>
+</div></div><div class="foot"><div class="btn pri">Fertig</div></div></div></div>
+<div><p class="cap">Handy · Übersicht</p><div class="win m"><div class="head"><b>Einrichtung gespeichert ✓<small>Entdecke, was noch geht</small></b><div class="x">✕</div></div>
+<div class="body"><div class="cards">
+<div class="cd"><div class="sk g1"><div class="bar"><i></i><i class="s"></i></div></div><div class="tx"><b>Magic Push</b><small>Eigene Meldungen</small><span class="meta">1 Min. · Lesen ›</span></div></div>
+<div class="cd"><div class="sk g2"><div class="bar"><i></i><i class="s"></i></div></div><div class="tx"><b>Routinen</b><small>Zeitgesteuert schalten</small><span class="meta">1 Min. · Lesen ›</span></div></div>
+<div class="cd"><div class="sk g3"><div class="bar"><i></i><i class="s"></i></div></div><div class="tx"><b>Dashboard-Karten</b><small>Ausfälle im Dashboard</small><span class="meta">1 Min. · Lesen ›</span></div></div>
+<div class="cd"><div class="sk g4"><div class="bar"><i></i><i class="s"></i></div></div><div class="tx"><b>App-Launcher</b><small>Eigene Apps</small><span class="meta">1 Min. · Lesen ›</span></div></div>
+</div></div><div class="foot"><div class="btn pri">Fertig</div></div></div></div>
+</div>
+
+<h2>A3 · Vollflächige Farbbalken, Artikel mit Seitenzähler <span class="cost">am einfachsten zu bauen</span></h2>
+<p class="sub">Die Themen sind breite, farbige Balken mit grossem Symbol (wie Einstiegsseiten moderner Apps). Im Artikel zeigt ein Punktestreifen, bei welchem Thema man ist; unten wechselt "← →" zwischen den Themen.</p>
+<div class="row">
+<div><p class="cap">Handy · Übersicht</p><div class="win m"><div class="head"><b>Einrichtung gespeichert ✓<small>Entdecke, was noch geht</small></b><div class="x">✕</div></div>
+<div class="body"><div class="stack">
+<div class="fc g1"><span class="em">✨</span><div><b>Magic Push</b><small>Eigene Meldungen für jeden Wert</small></div><span class="go">›</span></div>
+<div class="fc g2"><span class="em">⚡</span><div><b>Routinen</b><small>Geräte zeitgesteuert schalten</small></div><span class="go">›</span></div>
+<div class="fc g3"><span class="em">🧩</span><div><b>Dashboard-Karten</b><small>Ausfälle auf jedem Dashboard</small></div><span class="go">›</span></div>
+<div class="fc g4"><span class="em">🚀</span><div><b>App-Launcher</b><small>Eigene Apps und Aktionen</small></div><span class="go">›</span></div></div></div>
+<div class="foot"><div class="btn pri">Fertig</div></div></div></div>
+<div><p class="cap">Handy · Artikel</p><div class="win m"><div class="head"><div class="back">←</div><b>Dashboard-Karten</b><div class="x">✕</div></div>
+<div class="body art"><div class="dots"><i></i><i></i><i class="on"></i><i></i></div>
+<div class="hero g3"><span class="em">🧩</span><b>Dein Dashboard, live</b><small>1 Min. Lesezeit</small></div>
+<p>Zeige den Zustand deiner Geräte direkt auf einem Dashboard von Home Assistant.</p>
+<div class="tl"><div class="st"><i style="background:var(--c3)">1</i><p>Dashboard bearbeiten, "Karte hinzufügen", nach "Device Panel" suchen.</p></div><div class="st"><i style="background:var(--c3)">2</i><p>Verfügbarkeit, Gerade ausgefallen oder Übersicht wählen.</p></div></div>
+<div class="tip" style="border-color:var(--c3)">Tipp: Administratoren können ausgefallene Geräte direkt pausieren.</div></div>
+<div class="foot"><div class="pill"><span>← Routinen</span><span class="pri">App-Launcher →</span></div></div></div></div>
+<div><p class="cap">Einstieg später: Einstellungen › Panel, ganz unten</p>
+<div class="win set"><div class="head"><b>Einstellungen · Panel</b></div><div class="body">
+<div class="set-title">Einrichtungsassistent</div><div class="sn">Führt noch einmal durch Integrationen, Gerätetypen, Geräte und Meldungen.</div><div class="sn">Zuletzt abgeschlossen: 14. Nov. 2026</div><div class="sbtn">🚀 Assistent starten</div>
+<div class="sep"></div>
+<div class="set-title">Mehr erfahren</div><div class="sn">Kurze Artikel zu Magic Push, Routinen, Dashboard-Karten und dem App-Launcher.</div><div class="sbtn">📖 Themen ansehen</div></div></div>
+<p class="note" style="margin-top:8px">Das Kapitel "Mehr erfahren" steht direkt unter dem Einrichtungsassistenten, ganz unten bei Panel. Es öffnet dieselbe Übersicht; beendet ist dort nichts, man schliesst einfach.</p></div>
+</div>
+
+<h2>Empfehlung</h2>
+<p class="sub"><b style="color:var(--p)">A1 (Bento).</b> Wirkt am modernsten, braucht keine Bilder (nur Farbverlauf und Symbol) und passt zu Kacheln, die man auf dem Handy gut trifft. A2 sieht lebendiger aus, braucht aber vier gezeichnete Skizzen, die bei jeder Änderung der Oberfläche nachgeführt werden müssten. A3 ist am schlichtesten. Artikelaufbau in allen: Kopf in der Farbe des Themas, ein Satz, Zeitleiste mit Schritten, ein Tipp, unten "← Zurück" und "Weiter →" zum nächsten Thema.</p>
+</body>
