@@ -14,6 +14,11 @@ The push action "Remind" can remind tomorrow at a time you choose.
 ### Changed
 
 - **Push action "Remind", tomorrow at your time:** The tab "Tomorrow" (before: "Tomorrow 8:00") shows a time field under the row of tabs, preset to 08:00. The message comes again tomorrow at that time (before: at the next 8:00, which could be today). "15 min." and "1 h" stay as they are. A tap on "Next" is blocked while the time is empty. Existing messages keep working and remind tomorrow at 08:00.
+- **Push actions, variables at the title:** Each push action shows the variable chips under its own title field, so it is clear that they work there too; a tap inserts the variable into that title.
+
+### Fixed
+
+- **Keyboard covered the text field (phone):** In the assistant of a Magic Push message, a tap into any text field (title of a push action, text, name) brings the field into the visible area above the keyboard. While the keyboard is up, the progress bar and the footer step aside, so there is room for the field; they return when the keyboard closes.
 
 ## [2.218.0] - 2026-11-14
 

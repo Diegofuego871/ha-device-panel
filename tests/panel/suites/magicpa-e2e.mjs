@@ -81,6 +81,20 @@ for (const lang of ["de", "en"]) {
     await fill('[data-mg-atitle]', "Bestellt: {device}");
     check(`[${tag}] Vorschau zeigt den Knopf mit eingesetzter Variable`, await wait(`return r.querySelector('${W} [data-mg-zone="pv"] .pv-actions')?.textContent.includes("Bestellt: Klimasensor Keller")`));
 
+    // Variablen stehen in der Karte selbst und gehören zu deren Titel, auch ohne Fokus (die Tastatur deckt die Felder oben zu)
+    check(`[${tag}] Karte: Variablen-Chips unter dem Titel`, await wait(`return r.querySelectorAll('${W} .mg-pa-card .mg-chips [data-mg="var"]').length > 3`));
+    await ev(`const c=r.querySelector('${W} .mg-pa-card'); c.querySelector('[data-mg-atitle]').value="Titel "; c.querySelector('[data-mg-atitle]').dispatchEvent(new Event("input",{bubbles:true})); c.querySelector('.mg-chips [data-var="area"]').click();`);
+    check(`[${tag}] Chip in der Karte fügt in deren Titel ein`, (await ev(`return r.querySelector('${W} .mg-pa-card [data-mg-atitle]').value`)) === "Titel {area}");
+    // Handy mit Tastatur (simuliert wie in magic-e2e): ein Tipp ins Titelfeld holt es in die sichtbare Fläche, Fusszeile und Fortschritt weichen
+    if (mobile) {
+      await ev(`const fake = { offsetTop: 0, height: 420, addEventListener() {}, removeEventListener() {} }; r.host._topWindow = () => ({ visualViewport: fake, addEventListener() {}, removeEventListener() {} }); r.host._magic.fitWindow(); r.querySelector('${W} .mg-pa-card [data-mg-atitle]').focus();`);
+      await p.waitForTimeout(600);
+      const kb = await ev(`const a=r.host._magic.visibleArea(); const w=r.querySelector("${W}"); const i=r.querySelector('${W} .mg-pa-card [data-mg-atitle]').getBoundingClientRect(); const b=r.querySelector('${W} .mgw-body').getBoundingClientRect(); return { kb: w.classList.contains("mg-kb"), foot: getComputedStyle(r.querySelector('${W} .mgw-foot')).display, prog: getComputedStyle(r.querySelector('${W} .mgw-prog')).display, inside: i.top >= a.top && i.bottom <= a.bottom, top: Math.round(i.top - b.top), body: Math.round(b.height) }`);
+      check(`[${tag}] Tastatur oben: Titelfeld in der sichtbaren Fläche, Fusszeile und Fortschritt ausgeblendet`, kb.kb && kb.foot === "none" && kb.prog === "none" && kb.inside && kb.top >= 0, JSON.stringify(kb));
+      await ev(`delete r.host._topWindow; r.host._magic.fitWindow();`);
+      check(`[${tag}] Tastatur weg: Fusszeile und Fortschritt wieder da`, await ev(`const w=r.querySelector("${W}"); return !w.classList.contains("mg-kb") && getComputedStyle(r.querySelector('${W} .mgw-foot')).display !== "none"`));
+    }
+
     // --- Zweite Karte: Erinnern; dritte: Erledigt; Grenze ---
     await tap('[data-mg="aadd"]');
     await wait(`return r.querySelectorAll('${W} .mg-pa-card').length === 2`);
@@ -126,7 +140,7 @@ for (const lang of ["de", "en"]) {
     await wait(`return !r.querySelector("${W}").open`);
     const saved = (await calls("magic_save")).at(-1)?.rule;
     const pa = saved?.push_actions || [];
-    check(`[${tag}] Speichern: push_actions mit drei Einträgen (Routine, Erinnern bis morgen?, Erledigt/Öffnen)`, pa.length === 3 && pa[0].kind === "routine" && pa[0].routine_id === "aaaaaaaaaaa1" && pa[0].title === "Bestellt: {device}", JSON.stringify(pa));
+    check(`[${tag}] Speichern: push_actions mit drei Einträgen (Routine, Erinnern bis morgen?, Erledigt/Öffnen)`, pa.length === 3 && pa[0].kind === "routine" && pa[0].routine_id === "aaaaaaaaaaa1" && pa[0].title === "Titel {area}", JSON.stringify(pa));
     check(`[${tag}] Erinnern übernimmt die Zeit, Öffnen das Ziel`, pa[1]?.kind === "done" || pa[1]?.kind === "remind" || pa[1]?.kind === "open", JSON.stringify(pa.map((x) => x.kind)));
 
     // --- Bearbeiten: Schalter an, Karten wie gespeichert, ohne Änderung kein Rückfragefenster ---

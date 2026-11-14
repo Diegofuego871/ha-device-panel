@@ -2817,4 +2817,7 @@ dialog.updapp-dlg .dlg-error { font-size: 15px; }
 /* Knöpfe in der Vorschau der Meldung */
 .pv-actions { display: flex; gap: 6px; margin-top: 8px; }
 .pv-actions span { flex: 1 1 0; min-width: 0; padding: 7px 6px; border-radius: 9px; background: var(--dp-hover); color: var(--dp-primary); font-size: 12.5px; text-align: center; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+/* Tastatur oben (Handy): Fortschritt und Fusszeile des Assistenten weichen dem Feld (magic-push.js, fitWindow) */
+dialog.magic-dlg.mg-kb .mgw-prog, dialog.magic-dlg.mg-kb .mgw-foot { display: none; }
+.mg-pa-card .mg-chips { margin-top: 0; }
 `;

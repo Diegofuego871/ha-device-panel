@@ -150,6 +150,7 @@ export class MagicPush {
     this._unwatch?.();
     win.style.removeProperty("--mgw-top");
     win.style.removeProperty("--mgw-h");
+    win.classList.remove("mg-kb");
   }
 
   // Zahl der eingeschalteten Meldungen für die Beschriftung des Reiters (null: noch nicht geladen).
@@ -192,7 +193,10 @@ export class MagicPush {
     if (narrow && h > 0 && h < window.innerHeight - 60) {
       win.style.setProperty("--mgw-top", `${Math.round(area.top)}px`);
       win.style.setProperty("--mgw-h", `${Math.round(h)}px`);
+      // Tastatur oben: Fortschritt und Fusszeile weichen, damit für das Feld Platz bleibt (die Tastatur schliessen bringt sie zurück)
+      win.classList.add("mg-kb");
     } else {
+      win.classList.remove("mg-kb");
       win.style.removeProperty("--mgw-top");
       win.style.removeProperty("--mgw-h");
     }
@@ -2124,12 +2128,12 @@ export class MagicPush {
     return e?.kind === "number" ? "number" : "state";
   }
 
-  chipsHtml(group) {
+  chipsHtml(group, target = "") {
     const esc = (v) => this.esc(v);
     const vars = this.data.variables;
     const names = [...(vars[this.varGroup()] || []), ...vars.common];
     return `<div class="mg-chips">${names
-      .map((n) => `<button type="button" class="${(vars[this.varGroup()] || []).includes(n) ? "sug" : ""}" data-mg="var" data-group="${group}" data-var="${esc(n)}" title="${esc(this.tt(`mgVar_${n}`))}">{${esc(n)}}</button>`)
+      .map((n) => `<button type="button" class="${(vars[this.varGroup()] || []).includes(n) ? "sug" : ""}" data-mg="var" data-group="${group}"${target ? ` data-target="${esc(target)}"` : ""} data-var="${esc(n)}" title="${esc(this.tt(`mgVar_${n}`))}">{${esc(n)}}</button>`)
       .join("")}</div>`;
   }
 
@@ -2289,6 +2293,7 @@ export class MagicPush {
         return `<div class="mg-pa-card" data-uid="${esc(a.uid)}"><div class="mg-pa-head"><span class="mg-pa-n">${i + 1}</span><b>${esc(t("mgPaOne"))}</b><button type="button" class="mg-pa-del" data-mg="adel" data-uid="${esc(a.uid)}" title="${esc(t("mgPaRemove"))}" aria-label="${esc(t("mgPaRemove"))}">${this.h.mdi("trash", 18)}</button></div>
           <label class="mg-k" for="mg-pa-t-${esc(a.uid)}">${esc(t("mgPaTitle"))}</label>
           <input id="mg-pa-t-${esc(a.uid)}" class="mg-input" type="text" maxlength="${this.limit("action_title", 40)}" data-mg-atitle="${esc(a.uid)}" value="${esc(a.title)}" placeholder="${esc(t("mgPaTitlePh"))}" autocomplete="off">
+          <div class="mg-k">${esc(t("mgPaVars"))}</div>${this.chipsHtml("main", a.uid)}
           ${this.tabsHtml(kinds)}
           ${this.actionDetailHtml(a)}</div>`;
       })
@@ -2487,6 +2492,8 @@ export class MagicPush {
       if (this.wiz && el.dataset?.mgText) (this.wiz.focus ||= {})[el.dataset.mgGroup] = el.dataset.mgText;
       // Titel einer Push-Aktion: die Variablen der Meldung gelten auch dort
       else if (this.wiz && el.dataset?.mgAtitle) (this.wiz.focus ||= {}).main = `action:${el.dataset.mgAtitle}`;
+      // Handy: jedes Textfeld des Assistenten wird sichtbar gehalten, wenn die Tastatur kommt (sonst deckt sie das Feld zu)
+      if (this.wiz && this.win()?.contains(el) && window.matchMedia?.("(max-width: 700px)").matches && el.matches?.('input:not([type="checkbox"]):not([type="radio"]):not([type="range"]), textarea')) this.revealField(el);
     });
     // Variablen einfügen, ohne dass das Textfeld den Fokus (und die Tastatur) verliert.
     dlg.addEventListener("mousedown", (ev) => {
@@ -2707,7 +2714,7 @@ export class MagicPush {
         this.paint();
         break;
       case "var":
-        this.insertVariable(el.dataset.group, el.dataset.var);
+        this.insertVariable(el.dataset.group, el.dataset.var, el.dataset.target);
         break;
       case "aadd":
         if (this.wiz.draft.actions.length < ACTIONS_MAX) {
@@ -2768,8 +2775,9 @@ export class MagicPush {
   }
 
   // Die Variable kommt in das zuletzt gewählte Feld der Gruppe (Titel oder Inhalt); ohne Wahl in den Titel.
-  insertVariable(group, name) {
-    const field = this.wiz.focus?.[group] || (group === "recover" ? "recover_message" : "message");
+  insertVariable(group, name, target = "") {
+    // Chips in der Karte einer Push-Aktion gehören immer zu deren Titel (die Tastatur deckt die Felder oben zu)
+    const field = target ? `action:${target}` : this.wiz.focus?.[group] || (group === "recover" ? "recover_message" : "message");
     const isAction = field.startsWith("action:");
     const ta = isAction ? this.q(`[data-mg-atitle="${field.slice(7)}"]`) : this.q(`[data-mg-text="${field}"]`);
     if (!ta) return;
