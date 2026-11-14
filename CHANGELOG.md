@@ -7,15 +7,22 @@ All notable changes to this integration are documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/).
 
+## [2.216.2] - 2026-11-14
+
+The pulse on the dashboard cards has the moving dot of the panel.
+
+### Changed
+
+- **Dashboard cards, moving dot in the pulse:** Like in the panel, a small dot runs along the line of the outage pulse every 10 seconds (colour of the line). It follows the setting "Animations" of the user in the panel and stays off with "reduce motion" of the system. A card that is drawn again without a change keeps its running animation; the time axis moves in steps of five minutes.
+
 ## [2.216.1] - 2026-11-13
 
-Code review: dashboard cards lighter, safer and following the dark mode of Home Assistant, with the moving dot in the pulse, the pause watcher more robust.
+Code review: dashboard cards lighter, safer and following the dark mode of Home Assistant, the pause watcher more robust.
 
 ### Changed
 
 - **Code review:** The dashboard cards draw only their content (the large style sheet is set once, taps are handled once) and take every number from the sensor as a number, never as HTML; the minute refresh runs only while a device is offline. The watcher of the monitoring pause checks each device on its own, so one faulty device no longer holds up the others. An unused function was removed.
 - **Dashboard cards, dark mode:** The cards follow the design of Home Assistant: in dark mode they are dark, in light mode light, and they change when the design is switched (no reload). If a theme sets no colours of its own, dark instead of light fallback colours apply in dark mode.
-- **Dashboard cards, moving dot in the pulse:** Like in the panel, a small dot runs along the line of the outage pulse every 10 seconds (colour of the line). It follows the setting "Animations" of the user in the panel and stays off with "reduce motion" of the system. A card that is drawn again without a change keeps its running animation; the time axis moves in steps of five minutes.
 
 ## [2.216.0] - 2026-11-13
 
@@ -5980,6 +5987,7 @@ First pre-release.
   GitHub Actions for HACS/hassfest validation and tests.
 
 [2.6.0]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v2.6.0
+[2.216.2]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v2.216.2
 [2.216.1]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v2.216.1
 [2.216.0]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v2.216.0
 [2.215.1]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v2.215.1

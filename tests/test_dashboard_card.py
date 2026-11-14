@@ -41,5 +41,7 @@ def test_card_file_exists_and_holds_nothing_secret() -> None:
     # Alle drei Karten angemeldet, nur der Sensor wird gelesen: kein WebSocket-Befehl, kein Token
     for tag in ("device-panel-card", "device-panel-availability-card", "device-panel-offline-card"):
         assert f'"{tag}"' in source
-    assert not re.search(r"callWS|callApi|fetch\(|accessToken|auth\.", source)
+    assert not re.search(r"callApi|fetch\(|accessToken|auth\.", source)
+    # Einzige Abfrage: die eigenen Daten des Benutzers (Einstellung "Animationen"), kein Befehl des Panels
+    assert re.findall(r"callWS\(\{ type: \"([^\"]+)\"", source) == ["frontend/get_user_data"]
     assert "ß" not in source

@@ -390,7 +390,7 @@ Die Integration bringt drei Karten für jedes Dashboard von Home Assistant mit. 
 - **Device Panel: Gerade ausgefallen:** wie viele Geräte ausgefallen sind, der längste Ausfall, bis zu vier Geräte mit ihrer Dauer, die pausierten Geräte und die Warnungen.
 - **Device Panel: Übersicht:** beides zusammen mit dem Ausfall-Puls der letzten 24 Stunden.
 
-Die Karten sehen aus wie die Kacheln des Panels und lesen nur den Sensor **"Verfügbarkeit"** (Zustand: Prozent jetzt online; Attribute mit den Zahlen, dem Puls und den ausgefallenen Geräten). Sie brauchen keine Administratorrechte, wer das Dashboard sieht, sieht also die Zahlen. Nur Administratoren erhalten den Pfeil, ein Tipp auf eine Kachel öffnet das Panel. Im Editor kannst du den Sensor wählen; ohne Wahl findet ihn die Karte selbst.
+Die Karten sehen aus wie die Kacheln des Panels und lesen nur den Sensor **"Verfügbarkeit"** (Zustand: Prozent jetzt online; Attribute mit den Zahlen, dem Puls und den ausgefallenen Geräten). Sie brauchen keine Administratorrechte, wer das Dashboard sieht, sieht also die Zahlen. Der Ausfall-Puls hat den Messpunkt des Panels (er folgt deiner Einstellung "Animationen" und "Bewegung reduzieren" deines Systems). Nur Administratoren erhalten den Pfeil, ein Tipp auf eine Kachel öffnet das Panel. Im Editor kannst du den Sensor wählen; ohne Wahl findet ihn die Karte selbst.
 
 <details>
 <summary><b>Die Karte fehlt unter "Karte hinzufügen"</b></summary>
