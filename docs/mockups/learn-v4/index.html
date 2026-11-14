@@ -57,12 +57,23 @@ h1{margin:0 0 4px;font-size:21px}.sub{color:var(--t2);font-size:13px;margin:0 0 
 .s-lg{display:grid;grid-template-columns:repeat(4,1fr);gap:.8em;background:#00000030;border-radius:1.3em;padding:1em}.s-lg div{text-align:center;font-size:.85em;color:#fff;position:relative}.s-lg i{display:grid;place-items:center;aspect-ratio:1;border-radius:1.2em;font-style:normal;font-size:2.2em;margin-bottom:.15em}.s-lg .bd{position:absolute;top:-.4em;right:.1em;background:#e53935;color:#fff;border-radius:99px;font-size:.9em;padding:0 .45em;line-height:1.5}
 .s-kopf{display:flex;gap:.6em;justify-content:flex-end;align-items:center;font-size:.9em;color:#ffffffb0}.s-kopf i{font-style:normal;border:1px solid #ffffff55;border-radius:50%;width:2.2em;height:2.2em;display:grid;place-items:center;color:#fff}
 .s-note{font-size:.9em;color:#ffffffc0;text-align:center}
+.done{display:flex;flex-direction:column;align-items:center;text-align:center;padding:26px 10px 6px;gap:4px}
+.done h2{margin:14px 0 0;font-size:23px;letter-spacing:-.01em}.done p{margin:2px 0 0;color:var(--t2);font-size:13.5px;max-width:420px}
+.done .em{font-size:62px;line-height:1.1;animation:pop .55s cubic-bezier(.3,1.6,.5,1)}@keyframes pop{from{transform:scale(.4);opacity:0}to{transform:none;opacity:1}}
+.ckc{width:76px;height:76px;border-radius:50%;background:linear-gradient(145deg,#4caf50,#2e7d32);display:grid;place-items:center;position:relative;box-shadow:0 0 0 9px #43a04722;animation:pop .5s cubic-bezier(.3,1.6,.5,1)}
+.ckc::after{content:"";position:absolute;inset:-9px;border-radius:50%;border:2px solid #43a047aa;animation:rg 1.3s ease-out 1 forwards}@keyframes rg{from{transform:scale(.8);opacity:1}to{transform:scale(1.6);opacity:0}}
+.ck path{stroke-dasharray:32;animation:dr .5s .2s ease-out backwards}@keyframes dr{from{stroke-dashoffset:32}to{stroke-dashoffset:0}}
+.cfw{position:relative;width:170px;height:96px;display:grid;place-items:center}.cfw i{position:absolute;border-radius:3px;opacity:.95;animation:pop .6s backwards}
+.ckt{width:72px;height:72px;border-radius:21px;border:3px solid #43a047;background:#43a04724;display:grid;place-items:center;animation:pop .5s cubic-bezier(.3,1.6,.5,1)}
+.sect{margin:20px 2px 0;font-size:14px;font-weight:600;display:flex;align-items:center;gap:10px}.sect small{color:var(--t2);font-weight:400}.sect::after{content:"";flex:1;height:1px;background:var(--ln)}
+.head.min{padding-bottom:0}
 </style><body>
 <h1>Mehr erfahren: Variante A2, klickbar</h1>
 <p class="sub">Karten mit einer kleinen Skizze der Funktion, Artikel mit Reitern, "Weiter" und "Zurück". Alles ist anklickbar. Die Daten in den Skizzen sind erfunden. Der Assistent gilt beim Schliessen immer als beendet.</p>
 <div class="bar">
 <div class="grp"><label>Ansicht</label><div class="sub-tabs" data-k="mode" style="width:220px"><div class="seg-pill"></div><button class="sub-tab on" data-act="mode" data-v="desktop">Desktop</button><button class="sub-tab" data-act="mode" data-v="phone">Handy</button></div></div>
 <div class="grp"><label>Einstieg</label><div class="sub-tabs" data-k="entry" style="width:380px"><div class="seg-pill"></div><button class="sub-tab on" data-act="entry" data-v="wizard">Nach dem Assistenten</button><button class="sub-tab" data-act="entry" data-v="settings">Einstellungen › Panel</button></div></div>
+<div class="grp"><label>Kopf</label><div class="sub-tabs" data-k="hero" style="width:330px"><div class="seg-pill"></div><button class="sub-tab" data-act="hero" data-v="1">🎉 Party</button><button class="sub-tab on" data-act="hero" data-v="2">Haken rund</button><button class="sub-tab" data-act="hero" data-v="3">Haken eckig</button></div></div>
 <button class="rs" data-act="restart">↺ Von vorn</button></div>
 <div id="stage" class="stage desktop"></div>
 <div class="legend"><b>Klickbar:</b> Karten öffnen das Thema; Reiter oben, "←" und die Knöpfe unten wechseln zwischen den Themen; "✕" schliesst. Bei "Einstellungen › Panel" öffnet "Themen ansehen" dieselbe Übersicht (ganz unten im Panel, unter dem Einrichtungsassistenten). Nach dem Schliessen kann man die Demo mit "Von vorn" neu starten.<br><b>Schlichte Regeln aus dem Panel:</b> Reiter als Reiterleiste mit gleitender Kapsel, Pfeile als runder Pfeil-Knopf (<code>.cbtn</code>), auf dem Handy Vollbild.</div>
@@ -104,7 +115,12 @@ const SK={
  cards:f=>`<div class="s-dc"><div class="ring"><i>94 %</i></div><ul><li style="--c:#43a047"><span>Stabil</span><b>31</b></li><li style="--c:#f9a825"><span>Instabil</span><b>2</b></li><li style="--c:#e53935"><span>Ausgefallen</span><b>1</b></li></ul></div>`+(f?`<div class="s-dc2"><div class="n">2</div>Geräte ausgefallen, längster Ausfall 1 Std. 12 Min.<div class="r"><span>Garage Sensor</span><em>1 Std. 12 Min.</em><span class="pz">Pausieren</span></div><div class="r"><span>Gartenlicht</span><em>14 Min.</em><span class="pz">Pausieren</span></div></div>`:""),
  lau:f=>(f?`<div class="s-kopf"><span>Favoriten</span><i>⚡</i><i>⚙</i><i>▦</i></div>`:"")+`<div class="s-lg"><div><i style="background:#b3571b">⚡</i>Routinen</div><div><i style="background:#4a3aa8">✨</i>Magic Push</div><div><i style="background:#2b6cb0">📋</i>Protokoll</div><div><i style="background:#2e7d32">⟳</i>Updates<span class="bd">3</span></div>`+(f?`<div><i style="background:#555">⚙</i>Einstellungen</div><div><i style="background:#0f7a8a">🏠</i>Dashboard</div><div><i style="background:#a33463">💡</i>Alle Lichter aus</div><div><i style="background:#7a5a10">🔗</i>Router</div>`:"")+`</div>`};
 const CH='<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round"><path d="M9 5l7 7-7 7"/></svg>';
-const S={mode:"desktop",entry:"wizard",open:true,view:"overview",i:0,fx:"dlg",pg:{}};
+const CHK='<svg class="ck" width="40" height="40" viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12.5l4.5 4.5L19 7.5"/></svg>';
+const CHG='<svg class="ck" width="42" height="42" viewBox="0 0 24 24" fill="none" stroke="#43a047" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12.5l4.5 4.5L19 7.5"/></svg>';
+function hero(){const v=S.hero;
+ const ic=v===1?`<div class="em">🎉</div>`:v===2?`<div class="ckc">${CHK}</div>`:`<div class="cfw"><i style="left:14px;top:18px;width:9px;height:9px;background:#7c5cff;transform:rotate(20deg)"></i><i style="left:38px;top:62px;width:7px;height:12px;background:#ff8a3d;transform:rotate(-30deg)"></i><i style="left:6px;top:54px;width:8px;height:8px;border-radius:50%;background:#2bb7da"></i><i style="right:12px;top:16px;width:8px;height:12px;background:#e8528b;transform:rotate(35deg)"></i><i style="right:34px;top:64px;width:9px;height:9px;background:#ffd54f;transform:rotate(15deg)"></i><i style="right:4px;top:52px;width:7px;height:7px;border-radius:50%;background:#7c5cff"></i><div class="ckt">${CHG}</div></div>`;
+ return`<div class="done">${ic}<h2>Einrichtung abgeschlossen</h2><p>Alles ist gespeichert. Du kannst jetzt loslegen.</p></div><div class="sect">Möchtest du mehr erfahren? <small>Das ist freiwillig.</small></div>`}
+const S={hero:2,mode:"desktop",entry:"wizard",open:true,view:"overview",i:0,fx:"dlg",pg:{}};
 const $=s=>document.querySelector(s),stage=$("#stage");
 function place(el,anim){const on=el.querySelector(".sub-tab.on"),p=el.querySelector(".seg-pill");if(!on||!p)return;const k=el.dataset.k;
  const prev=S.pg[k];p.classList.remove("sl");
@@ -115,8 +131,8 @@ function steps(a,c){return`<div class="tl">`+a.map((s,n)=>`<div class="st"><i st
 function article(t,n){return`<div class="art2"><div class="txt"><h2>${t.title}</h2>`+t.blocks.map(b=>b.h?`<h3>${b.h}</h3>`+(b.p||[]).map(x=>`<p>${x}</p>`).join("")+(b.steps?steps(b.steps,t.ac):""):`<div class="tip" style="border-color:${t.ac}">${b.tip}</div>`).join("")+`</div><aside><div class="hero ${t.g}"><div class="sketch">${SK[t.id](true)}</div></div><div class="fcap">${t.cap}</div></aside></div>`}
 function dialog(){const w=S.entry==="wizard";let h="",b="",f="";
  if(S.view==="overview"){
-  h=`<div class="head"><b>${w?"Einrichtung gespeichert ✓":"Mehr erfahren"}<small>${w?"Entdecke, was Device Panel noch kann. Schliessen ist jederzeit möglich.":"Vier Themen, je etwa 2 Minuten"}</small></b><button class="x" data-act="close" aria-label="Schliessen">✕</button></div>`;
-  b=`<div class="scroll ${S.fx==="page"?"fx":""}"><div class="cards">`+T.map((t,n)=>`<button class="cd" data-act="topic" data-i="${n}"><div class="sk ${t.g}"><div class="sketch">${SK[t.id](false)}</div></div><div class="tx"><b>${t.name}</b><small>${t.short}</small><div class="meta"><span>${t.mins} Min. · Lesen</span><span class="cbtn">${CH}</span></div></div></button>`).join("")+`</div>${w?`<div class="hint">Du findest das später unter Einstellungen › Panel › Mehr erfahren.</div>`:""}</div>`;
+  h=w?`<div class="head min"><b></b><button class="x" data-act="close" aria-label="Schliessen">✕</button></div>`:`<div class="head"><b>Mehr erfahren<small>Vier Themen, je etwa 2 Minuten</small></b><button class="x" data-act="close" aria-label="Schliessen">✕</button></div>`;
+  b=`<div class="scroll ${S.fx==="page"?"fx":""}">${w?hero():""}<div class="cards">`+T.map((t,n)=>`<button class="cd" data-act="topic" data-i="${n}"><div class="sk ${t.g}"><div class="sketch">${SK[t.id](false)}</div></div><div class="tx"><b>${t.name}</b><small>${t.short}</small><div class="meta"><span>${t.mins} Min. · Lesen</span><span class="cbtn">${CH}</span></div></div></button>`).join("")+`</div>${w?`<div class="hint">Du findest das später unter Einstellungen › Panel › Mehr erfahren.</div>`:""}</div>`;
   f=`<div class="foot"><button class="pri" data-act="close">${w?"Fertig":"Schliessen"}</button></div>`}
  else{const t=T[S.i],last=S.i===T.length-1;
   h=`<div class="head"><button class="back" data-act="overview" aria-label="Zur Übersicht">←</button><b>${t.name}<small>Thema ${S.i+1} von 4 · ${t.mins} Min.</small></b><button class="x" data-act="close" aria-label="Schliessen">✕</button></div><div class="tabsbar"><div class="sub-tabs" data-k="topics"><div class="seg-pill"></div>`+T.map((x,n)=>`<button class="sub-tab ${n===S.i?"on":""}" data-act="topic" data-i="${n}">${x.tab}</button>`).join("")+`</div></div>`;
@@ -133,6 +149,7 @@ function render(){stage.className="stage "+S.mode+(S.mode==="phone"?" m":"");sta
  placeAll(S.fx==="page");S.fx=null}
 document.addEventListener("click",e=>{const a=e.target.closest("[data-act]");if(!a)return;const k=a.dataset.act,v=a.dataset.v;
  if(k==="mode"||k==="entry"){document.querySelectorAll(`[data-act="${k}"]`).forEach(x=>x.classList.toggle("on",x===a));S[k]=v;if(k==="entry"){S.open=v==="wizard";S.view="overview";S.fx="dlg"}placeAll(true);render();return}
+ if(k==="hero"){document.querySelectorAll('[data-act="hero"]').forEach(x=>x.classList.toggle("on",x===a));S.hero=+v;S.entry="wizard";S.open=true;S.view="overview";S.fx="page";document.querySelectorAll('[data-act="entry"]').forEach(x=>x.classList.toggle("on",x.dataset.v==="wizard"));placeAll(true);render();return}
  if(k==="restart"){S.open=S.entry==="wizard";S.view="overview";S.fx="dlg"}
  else if(k==="open"){S.open=true;S.view="overview";S.fx="dlg"}
  else if(k==="close"){S.open=false}
