@@ -1,5 +1,5 @@
 // Push-Aktionen in Magic Push (2.218.0, docs/mockups/magic-actions-v1, A): Schalter im Schritt "Text", bis zu drei Push-Aktionen, Art als Reiterleiste
-// (Routine, Erinnern, Öffnen, Erledigt), durchsuchbare Routinen, Variablen im Titel, Vorschau mit Knöpfen, Prüfung vor "Weiter", Speichern und
+// (Routine, Erinnern, Öffnen, Quittieren), durchsuchbare Routinen, Variablen im Titel, Vorschau mit Knöpfen, Prüfung vor "Weiter", Speichern und
 // Bearbeiten. Deutsch und Englisch, Desktop und Handy, echte Eingaben und Taps.
 import { chromium } from "playwright-core";
 import { launchOptions, outDir } from "../lib.mjs";
@@ -9,8 +9,8 @@ let ok = true;
 const check = (l, c, i = "") => { ok &&= !!c; console.log(`${c ? "PASS" : "FAIL"} ${l}${i ? " - " + i : ""}`); };
 const R = `document.querySelector("device-panel").shadowRoot`;
 const T = {
-  de: { sw: "Push-Aktionen", kinds: ["Routine", "Erinnern", "Öffnen", "Erledigt"], add3: "Push-Aktion hinzufügen (3 von 3)", search: "Routine suchen", doneHint: "Schliesst die Meldung", change: "Ändern" },
-  en: { sw: "Push actions", kinds: ["Routine", "Remind", "Open", "Done"], add3: "Add push action (3 of 3)", search: "Search routines", doneHint: "Closes the notification", change: "Change" },
+  de: { sw: "Push-Aktionen", kinds: ["Routine", "Erinnern", "Öffnen", "Quittieren"], add3: "Push-Aktion hinzufügen (3 von 3)", search: "Routine suchen", doneHint: "Bestätigt die Meldung", change: "Ändern" },
+  en: { sw: "Push actions", kinds: ["Routine", "Remind", "Open", "Acknowledge"], add3: "Add push action (3 of 3)", search: "Search routines", doneHint: "Acknowledges the notification", change: "Change" },
 };
 const SEED = (id, name, extra = {}) => ({ id, device_id: "d", entity_id: "switch.plug", name, action: "on", back_s: null, kind: "repeat", delay_s: null, date: null, time: "06:30", repeat: "daily", weekdays: null, mday: null, enabled: true, push: false, target: null, created: Date.now() / 1000, ...extra });
 
@@ -95,7 +95,7 @@ for (const lang of ["de", "en"]) {
       check(`[${tag}] Tastatur weg: Fusszeile und Fortschritt wieder da`, await ev(`const w=r.querySelector("${W}"); return !w.classList.contains("mg-kb") && getComputedStyle(r.querySelector('${W} .mgw-foot')).display !== "none"`));
     }
 
-    // --- Zweite Karte: Erinnern; dritte: Erledigt; Grenze ---
+    // --- Zweite Karte: Erinnern; dritte: Quittieren; Grenze ---
     await tap('[data-mg="aadd"]');
     await wait(`return r.querySelectorAll('${W} .mg-pa-card').length === 2`);
     await ev(`const c=r.querySelectorAll('${W} .mg-pa-card')[1]; c.querySelector('[data-mg="akind"][data-v="remind"]').click();`);

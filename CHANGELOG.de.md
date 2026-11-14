@@ -16,6 +16,8 @@ Die Push-Aktion "Erinnern" kann morgen zu einer frei gewählten Uhrzeit erinnern
 - **Push-Aktion "Erinnern", morgen zu deiner Uhrzeit:** Der Reiter "Morgen" (vorher: "Morgen 8:00") zeigt unter der Reiterleiste ein Zeitfeld, vorbelegt mit 08:00. Die Meldung kommt morgen zu dieser Uhrzeit nochmals (vorher: zum nächsten 8:00 Uhr, das konnte heute sein). "15 Min." und "1 Std." bleiben wie sie sind. Solange die Uhrzeit leer ist, ist "Weiter" gesperrt. Bestehende Meldungen laufen weiter und erinnern morgen um 08:00.
 - **Push-Aktionen, Variablen beim Titel:** Jede Push-Aktion zeigt die Variablen-Chips unter ihrem eigenen Titelfeld, damit klar ist, dass sie auch dort gelten; ein Tipp fügt die Variable in diesen Titel ein.
 
+- **Push-Aktion "Erledigt" heisst jetzt "Quittieren":** Sie bestätigt die Meldung; es gibt keine Wiederholung, bis das Gerät wieder normal ist. Der alte Name klang, als sei das Problem gelöst. Gespeicherte Meldungen laufen weiter.
+
 ### Behoben
 
 - **Tastatur deckte das Textfeld zu (Handy):** Im Assistenten einer Magic-Push-Meldung holt ein Tipp in ein beliebiges Textfeld (Titel einer Push-Aktion, Text, Name) das Feld in die sichtbare Fläche über der Tastatur. Solange die Tastatur oben ist, weichen Fortschrittsleiste und Fusszeile, damit für das Feld Platz bleibt; beim Schliessen der Tastatur kommen sie zurück.
