@@ -9,11 +9,12 @@ die Versionsnummern folgen [Semantic Versioning](https://semver.org/lang/de/).
 
 ## [2.224.1] - 2026-11-14
 
-Der Artikel zu Routinen auf der Lernseite beschreibt auch die Nutzung als Timer.
+Der Artikel zu Routinen auf der Lernseite beschreibt auch die Nutzung als Timer und als Schalter und Knopf in Home Assistant.
 
 ### Geändert
 
 - **Lernseite, Thema "Routinen":** Neuer Abschnitt "Auch als Timer" mit drei Wegen am Beispiel eines Ladegeräts an einer Steckdose: einmal ablaufen ("Wann" › "In …", zum Beispiel in 2 Stunden, Aktion "aus"), ein und nach einer Dauer wieder aus ("Zurückschalten" › "Nach Dauer") und immer wieder (Auslöser "Steckdose ist ein", mindestens 2 Stunden lang erfüllt, Aktion "aus": jedes Einschalten startet den Timer neu). Dazu der Hinweis auf die möglichen Dauern (10 Sekunden bis 7 Tage); die Kachel nennt den Timer ebenfalls. README (Routinen) ergänzt.
+- **Lernseite, Thema "Routinen":** Neuer Abschnitt "Als Schalter und Knopf in Home Assistant": Der Schalter im letzten Schritt legt einen Schalter (Routine ein- und ausschalten) und einen Knopf an (jetzt ausführen, auch bei Pause oder ausgeschalteter Routine), nutzbar in Automationen, auf Dashboards und per Sprache; beide verschwinden mit der Routine oder wenn die Option ausgeschaltet wird.
 
 ## [2.224.0] - 2026-11-14
 

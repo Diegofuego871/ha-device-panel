@@ -2528,6 +2528,7 @@ export const STRINGS = {
           { tip: "**Gut zu wissen:** \"Wie vorher\" merkt sich die Szene vor dem Schalten. So wird eine Lampe kurz heller und danach wieder genau wie vorher. \"Jetzt ausführen\" probiert eine Routine sofort aus." },
           { h: "Sofort zurückschalten", p: ["Auf Wunsch schickt die Routine einen Push im Moment des Schaltens. Wartet noch ein Zurückschalten, trägt er die Push-Aktion \"Sofort zurückschalten\"."] },
           { h: "Kontrolle und Pause", p: ["Jede Routine hat ein Protokoll mit Trace: jeder Schritt der Reihe nach, kopierbar für die Fehlersuche. Der Schalter \"Alle Routinen pausieren\" hält alles an, auf Wunsch bis zu einer Zeit."] },
+          { h: "Als Schalter und Knopf in Home Assistant", p: ["Im letzten Schritt legt der Schalter \"Als Schalter und Knopf in Home Assistant\" zwei Entitäten an: einen **Schalter**, der die Routine ein- und ausschaltet, und einen **Knopf**, der sie jetzt ausführt, auch bei Pause oder ausgeschalteter Routine. Du kannst sie in Automationen, auf Dashboards und per Sprache nutzen, zum Beispiel einen Knopf \"Lüfter 2 Stunden\" auf dem Dashboard. Beide verschwinden mit der Routine oder wenn du die Option wieder ausschaltest."] },
         ],
       },
       cards: {
@@ -5563,6 +5564,7 @@ export const STRINGS = {
           { tip: "**Good to know:** \"As before\" remembers the scene before switching. A lamp can get briefly brighter and afterwards be exactly as it was. \"Run now\" tries a routine right away." },
           { h: "Switch back right away", p: ["If you like, the routine sends a push at the moment of switching. While a switch back is still waiting, it carries the push action \"Switch back now\"."] },
           { h: "Control and pause", p: ["Every routine has a log with a trace: every step in order, copyable for troubleshooting. The switch \"Pause all routines\" stops everything, until a time if you like."] },
+          { h: "As a switch and button in Home Assistant", p: ["In the last step, the switch \"As a switch and button in Home Assistant\" creates two entities: a **switch** that turns the routine on and off, and a **button** that runs it now, also while paused or while the routine is off. You can use them in automations, on dashboards and by voice, for example a button \"Fan 2 hours\" on the dashboard. Both disappear with the routine or when you switch the option off again."] },
         ],
       },
       cards: {

@@ -12,13 +12,13 @@ const R = `document.querySelector("device-panel").shadowRoot`;
 const T = {
   de: {
     ttl: "Mehr erfahren", btn: "Themen ansehen", wiz: "Einrichtungsassistent", done: "Einrichtung abgeschlossen", doneText: "Alles ist gespeichert. Du kannst jetzt loslegen.",
-    pauseWord: "Pausieren bis online", pausedPill: "Pausiert bis", pausedChip: "Pausiert", timerH: "Auch als Timer", timerBits: ["In …", "2 Stunden", "Nach Dauer", "Steckdose ist ein"], more: "Möchtest du mehr erfahren?", later: "Du findest das später unter Einstellungen › Panel › Mehr erfahren.", finish: "Fertig", close: "Schliessen", overview: "Übersicht",
+    pauseWord: "Pausieren bis online", pausedPill: "Pausiert bis", pausedChip: "Pausiert", timerH: "Auch als Timer", timerBits: ["In …", "2 Stunden", "Nach Dauer", "Steckdose ist ein"], haH: "Als Schalter und Knopf in Home Assistant", haBits: ["Schalter", "Knopf", "Automationen", "Dashboards"], more: "Möchtest du mehr erfahren?", later: "Du findest das später unter Einstellungen › Panel › Mehr erfahren.", finish: "Fertig", close: "Schliessen", overview: "Übersicht",
     names: ["Ausgefallene Geräte", "Batterie-Warnungen", "Magic Push", "Routinen", "Dashboard-Karten", "App-Launcher"], tabs: ["Ausfälle", "Batterie", "Magic Push", "Routinen", "Karten", "Launcher"],
     titles: ["Wenn ein Gerät fehlt", "Bevor die Batterie leer ist", "Meldungen nach Mass", "Schalten nach Plan", "Dein Dashboard, live", "Alles in einem Knopf"], of: (i) => `Thema ${i} von 6 · 2 Min.`, read: "2 Min. · Lesen",
   },
   en: {
     ttl: "Learn more", btn: "View topics", wiz: "Setup wizard", done: "Setup complete", doneText: "Everything is saved. You can get started now.",
-    pauseWord: "Pause until online", pausedPill: "Paused until", pausedChip: "Paused", timerH: "Also as a timer", timerBits: ["In …", "2 hours", "After a time", "Socket is on"], more: "Would you like to learn more?", later: "You can find this later under Settings › Panel › Learn more.", finish: "Done", close: "Close", overview: "Overview",
+    pauseWord: "Pause until online", pausedPill: "Paused until", pausedChip: "Paused", timerH: "Also as a timer", timerBits: ["In …", "2 hours", "After a time", "Socket is on"], haH: "As a switch and button in Home Assistant", haBits: ["switch", "button", "automations", "dashboards"], more: "Would you like to learn more?", later: "You can find this later under Settings › Panel › Learn more.", finish: "Done", close: "Close", overview: "Overview",
     names: ["Offline devices", "Battery warnings", "Magic Push", "Routines", "Dashboard cards", "App launcher"], tabs: ["Outages", "Battery", "Magic Push", "Routines", "Cards", "Launcher"],
     titles: ["When a device goes missing", "Before the battery runs out", "Notifications made to measure", "Switching on a schedule", "Your dashboard, live", "Everything in one button"], of: (i) => `Topic ${i} of 6 · 2 min`, read: "2 min · Read",
   },
@@ -129,6 +129,7 @@ for (const lang of ["de", "en"]) {
     // Routinen: der Abschnitt "Auch als Timer" mit den drei Wegen (einmal, ein dann aus, immer wieder am Beispiel Ladegerät)
     await topicTap(3);
     check(`[${tag}] Routinen: Abschnitt "${L.timerH}" mit drei Schritten und den Namen aus dem Panel`, await ev(`const h=[...r.querySelectorAll("${D} .lrn-txt h3")].find(x => x.textContent === ${JSON.stringify(L.timerH)}); if (!h) return false; let n = h.nextElementSibling; while (n && !n.classList.contains("lrn-tl")) n = n.nextElementSibling; const t = r.querySelector("${D} .lrn-txt").innerText; return !!n && n.querySelectorAll(".lt-st").length === 3 && ${JSON.stringify(L.timerBits)}.every(b => t.includes(b))`));
+    check(`[${tag}] Routinen: Abschnitt "${L.haH}" (Schalter und Knopf, nutzbar in Automationen und Dashboards)`, await ev(`const h=[...r.querySelectorAll("${D} .lrn-txt h3")].find(x => x.textContent === ${JSON.stringify(L.haH)}); if (!h) return false; const p = h.nextElementSibling.innerText; return ${JSON.stringify(L.haBits)}.every(b => p.includes(b))`));
     await ev(`const h=[...r.querySelectorAll("${D} .lrn-txt h3")].find(x => x.textContent === ${JSON.stringify(L.timerH)}); h.scrollIntoView({block: "start"})`);
     await shot("6-article-rt-timer");
     await tap(`${D} .lrn-back`);

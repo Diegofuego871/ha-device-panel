@@ -9,11 +9,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/).
 
 ## [2.224.1] - 2026-11-14
 
-The article on routines on the learn page also describes the use as a timer.
+The article on routines on the learn page also describes the use as a timer and as a switch and button in Home Assistant.
 
 ### Changed
 
 - **Learn page, topic "Routines":** New section "Also as a timer" with three ways, using a charger on a socket as the example: run out once ("When" › "In …", for example in 2 hours, action "off"), on and off again after a duration ("Switch back" › "After a time") and again and again (trigger "Socket is on", met for at least 2 hours, action "off": every switch-on restarts the timer). Plus a note on the possible durations (10 seconds to 7 days); the tile mentions the timer too. README (routines) extended.
+- **Learn page, topic "Routines":** New section "As a switch and button in Home Assistant": the switch in the last step creates a switch (turn the routine on and off) and a button (run now, also while paused or while the routine is off), usable in automations, on dashboards and by voice; both disappear with the routine or when the option is switched off.
 
 ## [2.224.0] - 2026-11-14
 

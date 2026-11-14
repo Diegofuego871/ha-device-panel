@@ -14,6 +14,7 @@ Einstieg für jede neue Claude-Code-Session. Zuerst diese Datei lesen, dann
 ## Stand (2.224.1, Routinen-Artikel: Timer)
 
 - `strings.js` `lrnTopics.rt`: Abschnitt "Auch als Timer" (drei Wege am Beispiel Ladegerät: "In …", "Zurückschalten" › "Nach Dauer", Auslöser mit "mindestens so lange erfüllt"; Dauern `DELAY_MIN`/`BACK_MIN` 10 s bis `*_MAX` 7 Tage in `routines.py`, `hold_s` bis `magic.FOR_MAX` 7 Tage), Kachel-Text `short` nennt den Timer. Die Namen der Auswahlen stammen aus dem Panel (`rtKindIn`, `rtBackKindDuration`); ändern sie sich, den Artikel nachführen. Test: `learn-e2e` (Abschnitt mit drei Schritten und den Panel-Namen). README (Routinen): Zeile "Als Timer".
+- Ergänzt (Nutzerwunsch, noch vor dem Tag): Abschnitt "Als Schalter und Knopf in Home Assistant" im Routinen-Artikel (Option `ha_switch`, Text `rtHaSwitch`/`rtHaSwitchNote`; Schalter ein/aus und Knopf "jetzt ausführen", auch bei Pause). `PANEL_VERSION` 508.
 - Offizielles Release: 2.224.1 ist das erste offizielle seit 2.215.1; die Notes fassen alles ab 2.216.0 zusammen (2.223.0 übersprungen).
 
 ## Stand (2.224.0, Lernseite: Ausfälle und Batterie)
