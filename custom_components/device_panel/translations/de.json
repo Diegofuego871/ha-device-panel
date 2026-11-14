@@ -287,6 +287,12 @@
         "hacs": "Marketplace",
         "devices": "Geräte-Firmware"
       }
+    },
+    "pause_mode": {
+      "options": {
+        "online": "Bis wieder online",
+        "date": "Bis Datum"
+      }
     }
   },
   "entity": {
@@ -345,6 +351,37 @@
       "routines_paused": {
         "name": "Routinen pausiert"
       }
+    }
+  },
+  "services": {
+    "pause_monitoring": {
+      "name": "Überwachung pausieren",
+      "description": "Nimmt ein Gerät für eine Weile aus der Überwachung: bis es wieder online ist oder bis zu einem Datum. Nur für Administratoren.",
+      "fields": {
+        "device_id": {
+          "name": "Gerät",
+          "description": "Das Gerät, das pausiert wird."
+        },
+        "mode": {
+          "name": "Art",
+          "description": "Bis das Gerät wieder online ist, oder bis zu einem Datum."
+        },
+        "until": {
+          "name": "Bis",
+          "description": "Ende der Pause (nur bei der Art \"Datum\")."
+        }
+      }
+    }
+  },
+  "exceptions": {
+    "device_unknown": {
+      "message": "Dieses Gerät gibt es nicht."
+    },
+    "pause_until_missing": {
+      "message": "Wähle, bis wann das Gerät pausiert wird."
+    },
+    "pause_until_past": {
+      "message": "Das Ende der Pause liegt nicht in der Zukunft."
     }
   }
 }

@@ -35,7 +35,7 @@ const pulse = Array.from({ length: 48 }, (_, i) => (state === "offline" ? (i > 3
 const attrs = state === "offline"
   ? { total: 169, online: 166, stable: 165, flaky: 1, offline: 3, no_data: 0, no_status: 4, paused: 1, warnings: 2, avg24: 98.6, outages: 5, affected: 3,
       longest_since: iso(195), longest_at_least: false, pulse,
-      offline_list: [{ name: "Beispiel Lampe", since: iso(195), at_least: false }, { name: "Beispiel Sensor", since: iso(42), at_least: false }, { name: "Beispiel Stecker", since: iso(7), at_least: true }] }
+      offline_list: [{ id: "dev1", name: "Beispiel Lampe", since: iso(195), at_least: false }, { id: "dev2", name: "Beispiel Sensor", since: iso(42), at_least: false }, { id: "dev3", name: "Beispiel Stecker", since: iso(7), at_least: true }] }
   : { total: 169, online: 169, stable: 169, flaky: 0, offline: 0, no_data: 0, no_status: 4, paused: 1, warnings: 0, avg24: 100, outages: 0, affected: 0,
       longest_since: null, longest_at_least: false, pulse, offline_list: [] };
 const states = state === "missing" ? {} : { "sensor.device_panel_availability": { entity_id: "sensor.device_panel_availability", state: state === "offline" ? "98.2" : "100.0", last_updated: "2026-11-13T12:00:00Z", attributes: attrs } };
@@ -48,7 +48,7 @@ if (q.get("xss") === "1") {
 }
 // themes.darkMode wie bei Home Assistant; vars=0 lässt die CSS-Variablen des Themas weg (Thema ohne eigene Farben)
 if (q.get("vars") === "0") document.documentElement.setAttribute("data-novars", "");
-const hass = { themes: { darkMode: (q.get("theme") || "light") === "dark" }, states, entities, locale: { language: lang }, language: lang, user: { is_admin: q.get("admin") !== "0" }, callService: () => Promise.reject(new Error("keine Dienste")), callWS: (m) => Promise.resolve(m.type === "frontend/get_user_data" ? { value: q.get("anim") === "off" ? { anim: false } : null } : null) };
+const hass = { themes: { darkMode: (q.get("theme") || "light") === "dark" }, states, entities, locale: { language: lang }, language: lang, user: { is_admin: q.get("admin") !== "0" }, callService: (d, s, data) => { (window.__calls ||= []).push({ d, s, data }); return q.get("pzerr") === "1" ? Promise.reject(new Error("Nur Administratoren dürfen das")) : Promise.resolve(); }, callWS: (m) => Promise.resolve(m.type === "frontend/get_user_data" ? { value: q.get("anim") === "off" ? { anim: false } : null } : null) };
 const root = document.createElement("home-assistant");
 root.hass = hass;
 document.body.append(root);

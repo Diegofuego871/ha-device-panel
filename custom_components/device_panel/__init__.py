@@ -124,6 +124,7 @@ from .summary import PLATFORMS, SUMMARY_STORE_KEY, SummaryCoordinator
 from .device_update import UpdateError, held_until
 from .device_update import last_error as update_last_error
 from .device_update import async_install as async_install_update
+from . import services
 from .monitor_pause import MonitorPauseWatch, async_set_pause
 from .restart_pending import async_pending as async_restart_needed
 from .update_queue import DATA_UPDATE_QUEUE, available as update_available, get_queue as get_update_queue
@@ -260,6 +261,7 @@ async def async_setup_entry(hass: HomeAssistant, entry: ConfigEntry) -> bool:
     await hass.config_entries.async_forward_entry_setups(entry, PLATFORMS)
     await update_check.async_load_panel_settings(hass)
     update_check.async_start_daily(hass)
+    services.async_register(hass)
     entry.async_on_unload(entry.add_update_listener(_async_options_updated))
     return True
 
@@ -309,6 +311,7 @@ async def async_unload_entry(hass: HomeAssistant, entry: ConfigEntry) -> bool:
     if not await hass.config_entries.async_unload_platforms(entry, PLATFORMS):
         return False
     hass.data.pop(DATA_SUMMARY, None)
+    services.async_unregister(hass)
     if hass.data.pop(DATA_PANEL_REGISTERED, None):
         frontend.async_remove_panel(hass, PANEL_URL_PATH)
     if (notifier := hass.data.pop(DATA_OUTAGE, None)) is not None:

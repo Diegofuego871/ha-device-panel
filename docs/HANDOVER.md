@@ -11,6 +11,11 @@ Einstieg für jede neue Claude-Code-Session. Zuerst diese Datei lesen, dann
 
 - `charge.py` `known_rechargeable`: Lademeldung gilt (global + Gerät/Integration), oder am Gerät ausdrücklich "Ein", oder Live-Aktivität für das Gerät an; `rechargeable()` und `charging_of()` nutzen sie (vorher nur `enabled()` mit globalem Schalter). Test `test_rechargeable_by_device_charge_or_live`.
 
+## Stand (2.217.0, Pausieren aus der Karte)
+
+- `services.py`: Administrator-Dienst `device_panel.pause_monitoring` (`async_register_admin_service`; Prüfung durch HA, nicht durch die Karte), registriert in `async_setup_entry`, entfernt beim Entladen; rechnet danach den Koordinator der Sensoren neu. `services.yaml`, Texte in `strings.json`/Übersetzungen (services, exceptions, selector `pause_mode`). `summary._availability`: `offline_list` trägt die `id`.
+- `card.js`: Knopf `[data-pause]` je Zeile (nur Administratoren), Fenster `dialog.pause-dlg` im Shadow-DOM wie im Panel (Texte `dpz*` aus `strings.js`), Fehler des Dienstes im Fenster. Achtung: Regeln `.olist button` des Panels treffen den Knopf (Rand, Breite, ab drittem ausgeblendet auf dem Handy): `CARD_CSS` überschreibt sie. Tests: `tests/test_services.py`, `card-e2e.mjs` (Sichtbarkeit auf dem Handy, Dienst, Fehler, kein Knopf ohne Administrator).
+
 ## Stand (2.216.0, Dashboard-Karten)
 
 - `panel/card.js`: drei Elemente (`device-panel-availability-card`, `device-panel-offline-card`, `device-panel-card`) mit gemeinsamer Basisklasse; nutzt `PANEL_CSS` und `STRINGS` des Panels (Cache-Buster `?v=` aus `import.meta.url`), eigene kleine Fassung von Ring und Puls-Kurve. Liest nur den Sensor "Verfügbarkeit" (`summary._availability`, `sensor.AvailabilitySensor`, Attribute `pulse`/`offline_list` nicht im Recorder). Registrierung `_register_cards` in `__init__.py` (`frontend.add_extra_js_url`, einmal je Lauf, in try/except). Pfeil und Tippen nur für Administratoren; kein Tiefenlink mit Filter (das Panel kennt nur `device`, `app`, `tab`).

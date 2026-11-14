@@ -287,6 +287,12 @@
         "hacs": "Marketplace",
         "devices": "Device firmware"
       }
+    },
+    "pause_mode": {
+      "options": {
+        "online": "Until online again",
+        "date": "Until date"
+      }
     }
   },
   "entity": {
@@ -345,6 +351,37 @@
       "routines_paused": {
         "name": "Routines paused"
       }
+    }
+  },
+  "services": {
+    "pause_monitoring": {
+      "name": "Pause monitoring",
+      "description": "Takes a device out of monitoring for a while: until it is online again or until a date. Administrators only.",
+      "fields": {
+        "device_id": {
+          "name": "Device",
+          "description": "The device to pause."
+        },
+        "mode": {
+          "name": "Mode",
+          "description": "Until the device is online again, or until a date."
+        },
+        "until": {
+          "name": "Until",
+          "description": "End of the pause (only for the mode \"date\")."
+        }
+      }
+    }
+  },
+  "exceptions": {
+    "device_unknown": {
+      "message": "This device does not exist."
+    },
+    "pause_until_missing": {
+      "message": "Choose until when the device is paused."
+    },
+    "pause_until_past": {
+      "message": "The end of the pause is not in the future."
     }
   }
 }

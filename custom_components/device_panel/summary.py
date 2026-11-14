@@ -91,7 +91,7 @@ def _availability(listing: dict[str, Any], active: list[dict[str, Any]]) -> dict
         "affected": sum(1 for d in monitored if (d.get("avail24") or {}).get("outages")),
         "longest_since": offline[0].get("offline_since") if offline else None,
         "longest_at_least": bool(offline and offline[0].get("since_at_least")),
-        "offline_list": [{"name": str(d["name"]), "since": d.get("offline_since"), "at_least": bool(d.get("since_at_least"))} for d in offline[:4]],
+        "offline_list": [{"id": str(d["id"]), "name": str(d["name"]), "since": d.get("offline_since"), "at_least": bool(d.get("since_at_least"))} for d in offline[:4]],
         "pulse": list(pulse) if pulse else [],
     }
 

@@ -1,0 +1,19 @@
+pause_monitoring:
+  fields:
+    device_id:
+      required: true
+      selector:
+        device:
+    mode:
+      required: false
+      default: online
+      selector:
+        select:
+          translation_key: pause_mode
+          options:
+            - online
+            - date
+    until:
+      required: false
+      selector:
+        datetime:

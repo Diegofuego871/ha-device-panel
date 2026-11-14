@@ -7,6 +7,16 @@ All notable changes to this integration are documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/).
 
+## [2.217.0] - 2026-11-14
+
+A device that is offline can be paused right from the dashboard card.
+
+### Added
+
+- **Pause from the card:** In the card "Offline right now" (and in the overview) every device that is offline has a button "Pause" for administrators. It opens the same window as in the panel: "Until online again" or "Until date" (1 month, 3 months, 1 April or your own date). Errors appear in the window, in the language of Home Assistant. A tap on the button does not open the panel.
+- **Service `device_panel.pause_monitoring`:** The card pauses through this service. It is an administrator service: Home Assistant itself refuses everyone else, also when the user interface is bypassed. Fields: `device_id`, `mode` (`online` or `date`) and `until` (date with time, for `date`). You can use it in automations and scripts too. After pausing, the sensor "Availability" is recalculated at once.
+- The attribute `offline_list` of the sensor "Availability" carries the `id` of each device.
+
 ## [2.216.2] - 2026-11-14
 
 The pulse on the dashboard cards has the moving dot of the panel.
@@ -5987,6 +5997,7 @@ First pre-release.
   GitHub Actions for HACS/hassfest validation and tests.
 
 [2.6.0]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v2.6.0
+[2.217.0]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v2.217.0
 [2.216.2]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v2.216.2
 [2.216.1]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v2.216.1
 [2.216.0]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v2.216.0

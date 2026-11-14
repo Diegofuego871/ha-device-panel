@@ -48,7 +48,13 @@ const CARD_CSS = `
 .kt.tap:hover { border-color: color-mix(in srgb, var(--dp-primary) 45%, var(--dp-divider)); }
 .kt.tap:focus-visible { outline: 2px solid var(--dp-primary); outline-offset: 2px; }
 .kt .k .kchev { display: inline-flex; margin-left: auto; }
-.orow { display: grid; grid-template-columns: 20px minmax(0, 1fr) auto; align-items: center; gap: 8px; padding: 5px 0; font-size: 13.5px; }
+.orow { display: grid; grid-template-columns: 20px minmax(0, 1fr) auto; column-gap: 8px; align-items: center; gap: 8px; padding: 5px 0; font-size: 13.5px; }
+.orow.has-pz { grid-template-columns: 20px minmax(0, 1fr) auto auto; }
+/* Der Knopf liegt in .olist: die Regeln des Panels für Knöpfe dort (volle Breite, ab dem dritten ausgeblendet auf dem Handy) gelten für ihn nicht */
+.olist .orow button.pu-chip { display: inline-flex; width: auto; margin: 0; padding: 3px 10px; grid-template-columns: none; border: 1px solid var(--dp-primary); border-radius: 999px; background: transparent; font-size: 12.5px; }
+dialog.discard-dlg { margin: auto; }
+.pause-dlg .dd-card { text-align: left; }
+.pause-dlg .pu-err { color: var(--dp-error); font-size: 13px; }
 .orow > span:first-child { color: var(--dp-error); display: flex; }
 .orow b { color: var(--dp-error); font-weight: 600; font-variant-numeric: tabular-nums; }
 .orow .name { white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
@@ -91,9 +97,30 @@ class DevicePanelBaseCard extends HTMLElement {
     super();
     this.attachShadow({ mode: "open" });
     // Stile einmal: sie sind gross, nur der Inhalt wird neu gezeichnet. Tippen und Tasten einmal an der Wurzel (nicht je Kachel und Zeichnung)
-    this.shadowRoot.innerHTML = `<style>${PANEL_CSS}${CARD_CSS}</style><div class="body"></div>`;
+    this.shadowRoot.innerHTML = `<style>${PANEL_CSS}${CARD_CSS}</style><div class="body"></div><dialog class="discard-dlg pause-dlg"></dialog>`;
+    this._dlg = this.shadowRoot.querySelector("dialog");
+    this._dlg.addEventListener("click", (ev) => this._onDialogClick(ev));
+    this._dlg.addEventListener("change", (ev) => {
+      const z = this._pz;
+      if (!z || !ev.target.matches?.("[data-field]")) return;
+      const [y, m, d] = String(ev.target.value).split("-").map(Number);
+      z.sel = null;
+      // Mitternacht Ortszeit des gewählten Tages; ein leeres Feld heisst: noch keine Wahl
+      z.until = y && m && d ? Math.floor(new Date(y, m - 1, d).getTime() / 1000) : 0;
+      z.err = "";
+      this._renderPause();
+    });
+    this._dlg.addEventListener("close", () => {
+      this._pz = null;
+    });
     this._body = this.shadowRoot.querySelector(".body");
     this._body.addEventListener("click", (ev) => {
+      const pause = ev.target.closest("[data-pause]");
+      if (pause) {
+        ev.stopPropagation(); // nicht zugleich das Panel öffnen
+        this._openPause(pause.dataset.pause, pause.dataset.name || "");
+        return;
+      }
       if (ev.target.closest(".kt.tap")) this._open();
     });
     this._body.addEventListener("keydown", (ev) => {
@@ -246,7 +273,13 @@ class DevicePanelBaseCard extends HTMLElement {
     }
     const list = (a.offline_list || []).slice(0, 4);
     const rows = list
-      .map((d) => `<div class="orow"><span>${mdi("closeCircle", 16)}</span><span class="name">${escape(d.name)}</span><b>${d.since ? `${d.at_least ? "≥ " : ""}${escape(this._duration(d.since, true))}` : ""}</b></div>`)
+      .map((d) => {
+        // Pausieren nur für Administratoren (den Dienst prüft Home Assistant selbst: nur Administratoren); ohne Kennung des Geräts kein Knopf
+        const pz = this._canOpen() && typeof d.id === "string" && d.id
+          ? `<button type="button" class="pu-chip dpz-chip" data-pause="${escape(d.id)}" data-name="${escape(d.name)}" title="${escape(this._t("dpzTitle"))}" aria-label="${escape(`${this._t("dpzTitle")}: ${d.name}`)}">${mdi("pause", 13)}<span>${escape(this._t("dpzApply"))}</span></button>`
+          : "";
+        return `<div class="orow${pz ? " has-pz" : ""}"><span>${mdi("closeCircle", 16)}</span><span class="name">${escape(d.name)}</span><b>${d.since ? `${d.at_least ? "≥ " : ""}${escape(this._duration(d.since, true))}` : ""}</b>${pz}</div>`;
+      })
       .join("");
     const more = a.offline > list.length ? `<div class="more">${escape(this._t("more", a.offline - list.length))}</div>` : "";
     const longest = a.longest_since ? this._t("longest", `${a.longest_at_least ? "≥ " : ""}${this._duration(a.longest_since)}`) : "";
@@ -297,6 +330,128 @@ class DevicePanelBaseCard extends HTMLElement {
       ? `<div class="pnote">${escape(this._t("pulseSummary", a.outages, a.affected))}</div>`
       : `<div class="pnote ok">${escape(this._t("pulseNone"))}</div>`;
     return `<div class="kt pul${this._tapAttrs()}"><div class="k">${mdi("pulse", 16)}${escape(this._t("pulseTitle"))}${this._chev()}</div>${this._pulseChart(p)}${note}</div>`;
+  }
+
+  // --- Pausieren (seit 2.217.0): Fenster wie im Panel (Bis wieder online / Bis Datum); gesetzt wird über den Dienst device_panel.pause_monitoring,
+  // den Home Assistant nur Administratoren erlaubt. Eine Abweisung oder ein Fehler erscheint im Fenster, in der Sprache von Home Assistant.
+  _openPause(id, name) {
+    if (!this._canOpen()) return;
+    this._pz = { id, name, mode: "online", sel: null, until: 0, err: "", busy: false };
+    this._renderPause();
+    if (typeof this._dlg.showModal === "function") this._dlg.showModal();
+    else this._dlg.setAttribute("open", "");
+  }
+
+  _preset(key) {
+    const d = new Date();
+    d.setHours(0, 0, 0, 0);
+    if (key === "month") d.setMonth(d.getMonth() + 1);
+    else if (key === "quarter") d.setMonth(d.getMonth() + 3);
+    else {
+      d.setMonth(3, 1);
+      if (d.getTime() <= Date.now()) d.setFullYear(d.getFullYear() + 1);
+    }
+    return Math.floor(d.getTime() / 1000);
+  }
+
+  _day(sec) {
+    if (!(sec > 0)) return "";
+    const d = new Date(sec * 1000);
+    const p = (n) => String(n).padStart(2, "0");
+    return `${d.getFullYear()}-${p(d.getMonth() + 1)}-${p(d.getDate())}`;
+  }
+
+  _fmtDay(sec) {
+    try {
+      return new Intl.DateTimeFormat(pickLang(this._hass), { day: "numeric", month: "short", year: "numeric" }).format(new Date(sec * 1000));
+    } catch {
+      return this._day(sec);
+    }
+  }
+
+  _renderPause() {
+    const z = this._pz;
+    if (!z) return;
+    const t = (k, ...a) => this._t(k, ...a);
+    const bad = z.mode === "date" && z.until > 0 && z.until * 1000 <= Date.now();
+    const none = z.mode === "date" && !(z.until > 0);
+    const tabs = (key, items, cur) => items.map(([k, label]) => `<button type="button" role="tab" class="sub-tab${cur === k ? " on" : ""}" data-${key}="${k}" aria-selected="${cur === k}">${escape(t(label))}</button>`).join("");
+    let body;
+    if (z.mode === "online") {
+      body = `<small class="dpz-note">${escape(t("dpzOnlineNote"))}</small><div class="pu-res">${escape(t("dpzResultOnline"))}</div>`;
+    } else {
+      body = `<div class="sub-tabs pu-quick" role="tablist">${tabs("q", [["month", "dpzMonth"], ["quarter", "dpzQuarter"], ["spring", "dpzSpring"]], z.sel)}</div>
+        <label class="pu-field${bad ? " bad" : ""}"><span>${escape(t("dpzCustom"))}</span><input type="date" data-field value="${escape(this._day(z.until))}" aria-label="${escape(t("dpzCustom"))}"></label>
+        <div class="pu-res${bad || none ? " bad" : ""}">${escape(bad ? t("pauseUntilPast") : none ? t("dpzPickDate") : t("dpzResultDate", this._fmtDay(z.until)))}</div>`;
+    }
+    this._dlg.innerHTML = `<div class="dd-card pu-card" role="dialog" aria-labelledby="cpz-t"><b id="cpz-t">${escape(t("dpzTitle"))}</b><small>${escape(z.name)}. ${escape(t("dpzNote"))}</small>
+      <div class="sub-tabs" role="tablist">${tabs("mode", [["online", "dpzModeOnline"], ["date", "dpzModeDate"]], z.mode)}</div>
+      ${body}
+      ${z.err ? `<div class="pu-err" role="alert">${escape(z.err)}</div>` : ""}
+      <div class="dd-btns"><button type="button" class="dlg-btn" data-act="cancel">${escape(t("puCancel"))}</button><button type="button" class="dlg-btn primary" data-act="apply"${bad || none || z.busy ? " disabled" : ""}>${mdi("pause", 18)}${escape(t("dpzApply"))}</button></div></div>`;
+    this._seg();
+  }
+
+  // Gleitende Kapsel der Reiterleisten wie im Panel (.seg-pill): Lage und Grösse des gewählten Knopfs
+  _seg() {
+    for (const bar of this._dlg.querySelectorAll(".sub-tabs")) {
+      const on = bar.querySelector(".sub-tab.on");
+      if (!on || !bar.offsetWidth) continue;
+      const pill = document.createElement("i");
+      pill.className = "seg-pill";
+      pill.setAttribute("aria-hidden", "true");
+      pill.style.cssText = `width:${on.offsetWidth}px;height:${on.offsetHeight}px;transform:translate(${on.offsetLeft}px,${on.offsetTop}px)`;
+      bar.prepend(pill);
+    }
+  }
+
+  _closePause() {
+    this._pz = null;
+    if (typeof this._dlg.close === "function") this._dlg.close();
+    else this._dlg.removeAttribute("open");
+  }
+
+  _onDialogClick(ev) {
+    const z = this._pz;
+    if (!z) return;
+    const mode = ev.target.closest("[data-mode]");
+    if (mode) {
+      z.mode = mode.dataset.mode;
+      z.err = "";
+      this._renderPause();
+      return;
+    }
+    const q = ev.target.closest("[data-q]");
+    if (q) {
+      z.sel = z.sel === q.dataset.q ? null : q.dataset.q;
+      z.until = z.sel ? this._preset(z.sel) : 0;
+      this._renderPause();
+      return;
+    }
+    const btn = ev.target.closest("[data-act]");
+    if (!btn || btn.disabled) return;
+    if (btn.dataset.act === "cancel") this._closePause();
+    else if (btn.dataset.act === "apply") this._applyPause();
+  }
+
+  async _applyPause() {
+    const z = this._pz;
+    if (!z || z.busy) return;
+    const data = z.mode === "online" ? { device_id: z.id, mode: "online" } : { device_id: z.id, mode: "date", until: z.until };
+    z.busy = true;
+    z.err = "";
+    this._renderPause();
+    try {
+      await this._hass.callService("device_panel", "pause_monitoring", data);
+      this._closePause();
+    } catch (err) {
+      // Die Meldung kommt von Home Assistant, in der Sprache des Benutzers (Abweisung, unbekanntes Gerät, Datum in der Vergangenheit): nicht selbst übersetzen
+      if (this._pz === z) {
+        z.busy = false;
+        z.err = String(err?.message || err?.error?.message || err || "");
+        this._renderPause();
+      }
+    }
   }
 
   _draw() {

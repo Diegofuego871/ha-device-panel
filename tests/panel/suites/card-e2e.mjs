@@ -8,8 +8,8 @@ const b = await chromium.launch(launchOptions);
 let ok = true;
 const check = (l, c, i = "") => { ok &&= !!c; console.log(`${c ? "PASS" : "FAIL"} ${l}${i ? " - " + i : ""}`); };
 const T = {
-  de: { avail: "Verfügbarkeit", offline: "Gerade ausgefallen", pulse: "Ausfall-Puls", allOnline: "Alles online", paused: "1 Gerät pausiert", noStatus: "4 ohne Online-Status", none: "Keine Unterbrüche", missing: "nicht gefunden" },
-  en: { avail: "Availability", offline: "Offline right now", pulse: "Outage pulse", allOnline: "Everything online", paused: "1 device paused", noStatus: "4 without online status", none: "No outages", missing: "was not found" },
+  de: { avail: "Verfügbarkeit", offline: "Gerade ausgefallen", pulse: "Ausfall-Puls", allOnline: "Alles online", paused: "1 Gerät pausiert", noStatus: "4 ohne Online-Status", online2: "Bis wieder online", none: "Keine Unterbrüche", missing: "nicht gefunden" },
+  en: { avail: "Availability", offline: "Offline right now", pulse: "Outage pulse", allOnline: "Everything online", paused: "1 device paused", noStatus: "4 without online status", online2: "Until online again", none: "No outages", missing: "was not found" },
 };
 for (const lang of ["de", "en"]) {
   const L = T[lang];
@@ -86,6 +86,40 @@ for (const lang of ["de", "en"]) {
     await open("state=offline&anim=off");
     await p.waitForTimeout(200);
     check(`[${tag}] Einstellung "Animationen" aus: kein Messpunkt`, await p.evaluate(() => { const d = document.getElementById("all").shadowRoot.querySelector(".pchart .pdot"); return getComputedStyle(d).display === "none"; }));
+
+    // Pausieren aus der Karte: Knopf nur für Administratoren, Fenster wie im Panel, Dienst device_panel.pause_monitoring
+    await open("state=offline");
+    const pz = (sel) => p.evaluate((s) => document.getElementById("o").shadowRoot.querySelector(s), sel);
+    const click = (sel) => p.evaluate((s) => document.getElementById("o").shadowRoot.querySelector(s).click(), sel);
+    check(`[${tag}] Pausieren: Knopf je ausgefallenem Gerät (3)`, (await p.evaluate(() => document.getElementById("o").shadowRoot.querySelectorAll("[data-pause]").length)) === 3);
+    check(`[${tag}] Pausieren: alle drei Knöpfe sichtbar (nicht ausgeblendet, ganz in der Kachel)`, await p.evaluate(() => [...document.getElementById("o").shadowRoot.querySelectorAll("[data-pause]")].every((b) => { const r = b.getBoundingClientRect(), t = b.closest(".kt").getBoundingClientRect(); return r.width > 20 && r.height > 10 && r.right <= t.right && r.left >= t.left; })));
+    await click('[data-pause="dev1"]');
+    check(`[${tag}] Pausieren: Fenster offen, Gerätename, Reiter "${L.online2}"`, await p.evaluate((t) => { const r = document.getElementById("o").shadowRoot; const d = r.querySelector("dialog"); return d.open && d.textContent.includes("Beispiel Lampe") && d.textContent.includes(t); }, L.online2));
+    check(`[${tag}] Pausieren: Tippen auf den Knopf öffnet das Panel nicht`, (await p.evaluate(() => window.__nav)).length === 0);
+    await p.screenshot({ path: `${outDir}/card-${tag.replace("/", "-")}-pause.png` });
+    await click('dialog [data-act="apply"]');
+    await p.waitForTimeout(150);
+    check(`[${tag}] Pausieren bis wieder online: Dienst gerufen, Fenster zu`, JSON.stringify(await p.evaluate(() => window.__calls)) === JSON.stringify([{ d: "device_panel", s: "pause_monitoring", data: { device_id: "dev1", mode: "online" } }]) && !(await p.evaluate(() => document.getElementById("o").shadowRoot.querySelector("dialog").open)));
+    await click('[data-pause="dev2"]');
+    await click('dialog [data-mode="date"]');
+    check(`[${tag}] Bis Datum: "Pausieren" gesperrt, solange kein Datum gewählt ist`, await p.evaluate(() => document.getElementById("o").shadowRoot.querySelector('dialog [data-act="apply"]').disabled));
+    await click('dialog [data-q="month"]');
+    check(`[${tag}] Bis Datum: Schnellwahl "1 Monat" setzt das Datum`, await p.evaluate(() => /\d{4}-\d{2}-\d{2}/.test(document.getElementById("o").shadowRoot.querySelector("dialog [data-field]").value) && !document.getElementById("o").shadowRoot.querySelector('dialog [data-act="apply"]').disabled));
+    await p.screenshot({ path: `${outDir}/card-${tag.replace("/", "-")}-pause-date.png` });
+    await click('dialog [data-act="apply"]');
+    await p.waitForTimeout(150);
+    const last = await p.evaluate(() => window.__calls.at(-1));
+    check(`[${tag}] Bis Datum: Dienst mit Datum in der Zukunft`, last.data.mode === "date" && last.data.device_id === "dev2" && last.data.until * 1000 > Date.now());
+    await click('[data-pause="dev3"]');
+    await click('dialog [data-act="cancel"]');
+    check(`[${tag}] Abbrechen: kein weiterer Dienstaufruf`, (await p.evaluate(() => window.__calls.length)) === 2);
+    await open("state=offline&pzerr=1");
+    await click('[data-pause="dev1"]');
+    await click('dialog [data-act="apply"]');
+    await p.waitForTimeout(150);
+    check(`[${tag}] Fehler des Dienstes: Meldung im Fenster, Fenster bleibt offen`, await p.evaluate(() => { const d = document.getElementById("o").shadowRoot.querySelector("dialog"); return d.open && d.textContent.includes("Nur Administratoren"); }));
+    await open("state=offline&admin=0");
+    check(`[${tag}] Kein Administrator: kein Pausieren-Knopf`, !(await has("o", "[data-pause]")) && !(await has("all", "[data-pause]")));
 
     // Sensor fehlt
     await open("state=missing");

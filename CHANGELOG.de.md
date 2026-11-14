@@ -7,6 +7,16 @@ Alle nennenswerten Änderungen an dieser Integration stehen in dieser Datei.
 Das Format folgt [Keep a Changelog](https://keepachangelog.com/de/1.1.0/),
 die Versionsnummern folgen [Semantic Versioning](https://semver.org/lang/de/).
 
+## [2.217.0] - 2026-11-14
+
+Ein ausgefallenes Gerät lässt sich direkt in der Dashboard-Karte pausieren.
+
+### Hinzugefügt
+
+- **Pausieren aus der Karte:** In der Karte "Gerade ausgefallen" (und in der Übersicht) hat jedes ausgefallene Gerät für Administratoren einen Knopf "Pausieren". Er öffnet dasselbe Fenster wie im Panel: "Bis wieder online" oder "Bis Datum" (1 Monat, 3 Monate, 1. April oder eigenes Datum). Fehler erscheinen im Fenster, in der Sprache von Home Assistant. Ein Tipp auf den Knopf öffnet das Panel nicht.
+- **Dienst `device_panel.pause_monitoring`:** Die Karte pausiert über diesen Dienst. Er ist ein Administrator-Dienst: Home Assistant selbst weist alle anderen ab, auch wenn die Oberfläche umgangen wird. Felder: `device_id`, `mode` (`online` oder `date`) und `until` (Datum mit Zeit, bei `date`). Du kannst ihn auch in Automationen und Skripten nutzen. Nach dem Pausieren wird der Sensor "Verfügbarkeit" sofort neu gerechnet.
+- Das Attribut `offline_list` des Sensors "Verfügbarkeit" trägt die `id` jedes Geräts.
+
 ## [2.216.2] - 2026-11-14
 
 Der Puls auf den Dashboard-Karten hat den Messpunkt des Panels.
@@ -6088,6 +6098,7 @@ Erste Vorabversion.
   GitHub Actions für die Prüfungen von HACS und hassfest sowie die Tests.
 
 [2.6.0]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v2.6.0
+[2.217.0]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v2.217.0
 [2.216.2]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v2.216.2
 [2.216.1]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v2.216.1
 [2.216.0]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v2.216.0
