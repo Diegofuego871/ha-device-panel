@@ -1161,7 +1161,10 @@ export class WizardUi {
     // Die Liste richtet sich nach den neuen Ausschlüssen; eine offene Einstellungsseite liest ihre Werte neu
     this.host._fetch(true);
     this.host._settingsReload?.();
-    this.host._apps?.snack?.(this.t("wzDoneSnack"));
+    // Nach dem Abschluss die Lernseite (seit 2.223.0): sie trägt den Kopf "Einrichtung abgeschlossen" und ersetzt die Meldung. Der Assistent gilt
+    // schon als beendet, auch wenn sie nie angesehen oder gleich geschlossen wird.
+    if (this.host._learn) this.host._learn.open("wizard");
+    else this.host._apps?.snack?.(this.t("wzDoneSnack"));
   }
 
   // --- Eingaben ---------------------------------------------------------------------

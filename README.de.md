@@ -58,7 +58,7 @@ Einstellungen → Geräte & Dienste → "Device Panel" → ⋮ → Löschen. Das
 - **Ruhezeit und Sammelmeldung:** Meldungen warten in der Nacht, und mehrere Geräte einer Integration gehen als eine Meldung hinaus
 - **Magic Push und Routinen:** eigene Meldungen und eigene Schaltzeiten, ohne Automation
 - **Laden, Updates und neue Geräte:** Push, wenn ein Gerät voll ist, eine Update-Erinnerung, alle Updates in einem Fenster, eine Markierung für neue Geräte
-- **Alles im Panel:** alle Einstellungen, ein Einrichtungsassistent, Sichern und Wiederherstellen, Deutsch und Englisch und eine optionale KI-Einschätzung
+- **Alles im Panel:** alle Einstellungen, ein Einrichtungsassistent mit einer Lernseite zu den Funktionen, Sichern und Wiederherstellen, Deutsch und Englisch und eine optionale KI-Einschätzung
 
 ## Übersicht und Geräteliste
 
@@ -327,12 +327,21 @@ Das Zahnrad (die angeheftete App "Einstellungen", oder der Launcher) öffnet all
 
 ### Einrichtungsassistent
 
-Nach einer frischen Installation öffnet sich einmal ein Fenster in der Mitte des Panels (so gross wie die Einstellungen; auf dem Handy als Vollbild) und führt durch die Grundeinstellungen. Angewendet wird erst im letzten Schritt mit "Fertigstellen"; schliesst du zwischendurch, bleiben Schritt und Auswahl erhalten, und der nächste Start macht dort weiter.
+Nach einer frischen Installation öffnet sich einmal ein Fenster in der Mitte des Panels (so gross wie die Einstellungen; auf dem Handy als Vollbild) und führt durch die Grundeinstellungen. Angewendet wird erst im letzten Schritt mit "Fertigstellen"; schliesst du zwischendurch, bleiben Schritt und Auswahl erhalten, und der nächste Start macht dort weiter. Nach "Fertigstellen" öffnet die Lernseite "Mehr erfahren" (siehe unten).
 
 - **Schritte:** (oben ein Balken je Schritt, jeder ein Knopf zum direkten Springen; vorwärts nur bei gültiger Seite) Willkommen, Integrationen (abwählen, was du nicht brauchst), Gerätetypen, Geräte (nach Integration gruppiert, aufklappbar, ein Schalter je Gruppe oder Gerät), Meldungen (mit einem Info-Zeichen hinter jeder Option, das sie in einfachen Worten erklärt, und einem zweiten Ring-Schalter "Online-Status beobachten" je Integration und Gerät), Labels (nur wenn ein Gerät ein Label aus Home Assistant trägt: ein Label wählen und Überwachung, Zeiten, Batterie-Schwelle und Meldungen für alle seine Geräte einstellen), Backup, Ruhezeit und System (erst mit gewähltem Push-Ziel; die Meldung bei Backup-Fehler, die Ruhezeit und die Meldung bei hoher Auslastung von CPU, RAM und Festplatte mit aktuellem Wert, Grenze und Mindestdauer) und eine Zusammenfassung.
 - **Meldungen:** das Push-Ziel wählen (Notify-Gruppe oder -Dienst), ein Schalter je Art (ausgefallene Geräte mit Rückkehr, niedrige Batterie, neue Geräte, voll geladen, Updates) und je Zeile die jetzigen Werte, mit den Standardwerten vorausgefüllt und gleich anpassbar: "Melden nach" (Minuten), "Batterie schwach unter" (%), "Neue Geräte sammeln" (Minuten), "Voll ab" (%), Uhrzeit der Update-Meldung. Ein Pfeil an einer Zeile öffnet die Integrationen dieser Art: bei ausgefallenen Geräten, niedriger Batterie und neuen Geräten schaltest du einzelne aus, bei "Voll geladen" (standardmässig aus, Best Practice) einzelne ein. Ausgefallene Geräte, niedrige Batterie und "Voll geladen" lassen sich noch einmal bis zu den einzelnen Geräten aufklappen, je ein Schalter; bei "Updates" listet der Pfeil die Integrationen mit Updates und darunter die einzelnen Updates. In den Einstellungen steht dieselbe Wahl pro Integration als Liste über den einzelnen Einträgen (Reiter Updates) und als Reiter "Updates" im Detail jeder Integration. Ein Knopf sendet eine Testmeldung. Falsche Werte (ausserhalb des Bereichs, "Melden nach" kürzer als das eingestellte "Ausgefallen nach", das der Assistent nicht anbietet) sperren "Weiter" mit einem Hinweis.
 - **Überspringen:** "Jetzt nicht" schliesst das Fenster und merkt sich deinen Stand ("Entwurf verwerfen" auf der Willkommensseite beginnt neu); "Nicht mehr zeigen" beendet es für immer. Ab Schritt 1 fragt das Kreuz, welches von beiden du willst. Solange der Assistent nie beendet wurde, zeigt der Launcher zuoberst in der Gruppe "Device Panel" die Kachel "Einrichtung" und am Launcher-Knopf einen orangen Punkt (nicht einstellbar, weg nach "Fertigstellen" oder "Nicht mehr zeigen").
 - **Später wieder:** Einstellungen › Panel › Allgemein › "Einrichtungsassistent" startet ihn neu. Die Felder zeigen den jetzigen Stand, nichts wird zurückgesetzt. Wird er nicht beendet, kommen Kachel und Punkt zurück. Nur für Administratoren; der Zustand gilt für die ganze Installation, bestehende Installationen gelten als abgeschlossen (kein Fenster, keine Kachel).
+
+### Mehr erfahren
+
+Eine Lernseite mit kurzen Artikeln zu Magic Push, Routinen, Dashboard-Karten und dem App-Launcher, je etwa zwei Minuten.
+
+- **Aufbau:** vier Kacheln mit einer kleinen Skizze der Funktion (eine Meldung mit Push-Aktionen, eine Routine, der Ring der Verfügbarkeit, der Launcher). Ein Tipp öffnet den Artikel: "Wozu?", die Schritte als Zeitleiste, ein Hinweis "Gut zu wissen" und die Skizze grösser mit erfundenen Beispieldaten (am Desktop rechts neben dem Text, am Handy oben). Oben wechselt eine Reiterleiste das Thema, unten führen "Zurück" und "Weiter" durch die Themen, am Ende steht "Fertig". Das Kreuz, Esc oder ein Tipp neben das Fenster schliessen; am Handy ist das Fenster ein Vollbild.
+- **Nach dem Assistenten:** Die Seite öffnet oben mit "Einrichtung abgeschlossen" und einem grünen Haken, darunter die Kacheln. Der Assistent gilt mit "Fertigstellen" als beendet, auch wenn du die Themen nicht ansiehst oder das Fenster gleich schliesst.
+- **Später wieder:** Einstellungen › Panel › Allgemein, ganz unten, direkt unter dem Einrichtungsassistenten: "Mehr erfahren" › "Themen ansehen". Die Einstellungen bleiben dabei offen, auch mit ungespeicherten Änderungen.
+- **Nichts gespeichert:** Die Lernseite hat keine Einstellung und keinen Zustand; sie gehört deshalb auch nicht zur Sicherung.
 
 ### Sichern und wiederherstellen
 

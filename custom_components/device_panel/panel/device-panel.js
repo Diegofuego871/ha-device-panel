@@ -12,7 +12,7 @@
  */
 
 const MODULE_VERSION = new URL(import.meta.url).search;
-const [{ STRINGS, pickLang }, { PANEL_CSS }, { MagicPush }, { RoutineUi, DOMAIN_EMOJI }, { AppLauncher }, { StatusUi }, { ProtocolUi }, { WizardUi }, { UpdApp }, { ChargesUi }] = await Promise.all([
+const [{ STRINGS, pickLang }, { PANEL_CSS }, { MagicPush }, { RoutineUi, DOMAIN_EMOJI }, { AppLauncher }, { StatusUi }, { ProtocolUi }, { WizardUi }, { UpdApp }, { ChargesUi }, { LearnUi }] = await Promise.all([
   import(`./strings.js${MODULE_VERSION}`),
   import(`./styles.js${MODULE_VERSION}`),
   import(`./magic-push.js${MODULE_VERSION}`),
@@ -23,6 +23,7 @@ const [{ STRINGS, pickLang }, { PANEL_CSS }, { MagicPush }, { RoutineUi, DOMAIN_
   import(`./wizard.js${MODULE_VERSION}`),
   import(`./updapp.js${MODULE_VERSION}`),
   import(`./charges.js${MODULE_VERSION}`),
+  import(`./learn.js${MODULE_VERSION}`),
 ]);
 
 const POLL_INTERVAL_MS = 10000;
@@ -958,6 +959,7 @@ class DevicePanel extends HTMLElement {
     this._protocol = new ProtocolUi(this, { escape, mdi, errText });
     // Einrichtungsassistent (seit 2.135.0): poppt nach der Installation einmal auf, Kachel im Launcher bis zum ersten Abschluss (wizard.js)
     this._wizard = new WizardUi(this, { escape, mdi, errText });
+    this._learn = new LearnUi(this, { escape, mdi });
     this._aiOn = false;
     this._flakyOutages = 3;
     // Chips der Verbindungsart, die nicht erscheinen (Einstellung "Anzeige").
@@ -1664,7 +1666,7 @@ class DevicePanel extends HTMLElement {
       </div>
       <div class="area-pop" role="dialog" aria-label="${escape(this._t("areaTitle"))}" hidden></div>
       <div class="content"><div class="hstrip"></div><div class="hero"></div><div class="chips"></div><div class="viewline"></div><div class="list"></div><div class="foot"></div></div>
-      <dialog class="device"></dialog><dialog class="magic-dlg"></dialog><dialog class="magic-dlg routine-dlg"></dialog><dialog class="stat-dlg"></dialog><dialog class="settings"></dialog><dialog class="area-sheet"></dialog><dialog class="pulse-dlg"></dialog><dialog class="log-dlg proto-dlg"></dialog><dialog class="apps-dlg"></dialog><dialog class="app-dlg"></dialog><dialog class="rtall-dlg"></dialog><dialog class="mgall-dlg"></dialog><dialog class="status-dlg"></dialog><dialog class="prompt-dlg"></dialog><dialog class="notes-dlg"></dialog><dialog class="notes-dlg backup-dlg"></dialog><dialog class="notes-dlg upd-dlg"></dialog><dialog class="updapp-dlg"></dialog><dialog class="charges-dlg"></dialog><dialog class="rename-dlg"></dialog><dialog class="discard-dlg"></dialog><dialog class="discard-dlg pause-dlg"></dialog><dialog class="discard-dlg dpz-dlg"></dialog><dialog class="wizard-dlg"></dialog>
+      <dialog class="device"></dialog><dialog class="magic-dlg"></dialog><dialog class="magic-dlg routine-dlg"></dialog><dialog class="stat-dlg"></dialog><dialog class="settings"></dialog><dialog class="area-sheet"></dialog><dialog class="pulse-dlg"></dialog><dialog class="log-dlg proto-dlg"></dialog><dialog class="apps-dlg"></dialog><dialog class="app-dlg"></dialog><dialog class="rtall-dlg"></dialog><dialog class="mgall-dlg"></dialog><dialog class="status-dlg"></dialog><dialog class="prompt-dlg"></dialog><dialog class="notes-dlg"></dialog><dialog class="notes-dlg backup-dlg"></dialog><dialog class="notes-dlg upd-dlg"></dialog><dialog class="updapp-dlg"></dialog><dialog class="charges-dlg"></dialog><dialog class="rename-dlg"></dialog><dialog class="discard-dlg"></dialog><dialog class="discard-dlg pause-dlg"></dialog><dialog class="discard-dlg dpz-dlg"></dialog><dialog class="wizard-dlg"></dialog><dialog class="learn-dlg"></dialog>
       <div class="toast" role="status" aria-live="polite" hidden></div>`;
     const root = this.shadowRoot;
     this._apps.bind(root);
@@ -1701,6 +1703,7 @@ class DevicePanel extends HTMLElement {
     this._bindDevicePause(root.querySelector("dialog.dpz-dlg"));
     this._bindRename(root.querySelector("dialog.rename-dlg"));
     this._wizard.bind(root.querySelector("dialog.wizard-dlg"));
+    this._learn.bind(root.querySelector("dialog.learn-dlg"));
     const search = root.querySelector(".search");
     const clear = root.querySelector(".search-clear");
     search.addEventListener("input", () => {
@@ -7268,6 +7271,15 @@ class DevicePanel extends HTMLElement {
       <div class="bk-btns"><button type="button" class="dlg-btn" data-set="wizard-start"${dirty ? " disabled" : ""}>${mdi("rocket", 18)}${escape(t("wzSetStart"))}</button></div>`;
   }
 
+  // Kapitel "Mehr erfahren" (seit 2.223.0, Panel › Allgemein, unter dem Einrichtungsassistenten): öffnet die Lernseite über den Einstellungen;
+  // beim Schliessen steht man wieder dort (die Einstellungen bleiben offen, auch mit ungespeicherten Änderungen)
+  _learnChapterHtml() {
+    const t = (k, ...a) => this._t(k, ...a);
+    return `<div class="set-title">${escape(t("ttlLearn"))}</div>
+      <div class="opt-short bk-note">${escape(t("lrnSetNote"))}</div>
+      <div class="bk-btns"><button type="button" class="dlg-btn" data-set="learn-open">${mdi("lightbulb", 18)}${escape(t("lrnSetBtn"))}</button></div>`;
+  }
+
   _openBackup(mode) {
     const dlg = this.shadowRoot.querySelector("dialog.backup-dlg");
     if (!dlg || (this._settings && this._settingsChanges().length)) return;
@@ -10461,7 +10473,7 @@ class DevicePanel extends HTMLElement {
         `<div class="dlg-quick pn-ha"><button type="button" class="qbtn" data-set="open-ha">${mdi("open", 17)}<span class="q-t">${escape(t("openIntegPage"))}</span></button></div>` +
         subTabs("panel", [["pstart", "subPanelStart"], ["pupdates", "subPanelUpdates"], ["pstorage", "subPanelStorage"]], panelTab) +
         (panelTab === "pstart"
-          ? `<div class="nf-note view-own">${mdi("info", 16)}<div><p>${escape(t("startOwnNote"))}</p></div></div>` + ttl("ttlStart") + startRow() + ttl("ttlLang") + langRow() + ttl("ttlAccent") + accentRow() + ttl("ttlAnim") + animRow() + this._backupChapterHtml(changes.size > 0) + this._wizardChapterHtml(changes.size > 0)
+          ? `<div class="nf-note view-own">${mdi("info", 16)}<div><p>${escape(t("startOwnNote"))}</p></div></div>` + ttl("ttlStart") + startRow() + ttl("ttlLang") + langRow() + ttl("ttlAccent") + accentRow() + ttl("ttlAnim") + animRow() + this._backupChapterHtml(changes.size > 0) + this._wizardChapterHtml(changes.size > 0) + this._learnChapterHtml()
           : panelTab === "pstorage"
             ? storageChapter()
           : row("update_check", t("optUpdateCheck"), sw("update_check", t("optUpdateCheck")), t("optUpdateCheckShort"), t("optUpdateCheckInfo")) +
@@ -10698,6 +10710,9 @@ class DevicePanel extends HTMLElement {
         if (this._settingsChanges().length) return;
         this._closeSettings();
         this._wizard.open("settings");
+      } else if (action === "learn-open") {
+        // Lernseite (seit 2.223.0): über den Einstellungen, ohne sie zu schliessen
+        this._learn.open("settings");
       } else if (action === "bk-export" || action === "bk-import") {
         this._openBackup(action === "bk-export" ? "export" : "import");
       } else if (action === "open-ha") {

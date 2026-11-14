@@ -58,7 +58,7 @@ Settings → Devices & services → "Device Panel" → ⋮ → Delete. This also
 - **Quiet time and group messages:** notifications wait during the night, and several devices of one integration go out as one message
 - **Magic Push and routines:** your own messages and your own switching times, without an automation
 - **Charging, updates and new devices:** push when a device is full, an update reminder, all updates in one window, a mark for new devices
-- **Everything in the panel:** all settings, a setup wizard, back up and restore, German and English, and an optional AI assessment
+- **Everything in the panel:** all settings, a setup wizard with a learn page on the features, back up and restore, German and English, and an optional AI assessment
 
 ## Overview and device list
 
@@ -327,12 +327,21 @@ The gear (the pinned app "Settings", or the launcher) opens all settings in Germ
 
 ### Setup wizard
 
-After a fresh installation a window opens once in the middle of the panel (as large as the settings; full screen on a phone) and leads through the basic settings. Nothing is applied until the last step, "Finish"; if you close in between, your step and choices are kept and the next start continues there.
+After a fresh installation a window opens once in the middle of the panel (as large as the settings; full screen on a phone) and leads through the basic settings. Nothing is applied until the last step, "Finish"; if you close in between, your step and choices are kept and the next start continues there. After "Finish" the learn page "Learn more" opens (see below).
 
 - **Steps:** (a bar per step on top, each one a button to jump directly; forward only when the page is valid) Welcome, Integrations (switch off what you do not need), Device types, Devices (grouped by integration, expandable, one switch per group or device), Notifications (with an info mark behind each option that explains it in plain words, and a second, ring-shaped switch per integration and device for "Watch online status"), Labels (only if a device carries a Home Assistant label: pick a label and set monitoring, times, battery threshold and notifications for all its devices), Backup, quiet hours and system (only once a push target is chosen; the notification when a backup fails, the quiet hours plus the notification for high load of CPU, RAM and disk with the current value, limit and minimum duration) and a summary.
 - **Notifications:** choose the push target (notify group or service), one switch per kind (failed devices with return, low battery, new devices, fully charged, updates) and, per row, the current values already filled in with the defaults and editable on the spot: "Notify after" (minutes), "Battery low below" (%), "Collect new devices" (minutes), "Full from" (%), the time of the update notification. An arrow on a row opens the integrations of that kind: switch some off for failed devices, low battery and new devices, or on for "Fully charged" (off by default, best practice). Failed devices, low battery and fully charged open once more down to the single devices, one switch each; under "Updates" the arrow lists the integrations with updates and, below, the single updates. In the settings the same choice per integration is a list above the single entries (tab Updates) and a tab "Updates" in the detail of every integration. A button sends a test message. Wrong values (out of range, "Notify after" shorter than the set "Failed after", which the wizard does not offer) block "Next" with a note.
 - **Skip:** "Not now" closes the window and keeps your place ("Discard draft" on the welcome page starts over); "Don't show again" ends it for good. From step 1 on, the cross asks which of the two you want. Until the wizard has been finished once, the launcher shows a tile "Setup" at the top of the group "Device Panel" and an orange dot on the launcher button (not configurable, gone after "Finish" or "Don't show again").
 - **Again later:** Settings › Panel › General › "Setup wizard" starts it again. The fields show the current state, nothing is reset. Closed without finishing, the tile and the dot come back. Administrators only; the state applies to the whole installation, existing installations count as finished (no window, no tile).
+
+### Learn more
+
+A learn page with short articles on Magic Push, routines, dashboard cards and the app launcher, about two minutes each.
+
+- **Layout:** four tiles with a small sketch of the feature (a notification with push actions, a routine, the availability ring, the launcher). A tap opens the article: "What for?", the steps as a timeline, a "Good to know" note and the sketch larger with made-up example data (on the desktop to the right of the text, on a phone on top). A tab bar on top switches the topic, "Back" and "Next" at the bottom lead through the topics, and the last one ends with "Done". The cross, Esc or a tap beside the window close it; on a phone the window is full screen.
+- **After the wizard:** The page opens with "Setup complete" and a green tick on top, the tiles below. The wizard counts as finished with "Finish", even if you do not look at the topics or close the window right away.
+- **Again later:** Settings › Panel › General, at the very bottom, right below the setup wizard: "Learn more" › "View topics". The settings stay open, also with unsaved changes.
+- **Nothing stored:** The learn page has no setting and no state, so it is not part of the backup either.
 
 ### Back up and restore
 

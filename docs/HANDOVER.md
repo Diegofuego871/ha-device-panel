@@ -11,6 +11,16 @@ Einstieg für jede neue Claude-Code-Session. Zuerst diese Datei lesen, dann
 
 - `charge.py` `known_rechargeable`: Lademeldung gilt (global + Gerät/Integration), oder am Gerät ausdrücklich "Ein", oder Live-Aktivität für das Gerät an; `rechargeable()` und `charging_of()` nutzen sie (vorher nur `enabled()` mit globalem Schalter). Test `test_rechargeable_by_device_charge_or_live`.
 
+## Stand (2.223.0, Lernseite "Mehr erfahren")
+
+- `panel/learn.js` (`LearnUi`, Fenster `dialog.learn-dlg`, Vorbild `charges.js`): vier Themen (`TOPICS`: push, rt, cards, lau; Symbol und Farbe wie die Launcher-Symbole), Übersicht mit Kacheln (Skizze in em, `sketch(id, full)`), Artikel mit Reiterleiste (`.sub-tabs.lrn-tabs`, die Kapsel setzt `_initSeg` von selbst), Fussleiste "Zurück"/"Weiter"/"Fertig". Kacheln sind `role="button"` (Skizzen aus Blockelementen, kein `<button>`), Eingabe und Leertaste öffnen. Fett im Text mit `**…**` (erst `escape`, dann ersetzt, `rich()`).
+- Texte: `strings.js` `lrn*`, `lrnTopics` (je Thema `name`, `tab`, `title`, `short`, `cap`, `blocks`: `{h, p[]}`, `{h, steps[[Anfang, Text]]}`, `{tip}`) und `lrnSk` (erfundene Beispieldaten der Skizzen, je Sprache); `ttlLearn`, `lrnSetNote`, `lrnSetBtn` für das Kapitel.
+- Zwei Einstiege: `wizard.js` `finish()` ruft `host._learn.open("wizard")` (Kopf "Einrichtung abgeschlossen", rundes Zeichen mit Haken, Trennzeile "Möchtest du mehr erfahren?"; ersetzt die Meldung `wzDoneSnack`, der Schlüssel bleibt); Einstellungen › Panel › Allgemein, ganz unten, Kapitel `_learnChapterHtml()` (Knopf `data-set="learn-open"`, öffnet über den Einstellungen, sie bleiben offen, auch mit ungespeicherten Änderungen).
+- Kein Zustand, keine Einstellung, nichts im Backend: der Assistent gilt mit `finish()` als beendet (Nutzerwunsch: auch wenn die Themen nie angesehen werden); darum nichts in der Sicherung. Nicht ins Backup, weil es nichts zu sichern gibt.
+- Mockups `docs/mockups/learn-v1` bis `learn-v4` (v4 klickbar: Kopf-Varianten, Einstiege). Gewählt: A2 mit rundem Haken, ohne den Satz "freiwillig" (wirkte unprofessionell). Abweichung vom Mockup: die Themenfarben sind die der Launcher-Symbole (Magic Push violett, Routinen türkis, Karten blau, Launcher pink), nicht die Farben des Mockups.
+- Tests: Suite `learn-e2e.mjs` (beide Einstiege, vier Artikel, Reiter, Navigation, Schliessen, Überlauf, Layout Desktop/Handy, DE/EN), `wizard-e2e.mjs` (Lernseite nach "Fertigstellen", Zustand bleibt "done"), angepasst `backup-e2e.mjs` (siebtes Kapitel).
+- Offen/Beobachten: nur im Simulator geprüft, nicht in einem echten Home Assistant. Neue Funktionen, die ein Thema betreffen, müssen den Artikel in `lrnTopics` (DE und EN) nachführen; sonst veraltet die Seite still.
+
 ## Stand (2.222.0, Variable {action} im Titel der Push-Aktion)
 
 - `MagicPush.action_label` liefert den Wert (Texte `action_label_*` in `push.py`), `_actions` und `preview_actions` setzen `{"action": …}` in den Kontext; im Panel ist der Titel einer neuen Push-Aktion `{action}` vorbelegt, der Chip steht in der Karte zuerst (`chipsHtml(group, target)`), Art, Zeit und Ziel lösen die Vorschau neu aus. Tests: `test_magic_actions.py`, `magicpa-e2e.mjs`.

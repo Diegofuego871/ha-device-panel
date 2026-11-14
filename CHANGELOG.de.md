@@ -7,7 +7,20 @@ Alle nennenswerten Änderungen an dieser Integration stehen in dieser Datei.
 Das Format folgt [Keep a Changelog](https://keepachangelog.com/de/1.1.0/),
 die Versionsnummern folgen [Semantic Versioning](https://semver.org/lang/de/).
 
-## [2.222.0] - 2026-11-14
+## [2.223.0] - 2026-11-14
+
+Neue Lernseite "Mehr erfahren": kurze Artikel zu Magic Push, Routinen, Dashboard-Karten und dem App-Launcher, nach dem Einrichtungsassistenten und in den Einstellungen.
+
+### Hinzugefügt
+
+- **Lernseite "Mehr erfahren"** (Mockup `docs/mockups/learn-v4`, Variante A2): vier Kacheln mit einer kleinen Skizze der Funktion (eine Meldung mit Push-Aktionen, eine Routine, der Ring der Verfügbarkeit, der Launcher), in der Farbe des jeweiligen Launcher-Symbols. Ein Tipp öffnet den Artikel mit "Wozu?", den Schritten als Zeitleiste, einem Hinweis "Gut zu wissen" und der Skizze grösser mit erfundenen Beispieldaten (am Desktop rechts neben dem Text, am Handy oben). Oben wechselt eine Reiterleiste (gleitende Kapsel) das Thema, unten führen "Zurück" und "Weiter" durch die Themen, am Ende steht "Fertig". Das Kreuz, Esc, ein Tipp neben das Fenster oder die Eingabetaste auf einer Kachel bedienen es; am Handy ein Vollbild. Deutsch und Englisch.
+- **Einstieg nach dem Assistenten:** Nach "Fertigstellen" öffnet die Seite mit dem Kopf "Einrichtung abgeschlossen" (runder grüner Haken, viel Luft) und der Frage "Möchtest du mehr erfahren?"; darunter die Kacheln. Der Assistent gilt unabhängig davon als beendet, auch wenn du die Themen nicht ansiehst oder das Fenster gleich schliesst: die Seite hat keinen Zustand und schreibt nichts.
+- **Einstieg in den Einstellungen:** Einstellungen › Panel › Allgemein, ganz unten, direkt unter dem Einrichtungsassistenten: Kapitel "Mehr erfahren" mit dem Knopf "Themen ansehen". Die Seite öffnet über den Einstellungen und lässt sie offen (auch mit ungespeicherten Änderungen).
+
+### Geändert
+
+- **Nach "Fertigstellen" im Einrichtungsassistenten** öffnet die Lernseite statt der kurzen Meldung "Einrichtung gespeichert."; der Kopf der Seite sagt dasselbe deutlicher.
+
 
 Der Titel einer Push-Aktion beginnt mit einer Variablen für die gewählte Art.
 
@@ -6155,6 +6168,7 @@ Erste Vorabversion.
   GitHub Actions für die Prüfungen von HACS und hassfest sowie die Tests.
 
 [2.6.0]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v2.6.0
+[2.223.0]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v2.223.0
 [2.222.0]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v2.222.0
 [2.221.0]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v2.221.0
 [2.220.0]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v2.220.0

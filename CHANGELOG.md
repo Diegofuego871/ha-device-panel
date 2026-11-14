@@ -7,7 +7,20 @@ All notable changes to this integration are documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/).
 
-## [2.222.0] - 2026-11-14
+## [2.223.0] - 2026-11-14
+
+New learn page "Learn more": short articles on Magic Push, routines, dashboard cards and the app launcher, after the setup wizard and in the settings.
+
+### Added
+
+- **Learn page "Learn more"** (mockup `docs/mockups/learn-v4`, variant A2): four tiles with a small sketch of the feature (a notification with push actions, a routine, the availability ring, the launcher), in the colour of the matching launcher icon. A tap opens the article with "What for?", the steps as a timeline, a "Good to know" note and the sketch larger with made-up example data (on the desktop to the right of the text, on a phone on top). A tab bar on top (sliding capsule) switches the topic, "Back" and "Next" at the bottom lead through the topics, and the last one ends with "Done". The cross, Esc, a tap beside the window or the Enter key on a tile operate it; full screen on a phone. German and English.
+- **Entry after the wizard:** After "Finish" the page opens with the header "Setup complete" (round green tick, plenty of space) and the question "Would you like to learn more?"; the tiles below. The wizard counts as finished either way, even if you do not look at the topics or close the window right away: the page has no state and writes nothing.
+- **Entry in the settings:** Settings › Panel › General, at the very bottom, right below the setup wizard: chapter "Learn more" with the button "View topics". The page opens over the settings and leaves them open (also with unsaved changes).
+
+### Changed
+
+- **After "Finish" in the setup wizard** the learn page opens instead of the short message "Setup saved."; the header of the page says the same more clearly.
+
 
 The title of a push action starts with a variable for the chosen kind.
 
@@ -6054,6 +6067,7 @@ First pre-release.
   GitHub Actions for HACS/hassfest validation and tests.
 
 [2.6.0]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v2.6.0
+[2.223.0]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v2.223.0
 [2.222.0]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v2.222.0
 [2.221.0]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v2.221.0
 [2.220.0]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v2.220.0
