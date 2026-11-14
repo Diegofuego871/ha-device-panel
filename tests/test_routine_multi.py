@@ -17,6 +17,16 @@ from .test_outage_notify import _device, setup  # noqa: F401  (Fixture "setup")
 from .test_routines import _raw, _switch, _tick, _zurich  # noqa: F401  (Fixture "_zurich")
 
 
+@pytest.fixture(autouse=True)
+def _clock(freezer) -> None:
+    """
+    Feste Tageszeit: Mittag in Zürich (Winterzeit). Die Routinen hier laufen täglich um 23:00; mit der echten Uhr fiel diese Zeit
+    je nach Startzeit des Laufs (22:49 bis 23:00 Ortszeit) in das Vorrücken um 601 Sekunden, die Routine schaltete ein drittes Mal
+    und die Reihenfolge der Aufrufe stimmte nicht mehr (CI-Lauf vom 14.11.2026, 22:50).
+    """
+    freezer.move_to("2026-03-10 12:00:00+01:00")
+
+
 def _two(hass: HomeAssistant) -> tuple[dr.DeviceEntry, str, dr.DeviceEntry, str]:
     kitchen = _device(hass, "Küche")
     lamp = _switch(hass, kitchen, "lamp")
