@@ -1,0 +1,168 @@
+<!doctype html><meta charset="utf-8"><title>Mehr erfahren, Artikel mit Abbildungen, Mockup</title><style>
+:root{--p:#43a047;--bg:#1c1c1c;--card:#262626;--ln:#363636;--t2:#9a9a9a;--c1:#7c5cff;--c2:#ff8a3d;--c3:#2bb7da;--c4:#e8528b}
+*{box-sizing:border-box}
+body{margin:0;background:#0d0d0d;font:14px/1.5 Roboto,Arial,sans-serif;color:#e8e8e8;padding:24px;width:1560px}
+h1{margin:0 0 4px;font-size:22px}h2{margin:30px 0 4px;font-size:17px}
+.sub{color:var(--t2);font-size:13px;margin:0 0 12px;max-width:1450px}
+.row{display:flex;gap:18px;align-items:flex-start}
+.cap{color:#8a8a8a;font-size:12px;letter-spacing:.04em;text-transform:uppercase;margin:0 0 6px}
+.win{background:var(--bg);border:1px solid var(--ln);border-radius:22px;overflow:hidden;display:flex;flex-direction:column}
+.win.m{width:360px}.win.d{width:760px}
+.head{display:flex;align-items:center;gap:10px;padding:16px 18px 8px}.head b{font-size:18px;flex:1;line-height:1.2}.head small{display:block;color:var(--t2);font-size:12px;font-weight:400}
+.x,.back{width:34px;height:34px;border-radius:50%;border:1px solid #4a4a4a;display:grid;place-items:center;color:#bbb;flex:none;background:#222}
+.body{padding:6px 18px 14px;display:flex;flex-direction:column;gap:12px}
+.foot{padding:10px 18px 16px;border-top:1px solid var(--ln)}
+.pill{display:flex;gap:8px;padding:6px;border-radius:99px;background:#2a2a2a;border:1px solid var(--ln)}.pill span{flex:1;text-align:center;padding:10px;border-radius:99px;font-size:13.5px}.pill .pri{background:#2e6b33;color:#fff}
+.hero{border-radius:20px;padding:16px;height:118px;position:relative;display:flex;flex-direction:column;justify-content:flex-end;flex:none}.hero .em{position:absolute;top:12px;right:16px;font-size:42px}.hero b{font-size:20px;letter-spacing:-.01em}.hero small{opacity:.85}
+.g1{background:linear-gradient(145deg,#4a3aa8,#2a2260)}.g2{background:linear-gradient(145deg,#b3571b,#5e2f10)}.g3{background:linear-gradient(145deg,#17788f,#0d3f4c)}.g4{background:linear-gradient(145deg,#a33463,#51182f)}
+.art h3{margin:6px 0 0;font-size:15px;letter-spacing:-.005em}.art p{margin:0;color:#d4d4d4;font-size:13.5px}.art p b{color:#fff}
+.tl{display:flex;flex-direction:column;margin-left:2px}.tl .st{display:flex;gap:12px;padding:5px 0;position:relative}.tl .st::before{content:"";position:absolute;left:11px;top:30px;bottom:-5px;width:2px;background:#ffffff1f}.tl .st:last-child::before{display:none}
+.tl i{width:24px;height:24px;border-radius:50%;font-style:normal;display:grid;place-items:center;font-size:12px;flex:none;color:#fff}.tl p{font-size:13.5px}
+.tip{border-radius:14px;padding:10px 12px;font-size:13px;background:#ffffff0f;border-left:3px solid;color:#d4d4d4}.tip b{color:#fff}
+.fig{background:#141414;border:1px solid var(--ln);border-radius:18px;padding:12px;display:flex;flex-direction:column;gap:8px}.fig .fc{color:#8a8a8a;font-size:11.5px;text-align:center}
+/* Push-Meldung */
+.push{background:#2d2d30;border-radius:16px;padding:10px 12px;color:#eee;box-shadow:0 2px 10px #0008}.push .top{display:flex;align-items:center;gap:6px;font-size:11px;color:#9aa}.push .logo{width:16px;height:16px;border-radius:5px;background:#43a047;display:grid;place-items:center;font-size:10px;color:#fff}
+.push b{display:block;font-size:13.5px;margin-top:4px}.push .tx{font-size:12.5px;color:#cfd2d6;margin-top:1px}
+.acts{display:flex;gap:6px;margin-top:9px;border-top:1px solid #ffffff18;padding-top:8px;flex-wrap:wrap}.acts span{font-size:12px;font-weight:600;color:#8ab4f8;padding:2px 8px;border-radius:8px;background:#ffffff0d}
+.note{font-size:11.5px;color:#8a8a8a}
+/* Routinenkarte */
+.rt{background:var(--card);border:1px solid var(--ln);border-radius:14px;padding:10px 12px;display:flex;align-items:center;gap:10px}.rt .ic{width:34px;height:34px;border-radius:11px;background:#b3571b;display:grid;place-items:center;font-size:17px;flex:none}.rt b{font-size:13.5px;display:block}.rt small{color:var(--t2);font-size:12px}.rt .sw{margin-left:auto;width:34px;height:20px;border-radius:12px;background:#43a047;position:relative;flex:none}.rt .sw::after{content:"";position:absolute;right:3px;top:3px;width:14px;height:14px;border-radius:50%;background:#fff}
+/* Dashboard-Karte */
+.dc{background:#fff;color:#222;border-radius:16px;padding:12px;display:flex;gap:12px;align-items:center}.dc.dark{background:#1f1f22;color:#eee}
+.ring{width:84px;height:84px;border-radius:50%;background:conic-gradient(#43a047 0 94%,#e7e7e7 0);display:grid;place-items:center;flex:none}.dark .ring{background:conic-gradient(#43a047 0 94%,#3a3a3e 0)}.ring i{width:62px;height:62px;border-radius:50%;background:#fff;display:grid;place-items:center;font-style:normal;font-weight:700;font-size:16px}.dark .ring i{background:#1f1f22}
+.dc ul{list-style:none;margin:0;padding:0;font-size:12.5px;flex:1}.dc li{display:flex;justify-content:space-between;padding:2px 0}.dc li span:first-child::before{content:"";display:inline-block;width:8px;height:8px;border-radius:50%;margin-right:7px}.dc li.a span:first-child::before{background:#43a047}.dc li.b span:first-child::before{background:#f9a825}.dc li.c span:first-child::before{background:#e53935}
+.dc2{background:#fff;color:#222;border-radius:16px;padding:12px;font-size:12.5px}.dc2 .n{font-size:26px;font-weight:700;color:#e53935;line-height:1}.dc2 .r{display:flex;justify-content:space-between;align-items:center;padding:5px 0;border-top:1px solid #eee;margin-top:5px}.dc2 .r em{font-style:normal;color:#777}.dc2 .pz{border:1px solid #bbb;border-radius:8px;padding:1px 8px;font-size:11px}
+/* Launcher */
+.lg{display:grid;grid-template-columns:repeat(4,1fr);gap:10px}.lg div{text-align:center;font-size:10.5px;color:#cfcfcf;position:relative}.lg i{display:grid;place-items:center;width:100%;aspect-ratio:1;border-radius:16px;font-style:normal;font-size:22px;margin-bottom:3px}.lg .bd{position:absolute;top:-4px;right:2px;background:#e53935;color:#fff;border-radius:99px;font-size:10px;padding:0 5px;line-height:15px}.lg .hh{position:absolute;top:3px;left:6px;font-size:11px;color:#ff6b8a}
+.kopf{display:flex;gap:8px;justify-content:flex-end;align-items:center;font-size:11px;color:#9a9a9a}.kopf i{font-style:normal;border:1px solid #4a4a4a;border-radius:50%;width:26px;height:26px;display:grid;place-items:center;color:#ddd;font-size:13px}.kopf i.fv{border-color:#ff6b8a}
+.two{display:grid;grid-template-columns:1fr 1fr;gap:18px}.two .art{display:flex;flex-direction:column;gap:12px}
+.cmp{display:grid;grid-template-columns:1fr 1fr;gap:14px;margin-top:6px}.cmp div{background:#1c1c1c;border:1px solid var(--ln);border-radius:14px;padding:12px 14px;font-size:13px;color:#cfcfcf}.cmp b{color:#fff}
+</style><body>
+<h1>Mehr erfahren: Artikel mit Abbildungen</h1>
+<p class="sub">Variante A1 (Bento) mit längeren Artikeln. Aufbau: Kopf in der Themenfarbe, "Wozu", Schritte als Zeitleiste, eine Abbildung mit erfundenen Daten, "Gut zu wissen", unten Navigation. Die Texte folgen dem README; alle Beispieldaten sind erfunden. Die Abbildungen sind hier von Hand gezeichnet, im Panel würden sie aus denselben Bausteinen entstehen wie die echte Vorschau.</p>
+
+<h2>1 · Magic Push (Handy und Desktop)</h2>
+<div class="row">
+<div><p class="cap">Handy · Artikel (ganze Länge)</p>
+<div class="win m"><div class="head"><div class="back">←</div><b>Magic Push<small>Thema 1 von 4 · 2 Min.</small></b><div class="x">✕</div></div>
+<div class="body art">
+<div class="hero g1"><span class="em">✨</span><b>Meldungen nach Mass</b><small>Eigene Push-Meldungen, ohne Automation</small></div>
+<h3>Wozu?</h3>
+<p>Mit Magic Push sagst du dem Panel, wann es dir etwas melden soll, und was in der Meldung steht. Du brauchst dafür keine Automation und kein YAML. Eine Meldung gehört immer zu einem Gerät und steht in dessen Reiter "Magic Push".</p>
+<p>Beispiele: "Der Keller ist unter 12 °C." "Der Filter des Luftreinigers ist seit 10 Tagen fällig." "Jeden Montag um 10:00: Wäsche prüfen."</p>
+<h3>So legst du eine Meldung an</h3>
+<div class="tl">
+<div class="st"><i style="background:var(--c1)">1</i><p><b>Gerät öffnen</b>, Reiter "Magic Push", "Neue Meldung". Oder in der App "Magic Push" im Launcher, dort für alle Geräte.</p></div>
+<div class="st"><i style="background:var(--c1)">2</i><p><b>Bedingungen:</b> einen Wert des Geräts wählen (oder eine beliebige Entität), dann über, unter, ist oder ändert sich. Mehrere Bedingungen lassen sich mit "und" und "oder" verknüpfen.</p></div>
+<div class="st"><i style="background:var(--c1)">3</i><p><b>Wie lange:</b> Die Bedingung muss zum Beispiel 10 Minuten gelten, bevor gemeldet wird. Ebenso, wie lange der Wert normal bleiben muss, bevor die Meldung zurückgesetzt wird.</p></div>
+<div class="st"><i style="background:var(--c1)">4</i><p><b>Versand:</b> sofort oder erst zu einer Uhrzeit, an gewählten Wochentagen. Ziel ist jedes Notify-Ziel, auf Wunsch als kritische Mitteilung.</p></div>
+<div class="st"><i style="background:var(--c1)">5</i><p><b>Text:</b> Titel und Inhalt mit Variablen wie Name, Wert, Einheit, Schwelle und Bereich. Eine Vorschau zeigt die Meldung, wie sie ankommt.</p></div></div>
+<h3>So sieht es aus</h3>
+<div class="fig"><div class="push"><div class="top"><span class="logo">D</span>Device Panel · jetzt</div><b>Keller Sensor: Temperatur zu tief</b><div class="tx">9.4 °C, seit 10 Minuten unter 12 °C. Bereich: Keller.</div>
+<div class="acts"><span>Heizung ein</span><span>Morgen 08:00</span><span>Quittieren</span></div></div><div class="fc">Beispiel mit erfundenen Daten: Meldung mit drei Push-Aktionen</div></div>
+<h3>Push-Aktionen</h3>
+<p>Unter der Meldung können bis zu <b>drei Schaltflächen</b> stehen. Jede hat einen Titel und eine Art:</p>
+<p><b>Routine:</b> Ein Tipp führt eine deiner Routinen aus, eine Folge-Meldung sagt, wie es ausging.<br><b>Erinnern:</b> Die Meldung kommt nach 15 Minuten, 1 Stunde oder morgen zu einer Uhrzeit deiner Wahl noch einmal, solange die Bedingung gilt.<br><b>Öffnen:</b> das Gerät im Panel oder in Home Assistant.<br><b>Quittieren:</b> bestätigt die Meldung, es kommt keine Wiederholung, bis das Gerät wieder normal ist.</p>
+<div class="tip" style="border-color:var(--c1)"><b>Gut zu wissen:</b> Was ein Tipp tut, steht in der gespeicherten Meldung, nie in der Benachrichtigung. Ein gefälschter Tipp startet deshalb nichts. Die Meldung "wieder normal" trägt keine Push-Aktionen.</div>
+<h3>Alle Meldungen im Blick</h3>
+<p>Die App "Magic Push" im Launcher zeigt alle Meldungen aller Geräte, eine Karte pro Gerät, mit Suche und Filter. Im Protokoll siehst du jede gesendete Meldung mit Wert, Empfänger und was daraus wurde.</p>
+</div>
+<div class="foot"><div class="pill"><span>← Übersicht</span><span class="pri">Routinen →</span></div></div></div></div>
+
+<div><p class="cap">Desktop · Artikel mit Abbildung neben dem Text (gleicher Inhalt, gekürzt gezeigt)</p>
+<div class="win d"><div class="head"><div class="back">←</div><b>Magic Push<small>Thema 1 von 4 · 2 Min.</small></b><div class="x">✕</div></div>
+<div class="body art" style="flex-direction:row;gap:22px">
+<div style="flex:1.15;display:flex;flex-direction:column;gap:12px">
+<div class="hero g1" style="height:100px"><span class="em">✨</span><b>Meldungen nach Mass</b><small>Eigene Push-Meldungen, ohne Automation</small></div>
+<h3>Wozu?</h3><p>Mit Magic Push sagst du dem Panel, wann es dir etwas melden soll, und was in der Meldung steht. Du brauchst dafür keine Automation und kein YAML.</p>
+<h3>So legst du eine Meldung an</h3>
+<div class="tl">
+<div class="st"><i style="background:var(--c1)">1</i><p><b>Gerät öffnen,</b> Reiter "Magic Push", "Neue Meldung".</p></div>
+<div class="st"><i style="background:var(--c1)">2</i><p><b>Bedingungen</b> wählen, auch mit "und" und "oder".</p></div>
+<div class="st"><i style="background:var(--c1)">3</i><p><b>Wie lange</b> sie gelten muss.</p></div>
+<div class="st"><i style="background:var(--c1)">4</i><p><b>Versand:</b> sofort oder zu einer Uhrzeit.</p></div>
+<div class="st"><i style="background:var(--c1)">5</i><p><b>Text</b> mit Variablen und Vorschau.</p></div></div>
+<div class="tip" style="border-color:var(--c1)"><b>Gut zu wissen:</b> Ein gefälschter Tipp auf eine Push-Aktion startet nichts.</div>
+</div>
+<div style="flex:1;display:flex;flex-direction:column;gap:12px;padding-top:4px">
+<div class="fig"><div class="push"><div class="top"><span class="logo">D</span>Device Panel · jetzt</div><b>Keller Sensor: Temperatur zu tief</b><div class="tx">9.4 °C, seit 10 Minuten unter 12 °C. Bereich: Keller.</div><div class="acts"><span>Heizung ein</span><span>Morgen 08:00</span><span>Quittieren</span></div></div><div class="fc">Beispiel mit erfundenen Daten</div></div>
+<div class="fig"><div class="push"><div class="top"><span class="logo">D</span>Device Panel · 08:00</div><b>Erinnerung: Keller Sensor</b><div class="tx">Immer noch 10.1 °C, unter 12 °C.</div><div class="acts"><span>Heizung ein</span><span>Quittieren</span></div></div><div class="fc">Die Erinnerung trägt den dann gültigen Wert</div></div>
+</div></div>
+<div class="foot"><div class="pill"><span>← Übersicht</span><span class="pri">Routinen →</span></div></div></div></div>
+</div>
+
+<h2>2 · Routinen, Dashboard-Karten, App-Launcher (Handy)</h2>
+<div class="row">
+<div><p class="cap">Routinen</p>
+<div class="win m"><div class="head"><div class="back">←</div><b>Routinen<small>Thema 2 von 4 · 2 Min.</small></b><div class="x">✕</div></div>
+<div class="body art">
+<div class="hero g2"><span class="em">⚡</span><b>Schalten nach Plan</b><small>Einmalig, zeitgesteuert oder durch einen Auslöser</small></div>
+<h3>Wozu?</h3>
+<p>Eine Routine schaltet etwas in Home Assistant, einmalig oder nach Zeitplan, ohne Automation. Sie läuft in Home Assistant selbst, also auch bei geschlossenem Panel und nach einem Neustart.</p>
+<h3>So legst du eine Routine an</h3>
+<div class="tl">
+<div class="st"><i style="background:var(--c2)">1</i><p><b>Gerät, Gruppe oder Szene</b> wählen. Bis zu 10 Geräte lassen sich in einer Routine verbinden.</p></div>
+<div class="st"><i style="background:var(--c2)">2</i><p><b>Was:</b> ein, aus, umschalten oder setzen, zum Beispiel Helligkeit und Farbe einer Lampe. Eine Vorschau zeigt das Ergebnis, ohne zu schalten.</p></div>
+<div class="st"><i style="background:var(--c2)">3</i><p><b>Wann:</b> in X Minuten, an einem Datum, täglich, an Wochentagen, monatlich, oder durch einen Auslöser wie "Regensensor ist trocken".</p></div>
+<div class="st"><i style="background:var(--c2)">4</i><p><b>Zurückschalten:</b> nie, nach einer Dauer, zu einer Zeit oder durch einen Auslöser, auf "aus" oder "wie vorher".</p></div></div>
+<h3>So sieht es aus</h3>
+<div class="fig"><div class="rt"><span class="ic">💨</span><div><b>Lüfter Bad</b><small>Täglich 20:00 · ein, nach 30 Min. aus<br>Nächster Lauf: heute 20:00</small></div><span class="sw"></span></div>
+<div class="push"><div class="top"><span class="logo">D</span>Device Panel · 20:00</div><b>Routine "Lüfter Bad" gelaufen</b><div class="tx">Eingeschaltet, schaltet um 20:30 zurück.</div><div class="acts"><span>Sofort zurückschalten</span></div></div><div class="fc">Beispiel mit erfundenen Daten: Routine und ihre Meldung</div></div>
+<div class="tip" style="border-color:var(--c2)"><b>Gut zu wissen:</b> "Wie vorher" merkt sich die Szene vor dem Schalten. So wird eine Lampe kurz heller und danach wieder genau wie vorher. "Jetzt ausführen" probiert eine Routine sofort aus.</div>
+<h3>Kontrolle und Pause</h3>
+<p>Jede Routine hat ein Protokoll mit Trace: jeder Schritt der Reihe nach, kopierbar für die Fehlersuche. Der Schalter "Alle Routinen pausieren" hält alles an, auf Wunsch bis zu einer Zeit.</p>
+</div>
+<div class="foot"><div class="pill"><span>← Magic Push</span><span class="pri">Karten →</span></div></div></div></div>
+
+<div><p class="cap">Dashboard-Karten</p>
+<div class="win m"><div class="head"><div class="back">←</div><b>Dashboard-Karten<small>Thema 3 von 4 · 2 Min.</small></b><div class="x">✕</div></div>
+<div class="body art">
+<div class="hero g3"><span class="em">🧩</span><b>Dein Dashboard, live</b><small>Drei Karten für jedes Dashboard</small></div>
+<h3>Wozu?</h3>
+<p>Die Karten zeigen den Zustand deiner Geräte direkt auf einem Dashboard von Home Assistant, auch für Personen ohne Zugriff auf das Panel. Sie sehen aus wie die Kacheln des Panels und folgen dem hellen oder dunklen Design von Home Assistant.</p>
+<h3>So fügst du eine Karte hinzu</h3>
+<div class="tl">
+<div class="st"><i style="background:var(--c3)">1</i><p>Dashboard öffnen, "Bearbeiten", "Karte hinzufügen".</p></div>
+<div class="st"><i style="background:var(--c3)">2</i><p>Nach "Device Panel" suchen. Es erscheinen drei Karten mit Vorschau.</p></div>
+<div class="st"><i style="background:var(--c3)">3</i><p>Karte wählen, speichern. Einrichten musst du nichts.</p></div></div>
+<h3>Die drei Karten</h3>
+<div class="fig"><div class="dc"><div class="ring"><i>94 %</i></div><ul><li class="a"><span>Stabil</span><b>31</b></li><li class="b"><span>Instabil</span><b>2</b></li><li class="c"><span>Ausgefallen</span><b>1</b></li></ul></div><div class="fc">"Verfügbarkeit": Anteil der Geräte, die jetzt online sind</div>
+<div class="dc2"><div class="n">2</div>Geräte ausgefallen, längster Ausfall 1 Std. 12 Min.<div class="r"><span>Garage Sensor</span><em>1 Std. 12 Min.</em><span class="pz">Pausieren</span></div><div class="r"><span>Gartenlicht</span><em>14 Min.</em><span class="pz">Pausieren</span></div></div><div class="fc">"Gerade ausgefallen": wer fehlt und wie lange</div></div>
+<p>Die dritte Karte, "Übersicht", zeigt beides zusammen mit dem Ausfall-Puls der letzten 24 Stunden.</p>
+<div class="tip" style="border-color:var(--c3)"><b>Gut zu wissen:</b> Die Karten brauchen keine Administratorrechte. Nur Administratoren sehen den Knopf "Pausieren" und kommen mit einem Tipp ins Panel. Fehlt die Karte im Dialog, hilft ein Neustart von Home Assistant und ein hartes Neuladen des Browsers.</div>
+</div>
+<div class="foot"><div class="pill"><span>← Routinen</span><span class="pri">App-Launcher →</span></div></div></div></div>
+
+<div><p class="cap">App-Launcher</p>
+<div class="win m"><div class="head"><div class="back">←</div><b>App-Launcher<small>Thema 4 von 4 · 2 Min.</small></b><div class="x">✕</div></div>
+<div class="body art">
+<div class="hero g4"><span class="em">🚀</span><b>Alles in einem Knopf</b><small>Eigene Seiten, Links und Aktionen</small></div>
+<h3>Wozu?</h3>
+<p>Der Knopf in der Kopfzeile öffnet den Launcher: nützliche Seiten von Device Panel und von Home Assistant, in den Symbolen und Farben der Einstellungen von Home Assistant. Du kannst eigene Seiten, Links und Aktionen anlegen.</p>
+<div class="fig"><div class="kopf"><span>Favoriten</span><i class="fv">⚡</i><i class="fv">⚙</i><i>▦</i></div><div class="lg">
+<div><i style="background:#b3571b">⚡</i>Routinen<span class="hh">♥</span></div>
+<div><i style="background:#4a3aa8">✨</i>Magic Push</div>
+<div><i style="background:#2b6cb0">📋</i>Protokoll</div>
+<div><i style="background:#2e7d32">⟳</i>Updates<span class="bd">3</span></div>
+<div><i style="background:#555">⚙</i>Einstellungen<span class="hh">♥</span></div>
+<div><i style="background:#0f7a8a">🏠</i>Dashboard</div>
+<div><i style="background:#a33463">💡</i>Alle Lichter aus</div>
+<div><i style="background:#7a5a10">🔗</i>Router</div></div><div class="fc">Beispiel mit erfundenen Daten: Launcher mit Favoriten, Zahl bei Updates, eigener Aktion und Link</div></div>
+<h3>Eigene Einträge</h3>
+<div class="tl">
+<div class="st"><i style="background:var(--c4)">1</i><p><b>Seite</b> in Home Assistant, zum Beispiel Automationen.</p></div>
+<div class="st"><i style="background:var(--c4)">2</i><p><b>Externer Link,</b> öffnet in einem neuen Tab, auf Wunsch mit Favicon.</p></div>
+<div class="st"><i style="background:var(--c4)">3</i><p><b>Aktion:</b> ruft einen Dienst von Home Assistant auf, auf Wunsch mit Rückfrage. Das Symbol dreht sich, dann kommt ein grüner Haken oder ein rotes Kreuz.</p></div></div>
+<h3>Ordnung schaffen</h3>
+<p>Im Bearbeiten-Modus sortierst du per Ziehen, blendest Apps aus und wählst Raster oder Liste. Ein Herz macht bis zu fünf Apps zu Favoriten mit eigenem Knopf in der Kopfzeile. Farbe und Bild jeder eigenen App wählst du aus neun Farben und 50 Bildern.</p>
+<div class="tip" style="border-color:var(--c4)"><b>Gut zu wissen:</b> Die App "Status" (Administratoren) zeigt, ob alle Teile der Integration laufen, und meldet per Push, wenn einer steht. Ansicht, Favoriten und Reihenfolge gelten pro Benutzer.</div>
+</div>
+<div class="foot"><div class="pill"><span>← Karten</span><span class="pri">Fertig ✓</span></div></div></div></div>
+</div>
+
+<h2>Abbildungen: gezeichnet oder echte Screenshots?</h2>
+<div class="cmp">
+<div><b>Gezeichnet aus Bausteinen (Empfehlung)</b><br>Die Abbildungen entstehen im Panel aus HTML und Texten, mit erfundenen Daten. Sie wechseln mit der Sprache (DE/EN), folgen dem hellen oder dunklen Design und müssen bei Änderungen der Oberfläche nicht neu fotografiert werden. Die Push-Meldung ist nur ein gezeichnetes Abbild, nicht die echte Android- oder iOS-Ansicht. Etwas Aufwand beim Bauen.</div>
+<div><b>Echte Screenshots (PNG)</b><br>Zeigen exakt die echte Oberfläche. Es gibt schon Bilder in <code>docs/screenshots</code> (DE/EN), die das Panel mitliefern könnte. Nachteile: veralten bei jeder Änderung, gelten nur in einem Design (hell oder dunkel), vergrössern das Paket, und eine echte Push-Meldung lässt sich ohne Handy nicht fotografieren. Passt für Panel-Ansichten, weniger für die Meldung.</div>
+</div>
+</body>
