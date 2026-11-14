@@ -11,6 +11,10 @@ Einstieg für jede neue Claude-Code-Session. Zuerst diese Datei lesen, dann
 
 - `charge.py` `known_rechargeable`: Lademeldung gilt (global + Gerät/Integration), oder am Gerät ausdrücklich "Ein", oder Live-Aktivität für das Gerät an; `rechargeable()` und `charging_of()` nutzen sie (vorher nur `enabled()` mit globalem Schalter). Test `test_rechargeable_by_device_charge_or_live`.
 
+## Stand (2.220.0, Push-Aktion "Rückgängig")
+
+- Art `undo` mit `undo` = `opposite` (`RoutineManager.async_undo`: alle Ziele ins Gegenteil, nur Ein/Aus, wartendes Zurückschalten entfällt) oder `back` (`async_revert_now`: `_async_revert` jetzt, nur mit `back_kind` und wartendem Zurückschalten). Prüfung in `magic.clean_rule` (kein Import von `routines`: Kreis) und im Panel (`undoProblem`, `routines` mit `back_kind` und `acts`). Folge-Meldung wie bei der Routine, Texte `magic_action_undo_*`, Gründe `routine_reason_no_opposite|no_back|nothing_pending`. Fünf Reiter auf dem Handy: drei und zwei (`.mg-pa-kinds`). Tests: `tests/test_magic_actions.py`, Suite `magicpa-e2e.mjs`.
+
 ## Stand (2.218.0, Push-Aktionen in Magic Push)
 
 - Name überall: "Push-Aktionen" (EN "push actions"), nicht "Knöpfe". Regelfeld `push_actions` (bis 3: `title`, `kind` routine/remind/open/done, `routine_id`, `after` 15m/1h/morning, `open` panel/ha) in `magic.py` (`ACTION_SCHEMA`, `clean_rule`, `_actions`, `_on_action`, `_async_do_action`, Erinnern mit `_reminders` im Store, `runtime["acked"]` für Erledigt). Kennung `MAGIC_ACTION_PREFIX` + Regel + Nr; die Art kommt aus der Regel, nie aus dem Ereignis. Folge-Meldung (`push.reason_text`, Texte `magic_action_*`), Vorschau `preview_actions` (WS `magic_preview` liefert `actions`).

@@ -7,6 +7,15 @@ Alle nennenswerten Änderungen an dieser Integration stehen in dieser Datei.
 Das Format folgt [Keep a Changelog](https://keepachangelog.com/de/1.1.0/),
 die Versionsnummern folgen [Semantic Versioning](https://semver.org/lang/de/).
 
+## [2.220.0] - 2026-11-14
+
+Neue Push-Aktion "Rückgängig" für Magic-Push-Meldungen: das Gegenteil schalten oder eine Routine jetzt zurückschalten.
+
+### Hinzugefügt
+
+- **Push-Aktion "Rückgängig":** Im Schritt "Text" eine fünfte Art "Rückgängig" (neben Routine, Erinnern, Öffnen, Quittieren). Du wählst eine Routine aus der durchsuchbaren Liste und einen von zwei Modi: **Gegenteil** schaltet die Ziele der Routine sofort ins Gegenteil (ein ↔ aus), ein wartendes Zurückschalten der Routine entfällt dabei, damit es später nicht ein zweites Mal schaltet; **Zurückschalten** führt das Zurückschalten der Routine jetzt aus, so wie es in der Routine eingestellt ist (Gegenstück oder "wie vorher"). Eine Folge-Meldung sagt "Rückgängig gemacht" oder warum es nicht ging.
+- **Beim Einrichten geprüft:** "Gegenteil" geht nur bei Routinen, deren Ziele ein/aus sind (nicht Umschalten, Wert setzen oder Szene); "Zurückschalten" nur bei Routinen mit eingestelltem Zurückschalten, und beim Tippen nur, wenn die Routine geschaltet hat und noch zurückzuschalten wartet (sonst sagt die Folge-Meldung "nichts zurückzuschalten"). Der Assistent zeigt den Grund und sperrt "Weiter"; der Server prüft dasselbe. Auf dem Handy stehen die fünf Reiter in zwei Zeilen (drei und zwei).
+
 ## [2.219.0] - 2026-11-14
 
 Die Push-Aktion "Erinnern" kann morgen zu einer frei gewählten Uhrzeit erinnern.
@@ -6126,6 +6135,7 @@ Erste Vorabversion.
   GitHub Actions für die Prüfungen von HACS und hassfest sowie die Tests.
 
 [2.6.0]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v2.6.0
+[2.220.0]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v2.220.0
 [2.219.0]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v2.219.0
 [2.218.0]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v2.218.0
 [2.217.0]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v2.217.0

@@ -7,6 +7,15 @@ All notable changes to this integration are documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/).
 
+## [2.220.0] - 2026-11-14
+
+A new push action "Undo" for Magic Push messages: switch the opposite, or switch a routine back now.
+
+### Added
+
+- **Push action "Undo":** In the step "Text" a fifth kind "Undo" (next to Routine, Remind, Open, Acknowledge). You choose a routine from the searchable list and one of two modes: **Opposite** switches the targets of the routine to the opposite right away (on ↔ off), and a pending switch back of the routine is dropped, so it does not switch a second time later; **Switch back** runs the switch back of the routine now, as set in the routine (the opposite or "as before"). A follow-up notification says "Undone" or why it did not work.
+- **Checked while you set it up:** "Opposite" works only for routines whose targets are on/off (not toggle, set value or scene); "Switch back" only for routines that have a switch back set, and at the tap only if the routine has switched and still waits to be switched back (otherwise the follow-up says "nothing to switch back"). The assistant shows the reason and blocks "Next"; the server checks the same. On the phone the five tabs stand in two rows (three and two).
+
 ## [2.219.0] - 2026-11-14
 
 The push action "Remind" can remind tomorrow at a time you choose.
@@ -6025,6 +6034,7 @@ First pre-release.
   GitHub Actions for HACS/hassfest validation and tests.
 
 [2.6.0]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v2.6.0
+[2.220.0]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v2.220.0
 [2.219.0]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v2.219.0
 [2.218.0]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v2.218.0
 [2.217.0]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v2.217.0

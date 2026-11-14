@@ -1855,6 +1855,57 @@ class RoutineManager:
             self._save_now()
             return ok, reason
 
+    # -- Rückgängig (seit 2.220.0, Push-Aktion von Magic Push) --------------------------
+
+    async def async_undo(self, routine_id: str) -> tuple[bool, str | None] | None:
+        """
+        Rückgängig, Gegenteil: jedes Ziel sofort ins Gegenteil schalten (Ein ↔ Aus), auch wenn die Routine nichts zum Zurückschalten wartet.
+        Nur wenn alle Ziele ein Gegenteil haben (Umschalten, Setzen und Szenen nicht): sonst ("False", "no_opposite") und nichts geschaltet.
+        Ein wartendes Zurückschalten der geschalteten Ziele entfällt, sonst schaltete es später ein zweites Mal.
+        """
+        routine = self._routines.get(routine_id)
+        if routine is None:
+            return None
+        async with self._lock:
+            rt = self.runtime(routine_id)
+            views = {i: target_view(routine, i) for i in range(len(routine_targets(routine)))}
+            if any(opposite(v["action"]) is None for v in views.values()):
+                return False, "no_opposite"
+            results = await asyncio.gather(*(self._async_call(views[i], opposite(views[i]["action"]) or "off") for i in views))
+            fails: list[tuple[int, str | None]] = []
+            for i, (ok, reason) in zip(views, results, strict=True):
+                if ok:
+                    self._tr(rt, routine, i).update(revert_action=None, rretry=0, snapshot=None)
+                    activity.record(self.hass, "info", "routine", "routine_revert", routine["name"], log_device(routine), entity=self._entity_name(views[i]), action=self._action_text(views[i], opposite(views[i]["action"]) or "off"))
+                else:
+                    fails.append((i, reason))
+            if not self._pending(rt):
+                rt["revert_due"] = None
+                self._end_done(routine)
+            self._arm(routine_id)
+            self._save_now()
+            return not fails, fails[0][1] if fails else None
+
+    async def async_revert_now(self, routine_id: str) -> tuple[bool, str | None] | None:
+        """
+        Rückgängig, wie in der Routine eingestellt: das Zurückschalten der Routine jetzt ausführen (Gegenstück oder "wie vorher", je nach Einstellung
+        der Routine). Nur wenn die Routine ein Zurückschalten hat ("no_back" sonst) und noch etwas zurückzuschalten wartet ("nothing_pending" sonst).
+        """
+        routine = self._routines.get(routine_id)
+        if routine is None:
+            return None
+        async with self._lock:
+            rt = self.runtime(routine_id)
+            if routine["back_kind"] == "none":
+                return False, "no_back"
+            if not self._pending(rt):
+                return False, "nothing_pending"
+            await self._async_revert(routine, rt, time.time())
+            self._arm(routine_id)
+            self._save_now()
+            # Schlug das Zurückschalten fehl, wartet es weiter (die Routine versucht es nochmals): dann gilt es hier als nicht geschafft
+            return (not self._pending(rt), "error" if self._pending(rt) else None)
+
     # -- Auslöser (seit 2.54.0) ----------------------------------------------------
 
     def _eval(self, tree: dict[str, Any] | None) -> bool | None:
