@@ -11,6 +11,11 @@ Einstieg für jede neue Claude-Code-Session. Zuerst diese Datei lesen, dann
 
 - `charge.py` `known_rechargeable`: Lademeldung gilt (global + Gerät/Integration), oder am Gerät ausdrücklich "Ein", oder Live-Aktivität für das Gerät an; `rechargeable()` und `charging_of()` nutzen sie (vorher nur `enabled()` mit globalem Schalter). Test `test_rechargeable_by_device_charge_or_live`.
 
+## Stand (2.224.1, Routinen-Artikel: Timer)
+
+- `strings.js` `lrnTopics.rt`: Abschnitt "Auch als Timer" (drei Wege am Beispiel Ladegerät: "In …", "Zurückschalten" › "Nach Dauer", Auslöser mit "mindestens so lange erfüllt"; Dauern `DELAY_MIN`/`BACK_MIN` 10 s bis `*_MAX` 7 Tage in `routines.py`, `hold_s` bis `magic.FOR_MAX` 7 Tage), Kachel-Text `short` nennt den Timer. Die Namen der Auswahlen stammen aus dem Panel (`rtKindIn`, `rtBackKindDuration`); ändern sie sich, den Artikel nachführen. Test: `learn-e2e` (Abschnitt mit drei Schritten und den Panel-Namen). README (Routinen): Zeile "Als Timer".
+- Offizielles Release: 2.224.1 ist das erste offizielle seit 2.215.1; die Notes fassen alles ab 2.216.0 zusammen (2.223.0 übersprungen).
+
 ## Stand (2.224.0, Lernseite: Ausfälle und Batterie)
 
 - `learn.js` `TOPICS` hat sechs Einträge: `out` (Ausgefallene Geräte, mit Abschnitt "Geräte pausieren") und `bat` (Batterie-Warnungen) stehen vorn (Nutzerwunsch: sie sind essentiell), dann push, rt, cards, lau. Farben: Ausfälle rot, Batterie orange (wie die Warnstufen), die übrigen wie die Launcher-Symbole. Skizzen `.lrn-dev` (ausgefallenes und pausiertes Gerät) und `.lrn-bat` (Stand, Schwelle als Strich, Prognose); die Batterie-Meldung trägt keine Push-Aktionen, die Skizze zeigt sie darum ohne Schaltflächen (`push()` lässt die Trennlinie bei leerer Liste weg).

@@ -7,6 +7,14 @@ All notable changes to this integration are documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/).
 
+## [2.224.1] - 2026-11-14
+
+The article on routines on the learn page also describes the use as a timer.
+
+### Changed
+
+- **Learn page, topic "Routines":** New section "Also as a timer" with three ways, using a charger on a socket as the example: run out once ("When" › "In …", for example in 2 hours, action "off"), on and off again after a duration ("Switch back" › "After a time") and again and again (trigger "Socket is on", met for at least 2 hours, action "off": every switch-on restarts the timer). Plus a note on the possible durations (10 seconds to 7 days); the tile mentions the timer too. README (routines) extended.
+
 ## [2.224.0] - 2026-11-14
 
 The learn page "Learn more" now also explains offline devices (with pauses) and battery warnings, in first place.
@@ -37,6 +45,7 @@ New learn page "Learn more": short articles on Magic Push, routines, dashboard c
 
 - **After "Finish" in the setup wizard** the learn page opens instead of the short message "Setup saved."; the header of the page says the same more clearly.
 
+## [2.222.0] - 2026-11-14
 
 The title of a push action starts with a variable for the chosen kind.
 
@@ -6083,6 +6092,7 @@ First pre-release.
   GitHub Actions for HACS/hassfest validation and tests.
 
 [2.6.0]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v2.6.0
+[2.224.1]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v2.224.1
 [2.224.0]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v2.224.0
 [2.222.0]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v2.222.0
 [2.221.0]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v2.221.0

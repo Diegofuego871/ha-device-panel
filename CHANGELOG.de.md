@@ -7,6 +7,14 @@ Alle nennenswerten Änderungen an dieser Integration stehen in dieser Datei.
 Das Format folgt [Keep a Changelog](https://keepachangelog.com/de/1.1.0/),
 die Versionsnummern folgen [Semantic Versioning](https://semver.org/lang/de/).
 
+## [2.224.1] - 2026-11-14
+
+Der Artikel zu Routinen auf der Lernseite beschreibt auch die Nutzung als Timer.
+
+### Geändert
+
+- **Lernseite, Thema "Routinen":** Neuer Abschnitt "Auch als Timer" mit drei Wegen am Beispiel eines Ladegeräts an einer Steckdose: einmal ablaufen ("Wann" › "In …", zum Beispiel in 2 Stunden, Aktion "aus"), ein und nach einer Dauer wieder aus ("Zurückschalten" › "Nach Dauer") und immer wieder (Auslöser "Steckdose ist ein", mindestens 2 Stunden lang erfüllt, Aktion "aus": jedes Einschalten startet den Timer neu). Dazu der Hinweis auf die möglichen Dauern (10 Sekunden bis 7 Tage); die Kachel nennt den Timer ebenfalls. README (Routinen) ergänzt.
+
 ## [2.224.0] - 2026-11-14
 
 Die Lernseite "Mehr erfahren" erklärt jetzt auch ausgefallene Geräte (mit Pausen) und Batterie-Warnungen, an erster Stelle.
@@ -37,6 +45,7 @@ Neue Lernseite "Mehr erfahren": kurze Artikel zu Magic Push, Routinen, Dashboard
 
 - **Nach "Fertigstellen" im Einrichtungsassistenten** öffnet die Lernseite statt der kurzen Meldung "Einrichtung gespeichert."; der Kopf der Seite sagt dasselbe deutlicher.
 
+## [2.222.0] - 2026-11-14
 
 Der Titel einer Push-Aktion beginnt mit einer Variablen für die gewählte Art.
 
@@ -6184,6 +6193,7 @@ Erste Vorabversion.
   GitHub Actions für die Prüfungen von HACS und hassfest sowie die Tests.
 
 [2.6.0]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v2.6.0
+[2.224.1]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v2.224.1
 [2.224.0]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v2.224.0
 [2.222.0]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v2.222.0
 [2.221.0]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v2.221.0
