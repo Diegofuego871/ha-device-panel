@@ -1,5 +1,5 @@
 /**
- * Lernseite "Mehr erfahren" (seit 2.223.0, docs/mockups/learn-v4, Variante A2): vier Themen (Magic Push, Routinen, Dashboard-Karten, App-Launcher) als
+ * Lernseite "Mehr erfahren" (seit 2.224.0, docs/mockups/learn-v4, Variante A2): sechs Themen (Ausgefallene Geräte mit Pausen, Batterie-Warnungen, Magic Push, Routinen, Dashboard-Karten, App-Launcher) als
  * Kacheln mit einer kleinen Skizze der Funktion; ein Tipp öffnet einen kurzen Artikel mit Reitern, "Zurück" und "Weiter". Zwei Einstiege:
  * nach dem Einrichtungsassistenten (mit Kopf "Einrichtung abgeschlossen") und in Einstellungen › Panel › Mehr erfahren.
  *
@@ -8,9 +8,12 @@
  * sind erfunden (lrnSk). Die Skizzen sind kleine Nachbauten aus HTML und folgen damit der Sprache; sie zeigen keine echten Geräte.
  */
 
-// Reihenfolge, Symbol und Farbe je Thema. Die Farben sind die der Launcher-Symbole (Magic Push violett, Routinen türkis, Dashboard-Karten blau wie die
-// Ansicht), damit ein Thema überall dieselbe Farbe trägt.
+// Reihenfolge, Symbol und Farbe je Thema. Ausfälle und Batterie stehen vorn (Nutzerwunsch: sie sind das Wichtigste, was das Panel tut). Die Farben der
+// übrigen sind die der Launcher-Symbole (Magic Push violett, Routinen türkis, Dashboard-Karten blau wie die Ansicht), damit ein Thema überall
+// dieselbe Farbe trägt; Ausfälle rot und Batterie orange wie die Warnstufen des Panels.
 const TOPICS = [
+  { id: "out", icon: "alert", color: "#D32F2F" },
+  { id: "bat", icon: "battery", color: "#EF6C00" },
   { id: "push", icon: "sparkle", color: "#8E24AA" },
   { id: "rt", icon: "flash", color: "#00838F" },
   { id: "cards", icon: "puzzle", color: "#1E88E5" },
@@ -107,13 +110,25 @@ export class LearnUi {
     const { escape } = this.h;
     const k = this.host._t("lrnSk");
     return `<div class="lrn-push"><div class="lp-t"><i class="lp-logo">D</i>${escape(k.app)} · ${escape(time)}</div><b>${escape(title)}</b><p>${escape(text)}</p>
-      <div class="lp-ac">${acts.map((a) => `<u>${escape(a)}</u>`).join("")}</div></div>`;
+      ${acts.length ? `<div class="lp-ac">${acts.map((a) => `<u>${escape(a)}</u>`).join("")}</div>` : ""}</div>`;
   }
 
   // Skizze eines Themas; full: die grosse Fassung im Artikel mit zweitem Teil
   sketch(id, full) {
     const { escape, mdi } = this.h;
     const k = this.host._t("lrnSk");
+    if (id === "out") {
+      // Liste: ein ausgefallenes und ein pausiertes Gerät; im Artikel dazu die Meldung mit ihren drei Schaltflächen
+      const list = `<div class="lrn-dev"><div class="ld-r"><i class="ld-dot off"></i><b>${escape(k.dev1)}</b><em>${escape(k.dur1)}</em></div>
+        <div class="ld-r"><i class="ld-dot"></i><b>${escape(k.pauseDev)}</b><span class="ld-pill">${mdi("pause", 12)}${escape(k.pausedUntil)}</span></div></div>`;
+      return list + (full ? this.push(k.now, k.outTitle, k.outText, [k.outA1, k.outA2, k.outA3]) : "");
+    }
+    if (id === "bat") {
+      // Batterie mit Schwelle (Strich bei 15 %); im Artikel dazu die Prognose und die Warnung
+      const bar = `<div class="lrn-bat"><div class="lb-h"><span class="lb-ic">${mdi("battery", 20)}</span><b>${escape(k.batName)}</b><em>21 %</em></div>
+        <div class="lb-bar"><i style="width:21%"></i><u style="left:15%"></u></div><div class="lb-s"><span>${escape(k.batThr)}</span>${full ? `<span>${escape(k.batFc)}</span>` : ""}</div></div>`;
+      return bar + (full ? this.push(k.now, k.batTitle, k.batText, []) : "");
+    }
     if (id === "push") return this.push(k.now, k.pushTitle, k.pushText, [k.pushA1, k.pushA2, k.pushA3]);
     if (id === "rt") {
       const row = `<div class="lrn-rt"><span class="lr-ic">${mdi("fan", 22)}</span><div><b>${escape(k.rtName)}</b><small>${escape(k.rtSub)}</small></div><span class="lr-sw"></span></div>`;
@@ -166,7 +181,7 @@ export class LearnUi {
       .map((b) => {
         if (b.tip) return `<div class="lrn-tip">${this.rich(b.tip)}</div>`;
         const steps = b.steps ? `<div class="lrn-tl">${b.steps.map((st, n) => `<div class="lt-st"><i>${n + 1}</i><p><b>${escape(st[0])}:</b> ${escape(st[1])}</p></div>`).join("")}</div>` : "";
-        return `<h3>${escape(b.h)}</h3>${(b.p || []).map((p) => `<p>${this.rich(p)}</p>`).join("")}${steps}`;
+        return `${b.h ? `<h3>${escape(b.h)}</h3>` : ""}${(b.p || []).map((p) => `<p>${this.rich(p)}</p>`).join("")}${steps}`;
       })
       .join("");
     return `<div class="lrn-art" style="--lc:${tp.color}"><div class="lrn-txt"><h2>${escape(x.title)}</h2>${blocks}</div>

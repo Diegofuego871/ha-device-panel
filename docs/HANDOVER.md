@@ -11,6 +11,13 @@ Einstieg für jede neue Claude-Code-Session. Zuerst diese Datei lesen, dann
 
 - `charge.py` `known_rechargeable`: Lademeldung gilt (global + Gerät/Integration), oder am Gerät ausdrücklich "Ein", oder Live-Aktivität für das Gerät an; `rechargeable()` und `charging_of()` nutzen sie (vorher nur `enabled()` mit globalem Schalter). Test `test_rechargeable_by_device_charge_or_live`.
 
+## Stand (2.224.0, Lernseite: Ausfälle und Batterie)
+
+- `learn.js` `TOPICS` hat sechs Einträge: `out` (Ausgefallene Geräte, mit Abschnitt "Geräte pausieren") und `bat` (Batterie-Warnungen) stehen vorn (Nutzerwunsch: sie sind essentiell), dann push, rt, cards, lau. Farben: Ausfälle rot, Batterie orange (wie die Warnstufen), die übrigen wie die Launcher-Symbole. Skizzen `.lrn-dev` (ausgefallenes und pausiertes Gerät) und `.lrn-bat` (Stand, Schwelle als Strich, Prognose); die Batterie-Meldung trägt keine Push-Aktionen, die Skizze zeigt sie darum ohne Schaltflächen (`push()` lässt die Trennlinie bei leerer Liste weg).
+- Inhalt aus README und Code geprüft, nicht geraten: Standardwerte (2 Min. "Ausgefallen nach" und "Erst melden nach", Sammelmeldung ab drei Geräten, Schwelle 15 % von 1 bis 50 %, `BATTERY_REARM` 5, Sammel-Uhrzeit 08:00), Schaltflächen der Ausfall-Meldung (`push.device_actions`: Öffnen, 24 Std. stumm, Pausieren bis online), Pause ("Bis wieder online", "Bis Datum" mit 1 Monat, 3 Monate, 1. April, eigenes Datum). Ändert sich eines davon, den Artikel in `lrnTopics` (DE und EN) nachführen.
+- Reiter am Handy: `dialog.learn-dlg .sub-tabs.lrn-tabs` zwingt drei Spalten (die allgemeine Regel ab fünf Reitern gäbe 4 + 2); am Desktop eine Zeile. Die Leiste ist am Handy zweizeilig, der Text beginnt dadurch etwas tiefer.
+- Version: 2.223.0 hatte keinen Tag und wird übersprungen (CHANGELOG: "Nicht veröffentlicht; enthalten in 2.224.0", keine Fussnote). Suite `learn-e2e.mjs` jetzt mit sechs Themen, Reihenfolge, Zeilen der Reiter, Pause- und Batterie-Skizzen.
+
 ## Stand (2.223.0, Lernseite "Mehr erfahren")
 
 - `panel/learn.js` (`LearnUi`, Fenster `dialog.learn-dlg`, Vorbild `charges.js`): vier Themen (`TOPICS`: push, rt, cards, lau; Symbol und Farbe wie die Launcher-Symbole), Übersicht mit Kacheln (Skizze in em, `sketch(id, full)`), Artikel mit Reiterleiste (`.sub-tabs.lrn-tabs`, die Kapsel setzt `_initSeg` von selbst), Fussleiste "Zurück"/"Weiter"/"Fertig". Kacheln sind `role="button"` (Skizzen aus Blockelementen, kein `<button>`), Eingabe und Leertaste öffnen. Fett im Text mit `**…**` (erst `escape`, dann ersetzt, `rich()`).

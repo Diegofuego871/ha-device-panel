@@ -7,7 +7,23 @@ All notable changes to this integration are documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/).
 
+## [2.224.0] - 2026-11-14
+
+The learn page "Learn more" now also explains offline devices (with pauses) and battery warnings, in first place.
+
+### Added
+
+- **Topic "Offline devices":** how the panel shows outages (offline, unstable, outage pulse with the likely common cause), how the notification comes about ("Report outages only after", "Back online", one notification for several devices of an integration) and which buttons it carries (Open, Mute 24 h, Pause until online). Plus its own section **Pausing devices**: the chip "Pause …" in the device pop-up, "Until back online" and "Until date", the pill "Paused until …", what falls away during the pause and the filter chip "Paused". The sketch shows an offline and a paused device and the notification.
+- **Topic "Battery warnings":** the threshold (default 15 %, 1 to 50 %), the message once per device (again only after at least 5 points above the threshold), immediately or collected daily, the persistent notification, the forecast in the battery history and the setting per integration, label and device. The sketch shows the battery with threshold and forecast and the warning.
+
+### Changed
+
+- **Order:** outages and battery come before Magic Push, routines, dashboard cards and the app launcher; the page now has six topics ("Six topics, about 2 minutes each").
+- **Tabs on a phone:** the six tabs stand in two rows of three instead of one row (the names would be cut off otherwise); on the desktop it stays one row.
+
 ## [2.223.0] - 2026-11-14
+
+Not released; included in 2.224.0.
 
 New learn page "Learn more": short articles on Magic Push, routines, dashboard cards and the app launcher, after the setup wizard and in the settings.
 
@@ -6067,7 +6083,7 @@ First pre-release.
   GitHub Actions for HACS/hassfest validation and tests.
 
 [2.6.0]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v2.6.0
-[2.223.0]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v2.223.0
+[2.224.0]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v2.224.0
 [2.222.0]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v2.222.0
 [2.221.0]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v2.221.0
 [2.220.0]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v2.220.0

@@ -7,7 +7,23 @@ Alle nennenswerten Änderungen an dieser Integration stehen in dieser Datei.
 Das Format folgt [Keep a Changelog](https://keepachangelog.com/de/1.1.0/),
 die Versionsnummern folgen [Semantic Versioning](https://semver.org/lang/de/).
 
+## [2.224.0] - 2026-11-14
+
+Die Lernseite "Mehr erfahren" erklärt jetzt auch ausgefallene Geräte (mit Pausen) und Batterie-Warnungen, an erster Stelle.
+
+### Hinzugefügt
+
+- **Thema "Ausgefallene Geräte":** wie das Panel Ausfälle zeigt (ausgefallen, instabil, Ausfall-Puls mit vermuteter gemeinsamer Ursache), wie die Meldung entsteht ("Erst melden nach", "Wieder online", eine Meldung für mehrere Geräte einer Integration) und welche Schaltflächen sie trägt (Öffnen, 24 Std. stumm, Pausieren bis online). Dazu ein eigener Abschnitt **Geräte pausieren**: der Chip "Pausieren …" im Geräte-Pop-up, "Bis wieder online" und "Bis Datum", die Pille "Pausiert bis …", was während der Pause entfällt und der Filter-Chip "Pausiert". Die Skizze zeigt ein ausgefallenes und ein pausiertes Gerät und die Meldung.
+- **Thema "Batterie-Warnungen":** die Schwelle (Standard 15 %, 1 bis 50 %), die Meldung einmal pro Gerät (erneut erst nach mindestens 5 Punkten über der Schwelle), sofort oder täglich gesammelt, die anhaltende Benachrichtigung, die Prognose im Batterie-Verlauf und die Einstellung pro Integration, Label und Gerät. Die Skizze zeigt die Batterie mit Schwelle und Prognose und die Warnung.
+
+### Geändert
+
+- **Reihenfolge:** Ausfälle und Batterie stehen vor Magic Push, Routinen, Dashboard-Karten und App-Launcher; die Seite hat nun sechs Themen ("Sechs Themen, je etwa 2 Minuten").
+- **Reiter am Handy:** sechs Reiter stehen in zwei Zeilen zu drei statt in einer Zeile (die Namen wären sonst abgeschnitten); am Desktop bleibt es eine Zeile.
+
 ## [2.223.0] - 2026-11-14
+
+Nicht veröffentlicht; enthalten in 2.224.0.
 
 Neue Lernseite "Mehr erfahren": kurze Artikel zu Magic Push, Routinen, Dashboard-Karten und dem App-Launcher, nach dem Einrichtungsassistenten und in den Einstellungen.
 
@@ -6168,7 +6184,7 @@ Erste Vorabversion.
   GitHub Actions für die Prüfungen von HACS und hassfest sowie die Tests.
 
 [2.6.0]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v2.6.0
-[2.223.0]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v2.223.0
+[2.224.0]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v2.224.0
 [2.222.0]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v2.222.0
 [2.221.0]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v2.221.0
 [2.220.0]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v2.220.0

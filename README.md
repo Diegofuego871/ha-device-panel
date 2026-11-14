@@ -336,9 +336,9 @@ After a fresh installation a window opens once in the middle of the panel (as la
 
 ### Learn more
 
-A learn page with short articles on Magic Push, routines, dashboard cards and the app launcher, about two minutes each.
+A learn page with short articles on offline devices (with pauses), battery warnings, Magic Push, routines, dashboard cards and the app launcher, about two minutes each. The two most important topics, outages and battery, come first.
 
-- **Layout:** four tiles with a small sketch of the feature (a notification with push actions, a routine, the availability ring, the launcher). A tap opens the article: "What for?", the steps as a timeline, a "Good to know" note and the sketch larger with made-up example data (on the desktop to the right of the text, on a phone on top). A tab bar on top switches the topic, "Back" and "Next" at the bottom lead through the topics, and the last one ends with "Done". The cross, Esc or a tap beside the window close it; on a phone the window is full screen.
+- **Layout:** six tiles with a small sketch of the feature (an offline and a paused device, a battery with threshold, a notification with push actions, a routine, the availability ring, the launcher). A tap opens the article: "What for?", the steps as a timeline, a "Good to know" note and the sketch larger with made-up example data (on the desktop to the right of the text, on a phone on top). A tab bar on top switches the topic (on a phone in two rows of three), "Back" and "Next" at the bottom lead through the topics, and the last one ends with "Done". The cross, Esc or a tap beside the window close it; on a phone the window is full screen.
 - **After the wizard:** The page opens with "Setup complete" and a green tick on top, the tiles below. The wizard counts as finished with "Finish", even if you do not look at the topics or close the window right away.
 - **Again later:** Settings › Panel › General, at the very bottom, right below the setup wizard: "Learn more" › "View topics". The settings stay open, also with unsaved changes.
 - **Nothing stored:** The learn page has no setting and no state, so it is not part of the backup either.

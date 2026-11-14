@@ -1,5 +1,5 @@
-// Lernseite "Mehr erfahren" (2.223.0, docs/mockups/learn-v4, Variante A2): Einstieg in Einstellungen › Panel (Kapitel unter dem Einrichtungsassistenten),
-// Einstieg nach dem Assistenten mit dem Kopf "Einrichtung abgeschlossen" (ohne Zusatz "freiwillig"), vier Kacheln mit Skizze, Artikel mit Reitern (gleitende
+// Lernseite "Mehr erfahren" (2.223.0, ab 2.224.0 mit sechs Themen, docs/mockups/learn-v4, Variante A2): Einstieg in Einstellungen › Panel (Kapitel unter dem Einrichtungsassistenten),
+// Einstieg nach dem Assistenten mit dem Kopf "Einrichtung abgeschlossen" (ohne Zusatz "freiwillig"), sechs Kacheln mit Skizze, Artikel mit Reitern (gleitende
 // Kapsel), Weiter und Zurück, "Fertig" am Ende, Schliessen mit Kreuz, Esc und Tipp daneben, Handy als Vollbild, kein Überlauf, keine unaufgelösten Texte.
 // Deutsch und Englisch, Desktop und Handy, echte Klicks und Tipps.
 import { chromium } from "playwright-core";
@@ -12,19 +12,19 @@ const R = `document.querySelector("device-panel").shadowRoot`;
 const T = {
   de: {
     ttl: "Mehr erfahren", btn: "Themen ansehen", wiz: "Einrichtungsassistent", done: "Einrichtung abgeschlossen", doneText: "Alles ist gespeichert. Du kannst jetzt loslegen.",
-    more: "Möchtest du mehr erfahren?", later: "Du findest das später unter Einstellungen › Panel › Mehr erfahren.", finish: "Fertig", close: "Schliessen", overview: "Übersicht",
-    names: ["Magic Push", "Routinen", "Dashboard-Karten", "App-Launcher"], tabs: ["Magic Push", "Routinen", "Karten", "Launcher"],
-    titles: ["Meldungen nach Mass", "Schalten nach Plan", "Dein Dashboard, live", "Alles in einem Knopf"], of: (i) => `Thema ${i} von 4 · 2 Min.`, read: "2 Min. · Lesen",
+    pauseWord: "Pausieren bis online", pausedPill: "Pausiert bis", pausedChip: "Pausiert", more: "Möchtest du mehr erfahren?", later: "Du findest das später unter Einstellungen › Panel › Mehr erfahren.", finish: "Fertig", close: "Schliessen", overview: "Übersicht",
+    names: ["Ausgefallene Geräte", "Batterie-Warnungen", "Magic Push", "Routinen", "Dashboard-Karten", "App-Launcher"], tabs: ["Ausfälle", "Batterie", "Magic Push", "Routinen", "Karten", "Launcher"],
+    titles: ["Wenn ein Gerät fehlt", "Bevor die Batterie leer ist", "Meldungen nach Mass", "Schalten nach Plan", "Dein Dashboard, live", "Alles in einem Knopf"], of: (i) => `Thema ${i} von 6 · 2 Min.`, read: "2 Min. · Lesen",
   },
   en: {
     ttl: "Learn more", btn: "View topics", wiz: "Setup wizard", done: "Setup complete", doneText: "Everything is saved. You can get started now.",
-    more: "Would you like to learn more?", later: "You can find this later under Settings › Panel › Learn more.", finish: "Done", close: "Close", overview: "Overview",
-    names: ["Magic Push", "Routines", "Dashboard cards", "App launcher"], tabs: ["Magic Push", "Routines", "Cards", "Launcher"],
-    titles: ["Notifications made to measure", "Switching on a schedule", "Your dashboard, live", "Everything in one button"], of: (i) => `Topic ${i} of 4 · 2 min`, read: "2 min · Read",
+    pauseWord: "Pause until online", pausedPill: "Paused until", pausedChip: "Paused", more: "Would you like to learn more?", later: "You can find this later under Settings › Panel › Learn more.", finish: "Done", close: "Close", overview: "Overview",
+    names: ["Offline devices", "Battery warnings", "Magic Push", "Routines", "Dashboard cards", "App launcher"], tabs: ["Outages", "Battery", "Magic Push", "Routines", "Cards", "Launcher"],
+    titles: ["When a device goes missing", "Before the battery runs out", "Notifications made to measure", "Switching on a schedule", "Your dashboard, live", "Everything in one button"], of: (i) => `Topic ${i} of 6 · 2 min`, read: "2 min · Read",
   },
 };
 // Skizze im Artikel je Thema (grosse Fassung): Klasse des zweiten Teils
-const SK = ["lrn-push", "lrn-push", "lrn-dc2", "lrn-kopf"];
+const SK = ["lrn-push", "lrn-push", "lrn-push", "lrn-push", "lrn-dc2", "lrn-kopf"];
 
 for (const lang of ["de", "en"]) {
   const L = T[lang];
@@ -73,7 +73,7 @@ for (const lang of ["de", "en"]) {
     await tap('[data-set="learn-open"]');
     check(`[${tag}] öffnet über den Einstellungen, Übersicht`, (await wait(`return r.querySelector("${D}")?.open`)) && (await view()) === "overview" && (await ev(`return r.querySelector("dialog.settings").open`)));
     check(`[${tag}] Titel "${L.ttl}", kein Kopf "${L.done}"`, (await text(`${D} .dlg-title h2`)) === L.ttl && !(await ev(`return !!r.querySelector("${D} .lrn-done")`)));
-    check(`[${tag}] vier Kacheln mit Name, Skizze und "${L.read}"`, await ev(`const c=[...r.querySelectorAll("${D} .lrn-card")]; return c.length===4 && c.every((x,i)=>x.querySelector(".lrn-tx b").textContent===${JSON.stringify(L.names)}[i] && x.querySelector(".lrn-sketch").children.length>0 && x.querySelector(".lrn-meta").textContent.replace(/\\s+/g," ").trim()===${JSON.stringify(L.read)} && x.querySelector(".cbtn svg"))`));
+    check(`[${tag}] sechs Kacheln mit Name, Skizze und "${L.read}"`, await ev(`const c=[...r.querySelectorAll("${D} .lrn-card")]; return c.length===6 && c.every((x,i)=>x.querySelector(".lrn-tx b").textContent===${JSON.stringify(L.names)}[i] && x.querySelector(".lrn-sketch").children.length>0 && x.querySelector(".lrn-meta").textContent.replace(/\\s+/g," ").trim()===${JSON.stringify(L.read)} && x.querySelector(".cbtn svg"))`));
     const box = await ev(`const d = r.querySelector("${D}").getBoundingClientRect(); return [Math.round(d.left), Math.round(d.top), Math.round(d.width), Math.round(d.height), innerWidth, innerHeight]`);
     if (mobile) check(`[${tag}] Handy: Vollbild`, box[0] === 0 && box[1] === 0 && box[2] === box[4] && box[3] === box[5], JSON.stringify(box));
     else check(`[${tag}] Desktop: Popup in der Mitte, höchstens 900 px breit`, box[2] <= 900 && box[2] > 640 && Math.abs(box[0] + box[2] / 2 - box[4] / 2) < 4, JSON.stringify(box));
@@ -84,31 +84,33 @@ for (const lang of ["de", "en"]) {
 
     // --- Artikel: Kopf, Reiter mit Kapsel, Text mit Schritten, Skizze, Navigation
     await topicTap(0);
+    check(`[${tag}] Reihenfolge: Ausfälle und Batterie stehen vor Magic Push, Routinen, Karten und Launcher`, await ev(`return [...r.querySelectorAll("${D} .lrn-tabs .sub-tab")].map(x => x.dataset.i).join()==="0,1,2,3,4,5" && r.host._learn.s.i===0`));
     check(`[${tag}] Artikel 1: Name "${L.names[0]}", "${L.of(1)}", Titel "${L.titles[0]}"`, (await text(`${D} .dlg-title h2`)) === L.names[0] && (await text(`${D} .dlg-sub`)) === L.of(1) && (await text(`${D} .lrn-txt h2`)) === L.titles[0]);
-    check(`[${tag}] Reiter: vier, der erste gewählt, mit gleitender Kapsel`, await ev(`const t=[...r.querySelectorAll("${D} .lrn-tabs .sub-tab")]; return t.length===4 && t.map(x=>x.innerText.trim()).join("|")===${JSON.stringify(L.tabs)}.join("|") && t[0].classList.contains("on") && t.filter(x=>x.classList.contains("on")).length===1 && !!r.querySelector("${D} .lrn-tabs .seg-pill") && t.every(x => { const s = x.querySelector("span"); return s.scrollWidth <= s.clientWidth + 1; })`));
-    check(`[${tag}] Reiter nur Symbole und Schrift der Reiterleiste (.sub-tab), keine eigene Leiste`, await ev(`return r.querySelector("${D} .lrn-tabs").classList.contains("sub-tabs") && [...r.querySelectorAll("${D} .lrn-tabs .sub-tab svg")].length===4`));
+    check(`[${tag}] Reiter: sechs, der erste gewählt, mit gleitender Kapsel`, await ev(`const t=[...r.querySelectorAll("${D} .lrn-tabs .sub-tab")]; return t.length===6 && t.map(x=>x.innerText.trim()).join("|")===${JSON.stringify(L.tabs)}.join("|") && t[0].classList.contains("on") && t.filter(x=>x.classList.contains("on")).length===1 && !!r.querySelector("${D} .lrn-tabs .seg-pill") && t.every(x => { const s = x.querySelector("span"); return s.scrollWidth <= s.clientWidth + 1; })`));
+    check(`[${tag}] Reiter nur Symbole und Schrift der Reiterleiste (.sub-tab), keine eigene Leiste`, await ev(`return r.querySelector("${D} .lrn-tabs").classList.contains("sub-tabs") && [...r.querySelectorAll("${D} .lrn-tabs .sub-tab svg")].length===6`));
     check(`[${tag}] Schritte als Zeitleiste (mindestens drei) und Hinweis "Gut zu wissen"`, await ev(`return r.querySelectorAll("${D} .lt-st").length >= 3 && !!r.querySelector("${D} .lrn-tip b")`));
-    check(`[${tag}] Skizze im Artikel`, await ev(`return !!r.querySelector("${D} .lrn-hero .lrn-push")`));
+    check(`[${tag}] Skizze im Artikel: ausgefallenes und pausiertes Gerät, dazu die Meldung`, await ev(`return !!r.querySelector("${D} .lrn-hero .lrn-dev .ld-dot.off") && !!r.querySelector("${D} .lrn-hero .lrn-dev .ld-pill") && r.querySelectorAll("${D} .lrn-hero .lrn-push .lp-ac u").length === 3`));
+    check(`[${tag}] Ausfälle erklären die Pause (Pille, Chip, Filter) und die Push-Aktion "${L.pauseWord}"`, await ev(`const t = r.querySelector("${D} .lrn-txt").innerText; return t.includes(${JSON.stringify(L.pauseWord)}) && t.includes(${JSON.stringify(L.pausedPill)}) && t.includes(${JSON.stringify(L.pausedChip)})`));
     const aside = await ev(`const a=r.querySelector("${D} .lrn-art aside").getBoundingClientRect(), t=r.querySelector("${D} .lrn-txt").getBoundingClientRect(); return [Math.round(a.left), Math.round(a.top), Math.round(t.left), Math.round(t.top)]`);
     check(`[${tag}] ${mobile ? "Handy: Skizze über dem Text" : "Desktop: Skizze rechts neben dem Text"}`, mobile ? aside[1] < aside[3] || aside[1] === aside[3] - 0 : aside[0] > aside[2], JSON.stringify(aside));
     check(`[${tag}] Fussleiste: "${L.overview}" und "${L.names[1]}"`, await ev(`const b=[...r.querySelectorAll("${D} .dlg-actions .dlg-btn")]; return b.length===2 && b[0].innerText.trim()===${JSON.stringify(L.overview)} && b[1].innerText.trim()===${JSON.stringify(L.names[1])} && b[1].classList.contains("primary")`));
     await shot("2-article");
 
     // Reiter wechseln das Thema, Weiter geht zum nächsten, Zurück zum vorigen
-    await tap(`${D} .lrn-tabs .sub-tab[data-i="2"]`);
-    await wait(`return r.host._learn.s.i === 2`);
-    check(`[${tag}] Reiter "${L.tabs[2]}": Artikel 3, Skizze mit zweiter Karte, Reiter gewählt`, (await text(`${D} .lrn-txt h2`)) === L.titles[2] && (await ev(`return !!r.querySelector("${D} .lrn-hero .lrn-dc2")`)) && (await ev(`return r.querySelector('${D} .lrn-tabs .sub-tab[data-i="2"]').classList.contains("on")`)));
+    await tap(`${D} .lrn-tabs .sub-tab[data-i="4"]`);
+    await wait(`return r.host._learn.s.i === 4`);
+    check(`[${tag}] Reiter "${L.tabs[4]}": Artikel 5, Skizze mit zweiter Karte, Reiter gewählt`, (await text(`${D} .lrn-txt h2`)) === L.titles[4] && (await ev(`return !!r.querySelector("${D} .lrn-hero .lrn-dc2")`)) && (await ev(`return r.querySelector('${D} .lrn-tabs .sub-tab[data-i="4"]').classList.contains("on")`)));
     await tap(`${D} .dlg-actions .dlg-btn.primary`);
-    await wait(`return r.host._learn.s.i === 3`);
-    check(`[${tag}] Weiter: Artikel 4 "${L.names[3]}", Fussleiste "${L.finish}"`, (await text(`${D} .dlg-title h2`)) === L.names[3] && (await text(`${D} .dlg-actions .dlg-btn.primary`)) === L.finish);
+    await wait(`return r.host._learn.s.i === 5`);
+    check(`[${tag}] Weiter: Artikel 6 "${L.names[5]}", Fussleiste "${L.finish}"`, (await text(`${D} .dlg-title h2`)) === L.names[5] && (await text(`${D} .dlg-actions .dlg-btn.primary`)) === L.finish);
     await tap(`${D} .dlg-actions .dlg-btn:not(.primary)`);
-    await wait(`return r.host._learn.s.i === 2`);
-    check(`[${tag}] Zurück: Artikel 3`, (await text(`${D} .dlg-title h2`)) === L.names[2]);
+    await wait(`return r.host._learn.s.i === 4`);
+    check(`[${tag}] Zurück: Artikel 5`, (await text(`${D} .dlg-title h2`)) === L.names[4]);
     await tap(`${D} .lrn-back`);
     check(`[${tag}] Pfeil oben links: zurück zur Übersicht`, await wait(`return r.host._learn.s?.view === "overview" && !!r.querySelector("${D} .lrn-card")`));
 
-    // Alle vier Artikel: Skizzen, kein Überlauf, keine unaufgelösten Texte
-    for (let i = 0; i < 4; i++) {
+    // Alle sechs Artikel: Skizzen, kein Überlauf, keine unaufgelösten Texte
+    for (let i = 0; i < 6; i++) {
       await topicTap(i);
       const m = await ev(`const b=r.querySelector("${D} .lrn-body"), t=r.querySelector("${D} .lrn-tabs"), d=r.querySelector("${D}"); const txt=b.innerText; return {x: b.scrollWidth - b.clientWidth, tabs: t.scrollWidth - t.clientWidth, dlg: d.scrollWidth - d.clientWidth, bad: /undefined|\\[object|NaN|\\*\\*/.test(txt), sk: !!b.querySelector(".lrn-hero .lrn-sketch ." + ${JSON.stringify(SK[i])}), len: txt.length}`);
       check(`[${tag}] Artikel ${i + 1}: kein Überlauf, Skizze, keine unaufgelösten Texte, Länge`, m.x <= 1 && m.tabs <= 1 && m.dlg <= 1 && !m.bad && m.sk && m.len > 600, JSON.stringify(m));
@@ -116,8 +118,24 @@ for (const lang of ["de", "en"]) {
       await wait(`return r.host._learn.s?.view === "overview"`);
     }
 
+    // Batterie: Schwelle mit Strich, Prognose und Warnung ohne Schaltflächen (die Batterie-Meldung trägt keine)
+    await topicTap(1);
+    check(`[${tag}] Batterie: Stand mit Schwelle (Strich), Prognose, Warnung ohne Schaltflächen`, await ev(`return !!r.querySelector("${D} .lrn-hero .lrn-bat .lb-bar u") && /%/.test(r.querySelector("${D} .lrn-hero .lrn-bat .lb-s").innerText) && !!r.querySelector("${D} .lrn-hero .lrn-push") && !r.querySelector("${D} .lrn-hero .lrn-push .lp-ac")`));
+    check(`[${tag}] Batterie erklärt Schwelle, einmal pro Gerät, Prognose`, await ev(`const t = r.querySelector("${D} .lrn-txt").innerText; return t.includes("15 %") && t.includes("50 %") && t.includes("5 ")`));
+    await shot("5-article-bat");
+    await tap(`${D} .lrn-back`);
+    await wait(`return r.host._learn.s?.view === "overview"`);
+
+    // Reiterleiste: sechs Reiter, am Handy 3 x 2, am Desktop eine Zeile; kein Reiter beschnitten
+    await topicTap(0);
+    const rows = await ev(`const t=[...r.querySelectorAll("${D} .lrn-tabs .sub-tab")]; return {rows: new Set(t.map(x => Math.round(x.getBoundingClientRect().top))).size, cols: new Set(t.map(x => Math.round(x.getBoundingClientRect().left))).size, cut: t.some(x => { const s = x.querySelector("span"); return s.scrollWidth > s.clientWidth + 1; })}`);
+    check(`[${tag}] ${mobile ? "Handy: Reiter in 2 Zeilen zu 3 Spalten" : "Desktop: Reiter in einer Zeile"}, keiner beschnitten`, mobile ? rows.rows === 2 && rows.cols === 3 && !rows.cut : rows.rows === 1 && rows.cols === 6 && !rows.cut, JSON.stringify(rows));
+    await shot("4-article-out");
+    await tap(`${D} .lrn-back`);
+    await wait(`return r.host._learn.s?.view === "overview"`);
+
     // "Fertig" am Ende schliesst nur die Lernseite; die Einstellungen bleiben
-    await topicTap(3);
+    await topicTap(5);
     await tap(`${D} .dlg-actions .dlg-btn.primary`);
     check(`[${tag}] "${L.finish}" im letzten Artikel: Lernseite zu, Einstellungen noch offen`, (await wait(`return !r.querySelector("${D}").open`)) && (await ev(`return r.querySelector("dialog.settings").open`)));
 

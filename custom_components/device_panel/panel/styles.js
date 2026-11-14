@@ -2884,6 +2884,22 @@ dialog.learn-dlg[open] { display: flex; flex-direction: column; }
 .lrn-tip { padding: 10px 12px; border-left: 3px solid var(--lc); border-radius: 14px; background: var(--dp-subtle); color: color-mix(in srgb, var(--dp-text) 85%, transparent); font-size: 13px; line-height: 1.5; }
 .lrn-tip b { color: var(--dp-text); font-weight: 500; }
 /* Skizzen (in em) */
+.lrn-dev { display: flex; flex-direction: column; gap: .5em; padding: .8em 1em; border: 1px solid #3a3a3a; border-radius: 1.2em; background: #262626; color: #eee; }
+.lrn-dev .ld-r { display: flex; align-items: center; gap: .7em; }
+.lrn-dev b { flex: 1; min-width: 0; font-size: 1.1em; font-weight: 500; }
+.lrn-dev em { color: #ef9a9a; font-size: .95em; font-style: normal; }
+.lrn-dev .ld-dot { flex: none; width: .8em; height: .8em; border-radius: 50%; background: #757575; }
+.lrn-dev .ld-dot.off { background: #e53935; }
+.lrn-dev .ld-pill { display: inline-flex; align-items: center; gap: .35em; padding: .1em .65em; border-radius: 1em; background: rgba(255,255,255,.1); color: #cfcfcf; font-size: .9em; }
+.lrn-bat { padding: .8em 1em; border: 1px solid #3a3a3a; border-radius: 1.2em; background: #262626; color: #eee; }
+.lrn-bat .lb-h { display: flex; align-items: center; gap: .7em; }
+.lrn-bat .lb-ic { display: grid; place-items: center; flex: none; width: 2.2em; height: 2.2em; border-radius: .8em; background: #EF6C00; color: #fff; }
+.lrn-bat b { flex: 1; font-size: 1.1em; font-weight: 500; }
+.lrn-bat em { font-size: 1.1em; font-style: normal; font-weight: 500; }
+.lrn-bat .lb-bar { position: relative; height: .55em; margin: .8em 0 .5em; border-radius: .3em; background: rgba(255,255,255,.14); }
+.lrn-bat .lb-bar i { position: absolute; left: 0; top: 0; bottom: 0; border-radius: .3em; background: #66bb6a; }
+.lrn-bat .lb-bar u { position: absolute; top: -.3em; bottom: -.3em; width: 2px; background: #ffb74d; }
+.lrn-bat .lb-s { display: flex; flex-direction: column; gap: .15em; color: #9a9a9a; font-size: .9em; }
 .lrn-sketch > * + * { margin-top: .9em; }
 .lrn-push { padding: .9em 1em; border-radius: 1.3em; background: #2d2d30; color: #eee; box-shadow: 0 .2em 1em rgba(0,0,0,.5); }
 .lrn-push .lp-t { display: flex; align-items: center; gap: .5em; color: #9aa; font-size: .9em; }
@@ -2922,6 +2938,8 @@ dialog.learn-dlg[open] { display: flex; flex-direction: column; }
   .lrn-tabs { margin: 4px 16px 6px; }
   .lrn-tabs .sub-tab { gap: 4px; padding: 0 2px; font-size: 12px; }
   .lrn-tabs .sub-tab svg { display: none; }
+  /* Sechs Reiter: drei Spalten, zwei Zeilen (die allgemeine Regel ab fünf Reitern gäbe 4 + 2) */
+  dialog.learn-dlg .sub-tabs.lrn-tabs { grid-auto-flow: row; grid-template-columns: repeat(3, minmax(0, 1fr)); }
   .lrn-cards { grid-template-columns: 1fr; }
   .lrn-card .lrn-sketch { font-size: 10px; }
   .lrn-art { display: flex; flex-direction: column; gap: 12px; }
