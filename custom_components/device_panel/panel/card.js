@@ -53,6 +53,7 @@ const CARD_CSS = `
 .orow b { color: var(--dp-error); font-weight: 600; font-variant-numeric: tabular-nums; }
 .orow .name { white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
 .kpause { cursor: default; }
+@media (prefers-reduced-motion: reduce) { .pchart .pdot { display: none; } }
 .msg { padding: 16px 18px; border-radius: 20px; border: 1px solid var(--dp-divider); background: var(--dp-card); color: var(--dp-text2); }
 .cgrid .kt.ring, .cgrid .kt.offl { min-height: 100%; }
 .pticks span:first-child { transform: none; }
@@ -131,6 +132,7 @@ class DevicePanelBaseCard extends HTMLElement {
     const dark = Boolean(hass.themes?.darkMode ?? window.matchMedia?.("(prefers-color-scheme: dark)").matches);
     this.toggleAttribute("dark", dark);
     this.toggleAttribute("light", !dark);
+    this._loadAnim(hass);
     const id = this._config.entity || findEntity(hass);
     const st = id ? hass.states[id] : null;
     // Nur neu zeichnen, wenn sich etwas ändert: HA ruft das bei jeder Zustandsänderung im ganzen System auf
@@ -138,6 +140,22 @@ class DevicePanelBaseCard extends HTMLElement {
     if (sig === this._sig) return;
     this._sig = sig;
     this._draw();
+  }
+
+  // Einstellung "Animationen" des Benutzers (wie im Panel, Daten des Benutzers in Home Assistant; jeder Benutzer liest nur seine eigenen): aus = kein Messpunkt.
+  // Einmal je Karte; fehlt die Antwort, bleibt es beim Standard (an)
+  _loadAnim(hass) {
+    if (this._animAsked || typeof hass.callWS !== "function") return;
+    this._animAsked = true;
+    hass
+      .callWS({ type: "frontend/get_user_data", key: "device_panel_view" })
+      .then((result) => this._applyAnim(result?.value?.anim !== false))
+      .catch(() => {});
+  }
+
+  _applyAnim(on) {
+    if (on) this.removeAttribute("data-anim");
+    else this.setAttribute("data-anim", "off");
   }
 
   connectedCallback() {
@@ -253,11 +271,22 @@ class DevicePanelBaseCard extends HTMLElement {
     const path = (r) => `M${Array.from({ length: r.to - r.from + 1 }, (_, k) => pt(r.from + k)).join(" L")}`;
     const areas = runs.filter((r) => r.off).map((r) => `<path class="area" d="${path(r)} L${x(r.to)},${PULSE_H} L${x(r.from)},${PULSE_H} Z"/>`).join("");
     const lines = runs.map((r) => `<path class="line ${r.off ? "off" : "ok"}" d="${path(r)}" vector-effect="non-scaling-stroke"/>`).join("");
-    const end = Math.floor(Date.now() / 60000) * 60000;
+    const end = Math.floor(Date.now() / 300000) * 300000; // auf 5 Minuten: so ändert sich die Kachel (und die Animation läuft ungestört) nicht jede Minute
     const fmt = new Intl.DateTimeFormat(pickLang(this._hass), { hour: "2-digit", minute: "2-digit" });
     const ticks = [0, 1, 2, 3].map((k) => `<span style="left:${k * 25}%">${escape(fmt.format(new Date(end - 86400000 + k * 21600000)))}</span>`).join("");
+    // Messpunkt wie im Panel (die "Sternschnuppe" des Pulses): alle 10 Sekunden fährt ein Punkt in der Farbe der Linie in 3,4 Sekunden von links nach rechts;
+    // reine CSS-Animation, die Punkte der Kurve stehen als Keyframes in Prozent (die Kurve ist gestreckt)
+    let dot = "";
+    if (n > 1) {
+      const RUN = 3.4;
+      const CYCLE = 10;
+      const frames = p.map((v, i) => `${((((i + 0.5) / n) * RUN) / CYCLE * 100).toFixed(2)}%{left:${(((i + 0.5) / n) * 100).toFixed(2)}%;top:${((Number(y(v)) / PULSE_H) * 100).toFixed(2)}%;color:var(${v > 0 ? "--dp-error" : "--dp-success"})}`);
+      const name = `pd${[...frames.join("")].reduce((h, c) => (Math.imul(h, 31) + c.charCodeAt(0)) >>> 0, 7).toString(36)}`;
+      const last = (((n - 0.5) / n) * RUN) / CYCLE * 100;
+      dot = `<style>@keyframes ${name}{0%{opacity:0;${frames[0].slice(frames[0].indexOf("{") + 1, -1)}}0.4%{opacity:1}${frames.join("")}${(last + 0.8).toFixed(2)}%{opacity:1}${(last + 1.6).toFixed(2)}%,100%{opacity:0;left:${(((n - 0.5) / n) * 100).toFixed(2)}%;top:${((Number(y(p[n - 1])) / PULSE_H) * 100).toFixed(2)}%}}</style><i class="pdot" style="animation-name:${name}" aria-hidden="true"></i>`;
+    }
     return `<div class="pchart${max ? "" : " quiet"}"><svg viewBox="0 0 ${PULSE_W} ${PULSE_H}" preserveAspectRatio="none" aria-hidden="true">
-        <line class="base" x1="0" x2="${PULSE_W}" y1="${PULSE_H - 0.5}" y2="${PULSE_H - 0.5}" vector-effect="non-scaling-stroke"/>${areas}${lines}</svg></div>
+        <line class="base" x1="0" x2="${PULSE_W}" y1="${PULSE_H - 0.5}" y2="${PULSE_H - 0.5}" vector-effect="non-scaling-stroke"/>${areas}${lines}</svg>${dot}</div>
       <div class="pticks">${ticks}<span class="now-label">${escape(this._t("now"))}</span></div>`;
   }
 
@@ -287,7 +316,25 @@ class DevicePanelBaseCard extends HTMLElement {
       const html = { ring: (x) => this._ringHtml(x), offline: (x) => this._offlineHtml(x), pulse: (x) => this._pulseHtml(x) };
       body = `<div class="cgrid">${this.constructor.parts.map((part) => html[part](a)).join("")}</div>`;
     }
-    this._body.innerHTML = body;
+    this._setBody(body);
+  }
+
+  // Nur geänderte Kacheln ersetzen: eine unveränderte Kachel behält ihre laufende Animation (Messpunkt des Pulses), auch wenn die Karte neu gezeichnet wird
+  _setBody(html) {
+    const tpl = document.createElement("template");
+    tpl.innerHTML = html;
+    const next = tpl.content.firstElementChild;
+    const cur = this._body.firstElementChild;
+    if (!next || !cur || next.className !== cur.className || next.children.length !== cur.children.length || !next.classList.contains("cgrid")) {
+      this._body.innerHTML = html;
+      this._tiles = [...(this._body.firstElementChild?.children || [])].map((t) => t.outerHTML);
+      return;
+    }
+    const was = this._tiles || [];
+    [...next.children].forEach((tile, i) => {
+      if (was[i] !== tile.outerHTML) cur.children[i].replaceWith(tile);
+    });
+    this._tiles = [...next.children].map((t) => t.outerHTML);
   }
 }
 

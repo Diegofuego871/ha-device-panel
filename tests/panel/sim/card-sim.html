@@ -48,7 +48,7 @@ if (q.get("xss") === "1") {
 }
 // themes.darkMode wie bei Home Assistant; vars=0 lässt die CSS-Variablen des Themas weg (Thema ohne eigene Farben)
 if (q.get("vars") === "0") document.documentElement.setAttribute("data-novars", "");
-const hass = { themes: { darkMode: (q.get("theme") || "light") === "dark" }, states, entities, locale: { language: lang }, language: lang, user: { is_admin: q.get("admin") !== "0" }, callService: () => Promise.reject(new Error("keine Dienste")) };
+const hass = { themes: { darkMode: (q.get("theme") || "light") === "dark" }, states, entities, locale: { language: lang }, language: lang, user: { is_admin: q.get("admin") !== "0" }, callService: () => Promise.reject(new Error("keine Dienste")), callWS: (m) => Promise.resolve(m.type === "frontend/get_user_data" ? { value: q.get("anim") === "off" ? { anim: false } : null } : null) };
 const root = document.createElement("home-assistant");
 root.hass = hass;
 document.body.append(root);

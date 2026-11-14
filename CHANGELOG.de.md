@@ -9,12 +9,13 @@ die Versionsnummern folgen [Semantic Versioning](https://semver.org/lang/de/).
 
 ## [2.216.1] - 2026-11-13
 
-Code-Review: Dashboard-Karten leichter, sicherer und im dunklen Design von Home Assistant, der Wächter der Pause robuster.
+Code-Review: Dashboard-Karten leichter, sicherer und im dunklen Design von Home Assistant, mit dem Messpunkt im Puls, der Wächter der Pause robuster.
 
 ### Geändert
 
 - **Code-Review:** Die Dashboard-Karten zeichnen nur ihren Inhalt (das grosse Stylesheet wird einmal gesetzt, Tippen einmal behandelt) und übernehmen jede Zahl des Sensors als Zahl, nie als HTML; die Auffrischung jede Minute läuft nur, solange ein Gerät ausgefallen ist. Der Wächter der Überwachungs-Pause prüft jedes Gerät für sich, ein fehlerhaftes Gerät hält die anderen nicht mehr auf. Eine ungenutzte Funktion wurde entfernt.
 - **Dashboard-Karten, dunkles Design:** Die Karten folgen dem Design von Home Assistant: im dunklen Design sind sie dunkel, im hellen hell, und sie wechseln mit, wenn das Design umgeschaltet wird (ohne Neuladen). Setzt ein Thema keine eigenen Farben, gelten im dunklen Design dunkle statt heller Ersatzfarben.
+- **Dashboard-Karten, Messpunkt im Puls:** Wie im Panel fährt alle 10 Sekunden ein kleiner Punkt (Farbe der Linie) über die Linie des Ausfall-Pulses. Er folgt der Einstellung "Animationen" des Benutzers im Panel und bleibt bei "Bewegung reduzieren" des Systems aus. Eine Karte, die ohne Änderung neu gezeichnet wird, behält ihre laufende Animation; die Zeitachse rückt in Schritten von fünf Minuten.
 
 ## [2.216.0] - 2026-11-13
 

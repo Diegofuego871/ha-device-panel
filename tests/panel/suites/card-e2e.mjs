@@ -78,6 +78,15 @@ for (const lang of ["de", "en"]) {
     check(`[${tag}] Wechsel zur Laufzeit auf dunkel: Attribut "dark" gesetzt`, await p.evaluate(() => document.getElementById("all").hasAttribute("dark")));
     await p.screenshot({ path: `${outDir}/card-${tag.replace("/", "-")}-dark-novars.png`, fullPage: true });
 
+    // Messpunkt des Pulses ("Sternschnuppe"): da und animiert; bleibt bei einer Neuzeichnung ohne Änderung dieselbe Kachel; aus bei "Animationen aus"
+    await open("state=offline");
+    check(`[${tag}] Puls: Messpunkt vorhanden, Animation läuft`, await p.evaluate(() => { const d = document.getElementById("all").shadowRoot.querySelector(".pchart .pdot"); return !!d && getComputedStyle(d).animationName.startsWith("pd") && getComputedStyle(d).animationDuration === "10s"; }));
+    const same = await p.evaluate(() => { const el = document.getElementById("all"); const before = el.shadowRoot.querySelector(".pchart .pdot"); el._draw(); return el.shadowRoot.querySelector(".pchart .pdot") === before; });
+    check(`[${tag}] Neuzeichnung ohne Änderung lässt den Messpunkt (und seine Animation) unberührt`, same);
+    await open("state=offline&anim=off");
+    await p.waitForTimeout(200);
+    check(`[${tag}] Einstellung "Animationen" aus: kein Messpunkt`, await p.evaluate(() => { const d = document.getElementById("all").shadowRoot.querySelector(".pchart .pdot"); return getComputedStyle(d).display === "none"; }));
+
     // Sensor fehlt
     await open("state=missing");
     check(`[${tag}] Sensor fehlt: Hinweis statt Fehler`, (await txt("all")).includes(L.missing) && (await txt("a")).includes(L.missing));
