@@ -72,9 +72,7 @@ MAX_LEAVES = 10
 MAX_GROUPS = 4
 IGNORED = ("unavailable", "unknown", "", None)
 # Push-Aktionen (seit 2.218.0): Knöpfe unter der Meldung. Art: Routine ausführen, später erinnern, öffnen, erledigt
-ACTION_KINDS = ("routine", "remind", "open", "done", "undo")
-# Rückgängig (seit 2.220.0): "opposite" = Gegenteil schalten, "back" = das Zurückschalten der Routine jetzt ausführen
-UNDO_MODES = ("opposite", "back")
+ACTION_KINDS = ("routine", "remind", "open", "done")
 ACTIONS_MAX = 3
 ACTION_TITLE_MAX = 40
 REMIND_AFTER = ("15m", "1h", "morning")
@@ -572,7 +570,6 @@ ACTION_SCHEMA = vol.Schema(
         # Uhrzeit für "morgen" (seit 2.219.0)
         vol.Optional("at", default=REMIND_MORNING): _clock_text,
         vol.Optional("open", default="panel"): vol.In(OPEN_TARGETS),
-        vol.Optional("undo", default="opposite"): vol.In(UNDO_MODES),
     }
 )
 
@@ -630,9 +627,16 @@ def _clean_reset(reset: Any, kind: str, value: Any) -> float | str | None:
     return reset
 
 
+def _without_removed_actions(raw: Any) -> Any:
+    """Push-Aktionen der Art "undo" (nur in 2.220.0, wieder entfernt) fallen weg; die Meldung bleibt gültig (gespeichert, Sicherung)."""
+    if isinstance(raw, dict) and isinstance(raw.get("push_actions"), list):
+        return {**raw, "push_actions": [a for a in raw["push_actions"] if not (isinstance(a, dict) and a.get("kind") == "undo")]}
+    return raw
+
+
 def clean_rule(hass: HomeAssistant, raw: dict[str, Any], *, routine_ids: set[str] | None = None) -> dict[str, Any]:
     """Regel prüfen und bereinigen (Fehler als vol.Invalid mit Text für das Panel). routine_ids: weitere Routinen, die als vorhanden gelten (Wiederherstellung: kommen mit derselben Datei)."""
-    rule = RULE_SCHEMA(raw)
+    rule = RULE_SCHEMA(_without_removed_actions(raw))
     # Bedingungen (seit 2.15.0): die erste steht in den alten Feldern und wird wie bisher geprüft
     raw_tree = rule.get("conditions")
     raw_leaves = _raw_leaves(raw_tree) if raw_tree else []
@@ -689,22 +693,13 @@ def clean_rule(hass: HomeAssistant, raw: dict[str, Any], *, routine_ids: set[str
     # Push-Aktionen: je Art nur das Nötige behalten; eine Routine muss es geben
     manager = hass.data.get(DATA_ROUTINES)
     for action in rule["push_actions"]:
-        if action["kind"] in ("routine", "undo"):
+        if action["kind"] == "routine":
             if not action["routine_id"]:
                 raise vol.Invalid("Für die Push-Aktion fehlt die Routine")
-            found = manager.get(action["routine_id"]) if manager is not None else None
-            if manager is not None and found is None and action["routine_id"] not in (routine_ids or ()):
+            if manager is not None and manager.get(action["routine_id"]) is None and action["routine_id"] not in (routine_ids or ()):
                 raise vol.Invalid("Die Routine der Push-Aktion gibt es nicht")
-            # Rückgängig muss möglich sein: "Gegenteil" nur bei Ein/Aus, "Zurückschalten" nur bei einer Routine mit Zurückschalten
-            if action["kind"] == "undo" and found is not None:
-                if action["undo"] == "back" and found["back_kind"] == "none":
-                    raise vol.Invalid("Die Routine hat kein Zurückschalten")
-                if action["undo"] == "opposite" and any(a not in ("on", "off") for a in [found["action"], *(m["action"] for m in found.get("more") or [])]):
-                    raise vol.Invalid("Die Routine hat kein Gegenteil (nur Ein und Aus)")
         else:
             action["routine_id"] = ""
-        if action["kind"] != "undo":
-            action["undo"] = "opposite"
         # Die Uhrzeit gilt nur für "Erinnern morgen"; sonst bleibt der Standard stehen
         if action["kind"] != "remind" or action["after"] != "morning":
             action["at"] = REMIND_MORNING
@@ -1311,7 +1306,7 @@ class MagicPush:
             self._arm_remind(rule["id"])
             self._save_now()
             activity.record(hass, "info", "magic", "magic_action_remind", rule["name"], rule["device_id"], title=action["title"], when=_clock(hass, at))
-        elif kind in ("routine", "undo"):
+        elif kind == "routine":
             await self._async_run_routine(rule, action)
 
     async def _async_run_routine(self, rule: dict[str, Any], action: dict[str, Any]) -> None:
@@ -1319,27 +1314,19 @@ class MagicPush:
         hass = self.hass
         manager = hass.data.get(DATA_ROUTINES)
         routine = manager.get(action["routine_id"]) if manager is not None else None
-        undo = action["kind"] == "undo"
-        if routine is None:
-            result = None
-        elif not undo:
-            result = await manager.async_run_now(action["routine_id"])
-        elif action["undo"] == "back":
-            result = await manager.async_revert_now(action["routine_id"])
-        else:
-            result = await manager.async_undo(action["routine_id"])
+        result = await manager.async_run_now(action["routine_id"]) if routine is not None else None
         name = routine["name"] if routine is not None else ""
         if result is None:
             ok, reason, text_key = False, None, "magic_action_missing_text"
         else:
             ok, reason = result
-            text_key = ("magic_action_undo_ok_text" if undo else "magic_action_ok_text") if ok else "magic_action_fail_text"
-        activity.record(hass, "info" if ok else "error", "magic", ("magic_action_undo" if undo else "magic_action_routine") if ok else "magic_action_failed", rule["name"], rule["device_id"], title=name or action["title"])
+            text_key = "magic_action_ok_text" if ok else "magic_action_fail_text"
+        activity.record(hass, "info" if ok else "error", "magic", "magic_action_routine" if ok else "magic_action_failed", rule["name"], rule["device_id"], title=name or action["title"])
         target = self.target(rule)
         if target == NOTIFY_NONE:
             return
         reason_text = push.reason_text(hass, reason)
-        title = push.text(hass, ("magic_action_undo_ok_title" if undo else "magic_action_ok_title") if ok else ("magic_action_undo_fail_title" if undo else "magic_action_fail_title"))
+        title = push.text(hass, "magic_action_ok_title" if ok else "magic_action_fail_title")
         message = push.text(hass, text_key, routine=name, rule=rule["name"], reason=reason_text)
         data = push.notification_data(hass, f"{DOMAIN}_magic_{rule['id']}_action", push.panel_url(rule["device_id"]))
         await push.async_push(hass, target, title, message, data)
@@ -1469,7 +1456,7 @@ class MagicPush:
 def clean_stored(raw: Any) -> dict[str, Any]:
     """Gespeicherte Regel lesen (ohne die Prüfung gegen die Register, die beim Anlegen läuft)."""
     schema = RULE_SCHEMA.extend({vol.Required("id"): vol.All(str, vol.Match(_ID_RE)), vol.Optional("created"): vol.Coerce(float)})
-    rule = schema(raw)
+    rule = schema(_without_removed_actions(raw))
     if rule["kind"] in NUMERIC_KINDS and _float(rule.get("value")) is None:
         raise vol.Invalid("Zahl fehlt")
     rule["target"] = rule.get("target") or None

@@ -62,6 +62,7 @@ from homeassistant.util import dt as dt_util
 
 from . import activity, magic, push, push_icon
 from .const import (
+    ROUTINE_BACK_ACTION_PREFIX,
     CONF_NOTIFY_CLICK,
     CONF_ROUTINES_CATCH_UP,
     CONF_ROUTINES_NOTIFY_ERROR,
@@ -737,6 +738,8 @@ ROUTINE_SCHEMA = vol.Schema(
         vol.Optional("mday", default=None): vol.Any(None, vol.All(int, vol.Range(min=-1, max=31)), msg="Tag des Monats ungültig"),
         vol.Optional("enabled", default=True): bool,
         vol.Optional("push", default=False): bool,
+        # Push-Aktion "Sofort zurückschalten" in der Meldung (seit 2.221.0): nur mit Meldung und mit Zurückschalten (clean() setzt sonst aus)
+        vol.Optional("push_back", default=False): bool,
         # Schalter in Home Assistant (seit 2.177.0): die Routine als Entität ein- und ausschalten
         vol.Optional("ha_switch", default=False): bool,
         vol.Optional("target", default=None): vol.Any(None, "", vol.All(str, vol.Match(_NOTIFY_RE)), msg="Empfänger ungültig"),
@@ -961,6 +964,8 @@ class RoutineManager:
             rt = runtime.get(routine_id) if isinstance(runtime, dict) else None
             self._runtime[routine_id] = self._clean_runtime(rt if isinstance(rt, dict) else {})
         self._unsubs.append(self.hass.bus.async_listen(dr.EVENT_DEVICE_REGISTRY_UPDATED, self._on_device_registry))
+        # Tippen auf die Push-Aktion "Sofort zurückschalten" (die Companion-App meldet es als Ereignis)
+        self._unsubs.append(self.hass.bus.async_listen("mobile_app_notification_action", self._on_push_action))
         async_at_started(self.hass, self._on_started)
         self._plan_resume()
 
@@ -1316,6 +1321,8 @@ class RoutineManager:
         """Entwurf prüfen (gegen Gerät, Entität, Aktion und Zeitangaben); gibt die bereinigte Routine zurück."""
         routine = ROUTINE_SCHEMA(raw)
         normalize_back(routine)
+        # Die Push-Aktion gibt es nur, wenn die Routine meldet und ein Zurückschalten hat (sonst gäbe es nichts zurückzuschalten)
+        routine["push_back"] = bool(routine["push_back"] and routine["push"] and routine["back_kind"] != "none")
         # Ziele (seit 2.181.0): das erste in den Feldern der Routine, weitere in "more"; jedes wird einzeln geprüft
         routine.update(self._clean_target(routine, {k: routine[k] for k in TARGET_KEYS}))
         routine["more"] = [self._clean_target(routine, dict(t)) for t in routine["more"]]
@@ -1855,40 +1862,33 @@ class RoutineManager:
             self._save_now()
             return ok, reason
 
-    # -- Rückgängig (seit 2.220.0, Push-Aktion von Magic Push) --------------------------
+    # -- Sofort zurückschalten (seit 2.221.0, Push-Aktion in der Meldung einer Routine) --
 
-    async def async_undo(self, routine_id: str) -> tuple[bool, str | None] | None:
-        """
-        Rückgängig, Gegenteil: jedes Ziel sofort ins Gegenteil schalten (Ein ↔ Aus), auch wenn die Routine nichts zum Zurückschalten wartet.
-        Nur wenn alle Ziele ein Gegenteil haben (Umschalten, Setzen und Szenen nicht): sonst ("False", "no_opposite") und nichts geschaltet.
-        Ein wartendes Zurückschalten der geschalteten Ziele entfällt, sonst schaltete es später ein zweites Mal.
-        """
-        routine = self._routines.get(routine_id)
-        if routine is None:
-            return None
-        async with self._lock:
-            rt = self.runtime(routine_id)
-            views = {i: target_view(routine, i) for i in range(len(routine_targets(routine)))}
-            if any(opposite(v["action"]) is None for v in views.values()):
-                return False, "no_opposite"
-            results = await asyncio.gather(*(self._async_call(views[i], opposite(views[i]["action"]) or "off") for i in views))
-            fails: list[tuple[int, str | None]] = []
-            for i, (ok, reason) in zip(views, results, strict=True):
-                if ok:
-                    self._tr(rt, routine, i).update(revert_action=None, rretry=0, snapshot=None)
-                    activity.record(self.hass, "info", "routine", "routine_revert", routine["name"], log_device(routine), entity=self._entity_name(views[i]), action=self._action_text(views[i], opposite(views[i]["action"]) or "off"))
-                else:
-                    fails.append((i, reason))
-            if not self._pending(rt):
-                rt["revert_due"] = None
-                self._end_done(routine)
-            self._arm(routine_id)
-            self._save_now()
-            return not fails, fails[0][1] if fails else None
+    @callback
+    def _on_push_action(self, event: Event) -> None:
+        action = str(event.data.get("action") or "")
+        if not action.startswith(ROUTINE_BACK_ACTION_PREFIX):
+            return
+        # Was ein Tipp tut, steht in der gespeicherten Routine (push_back), nie im Ereignis
+        routine = self._routines.get(action.removeprefix(ROUTINE_BACK_ACTION_PREFIX))
+        if routine is not None and routine.get("push_back"):
+            self.hass.async_create_task(self._async_push_back(routine))
+
+    async def _async_push_back(self, routine: dict[str, Any]) -> None:
+        """Das Zurückschalten sofort ausführen; gelingt es, meldet die Routine es wie sonst, nur ein Fehlschlag bekommt eine eigene Meldung."""
+        result = await self.async_revert_now(routine["id"])
+        ok, reason = result if result is not None else (False, "error")
+        activity.record(self.hass, "info" if ok else "warning", "routine", "routine_push_back" if ok else "routine_push_back_failed", routine["name"], log_device(routine), reason=push.reason_text(self.hass, reason))
+        if ok or self.target(routine) == NOTIFY_NONE:
+            return
+        data = push.notification_data(self.hass, f"{DOMAIN}_routine_{routine['id']}_back", push.panel_url(None if is_holder(routine["device_id"]) else routine["device_id"]))
+        await push.async_push(
+            self.hass, self.target(routine), push.text(self.hass, "routine_back_fail_title", name=routine["name"]), push.text(self.hass, "routine_back_fail_text", reason=push.reason_text(self.hass, reason)), data
+        )
 
     async def async_revert_now(self, routine_id: str) -> tuple[bool, str | None] | None:
         """
-        Rückgängig, wie in der Routine eingestellt: das Zurückschalten der Routine jetzt ausführen (Gegenstück oder "wie vorher", je nach Einstellung
+        Das Zurückschalten der Routine jetzt ausführen, wie in der Routine eingestellt (Gegenstück oder "wie vorher", je nach Einstellung
         der Routine). Nur wenn die Routine ein Zurückschalten hat ("no_back" sonst) und noch etwas zurückzuschalten wartet ("nothing_pending" sonst).
         """
         routine = self._routines.get(routine_id)
@@ -2126,10 +2126,14 @@ class RoutineManager:
             return
         title, message = self.texts(routine, action=action, ok=ok, reason=reason, failed=failed, done=done, results=results)
         outcome: dict[str, Any] = {}
-        sent = await self._async_send(routine, title, message, outcome)
+        # Push-Aktion "Sofort zurückschalten": nur bei einer Meldung über das Schalten und solange noch etwas zurückzuschalten wartet
+        actions = None
+        if ok and routine.get("push_back") and routine.get("id") and self._pending(self.runtime(routine["id"])):
+            actions = [{"action": f"{ROUTINE_BACK_ACTION_PREFIX}{routine['id']}", "title": push.text(self.hass, "action_revert_now")}]
+        sent = await self._async_send(routine, title, message, outcome, actions)
         _trace_step(trace, "notify", res="held" if outcome.get("held") else "sent" if sent else "failed", target=self.target(routine), title=title, err=outcome.get("err"))
 
-    async def _async_send(self, routine: dict[str, Any], title: str, message: str, outcome: dict[str, Any] | None = None) -> bool:
+    async def _async_send(self, routine: dict[str, Any], title: str, message: str, outcome: dict[str, Any] | None = None, actions: list[dict[str, str]] | None = None) -> bool:
         hass = self.hass
         opts = effective(hass)
         target = self.target(routine)
@@ -2143,7 +2147,7 @@ class RoutineManager:
         # Ohne Gerät (Szene, Gruppe) öffnet die Meldung das Panel, ohne Integrationsbild
         icon = await push_icon.async_integration_icon(hass, primary_domain(hass, device)) if device is not None else None
         url = push.device_url(opts[CONF_NOTIFY_CLICK], device.id) if device is not None else push.panel_url()
-        data = push.notification_data(hass, f"{DOMAIN}_routine_{routine.get('id', 'test')}", url, icon=icon)
+        data = push.notification_data(hass, f"{DOMAIN}_routine_{routine.get('id', 'test')}", url, actions, icon=icon)
         return await push.async_push(hass, target, title, message, data, topic="routines", outcome=outcome)
 
     def preview_raw(self, raw: dict[str, Any]) -> dict[str, Any]:

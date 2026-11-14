@@ -2820,7 +2820,4 @@ dialog.updapp-dlg .dlg-error { font-size: 15px; }
 /* Tastatur oben (Handy): Fortschritt und Fusszeile des Assistenten weichen dem Feld (magic-push.js, fitWindow) */
 dialog.magic-dlg.mg-kb .mgw-prog, dialog.magic-dlg.mg-kb .mgw-foot { display: none; }
 .mg-pa-card .mg-chips { margin-top: 0; }
-/* Rückgängig (seit 2.220.0): Hinweis, wenn die Routine es nicht hergibt. Fünf Reiter stehen auf dem Handy in zwei Zeilen zu drei und zwei (vier und einer ginge für "Acknowledge" nicht) */
-@media (max-width: 700px) { .mg-pa-kinds:has(> .sub-tab:nth-child(5)) { grid-template-columns: repeat(3, minmax(0, 1fr)) !important; } }
-.mg-pa-warn { padding: 8px 10px; border-radius: 10px; background: var(--dp-error-soft); color: var(--dp-error); font-size: 12.5px; line-height: 1.35; }
 `;

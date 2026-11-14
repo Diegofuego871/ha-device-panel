@@ -11,7 +11,11 @@ Einstieg für jede neue Claude-Code-Session. Zuerst diese Datei lesen, dann
 
 - `charge.py` `known_rechargeable`: Lademeldung gilt (global + Gerät/Integration), oder am Gerät ausdrücklich "Ein", oder Live-Aktivität für das Gerät an; `rechargeable()` und `charging_of()` nutzen sie (vorher nur `enabled()` mit globalem Schalter). Test `test_rechargeable_by_device_charge_or_live`.
 
-## Stand (2.220.0, Push-Aktion "Rückgängig")
+## Stand (2.221.0, "Rückgängig" aus Magic Push entfernt, "Sofort zurückschalten" bei Routinen)
+
+- Magic Push hat die Art `undo` nicht mehr (Nutzer: zu kompliziert). Dafür Routinen-Feld `push_back` (nur mit `push` und `back_kind != none`, sonst in `clean()` aus): die Meldung über das Schalten trägt die Push-Aktion `ROUTINE_BACK_ACTION_PREFIX` + Routine, solange `_pending`; `RoutineManager._on_push_action` → `_async_push_back` → `async_revert_now` (Fehlschlag: eigene Meldung `routine_back_fail_*`, Erfolg: die Meldung der Routine über das Zurückschalten genügt). Panel: Schalter in Schritt 3 der Routine (`push-back`), Vorschau mit Schaltfläche. Tests: `tests/test_routine_push_back.py`, `routine-e2e.mjs`.
+
+## Stand (2.220.0, Push-Aktion "Rückgängig", inzwischen entfernt)
 
 - Art `undo` mit `undo` = `opposite` (`RoutineManager.async_undo`: alle Ziele ins Gegenteil, nur Ein/Aus, wartendes Zurückschalten entfällt) oder `back` (`async_revert_now`: `_async_revert` jetzt, nur mit `back_kind` und wartendem Zurückschalten). Prüfung in `magic.clean_rule` (kein Import von `routines`: Kreis) und im Panel (`undoProblem`, `routines` mit `back_kind` und `acts`). Folge-Meldung wie bei der Routine, Texte `magic_action_undo_*`, Gründe `routine_reason_no_opposite|no_back|nothing_pending`. Fünf Reiter auf dem Handy: drei und zwei (`.mg-pa-kinds`). Tests: `tests/test_magic_actions.py`, Suite `magicpa-e2e.mjs`.
 

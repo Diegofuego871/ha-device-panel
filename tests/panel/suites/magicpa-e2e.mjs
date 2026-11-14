@@ -9,8 +9,8 @@ let ok = true;
 const check = (l, c, i = "") => { ok &&= !!c; console.log(`${c ? "PASS" : "FAIL"} ${l}${i ? " - " + i : ""}`); };
 const R = `document.querySelector("device-panel").shadowRoot`;
 const T = {
-  de: { sw: "Push-Aktionen", undo: "Rückgängig", opp: "Gegenteil", back: "Zurückschalten", kinds: ["Routine", "Rückgängig", "Erinnern", "Öffnen", "Quittieren"], add3: "Push-Aktion hinzufügen (3 von 3)", search: "Routine suchen", doneHint: "Bestätigt die Meldung", change: "Ändern" },
-  en: { sw: "Push actions", undo: "Undo", opp: "Opposite", back: "Switch back", kinds: ["Routine", "Undo", "Remind", "Open", "Acknowledge"], add3: "Add push action (3 of 3)", search: "Search routines", doneHint: "Acknowledges the notification", change: "Change" },
+  de: { sw: "Push-Aktionen", kinds: ["Routine", "Erinnern", "Öffnen", "Quittieren"], add3: "Push-Aktion hinzufügen (3 von 3)", search: "Routine suchen", doneHint: "Bestätigt die Meldung", change: "Ändern" },
+  en: { sw: "Push actions", kinds: ["Routine", "Remind", "Open", "Acknowledge"], add3: "Add push action (3 of 3)", search: "Search routines", doneHint: "Acknowledges the notification", change: "Change" },
 };
 const SEED = (id, name, extra = {}) => ({ id, device_id: "d", entity_id: "switch.plug", name, action: "on", back_s: null, kind: "repeat", delay_s: null, date: null, time: "06:30", repeat: "daily", weekdays: null, mday: null, enabled: true, push: false, target: null, created: Date.now() / 1000, ...extra });
 
@@ -94,33 +94,6 @@ for (const lang of ["de", "en"]) {
       await ev(`delete r.host._topWindow; r.host._magic.fitWindow();`);
       check(`[${tag}] Tastatur weg: Fusszeile und Fortschritt wieder da`, await ev(`const w=r.querySelector("${W}"); return !w.classList.contains("mg-kb") && getComputedStyle(r.querySelector('${W} .mgw-foot')).display !== "none"`));
     }
-
-    // --- Rückgängig (2.220.0): fünfter Reiter, Routine, "Gegenteil" oder "Zurückschalten", Prüfung ---
-    const card0 = (code) => ev(`const c=r.querySelector('${W} .mg-pa-card'); ${code}`);
-    await card0(`c.querySelector('[data-mg="akind"][data-v="undo"]').click();`);
-    check(`[${tag}] Fünf Reiter, "${L.undo}" gewählt, Modus "${L.opp}" / "${L.back}" unter der Routine`, (await wait(`const c=r.querySelector('${W} .mg-pa-card'); return c.querySelectorAll('[data-mg="akind"]').length === 5 && c.querySelector('[data-mg="akind"].on').dataset.v === "undo" && c.querySelectorAll('[data-mg="aundo"]').length === 2 && c.querySelector('[data-mg="aundo"].on').dataset.v === "opposite"`)) && (await card0(`return [...c.querySelectorAll('[data-mg="aundo"]')].map((x) => x.textContent.trim()).join()`)) === `${L.opp},${L.back}`);
-    if (mobile) check(`[${tag}] Handy: alle fünf Reiter ohne abgeschnittenen Text`, await card0(`return [...c.querySelectorAll('[data-mg="akind"]')].every((x) => x.scrollWidth <= x.clientWidth + 1) && c.querySelector('.mg-pa-kinds').scrollWidth <= c.querySelector('.mg-pa-kinds').clientWidth + 1`));
-    check(`[${tag}] "Gegenteil" bei einer Routine mit "ein": kein Hinweis, "Weiter" frei`, (await ev(`return !r.querySelector('${W} .mg-pa-warn')`)) && (await nextOn()));
-    await card0(`c.querySelector('[data-mg="aundo"][data-v="back"]').click();`);
-    check(`[${tag}] "Zurückschalten" bei einer Routine ohne Zurückschalten: Hinweis, "Weiter" gesperrt`, (await wait(`return !!r.querySelector('${W} .mg-pa-warn')`)) && !(await nextOn()));
-    await p.screenshot({ path: `${outDir}/magicpa-${tag.replace("/", "-")}-undo.png` });
-    // Andere Routine (Nachtlicht, mit Zurückschalten): derselbe Modus geht
-    await card0(`c.querySelector('[data-mg="aroutine-change"]').click();`);
-    await wait(`return r.querySelectorAll('${W} .mg-pa-opt').length === 3`);
-    await ev(`r.querySelector('${W} .mg-pa-opt[data-id="aaaaaaaaaaa2"]').click();`);
-    check(`[${tag}] Routine mit Zurückschalten: Hinweis weg, "Weiter" frei`, (await wait(`return !r.querySelector('${W} .mg-pa-warn') && r.querySelector('${W} .mg-pa-sel')?.textContent.includes("Nachtlicht")`)) && (await nextOn()));
-    // Routine mit "umschalten": "Gegenteil" geht nicht
-    await card0(`c.querySelector('[data-mg="aundo"][data-v="opposite"]').click();`);
-    await card0(`c.querySelector('[data-mg="aroutine-change"]').click();`);
-    await wait(`return r.querySelectorAll('${W} .mg-pa-opt').length === 3`);
-    await ev(`r.querySelector('${W} .mg-pa-opt[data-id="aaaaaaaaaaa3"]').click();`);
-    check(`[${tag}] Routine mit "umschalten" und "Gegenteil": Hinweis, "Weiter" gesperrt`, (await wait(`return !!r.querySelector('${W} .mg-pa-warn')`)) && !(await nextOn()));
-    // Zurück zu "Routine" mit der Filter-Bestellung, wie die übrigen Prüfungen es erwarten
-    await card0(`c.querySelector('[data-mg="akind"][data-v="routine"]').click();`);
-    await card0(`c.querySelector('[data-mg="aroutine-change"]').click();`);
-    await wait(`return r.querySelectorAll('${W} .mg-pa-opt').length === 3`);
-    await ev(`r.querySelector('${W} .mg-pa-opt[data-id="aaaaaaaaaaa1"]').click();`);
-    await wait(`return r.querySelector('${W} .mg-pa-sel')?.textContent.includes("Filter-Bestellung")`);
 
     // --- Zweite Karte: Erinnern; dritte: Quittieren; Grenze ---
     await tap('[data-mg="aadd"]');

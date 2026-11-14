@@ -7,6 +7,18 @@ Alle nennenswerten Änderungen an dieser Integration stehen in dieser Datei.
 Das Format folgt [Keep a Changelog](https://keepachangelog.com/de/1.1.0/),
 die Versionsnummern folgen [Semantic Versioning](https://semver.org/lang/de/).
 
+## [2.221.0] - 2026-11-14
+
+Die Push-Aktion "Rückgängig" von Magic Push entfällt; die Meldung einer Routine kann dafür "Sofort zurückschalten" tragen.
+
+### Hinzugefügt
+
+- **Push-Aktion "Sofort zurückschalten" in der Meldung einer Routine:** Im Schritt "Meldung" einer Routine (mit "Per Push melden" und eingestelltem Zurückschalten) fügt ein Schalter "Push-Aktion Sofort zurückschalten" der Meldung eine Schaltfläche hinzu. Ein Tipp führt das Zurückschalten der Routine sofort aus, so wie dort eingestellt (Gegenstück oder "wie vorher"), solange es noch wartet. Die Routine meldet das Zurückschalten wie gewohnt; gibt es nichts mehr zurückzuschalten (es ist schon passiert), sagt das eine kurze Meldung. Die Vorschau zeigt die Schaltfläche. Was ein Tipp tut, steht in der gespeicherten Routine, nie in der Benachrichtigung selbst.
+
+### Entfernt
+
+- **Push-Aktion "Rückgängig" in Magic Push** (2.220.0): Sie ergab dort wenig Sinn und machte die Einrichtung komplizierter. Eine Meldung, die sie nutzte, läuft weiter, nur ohne diese Aktion.
+
 ## [2.220.0] - 2026-11-14
 
 Neue Push-Aktion "Rückgängig" für Magic-Push-Meldungen: das Gegenteil schalten oder eine Routine jetzt zurückschalten.
@@ -6135,6 +6147,7 @@ Erste Vorabversion.
   GitHub Actions für die Prüfungen von HACS und hassfest sowie die Tests.
 
 [2.6.0]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v2.6.0
+[2.221.0]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v2.221.0
 [2.220.0]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v2.220.0
 [2.219.0]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v2.219.0
 [2.218.0]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v2.218.0

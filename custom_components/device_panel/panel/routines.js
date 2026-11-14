@@ -1028,6 +1028,7 @@ export class RoutineUi {
       mdayOwn: false,
       enabled: true,
       push: false,
+      push_back: false,
       ha_switch: false,
       ha_entity: "",
       ha_button: "",
@@ -1070,6 +1071,7 @@ export class RoutineUi {
       // (Schalter in Schritt 5, Schalter in der Liste oder "Nochmal"); bis 2.32.0 schaltete das Bearbeiten ihn von selbst wieder ein.
       enabled: rt.enabled,
       push: Boolean(rt.push),
+      push_back: Boolean(rt.push_back),
       ha_switch: Boolean(rt.ha_switch),
       ha_entity: rt.ha_entity || "",
       ha_button: rt.ha_button || "",
@@ -1257,6 +1259,8 @@ export class RoutineUi {
       mday: d.kind === "repeat" && d.repeat === "monthly" ? d.mday : null,
       enabled: d.enabled,
       push: d.push,
+      // Push-Aktion "Sofort zurückschalten" (seit 2.221.0): nur mit Meldung und mit Zurückschalten
+      push_back: Boolean(d.push && d.push_back && d.backKind !== "none"),
       ha_switch: Boolean(d.ha_switch),
       target: d.target || null,
     };
@@ -2087,6 +2091,10 @@ export class RoutineUi {
     let html = `<p class="mg-note">${esc(t("rtPushNote"))}</p>
       <div class="mg-optrow"><div>${esc(t("rtPushSwitch"))}</div><label class="switch"><input type="checkbox" data-rt="push"${d.push ? " checked" : ""} aria-label="${esc(t("rtPushSwitch"))}"><span></span></label></div>`;
     if (!d.push) return `${html}<p class="mg-hint">${esc(t("rtPushOffNote"))}</p>`;
+    // Push-Aktion "Sofort zurückschalten" (seit 2.221.0): ein Schalter, solange die Routine ein Zurückschalten hat; sonst ein Hinweis
+    html += d.backKind !== "none"
+      ? `<div class="mg-optrow"><div>${esc(t("rtPushBack"))}<small>${esc(t("rtPushBackNote"))}</small></div><label class="switch"><input type="checkbox" data-rt="push-back"${d.push_back ? " checked" : ""} aria-label="${esc(t("rtPushBack"))}"><span></span></label></div>`
+      : `<p class="mg-hint">${esc(t("rtPushBackNeed"))}</p>`;
     html += `<div class="mg-k">${esc(t("rtRecipient"))}</div>
       <button type="button" class="mg-sel" data-rt="target-toggle" aria-expanded="${this.wiz.targetOpen}"><span>${esc(d.target ? this.niceTarget(d.target) : t("rtTargetDefault"))}<small>${esc(d.target || this.targetSub())}</small></span>${this.chevHtml(this.wiz.targetOpen)}</button>`;
     if (this.wiz.targetOpen) html += `<div class="mg-list" role="listbox">${this.targetListHtml()}</div>`;
@@ -2118,7 +2126,7 @@ export class RoutineUi {
     let inner;
     if (w.pvError) inner = `<div class="opt-error">${esc(t("rtPvError", w.pvError))}</div>`;
     else if (!w.pv) inner = `<div class="pv-text">…</div>`;
-    else inner = `<div class="pv-title">${esc(w.pv.title)}</div><div class="pv-text">${esc(w.pv.message)}</div>`;
+    else inner = `<div class="pv-title">${esc(w.pv.title)}</div><div class="pv-text">${esc(w.pv.message)}</div>${w.draft.push_back && w.draft.backKind !== "none" ? `<div class="pv-actions"><span>${esc(t("rtPvBackAction"))}</span></div>` : ""}`;
     const test = w.test?.busy
       ? `<div class="mg-testrow"><span class="opt-short">${esc(t("rtTestBusy"))}</span></div>`
       : `<div class="mg-testrow"><button type="button" class="linkbtn" data-rt="test">${esc(t("rtTestSend"))}</button>${w.test?.text ? `<span class="${w.test.failed ? "opt-error" : "opt-short"}" role="status">${esc(w.test.text)}</span>` : ""}</div>`;
@@ -2606,6 +2614,10 @@ export class RoutineUi {
         d.delay_s = this.parseOwn(d.delayOwn.text, d.delayOwn.unit) || d.delay_s;
         this.paint();
         this.requestPreview();
+        break;
+      case "push-back":
+        d.push_back = el.checked;
+        this.paint();
         break;
       case "push":
         d.push = el.checked;

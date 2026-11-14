@@ -146,6 +146,10 @@ for (const lang of ["de", "en"]) {
     check(`[${tag}] Schritt 3: Meldung aus, kein Empfänger`, await wait(`return r.querySelector("dialog.routine-dlg .mg-big")?.textContent === ${JSON.stringify(T.q3)} && !r.querySelector('dialog.routine-dlg [data-rt="push"]').checked && !r.querySelector('dialog.routine-dlg [data-rt="target-toggle"]')`));
     await tap(`${win} [data-rt="push"]`);
     check(`[${tag}] Push an: Empfänger "${T.def}", Vorschau mit festem Text`, await wait(`return r.querySelector('dialog.routine-dlg [data-rt="target-toggle"] span')?.textContent.startsWith(${JSON.stringify(T.def)}) && r.querySelector("dialog.routine-dlg .pv-title")?.textContent === ${JSON.stringify("⚡ Routine: " + T.plug)} && /Steckdose|Plug/.test(r.querySelector("dialog.routine-dlg .pv-text")?.textContent || "")`), await text(`${win} .pv-card`));
+    // Push-Aktion "Sofort zurückschalten" (2.221.0): Schalter, solange die Routine ein Zurückschalten hat; aus, Vorschau ohne Schaltfläche
+    check(`[${tag}] Push-Aktion "Sofort zurückschalten": Schalter da und aus, Vorschau ohne Schaltfläche`, await wait(`const c=r.querySelector('dialog.routine-dlg [data-rt="push-back"]'); return !!c && !c.checked && !r.querySelector('dialog.routine-dlg .pv-actions')`));
+    await tap(`${win} [data-rt="push-back"]`);
+    check(`[${tag}] Schalter an: die Vorschau zeigt die Schaltfläche "${lang === "de" ? "Sofort zurückschalten" : "Switch back now"}"`, await wait(`return r.querySelector('dialog.routine-dlg .pv-actions')?.textContent.trim() === ${JSON.stringify(lang === "de" ? "Sofort zurückschalten" : "Switch back now")}`));
     await tap(`${win} [data-rt="target-toggle"]`);
     check(`[${tag}] Liste: Standard, Gruppen, Dienste, Entitäten`, await wait(`return r.querySelectorAll('dialog.routine-dlg [data-rt="target"]').length === 5 && !!r.querySelector("dialog.routine-dlg .mg-opt-head")`));
     await tap(`${win} [data-rt="target"][data-v="notify.familie"]`);
@@ -163,6 +167,7 @@ for (const lang of ["de", "en"]) {
     await tap(`${win} [data-rt="nav-save"]`);
     check(`[${tag}] gespeichert: Fenster zu, Karte in der Liste`, await wait(`return !r.querySelector("dialog.routine-dlg").open && r.querySelectorAll(".rt-root .rt-clock").length === 1`));
     const saved = (await calls("device_panel/routine_save")).at(-1)?.routine;
+    check(`[${tag}] routine_save trägt push_back`, saved?.push_back === true);
     check(`[${tag}] routine_save: Entität, Aktion, 20 Min. zurück, wöchentlich Mo, Mi, Fr 06:30, Push an Familie`, saved && saved.entity_id === "switch.plug" && saved.action === "on" && saved.back_s === 1200 && saved.kind === "repeat" && saved.repeat === "weekly" && JSON.stringify(saved.weekdays) === "[0,2,4]" && saved.time === "06:30" && saved.push === true && saved.target === "notify.familie" && saved.name === "Bewässerung", JSON.stringify(saved));
     check(`[${tag}] Meldung "${T.saved}"`, (await cardsText()).includes(T.saved));
     check(`[${tag}] Karte: Uhrzeit, Name, Wochentage, nächster Lauf, Glocke`, await ev(`const c = r.querySelector(".rt-root .rt-clock"); return c.querySelector(".time").textContent.startsWith("06:30") && c.querySelector(".name").textContent.includes("Bewässerung") && c.querySelectorAll(".rt-days i.on").length === 3 && !!c.querySelector(".next b") && c.textContent.includes("🔔")`));

@@ -742,7 +742,7 @@ export class MagicPush {
       recover_body: d.recover_body,
       repeat_s: d.kind === "change" ? 0 : d.repeat_s,
       send_at: d.sendAt ? d.send_at : "",
-      push_actions: d.pushOn ? d.actions.map((a) => ({ title: a.title, kind: a.kind, routine_id: a.kind === "routine" ? a.routine_id : "", after: a.after, at: a.at, open: a.open, undo: a.undo })) : [],
+      push_actions: d.pushOn ? d.actions.map((a) => ({ title: a.title, kind: a.kind, routine_id: a.kind === "routine" ? a.routine_id : "", after: a.after, at: a.at, open: a.open })) : [],
       target: d.target || null,
       enabled: d.enabled,
       critical: d.critical,
@@ -1120,7 +1120,7 @@ export class MagicPush {
       recover_body: rule.recover_body || "",
       touched: { message: true, body: true, recover_message: true, recover_body: true },
       pushOn: (rule.push_actions || []).length > 0,
-      actions: (rule.push_actions || []).map((a) => ({ uid: leafId(), title: a.title, kind: a.kind, routine_id: a.routine_id || "", after: a.after || "1h", at: a.at || "08:00", open: a.open || "panel", undo: a.undo || "opposite", q: "" })),
+      actions: (rule.push_actions || []).map((a) => ({ uid: leafId(), title: a.title, kind: a.kind, routine_id: a.routine_id || "", after: a.after || "1h", at: a.at || "08:00", open: a.open || "panel", q: "" })),
       repeat_s: rule.repeat_s || 0,
       send_at: rule.send_at || "",
       sendAt: Boolean(rule.send_at),
@@ -1508,7 +1508,7 @@ export class MagicPush {
 
   // Push-Aktionen: jede braucht einen Titel, eine Routine-Aktion auch die Wahl der Routine
   actionsValid(d) {
-    return !d.pushOn || d.actions.every((a) => a.title.trim() !== "" && ((a.kind !== "routine" && a.kind !== "undo") || a.routine_id) && !this.undoProblem(a) && (a.kind !== "remind" || a.after !== "morning" || /^([01]\d|2[0-3]):[0-5]\d$/.test(a.at)));
+    return !d.pushOn || d.actions.every((a) => a.title.trim() !== "" && (a.kind !== "routine" || a.routine_id) && (a.kind !== "remind" || a.after !== "morning" || /^([01]\d|2[0-3]):[0-5]\d$/.test(a.at)));
   }
 
   syncNav() {
@@ -2222,23 +2222,13 @@ export class MagicPush {
     try {
       const r = await this.call({ type: "device_panel/routine_list" });
       if (this.wiz !== w) return;
-      w.routines = (r.routines || []).map((x) => ({ id: x.id, name: x.name, device_id: x.device_id, back_kind: x.back_kind || "none", acts: [x.action, ...(x.more || []).map((m) => m.action)] }));
+      w.routines = (r.routines || []).map((x) => ({ id: x.id, name: x.name, device_id: x.device_id }));
     } catch (err) {
       if (this.wiz !== w) return;
       w.routines = [];
       w.routinesError = this.h.errText(err);
     }
     this.paintZones(["pa"]);
-  }
-
-  // Rückgängig geht nur, wenn die Routine es hergibt (der Server prüft dasselbe): "Gegenteil" nur bei Ein/Aus, "Zurückschalten" nur mit eingestelltem Zurückschalten
-  undoProblem(a) {
-    if (a.kind !== "undo" || !a.routine_id) return "";
-    const r = this.wiz?.routines?.find((x) => x.id === a.routine_id);
-    if (!r) return "";
-    if (a.undo === "back" && r.back_kind === "none") return "mgPaUndoNoBack";
-    if (a.undo === "opposite" && r.acts.some((x) => x !== "on" && x !== "off")) return "mgPaUndoNoOpposite";
-    return "";
   }
 
   routineName(id) {
@@ -2267,20 +2257,13 @@ export class MagicPush {
   actionDetailHtml(a) {
     const esc = (v) => this.esc(v);
     const t = (k, ...n) => this.t(k, ...n);
-    if (a.kind === "routine" || a.kind === "undo") {
-      let picker;
+    if (a.kind === "routine") {
       if (a.routine_id) {
         const name = this.routineName(a.routine_id) || (this.wiz.routines ? t("mgPaGone") : "…");
-        picker = `<div class="mg-pa-sel"><span>${this.h.mdi("check", 16)}${esc(name)}</span><button type="button" class="dlg-btn text" data-mg="aroutine-change" data-uid="${esc(a.uid)}">${esc(t("mgPaChange"))}</button></div>`;
-      } else {
-        picker = `<label class="list-search" data-for="pa-${esc(a.uid)}">${this.h.mdi("search", 18)}<input type="search" data-mg="aq" data-uid="${esc(a.uid)}" value="${esc(a.q)}" placeholder="${esc(t("mgPaSearch"))}" aria-label="${esc(t("mgPaSearch"))}" enterkeyhint="search" autocomplete="off" autocapitalize="off" spellcheck="false">${this.host._fieldClearHtml("data-fc", "", a.q)}</label>
-        <div data-mg-zone="parl-${esc(a.uid)}">${this.routineListHtml(a)}</div>`;
+        return `<div class="mg-pa-sel"><span>${this.h.mdi("check", 16)}${esc(name)}</span><button type="button" class="dlg-btn text" data-mg="aroutine-change" data-uid="${esc(a.uid)}">${esc(t("mgPaChange"))}</button></div>`;
       }
-      if (a.kind === "routine") return picker;
-      // Rückgängig (seit 2.220.0): die Routine wählen, dann "Gegenteil" (sofort ins Gegenteil schalten) oder "Zurückschalten" (das Zurückschalten der Routine jetzt ausführen)
-      const items = [["opposite", "mgPaUndoOpposite"], ["back", "mgPaUndoBack"]].map(([v, k]) => ({ on: a.undo === v, label: t(k), attrs: `data-mg="aundo" data-group="${esc(a.uid)}" data-uid="${esc(a.uid)}" data-v="${v}"` }));
-      const problem = this.undoProblem(a);
-      return `${picker}${this.tabsHtml(items)}<p class="mg-hint">${esc(t(a.undo === "back" ? "mgPaUndoBackHint" : "mgPaUndoOppositeHint"))}</p>${problem ? `<div class="mg-pa-warn" role="alert">${esc(t(problem))}</div>` : ""}`;
+      return `<label class="list-search" data-for="pa-${esc(a.uid)}">${this.h.mdi("search", 18)}<input type="search" data-mg="aq" data-uid="${esc(a.uid)}" value="${esc(a.q)}" placeholder="${esc(t("mgPaSearch"))}" aria-label="${esc(t("mgPaSearch"))}" enterkeyhint="search" autocomplete="off" autocapitalize="off" spellcheck="false">${this.host._fieldClearHtml("data-fc", "", a.q)}</label>
+        <div data-mg-zone="parl-${esc(a.uid)}">${this.routineListHtml(a)}</div>`;
     }
     if (a.kind === "remind") {
       const items = [["15m", "mgPaAfter15"], ["1h", "mgPaAfter1h"], ["morning", "mgPaAfterMorning"]].map(([v, k]) => ({ on: a.after === v, label: t(k), attrs: `data-mg="aafter" data-group="${esc(a.uid)}" data-uid="${esc(a.uid)}" data-v="${v}"` }));
@@ -2306,12 +2289,12 @@ export class MagicPush {
     html += `<p class="mg-hint">${esc(t("mgPaIntro"))}</p>`;
     html += d.actions
       .map((a, i) => {
-        const kinds = [["routine", "mgPaKindRoutine"], ["undo", "mgPaKindUndo"], ["remind", "mgPaKindRemind"], ["open", "mgPaKindOpen"], ["done", "mgPaKindDone"]].map(([v, k]) => ({ on: a.kind === v, label: t(k), attrs: `data-mg="akind" data-group="${esc(a.uid)}" data-uid="${esc(a.uid)}" data-v="${v}"` }));
+        const kinds = [["routine", "mgPaKindRoutine"], ["remind", "mgPaKindRemind"], ["open", "mgPaKindOpen"], ["done", "mgPaKindDone"]].map(([v, k]) => ({ on: a.kind === v, label: t(k), attrs: `data-mg="akind" data-group="${esc(a.uid)}" data-uid="${esc(a.uid)}" data-v="${v}"` }));
         return `<div class="mg-pa-card" data-uid="${esc(a.uid)}"><div class="mg-pa-head"><span class="mg-pa-n">${i + 1}</span><b>${esc(t("mgPaOne"))}</b><button type="button" class="mg-pa-del" data-mg="adel" data-uid="${esc(a.uid)}" title="${esc(t("mgPaRemove"))}" aria-label="${esc(t("mgPaRemove"))}">${this.h.mdi("trash", 18)}</button></div>
           <label class="mg-k" for="mg-pa-t-${esc(a.uid)}">${esc(t("mgPaTitle"))}</label>
           <input id="mg-pa-t-${esc(a.uid)}" class="mg-input" type="text" maxlength="${this.limit("action_title", 40)}" data-mg-atitle="${esc(a.uid)}" value="${esc(a.title)}" placeholder="${esc(t("mgPaTitlePh"))}" autocomplete="off">
           <div class="mg-k">${esc(t("mgPaVars"))}</div>${this.chipsHtml("main", a.uid)}
-          ${this.tabsHtml(kinds, "mg-pa-kinds")}
+          ${this.tabsHtml(kinds)}
           ${this.actionDetailHtml(a)}</div>`;
       })
       .join("");
@@ -2322,7 +2305,7 @@ export class MagicPush {
   }
 
   newAction() {
-    return { uid: leafId(), title: "", kind: "routine", routine_id: "", after: "1h", at: "08:00", open: "panel", undo: "opposite", q: "" };
+    return { uid: leafId(), title: "", kind: "routine", routine_id: "", after: "1h", at: "08:00", open: "panel", q: "" };
   }
 
   actionOf(uid) {
@@ -2751,15 +2734,13 @@ export class MagicPush {
       case "akind":
       case "aafter":
       case "aopen":
-      case "aundo":
         {
           const a = this.actionOf(el.dataset.uid);
           if (!a) break;
           if (action === "akind") a.kind = el.dataset.v;
           else if (action === "aafter") a.after = el.dataset.v;
-          else if (action === "aundo") a.undo = el.dataset.v;
           else a.open = el.dataset.v;
-          if (a.kind === "routine" || a.kind === "undo") this.loadRoutines();
+          if (a.kind === "routine") this.loadRoutines();
           this.paint();
           this.syncNav();
         }
@@ -2770,7 +2751,7 @@ export class MagicPush {
           if (!a) break;
           a.routine_id = el.dataset.id;
           // Ist der Titel noch leer, schlägt die Wahl den Namen der Routine vor
-          if (!a.title.trim()) a.title = (a.kind === "undo" ? this.t("mgPaUndoTitle", this.routineName(a.routine_id)) : this.routineName(a.routine_id)).slice(0, this.limit("action_title", 40));
+          if (!a.title.trim()) a.title = this.routineName(a.routine_id).slice(0, this.limit("action_title", 40));
           this.paint();
           this.syncNav();
           this.requestPreview();

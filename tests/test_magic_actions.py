@@ -11,6 +11,7 @@ import voluptuous as vol
 from homeassistant.core import HomeAssistant
 from pytest_homeassistant_custom_component.common import async_fire_time_changed, async_mock_service
 
+from custom_components.device_panel import magic as magic_module
 from custom_components.device_panel.const import DATA_MAGIC, DATA_ROUTINES, DOMAIN, MAGIC_ACTION_PREFIX
 
 from .test_magic import _rule, _sensor, _tick
@@ -45,7 +46,7 @@ async def test_validation(hass: HomeAssistant, setup) -> None:  # noqa: F811
     temp = _sensor(hass, device, "temp", "14", "temperature", "°C")
     magic = hass.data[DATA_MAGIC]
     ok = await magic.async_save_rule(_rule(device, temp, push_actions=[{"title": "Später", "kind": "remind"}]))
-    assert ok["push_actions"] == [{"title": "Später", "kind": "remind", "routine_id": "", "after": "1h", "open": "panel", "at": "08:00", "undo": "opposite"}]
+    assert ok["push_actions"] == [{"title": "Später", "kind": "remind", "routine_id": "", "after": "1h", "open": "panel", "at": "08:00"}]
     # Uhrzeit nur bei "morgen"; ungültige Uhrzeit wird abgelehnt
     morning = await magic.async_save_rule(_rule(device, temp, push_actions=[{"title": "M", "kind": "remind", "after": "morning", "at": "06:45"}, {"title": "S", "kind": "remind", "after": "1h", "at": "06:45"}]))
     assert [a["at"] for a in morning["push_actions"]] == ["06:45", "08:00"]
@@ -198,92 +199,13 @@ async def test_remind_tomorrow_at_the_chosen_time(hass: HomeAssistant, setup, fr
     assert 3500 < magic._remind_at("1h") - time.time() < 3700 and 800 < magic._remind_at("15m") - time.time() < 1000
 
 
-# --- Rückgängig (2.220.0) ---------------------------------------------------------------
 
-
-async def _undo_rule(hass: HomeAssistant, freezer, mode: str, **routine_extra: Any):
-    calls = async_mock_service(hass, "notify", "handy")
-    await _options(hass, notify_service="notify.handy")
+async def test_removed_undo_actions_are_dropped_not_the_rule(hass: HomeAssistant, setup) -> None:  # noqa: F811
     device = _device(hass, "Lüftung")
     temp = _sensor(hass, device, "temp", "14", "temperature", "°C")
-    plug = _switch(hass, device)
-    manager = hass.data[DATA_ROUTINES]
-    routine = await manager.async_save_routine(_raw(device, plug, name="Licht", kind="countdown", delay_s=86400, **routine_extra))
-    actions = [{"title": "Rückgängig", "kind": "undo", "routine_id": routine["id"], "undo": mode}]
-    rule = await hass.data[DATA_MAGIC].async_save_rule(_rule(device, temp, push_actions=actions))
-    hass.states.async_set(temp, "11", {"device_class": "temperature", "unit_of_measurement": "°C"})
-    await _tick(hass, freezer, 601)
-    return calls, rule, routine, manager, plug
-
-
-async def test_undo_validation(hass: HomeAssistant, setup) -> None:  # noqa: F811
-    device = _device(hass, "Lüftung")
-    temp = _sensor(hass, device, "temp", "14", "temperature", "°C")
-    plug = _switch(hass, device)
-    manager = hass.data[DATA_ROUTINES]
-    plain = await manager.async_save_routine(_raw(device, plug, name="Ohne", kind="countdown", delay_s=600))
-    with_back = await manager.async_save_routine(_raw(device, plug, name="Mit", kind="countdown", delay_s=600, back_s=300))
-    toggle = await manager.async_save_routine(_raw(device, plug, name="Toggle", kind="countdown", delay_s=600, action="toggle"))
     magic = hass.data[DATA_MAGIC]
-
-    def one(routine, mode):
-        return [{"title": "Zurück", "kind": "undo", "routine_id": routine["id"], "undo": mode}]
-
-    await magic.async_save_rule(_rule(device, temp, push_actions=one(plain, "opposite")))
-    await magic.async_save_rule(_rule(device, temp, push_actions=one(with_back, "back")))
-    with pytest.raises(vol.Invalid, match="kein Zurückschalten"):
-        await magic.async_save_rule(_rule(device, temp, push_actions=one(plain, "back")))
-    with pytest.raises(vol.Invalid, match="kein Gegenteil"):
-        await magic.async_save_rule(_rule(device, temp, push_actions=one(toggle, "opposite")))
-    with pytest.raises(vol.Invalid):
-        await magic.async_save_rule(_rule(device, temp, push_actions=[{"title": "x", "kind": "undo", "undo": "opposite"}]))  # Routine fehlt
-    with pytest.raises(vol.Invalid):
-        await magic.async_save_rule(_rule(device, temp, push_actions=[{"title": "x", "kind": "undo", "routine_id": plain["id"], "undo": "nie"}]))
-
-
-async def test_undo_opposite_switches_back_and_cancels_the_planned_revert(hass: HomeAssistant, setup, freezer) -> None:  # noqa: F811
-    calls, rule, routine, manager, plug = await _undo_rule(hass, freezer, "opposite", back_s=1800)
-    off = async_mock_service(hass, "switch", "turn_off")
-    on = async_mock_service(hass, "switch", "turn_on")
-    # Die Routine einmal laufen lassen: das Zurückschalten wartet
-    await manager.async_run_now(routine["id"])
-    assert len(on) == 1 and manager._pending(manager.runtime(routine["id"]))
-    _tap(hass, rule, 0)
-    await hass.async_block_till_done()
-    assert len(off) == 1, "Gegenteil wurde nicht geschaltet"
-    assert not manager._pending(manager.runtime(routine["id"])) and manager.runtime(routine["id"])["revert_due"] is None
-    assert calls[-1].data["title"].startswith("↩️") and "Licht" in calls[-1].data["message"]
-    await _tick(hass, freezer, 3600)
-    assert len(off) == 1, "das geplante Zurückschalten schaltete ein zweites Mal"
-
-
-async def test_undo_back_runs_the_routines_switch_back_now(hass: HomeAssistant, setup, freezer) -> None:  # noqa: F811
-    calls, rule, routine, manager, plug = await _undo_rule(hass, freezer, "back", back_s=1800)
-    off = async_mock_service(hass, "switch", "turn_off")
-    async_mock_service(hass, "switch", "turn_on")
-    await manager.async_run_now(routine["id"])
-    _tap(hass, rule, 0)
-    await hass.async_block_till_done()
-    assert len(off) == 1
-    assert not manager._pending(manager.runtime(routine["id"])) and calls[-1].data["title"].startswith("↩️")
-
-
-async def test_undo_back_without_anything_pending_says_so(hass: HomeAssistant, setup, freezer) -> None:  # noqa: F811
-    calls, rule, routine, manager, plug = await _undo_rule(hass, freezer, "back", back_s=1800)
-    off = async_mock_service(hass, "switch", "turn_off")
-    _tap(hass, rule, 0)
-    await hass.async_block_till_done()
-    assert off == []
-    assert calls[-1].data["title"].startswith("⚠️") and "nichts zurückzuschalten" in calls[-1].data["message"]
-
-
-async def test_undo_opposite_refuses_without_an_opposite(hass: HomeAssistant, setup, freezer) -> None:  # noqa: F811
-    calls, rule, routine, manager, plug = await _undo_rule(hass, freezer, "opposite")
-    # Die Routine wird nach dem Anlegen der Regel auf "Umschalten" geändert: es gibt kein Gegenteil, nichts wird geschaltet
-    await manager.async_save_routine({**manager.get(routine["id"]), "action": "toggle"})
-    off = async_mock_service(hass, "switch", "turn_off")
-    on = async_mock_service(hass, "switch", "turn_on")
-    _tap(hass, rule, 0)
-    await hass.async_block_till_done()
-    assert off == [] and on == []
-    assert calls[-1].data["title"].startswith("⚠️") and "kein Gegenteil" in calls[-1].data["message"]
+    legacy = [{"title": "Zurück", "kind": "undo", "routine_id": "0123456789ab", "undo": "opposite"}, {"title": "Später", "kind": "remind"}]
+    saved = await magic.async_save_rule(_rule(device, temp, push_actions=legacy))
+    assert [a["kind"] for a in saved["push_actions"]] == ["remind"]
+    stored = magic_module.clean_stored({**saved, "push_actions": legacy})
+    assert [a["kind"] for a in stored["push_actions"]] == ["remind"]

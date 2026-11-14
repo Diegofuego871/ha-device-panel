@@ -13,7 +13,7 @@ PANEL_HTML_FILE = "panel.html"
 STATIC_URL_PATH = f"/{DOMAIN}"
 PANEL_STATIC_URL_PATH = f"{STATIC_URL_PATH}/panel"
 # Cache-Buster: bei jeder Änderung unter panel/ von Hand erhöhen.
-PANEL_VERSION = "502"
+PANEL_VERSION = "503"
 PANEL_PAGE_URL = f"{PANEL_STATIC_URL_PATH}/{PANEL_HTML_FILE}?v={PANEL_VERSION}"
 # Dashboard-Karten (seit 2.216.0): ES-Modul im Ordner des Panels; ?v= ist der Cache-Buster
 CARD_URL = f"{PANEL_STATIC_URL_PATH}/card.js?v={PANEL_VERSION}"
@@ -410,6 +410,8 @@ MUTE_HOURS = 24
 PAUSE_ACTION_PREFIX = "DEVICE_PANEL_PAUSE_"
 # Push-Aktionen einer Magic-Push-Meldung (seit 2.218.0): Kennung "DEVICE_PANEL_MP_<Regel>_<Nr>", die Regel sagt, was dahinter liegt
 MAGIC_ACTION_PREFIX = "DEVICE_PANEL_MP_"
+# Push-Aktion "Sofort zurückschalten" in der Meldung einer Routine (seit 2.221.0): Kennung mit der Routine, die Regel dazu steht in der Routine
+ROUTINE_BACK_ACTION_PREFIX = "DEVICE_PANEL_RT_BACK_"
 # Pause der Überwachung eines Geräts (seit 2.214.0): bis ein Datum oder bis das Gerät wieder online ist
 PAUSE_DATE = "date"
 PAUSE_ONLINE = "online"

@@ -7,6 +7,18 @@ All notable changes to this integration are documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/).
 
+## [2.221.0] - 2026-11-14
+
+The push action "Undo" of Magic Push is gone; a routine notification can carry "Switch back now" instead.
+
+### Added
+
+- **Push action "Switch back now" in the notification of a routine:** In the step "Notification" of a routine (with "Notify by push" on and a switch back set) a switch "Push action Switch back now" adds a button to the notification. A tap runs the switch back of the routine right away, as set there (the opposite or "as before"), as long as it is still waiting. The routine reports the switch back as usual; if there is nothing to switch back (it already happened), a short notification says so. The preview shows the button. What a tap does comes from the saved routine, never from the notification.
+
+### Removed
+
+- **Push action "Undo" in Magic Push** (2.220.0): it made little sense there and made the setup more complicated. A message that used it keeps working, only without that action.
+
 ## [2.220.0] - 2026-11-14
 
 A new push action "Undo" for Magic Push messages: switch the opposite, or switch a routine back now.
@@ -6034,6 +6046,7 @@ First pre-release.
   GitHub Actions for HACS/hassfest validation and tests.
 
 [2.6.0]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v2.6.0
+[2.221.0]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v2.221.0
 [2.220.0]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v2.220.0
 [2.219.0]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v2.219.0
 [2.218.0]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v2.218.0
