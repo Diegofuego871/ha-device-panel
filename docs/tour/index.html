@@ -1,0 +1,168 @@
+<!doctype html>
+<html lang="de">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Device Panel kennenlernen</title>
+<meta name="description" content="Interaktive Tour durch Device Panel für Home Assistant: Ausfälle, Batterie, System, Backup, Ansicht, Magic Push, Routinen, Dashboard-Karten und Launcher.">
+<link rel="icon" href="../brand/icon.svg" type="image/svg+xml">
+<style>
+  /* Farben wie Home Assistant sie dem Panel per Variablen gibt (dunkel, mit [light] hell); das Panel selbst liest nur diese Variablen */
+  html, body { margin: 0; height: 100%; }
+  body { background: var(--primary-background-color); }
+  #tour {
+    --primary-background-color: #111111;
+    --card-background-color: #1c1c1c;
+    --primary-text-color: #e1e1e1;
+    --secondary-text-color: #9b9b9b;
+    --disabled-text-color: #6f6f6f;
+    --divider-color: rgba(225, 225, 225, 0.12);
+    --error-color: #ef5350;
+    --primary-color: #03a9f4;
+    --warning-color: #ff9800;
+    color-scheme: dark;
+  }
+  #tour[light] {
+    --primary-background-color: #fafafa;
+    --card-background-color: #ffffff;
+    --primary-text-color: #212121;
+    --secondary-text-color: #727272;
+    --disabled-text-color: #bdbdbd;
+    --divider-color: rgba(0, 0, 0, 0.12);
+    --error-color: #db4437;
+    color-scheme: light;
+  }
+  body:has(#tour[light]) { background: #fafafa; }
+  body:not(:has(#tour[light])) { background: #111111; }
+  noscript { display: block; padding: 24px; font: 16px sans-serif; }
+</style>
+</head>
+<body>
+<div id="tour"><noscript>Diese Seite braucht JavaScript. Die Beschreibung steht auch in der README: https://github.com/Diegofuego871/ha-device-panel</noscript></div>
+<script type="module">
+// Interaktive Tour (seit 2.227.0): dieselbe Lernseite wie im Panel (learn.js), mit denselben Texten (strings.js), Stilen (styles.js)
+// und Symbolen (icons.js), direkt aus dem Repository geladen, ohne Build. Die Seite ist Teil der Dokumentation und zeigt nur erfundene
+// Beispieldaten; sie spricht mit keinem Home Assistant und speichert nichts.
+const BASE = "../../custom_components/device_panel/panel/";
+const root = document.getElementById("tour");
+
+// Eigene Texte der Seite (die Lernseite selbst bringt ihre Texte aus strings.js mit)
+const PAGE = {
+  de: { title: "Device Panel kennenlernen", lang: "Sprache", theme: "Darstellung", light: "Hell", dark: "Dunkel", repo: "Auf GitHub", loadFail: "Die Tour konnte nicht geladen werden. Die Beschreibung steht in der README:" },
+  en: { title: "Get to know Device Panel", lang: "Language", theme: "Appearance", light: "Light", dark: "Dark", repo: "On GitHub", loadFail: "The tour could not be loaded. The description is in the README:" },
+};
+const REPO = "https://github.com/Diegofuego871/ha-device-panel";
+
+try {
+  const [{ STRINGS }, { PANEL_CSS }, { escape, mdi }, { initSeg }, { LearnUi, TOPICS }] = await Promise.all([
+    import(`${BASE}strings.js`),
+    import(`${BASE}styles.js`),
+    import(`${BASE}icons.js`),
+    import(`${BASE}seg.js`),
+    import(`${BASE}learn.js`),
+  ]);
+
+  const params = new URLSearchParams(location.search);
+  const dark = window.matchMedia?.("(prefers-color-scheme: dark)").matches ?? true;
+  let lang = ["de", "en"].includes(params.get("lang")) ? params.get("lang") : /^de/i.test(navigator.language || "") ? "de" : "en";
+  let light = params.get("theme") ? params.get("theme") === "light" : !dark;
+
+  const shadow = root.attachShadow({ mode: "open" });
+  shadow.innerHTML = `<style>${PANEL_CSS}
+    .tour-bar { flex: none; display: flex; align-items: center; flex-wrap: wrap; gap: 4px 12px; width: 100%; max-width: 980px; margin: 0 auto; padding: 14px 20px 0; }
+    .tour-bar h1 { margin: 0 auto 0 0; font-size: 20px; font-weight: 500; }
+    .tour-bar .sub-tabs { margin: 8px 0 0; }
+    .tour-bar .sub-tab { padding: 0 14px; }
+    .tour-bar a { color: var(--dp-primary); text-decoration: none; font-size: 13.5px; margin-top: 8px; }
+    .tour-bar a:hover { text-decoration: underline; }
+    .tour-stage { flex: 1 1 auto; min-height: 0; width: 100%; max-width: 980px; margin: 0 auto; padding: 12px 20px 20px; }
+    @media (max-width: 600px) {
+      .tour-bar { padding: 10px 12px 0; gap: 0 8px; }
+      .tour-bar h1 { flex: 1 0 100%; font-size: 17px; }
+      .tour-bar .sub-tab { padding: 0 9px; min-height: 34px; font-size: 13px; }
+      .tour-bar a { margin: 8px 0 0 auto; font-size: 13px; }
+      .tour-stage { padding: 8px 0 0; }
+    }
+  </style>
+  <div class="tour-bar"></div>
+  <div class="tour-stage"><dialog class="learn-dlg lrn-embed" open></dialog></div>`;
+  // Reiterleisten mit gleitender Kapsel, wie im Panel (Regel "Auswahlknöpfe")
+  initSeg.call({}, shadow);
+
+  // Gastgeber der Lernseite: sie braucht nur die Texte und die Wurzel
+  const host = {
+    shadowRoot: shadow,
+    _t(key, ...args) {
+      const value = STRINGS[lang][key];
+      return typeof value === "function" ? value(...args) : value;
+    },
+  };
+  const learn = new LearnUi(host, { escape, mdi, embed: true });
+  const dlg = shadow.querySelector("dialog.learn-dlg");
+  learn.bind(dlg);
+
+  const bar = shadow.querySelector(".tour-bar");
+  const tab = (set, value, label, on) => `<button type="button" class="sub-tab${on ? " on" : ""}" data-set="${set}" data-v="${value}" role="tab" aria-selected="${on}">${escape(label)}</button>`;
+  const drawBar = () => {
+    const p = PAGE[lang];
+    bar.innerHTML = `<h1>${escape(p.title)}</h1>
+      <div class="sub-tabs" role="tablist" aria-label="${escape(p.lang)}">${tab("tour-lang", "de", "Deutsch", lang === "de")}${tab("tour-lang", "en", "English", lang === "en")}</div>
+      <div class="sub-tabs" role="tablist" aria-label="${escape(p.theme)}">${tab("tour-theme", "light", p.light, light)}${tab("tour-theme", "dark", p.dark, !light)}</div>
+      <a href="${REPO}" target="_blank" rel="noopener">${escape(p.repo)}</a>`;
+  };
+  const applyPage = () => {
+    root.toggleAttribute("light", light);
+    document.documentElement.lang = lang;
+    document.title = PAGE[lang].title;
+  };
+
+  // Thema in der Adresse (#bat): ein Link springt direkt zu einem Thema, Vor und Zurück im Browser gehen mit
+  const fromHash = () => {
+    const i = TOPICS.findIndex((x) => x.id === location.hash.slice(1));
+    if (i >= 0) learn.go("article", i);
+    else learn.go("overview");
+  };
+  const toHash = () => {
+    const s = learn.s;
+    const want = s && s.view === "article" ? `#${TOPICS[s.i].id}` : "";
+    if (want !== location.hash) history.pushState(null, "", `${location.pathname}${location.search}${want}`);
+  };
+
+  drawBar();
+  applyPage();
+  learn.open("settings");
+  fromHash();
+  // Nach jedem Tipp in der Lernseite die Adresse nachführen (nach dem Tipp, wenn der neue Zustand steht)
+  dlg.addEventListener("click", () => queueMicrotask(toHash));
+  window.addEventListener("popstate", fromHash);
+
+  bar.addEventListener("click", (ev) => {
+    const b = ev.target.closest("[data-set]");
+    if (!b) return;
+    if (b.dataset.set === "tour-lang") lang = b.dataset.v;
+    else light = b.dataset.v === "light";
+    applyPage();
+    // Nur die Knöpfe umschalten (die Kapsel gleitet), Texte der Leiste neu setzen
+    bar.querySelectorAll("[data-set]").forEach((x) => {
+      const on = (x.dataset.set === "tour-lang" ? lang : light ? "light" : "dark") === x.dataset.v;
+      x.classList.toggle("on", on);
+      x.setAttribute("aria-selected", String(on));
+    });
+    const p = PAGE[lang];
+    bar.querySelector("h1").textContent = p.title;
+    bar.querySelector("a").textContent = p.repo;
+    const [lb, tb] = bar.querySelectorAll(".sub-tabs");
+    lb.setAttribute("aria-label", p.lang);
+    tb.setAttribute("aria-label", p.theme);
+    tb.querySelectorAll(".sub-tab")[0].textContent = p.light;
+    tb.querySelectorAll(".sub-tab")[1].textContent = p.dark;
+    learn.render(false);
+  });
+} catch (err) {
+  const p = PAGE[/^de/i.test(navigator.language || "") ? "de" : "en"];
+  root.innerHTML = `<p style="padding:24px;font:16px sans-serif;color:#888">${p.loadFail} <a href="${REPO}">${REPO}</a></p>`;
+  console.error(err);
+}
+</script>
+</body>
+</html>

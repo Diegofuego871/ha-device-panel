@@ -11,6 +11,14 @@ Einstieg für jede neue Claude-Code-Session. Zuerst diese Datei lesen, dann
 
 - `charge.py` `known_rechargeable`: Lademeldung gilt (global + Gerät/Integration), oder am Gerät ausdrücklich "Ein", oder Live-Aktivität für das Gerät an; `rechargeable()` und `charging_of()` nutzen sie (vorher nur `enabled()` mit globalem Schalter). Test `test_rechargeable_by_device_charge_or_live`.
 
+## Stand (2.227.0, interaktive Tour für GitHub Pages)
+
+- `docs/tour/index.html` zeigt die Lernseite als eigene Seite: lädt `strings.js`, `styles.js`, `icons.js`, `seg.js` und `learn.js` direkt aus `custom_components/device_panel/panel/` (relative Pfade, kein Build; GitHub Pages liefert das ganze Repository, Quelle: Branch `main`, Ordner `/`). Die Seite baut einen Shadow-Root mit `PANEL_CSS`, einer eigenen Leiste (Sprache, Hell/Dunkel, Link zu GitHub; Reiterleisten mit Kapsel über `initSeg`) und dem `<dialog class="learn-dlg lrn-embed" open>`. Hell/Dunkel über das Attribut `light` am Gastgeber und die HA-Variablen im Seiten-CSS. Sprache und Farbschema aus dem Browser, `?lang=de|en` und `?theme=light|dark` überschreiben. Adresse `#<Thema-ID>` (out, bat, sys, bkp, view, push, rt, cards, lau).
+- Ausgelagert (Verhalten gleich): `icons.js` (`escape`, `MDI`, `mdiPath`, `mdi`), `seg.js` (`initSeg`, vorher `_initSeg` in `device-panel.js`, Aufruf `initSeg.call(halter, wurzel)`). `LearnUi` bekommt `deps.embed`: Fenster nicht modal (Attribut `open`), kein Kreuz, kein "Fertig", keine Fusszeile in der Übersicht, "Zurück zur Übersicht" statt "Fertig" im letzten Thema; `TOPICS` wird exportiert. CSS `.lrn-embed` am Ende von `styles.js`.
+- `tests/panel/server.mjs` liefert das Repository wie Pages unter `/ha-device-panel/`; Suite `tour-e2e` (100 Prüfungen).
+- **Offen:** GitHub Pages muss der Nutzer einschalten (Settings › Pages, Branch main, Ordner /). Erst wenn die Seite unter `https://diegofuego871.github.io/ha-device-panel/docs/tour/` läuft, kommt der Link "Interaktive Tour" in beide READMEs (README.md, README.de.md, im selben Commit; der Text bleibt sonst unverändert).
+- 2.226.0 hatte keinen Tag und wird übersprungen (CHANGELOG: "Nicht veröffentlicht; enthalten in 2.227.0", keine Fussnote).
+
 ## Stand (2.226.0, Lernseite: Ansicht und Liste)
 
 - `learn.js` `TOPICS` hat neun Einträge, neu **view** (Symbol `tune`, Farbe #5C6BC0; nicht `viewSettings`: das ist ein SVG mit fester Mask-ID und würde in den Reitern kollidieren) nach bkp. Skizze `.lrn-vw` (Suche, Chips) und `.lrn-vwd` (Dialog mit Ziehgriff und Auge, eine Spalte ausgeblendet). Inhalt aus README ("Deine eigene Ansicht", "Suchen, filtern, sortieren") und den Panel-Texten geprüft (`viewBtn`, `viewLineTitle`, `viewTabSort`, `viewGroupsOrList`, `viewFields`, `viewMarks`, `discardTitle`). Ändern sich die Namen im Dialog "Ansicht", den Artikel in `lrnTopics` nachführen.

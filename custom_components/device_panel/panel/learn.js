@@ -11,7 +11,7 @@
 // Reihenfolge, Symbol und Farbe je Thema. Ausfälle und Batterie stehen vorn (Nutzerwunsch: sie sind das Wichtigste, was das Panel tut). Die Farben der
 // übrigen sind die der Launcher-Symbole (Magic Push violett, Routinen türkis, Dashboard-Karten blau wie die Ansicht), damit ein Thema überall
 // dieselbe Farbe trägt; Ausfälle rot und Batterie orange wie die Warnstufen des Panels.
-const TOPICS = [
+export const TOPICS = [
   { id: "out", icon: "alert", color: "#D32F2F" },
   { id: "bat", icon: "battery", color: "#EF6C00" },
   { id: "sys", icon: "desktop", color: "#2E8B57" },
@@ -45,12 +45,16 @@ export class LearnUi {
     this.s = { source, view: "overview", i: 0 };
     this.render(false);
     if (!dlg.open) {
-      if (typeof dlg.showModal === "function") dlg.showModal();
+      // Eingebettet (Tour-Seite): als Teil der Seite, nicht als Fenster über ihr
+      if (this.h.embed) dlg.setAttribute("open", "");
+      else if (typeof dlg.showModal === "function") dlg.showModal();
       else dlg.setAttribute("open", "");
     }
   }
 
   close() {
+    // Die Tour-Seite hat kein Fenster, das sich schliessen liesse
+    if (this.h.embed) return;
     const dlg = this.dlg;
     if (dlg?.open) {
       if (typeof dlg.close === "function") dlg.close();
@@ -220,7 +224,8 @@ export class LearnUi {
     const active = this.host.shadowRoot.activeElement;
     const focusKey = dlg.contains(active) && active?.dataset?.lrn ? `[data-lrn="${active.dataset.lrn}"]${active.dataset.i != null ? `[data-i="${active.dataset.i}"]` : ""}` : "";
     const wiz = s.source === "wizard";
-    const close = `<button type="button" class="dlg-close" data-lrn="close" title="${escape(t("close"))}" aria-label="${escape(t("close"))}">${mdi("close", 18)}</button>`;
+    const embed = !!this.h.embed;
+    const close = embed ? "" : `<button type="button" class="dlg-close" data-lrn="close" title="${escape(t("close"))}" aria-label="${escape(t("close"))}">${mdi("close", 18)}</button>`;
     let head = "";
     let tabs = "";
     let body = "";
@@ -230,7 +235,8 @@ export class LearnUi {
         ? `<div class="dlg-head lrn-min">${close}</div>`
         : `<div class="dlg-head"><span class="dlg-avatar app app-learn">${mdi("lightbulb", 28)}</span><div class="dlg-title"><h2>${escape(t("lrnTitle"))}</h2><div class="dlg-sub">${escape(t("lrnSub"))}</div></div>${close}</div>`;
       body = this.overviewHtml();
-      foot = wiz
+      // Eingebettet: die Übersicht hat unten keine Knöpfe (nichts zu schliessen)
+      foot = embed ? "" : wiz
         ? `<button type="button" class="dlg-btn primary" data-lrn="close">${mdi("check", 18)}${escape(t("lrnFinish"))}</button>`
         : `<button type="button" class="dlg-btn" data-lrn="close">${mdi("close", 18)}${escape(t("close"))}</button>`;
     } else {
@@ -243,10 +249,10 @@ export class LearnUi {
       body = this.articleHtml(i);
       const prev = i > 0 ? this.topic(TOPICS[i - 1].id).name : t("lrnOverview");
       foot = `<button type="button" class="dlg-btn" data-lrn="${i > 0 ? "topic" : "overview"}" data-i="${i - 1}">${mdi("arrowLeft", 18)}<span>${escape(prev)}</span></button>
-        ${last ? `<button type="button" class="dlg-btn primary" data-lrn="close">${mdi("check", 18)}${escape(t("lrnFinish"))}</button>` : `<button type="button" class="dlg-btn primary" data-lrn="topic" data-i="${i + 1}"><span>${escape(this.topic(TOPICS[i + 1].id).name)}</span>${mdi("arrowRight", 18)}</button>`}`;
+        ${last ? (embed ? `<button type="button" class="dlg-btn primary" data-lrn="overview">${mdi("apps", 18)}<span>${escape(t("lrnBackOverview"))}</span></button>` : `<button type="button" class="dlg-btn primary" data-lrn="close">${mdi("check", 18)}${escape(t("lrnFinish"))}</button>`) : `<button type="button" class="dlg-btn primary" data-lrn="topic" data-i="${i + 1}"><span>${escape(this.topic(TOPICS[i + 1].id).name)}</span>${mdi("arrowRight", 18)}</button>`}`;
     }
     dlg.setAttribute("aria-label", t("lrnTitle"));
-    dlg.innerHTML = `${head}<div class="dlg-body lrn-body">${tabs}<div class="lrn-page${animate ? " fx" : ""}">${body}</div></div><div class="dlg-actions">${foot}</div>`;
+    dlg.innerHTML = `${head}<div class="dlg-body lrn-body">${tabs}<div class="lrn-page${animate ? " fx" : ""}">${body}</div></div>${foot ? `<div class="dlg-actions">${foot}</div>` : ""}`;
     dlg.querySelector(".lrn-body").scrollTop = 0;
     if (focusKey) dlg.querySelector(focusKey)?.focus({ preventScroll: true });
   }

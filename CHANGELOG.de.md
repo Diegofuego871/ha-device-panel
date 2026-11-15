@@ -7,7 +7,22 @@ Alle nennenswerten Änderungen an dieser Integration stehen in dieser Datei.
 Das Format folgt [Keep a Changelog](https://keepachangelog.com/de/1.1.0/),
 die Versionsnummern folgen [Semantic Versioning](https://semver.org/lang/de/).
 
+## [2.227.0] - 2026-11-15
+
+Neu: die Lernseite als **interaktive Tour** auf einer eigenen Webseite, damit man die Funktionen ansehen kann, ohne etwas zu installieren.
+
+### Hinzugefügt
+
+- **Interaktive Tour (`docs/tour`):** dieselbe Lernseite wie im Panel (neun Themen mit Skizzen und Artikeln, gleiche Texte, Stile und Symbole, direkt aus dem Repository geladen) als Seite für GitHub Pages. Sprache (Deutsch oder Englisch) und Darstellung (hell oder dunkel) lassen sich auf der Seite umschalten; Vorgabe sind Sprache und Farbschema des Browsers. Die Adresse folgt dem Thema (`#bat` für den Batterie-Artikel, `#rt` für Routinen), ein Link kann also auf ein einzelnes Thema zeigen, und die Zurück-Taste des Browsers geht. Die Seite zeigt nur erfundene Daten, spricht mit keinem Home Assistant und speichert nichts.
+- **Tests:** neue Suite `tour-e2e` (100 Prüfungen: Deutsch und Englisch, Desktop und Handy, hell und dunkel, Themen, Links, Umschalten von Sprache und Darstellung).
+
+### Geändert
+
+- **Intern:** die Symbole und das Escaping (`icons.js`) und die Logik der gleitenden Reiter-Kapsel (`seg.js`) liegen jetzt in eigenen Modulen statt in `device-panel.js`, damit die Tour sie nutzen kann; das Verhalten ändert sich nicht. `learn.js` hat einen eingebetteten Modus (kein Schliessen, kein "Fertig"); das Panel bleibt unverändert.
+
 ## [2.226.0] - 2026-11-15
+
+Nicht veröffentlicht; enthalten in 2.227.0.
 
 Die Lernseite "Mehr erfahren" erklärt jetzt auch die Ansicht und die Liste.
 
@@ -6229,7 +6244,7 @@ Erste Vorabversion.
   GitHub Actions für die Prüfungen von HACS und hassfest sowie die Tests.
 
 [2.6.0]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v2.6.0
-[2.226.0]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v2.226.0
+[2.227.0]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v2.227.0
 [2.225.0]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v2.225.0
 [2.224.1]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v2.224.1
 [2.224.0]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v2.224.0

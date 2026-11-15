@@ -6,13 +6,19 @@ import { extname, join, normalize } from "node:path";
 import { fileURLToPath } from "node:url";
 
 const here = fileURLToPath(new URL(".", import.meta.url));
-const integration = join(here, "..", "..", "custom_components", "device_panel");
-const TYPES = { ".html": "text/html; charset=utf-8", ".js": "text/javascript; charset=utf-8", ".png": "image/png", ".svg": "image/svg+xml" };
+const repo = join(here, "..", "..");
+const integration = join(repo, "custom_components", "device_panel");
+const TYPES = { ".html": "text/html; charset=utf-8", ".js": "text/javascript; charset=utf-8", ".png": "image/png", ".svg": "image/svg+xml", ".json": "application/json" };
 
 function resolve(url) {
   const path = decodeURIComponent(new URL(url, "http://x").pathname);
   if (path.includes("..")) return null;
   if (path.startsWith("/device_panel/panel/")) return join(integration, "panel", path.slice("/device_panel/panel/".length));
+  // Wie GitHub Pages: das ganze Repository unter /ha-device-panel/ (Tour-Seite: /ha-device-panel/docs/tour/)
+  if (path.startsWith("/ha-device-panel/")) {
+    const rel = path.slice("/ha-device-panel/".length);
+    return join(repo, rel.endsWith("/") || rel === "" ? rel + "index.html" : rel);
+  }
   return join(here, "sim", normalize(path === "/" ? "/ha-sim.html" : path));
 }
 

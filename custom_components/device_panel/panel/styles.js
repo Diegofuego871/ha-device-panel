@@ -2980,4 +2980,7 @@ dialog.learn-dlg .sub-tabs.lrn-tabs { grid-auto-flow: column; grid-template-colu
   .lrn-art aside { position: static; order: -1; width: 100%; }
   .lrn-hero .lrn-sketch { font-size: 12px; }
 }
+/* Tour-Seite (docs/tour): dieselbe Lernseite, aber als Teil der Seite statt als Fenster. Schliessen gibt es nicht; die Seite füllt ihren Rahmen. */
+dialog.learn-dlg.lrn-embed { position: relative; inset: auto; margin: 0; width: 100%; max-width: none; height: 100%; max-height: none; box-shadow: var(--dp-shadow); }
+@media (max-width: 600px) { dialog.learn-dlg.lrn-embed { border-radius: 0; box-shadow: none; } }
 `;
