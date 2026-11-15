@@ -63,6 +63,7 @@ from .const import (
     DATA_ROUTINES,
     DATA_SIGNAL,
     DATA_BLE_STAMPS,
+    DATA_THREAD_NAMES,
     DATA_CONNECTION_OVERRIDES,
     CONF_FLAKY_OUTAGES,
     CONF_NOTIFY_DELAY,
@@ -366,6 +367,8 @@ def signal_source(
         # Thread-Gerät (seit 2.229.0): Matter zeigt den Empfang nirgends als Entität; ein WLAN-Gerät mit Matter hat keine Nachbartabelle
         # (thread ist dann None) und behält seinen Sensor
         signal, source = thread, "thread"
+        if parent := thread_parent(hass, device):
+            via = parent[1]
     ble = next((c[1] for c in device.connections if c[0] == dr.CONNECTION_BLUETOOTH), None)
     if ble:
         # Wert und Empfänger aus derselben Quelle: Der Sensor des Geräts (zum Beispiel SwitchBot "Bluetooth-Signal") liest den Scanner,
@@ -395,12 +398,31 @@ def _zha_signal(hass: HomeAssistant, device_id: str) -> dict[str, Any] | None:
     return {"kind": "lqi", "value": lqi, "rssi": rssi} if lqi is not None else {"kind": "dbm", "value": rssi}
 
 
-# Thread-Empfang (seit 2.229.0, Vorbild: Alarmageddon 1.42.0): Matter legt für Thread-Geräte die Nachbartabelle der Thread-Diagnose ab (Endpunkt 0,
-# Cluster 53, Attribut 7), als Entität gibt es sie nicht. Ein Eintrag je Nachbar mit mittlerem (Tag 6) und letztem RSSI (Tag 7); bei einem
-# Endgerät ist der stärkste Nachbar sein Elternteil. Der Wert ist der letzte Stand, den der Matter-Server kennt.
+# Thread (Matter; Empfang seit 2.229.0, Rolle und Verbindung seit 2.230.0, Vorbild: Alarmageddon 1.42.0): Matter legt für Thread-Geräte die
+# Thread-Diagnose ab (Endpunkt 0, Cluster 53), als Entität gibt es sie nicht: Rolle im Netz (Attribut 1), Nachbartabelle (7) und die eigene
+# Adresse (63, nur neuere Geräte). Ein Eintrag der Nachbartabelle je Nachbar mit Adresse (Tag 0), Alter (1), LQI (5), mittlerem (6) und
+# letztem RSSI (7), "rxOnWhenIdle" (10), "fullThreadDevice" (11) und "isChild" (13). Bei einem Endgerät steht dort nur sein Elternteil (der
+# Router, an dem es hängt), bei einem Router seine Nachbarn und angehängten Geräte. Der Wert ist der letzte Stand, den der Matter-Server kennt.
+THREAD_ROLE = "0/53/1"
 THREAD_NEIGHBORS = "0/53/7"
-_THREAD_RSSI_TAGS = (("averageRssi", "6"), ("lastRssi", "7"))
+THREAD_EXT = "0/53/63"
+_THREAD_ROLES = {2: "sleepy", 3: "end", 4: "reed", 5: "router", 6: "leader"}
+_THREAD_ENDS = ("sleepy", "end", "reed")  # Rollen, die an einem Router hängen (Elternteil statt Nachbarn)
 _THREAD_RSSI_RANGE = (-120, -1)  # ausserhalb ist es kein Messwert (0 dBm, 127 dBm, "kein Wert")
+THREAD_DEVICES_TTL_S = 60.0
+THREAD_NAMES_TTL_S = 300.0  # Namen der Adressen: Matter-Geräte und Border Router höchstens so oft neu lesen
+
+
+def _thread_node(hass: HomeAssistant, device_id: str) -> Any:
+    """Matter-Knoten eines Geräts oder None (Matter nicht geladen, kein Matter-Gerät, Schnittstelle geändert)."""
+    if "matter" not in hass.config.components:
+        return None
+    try:
+        from homeassistant.components.matter.helpers import node_from_ha_device_id  # noqa: PLC0415
+
+        return node_from_ha_device_id(hass, device_id)
+    except Exception:  # noqa: BLE001 - interne Schnittstelle von Matter
+        return None
 
 
 def _thread_field(entry: Any, names: tuple[str, ...]) -> Any:
@@ -412,6 +434,47 @@ def _thread_field(entry: Any, names: tuple[str, ...]) -> Any:
     return None
 
 
+def _thread_int(value: Any, low: int | None = None, high: int | None = None) -> int | None:
+    if not isinstance(value, (int, float)) or isinstance(value, bool):
+        return None
+    if (low is not None and value < low) or (high is not None and value > high):
+        return None
+    return round(value)
+
+
+def _thread_table(node: Any) -> list[dict[str, Any]] | None:
+    """Die Nachbartabelle als Liste einfacher Wörterbücher (ext, rssi, lqi, child, full, idle_rx, age); None, wenn es sie nicht gibt."""
+    try:
+        table = node.node_data.attributes.get(THREAD_NEIGHBORS)
+    except Exception:  # noqa: BLE001 - interne Schnittstelle von Matter
+        return None
+    if not isinstance(table, list):
+        return None
+    low, high = _THREAD_RSSI_RANGE
+    rows: list[dict[str, Any]] = []
+    for entry in table:
+        try:
+            rssi = None
+            for names in (("averageRssi", "6"), ("lastRssi", "7")):
+                rssi = _thread_int(_thread_field(entry, names), low, high)
+                if rssi is not None:
+                    break
+            rows.append(
+                {
+                    "ext": _thread_int(_thread_field(entry, ("extAddress", "0"))),
+                    "age": _thread_int(_thread_field(entry, ("age", "1")), 0),
+                    "lqi": _thread_int(_thread_field(entry, ("lqi", "5")), 0, 3),
+                    "rssi": rssi,
+                    "idle_rx": _thread_field(entry, ("rxOnWhenIdle", "10")),
+                    "full": _thread_field(entry, ("fullThreadDevice", "11")),
+                    "child": bool(_thread_field(entry, ("isChild", "13"))),
+                }
+            )
+        except Exception:  # noqa: BLE001 - ein kaputter Eintrag zählt nicht
+            continue
+    return rows
+
+
 def _thread_signal(hass: HomeAssistant, device_id: str) -> dict[str, Any] | None:
     """
     {"kind": "dbm", "value": Zahl oder None} aus der Nachbartabelle eines Thread-Geräts (Matter); None, wenn das Gerät kein Thread-Gerät ist, die
@@ -419,27 +482,147 @@ def _thread_signal(hass: HomeAssistant, device_id: str) -> dict[str, Any] | None
     zählt, je Nachbar der mittlere RSSI vor dem letzten. Ein Gerät, das Matter gerade nicht erreicht, hat keinen Wert (die Tabelle ist dann
     veraltet), behält aber seinen Reiter "Empfang" mit dem Verlauf.
     """
-    if "matter" not in hass.config.components:
+    node = _thread_node(hass, device_id)
+    rows = _thread_table(node) if node is not None else None
+    if rows is None:
+        return None
+    values = [r["rssi"] for r in rows if r["rssi"] is not None]
+    reachable = bool(getattr(node, "available", True))
+    return {"kind": "dbm", "value": max(values) if values and reachable else None}
+
+
+def _thread_device_names(hass: HomeAssistant) -> dict[int, str]:
+    """Adresse (Thread) -> Name der Matter-Geräte, die ihre eigene Adresse melden (Attribut 0/53/63, neuere Geräte)."""
+    names: dict[int, str] = {}
+    for device in registry_devices(dr.async_get(hass)):
+        if not any((e := hass.config_entries.async_get_entry(i)) and e.domain == "matter" for i in device_entry_ids(device)):
+            continue
+        node = _thread_node(hass, device.id)
+        try:
+            ext = _thread_int(node.node_data.attributes.get(THREAD_EXT)) if node is not None else None
+        except Exception:  # noqa: BLE001 - interne Schnittstelle von Matter
+            ext = None
+        if ext:
+            names[ext] = device.name_by_user or device.name or device.id
+    return names
+
+
+async def _thread_refresh_routers(hass: HomeAssistant) -> None:
+    """Border Router der Integration "Thread" aus dem Zeroconf-Zwischenspeicher: Adresse -> Name (Marke und Modell)."""
+    store: dict[str, Any] = hass.data.setdefault(DATA_THREAD_NAMES, {})
+    try:
+        from homeassistant.components import zeroconf  # noqa: PLC0415
+        from homeassistant.components.thread.discovery import async_read_zeroconf_cache  # noqa: PLC0415
+
+        aiozc = await zeroconf.async_get_async_instance(hass)
+        found: dict[int, str] = {}
+        for router in async_read_zeroconf_cache(aiozc):
+            try:
+                ext = int(router.extended_address, 16)
+            except (TypeError, ValueError):
+                continue
+            found[ext] = " ".join(x for x in (router.brand or router.vendor_name, router.model_name) if x) or router.instance_name
+        store["routers"] = found
+    except Exception:  # noqa: BLE001 - Thread oder Zeroconf nicht bereit oder Schnittstelle geändert: ohne Namen
+        store.setdefault("routers", {})
+    finally:
+        store["refreshing"] = False
+
+
+def _thread_names(hass: HomeAssistant) -> dict[int, str]:
+    """Namen zu Thread-Adressen: Matter-Geräte (ohne Zwischenspeicher, billig) vor den Border Routern (im Hintergrund erneuert)."""
+    store: dict[str, Any] = hass.data.setdefault(DATA_THREAD_NAMES, {})
+    now = time.monotonic()
+    if "thread" in hass.config.components and not store.get("refreshing") and now - store.get("at", -1e9) > THREAD_NAMES_TTL_S:
+        store["at"] = now
+        store["refreshing"] = True
+        hass.async_create_task(_thread_refresh_routers(hass))
+    # Die Namen der Matter-Geräte ändern sich selten, die Suche geht durch alle Geräte: höchstens einmal je Minute
+    if now - store.get("devices_at", -1e9) > THREAD_DEVICES_TTL_S:
+        store["devices_at"] = now
+        store["devices"] = _thread_device_names(hass)
+    return {**store.get("routers", {}), **store.get("devices", {})}
+
+
+def _thread_kind(row: dict[str, Any]) -> str:
+    """Art des Nachbarn: angehängtes Gerät (Endgerät, schlafend, wenn es nicht dauernd lauscht) oder Router."""
+    if row["child"]:
+        return "sleepy" if row["idle_rx"] is False else "end"
+    return "router"
+
+
+def thread_info(hass: HomeAssistant, device: dr.DeviceEntry) -> dict[str, Any] | None:
+    """
+    Rolle und Nachbarn eines Thread-Geräts (seit 2.230.0): {"role": router|leader|end|sleepy|reed|None, "bridge": bool, "mode": "parent"|
+    "neighbors", "rows": [...]}. Je Zeile Name (Matter-Gerät oder Border Router, sonst "Router …A1B2" aus dem Ende der Adresse), Art,
+    RSSI, LQI (0 bis 3), Alter in Sekunden, "child" (hängt an diesem Gerät) und "used" (der stärkste, dessen Wert der Empfang ist); der
+    stärkste zuerst. "parent": ein Endgerät, die Zeile ist sein Elternteil; "neighbors": ein Router mit seinen Nachbarn. None: kein Thread-Gerät.
+    """
+    node = _thread_node(hass, device.id)
+    if node is None:
         return None
     try:
-        from homeassistant.components.matter.helpers import node_from_ha_device_id  # noqa: PLC0415
-
-        node = node_from_ha_device_id(hass, device_id)
-        table = node.node_data.attributes.get(THREAD_NEIGHBORS) if node is not None else None
-        if not isinstance(table, list):
-            return None
-        low, high = _THREAD_RSSI_RANGE
-        values: list[int] = []
-        for entry in table:
-            for names in _THREAD_RSSI_TAGS:
-                rssi = _thread_field(entry, names)
-                if isinstance(rssi, (int, float)) and not isinstance(rssi, bool) and low <= rssi <= high:
-                    values.append(round(rssi))
-                    break
-        reachable = bool(getattr(node, "available", True))
+        role = _THREAD_ROLES.get(node.node_data.attributes.get(THREAD_ROLE))
     except Exception:  # noqa: BLE001 - interne Schnittstelle von Matter
+        role = None
+    table = _thread_table(node)
+    if role is None and table is None:
         return None
-    return {"kind": "dbm", "value": max(values) if values and reachable else None}
+    rows: list[dict[str, Any]] = []
+    if table is not None and bool(getattr(node, "available", True)):
+        names = _thread_names(hass)
+        best = max((r["rssi"] for r in table if r["rssi"] is not None), default=None)
+        for r in table:
+            kind = _thread_kind(r)
+            short = f"{r['ext']:016X}"[-4:] if r["ext"] else "?"
+            name = names.get(r["ext"]) if r["ext"] else None
+            rows.append(
+                {
+                    "key": f"{r['ext']:016x}" if r["ext"] else short,
+                    "name": name or f"{'Router' if kind == 'router' else 'Thread'} …{short}",
+                    "known": bool(name),
+                    "kind": kind,
+                    "rssi": r["rssi"],
+                    "lqi": r["lqi"],
+                    "age": r["age"],
+                    "child": r["child"],
+                    "used": r["rssi"] is not None and r["rssi"] == best,
+                }
+            )
+        rows.sort(key=lambda x: (x["rssi"] is None, -(x["rssi"] or 0)))
+        # Nur eine Zeile darf "zählt" tragen (gleich starke Nachbarn)
+        seen = False
+        for row in rows:
+            if row["used"] and seen:
+                row["used"] = False
+            seen = seen or row["used"]
+    ends = role in _THREAD_ENDS or (role is None and not any(r["child"] for r in rows) and len(rows) <= 1)
+    return {"role": role, "bridge": bool(getattr(node, "is_bridge_device", False)), "mode": "parent" if ends else "neighbors", "rows": rows}
+
+
+def _thread_role_of(hass: HomeAssistant, device: dr.DeviceEntry, domains: Any) -> str | None:
+    """Rolle für die Zeile "Verbindung" der Liste: "bridge" für eine Bridge, sonst die Rolle im Thread-Netz; None ohne Matter oder Thread."""
+    if "matter" not in domains:
+        return None
+    info = thread_info(hass, device)
+    if info is None:
+        return None
+    return "bridge" if info["bridge"] else info["role"]
+
+
+def thread_listeners(hass: HomeAssistant, device: dr.DeviceEntry) -> list[dict[str, Any]]:
+    """Für die Karte im Fenster "Empfang": die Zeilen von thread_info mit den Feldern, die die Bluetooth-Karte kennt (name, rssi, age, used)."""
+    info = thread_info(hass, device)
+    return [{**r, "rssi": r["rssi"]} for r in info["rows"] if r["rssi"] is not None] if info else []
+
+
+def thread_parent(hass: HomeAssistant, device: dr.DeviceEntry) -> tuple[str, str] | None:
+    """(Schlüssel, Name) des Routers, an dem ein Thread-Endgerät hängt (stärkster Nachbar, der kein angehängtes Gerät ist); sonst None."""
+    info = thread_info(hass, device)
+    if not info or info["mode"] != "parent":
+        return None
+    row = next((r for r in info["rows"] if not r["child"] and r["rssi"] is not None), None)
+    return (row["key"], row["name"]) if row else None
 
 
 # Bluetooth-Empfang (seit 2.108.0): der stärkste Empfänger, nicht der, den Home Assistant gerade führt. HA behält die zuletzt gewählte
@@ -1952,6 +2135,8 @@ async def async_list_devices(hass: HomeAssistant, log: Any = None) -> dict[str, 
                 # Herkunft ("integration", "global" oder None = fester Standard).
                 "signal_default": signal_default(opts, scope, manual_conn or integ_conn or auto_conn or "unknown", signal),
                 "via": via,
+                # Rolle im Thread-Netz (seit 2.230.0): router, leader, end, sleepy, reed oder bridge; None ohne Thread
+                "thread_role": _thread_role_of(hass, device, domains),
                 **bat_fields,
                 "battery_last": battery_last,
                 # Ausfall- und Online-Meldungen für dieses Gerät aus.

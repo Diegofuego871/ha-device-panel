@@ -345,7 +345,17 @@ const MATTER_TYPES = { thread: "thread", wifi: "wifi", ethernet: "ethernet" };
 // Matter-Servers: end_device, sleepy_end_device, routing_end_device für Router
 // und Leader, bridge, unknown). Nur diese drei zeigt das Popup, der Rest
 // bleibt weg (nichts raten).
-const THREAD_ROLES = { routing_end_device: "roleRouter", end_device: "roleEnd", sleepy_end_device: "roleSleepy" };
+const THREAD_ROLES = { routing_end_device: "router", end_device: "end", sleepy_end_device: "sleepy" };
+// Rolle im Thread-Netz für die Zeile unter der Verbindungsart (seit 2.230.0; der Server liefert sie als d.thread_role aus der Thread-Diagnose
+// des Matter-Knotens, sonst die Rolle aus matter/node_diagnostics): Text und Symbol je Rolle
+const THREAD_ROLE_VIEW = {
+  router: { key: "roleRouter", icon: "thRouter" },
+  leader: { key: "roleLeader", icon: "crown" },
+  end: { key: "roleEnd", icon: "thEnd" },
+  sleepy: { key: "roleSleepy", icon: "thSleep" },
+  reed: { key: "roleReed", icon: "thEnd" },
+  bridge: { key: "roleBridge", icon: "thBridge" },
+};
 // Wählbar von Hand (Popup): alle ausser "unbekannt" (Fall ohne Erkennung).
 const CONN_MANUAL = Object.keys(CONN).filter((k) => k !== "unknown");
 
@@ -4600,7 +4610,11 @@ class DevicePanel extends HTMLElement {
       .concat(CONN_MANUAL.map((k) => `<option value="${k}" ${d.connection_manual && d.connection === k ? "selected" : ""}>${escape(this._t(CONN[k].key))}</option>`))
       .join("");
     if (!edit) {
-      return `<span class="typ-ro">${CONN[type].icon(16)}<span>${escape(this._t(CONN[type].key))}</span></span>${
+      // Rolle im Thread-Netz (seit 2.230.0, docs/mockups/thread-v1 A): zweite Zeile unter "Thread" mit kleinem Symbol; wie Netz und Teile der Diagnose
+      // eine Zusatzangabe, die auch bei von Hand gesetzter Verbindungsart bleibt
+      const role = THREAD_ROLE_VIEW[d.thread_role || this._matter.get(d.id)?.role];
+      const roleLine = role ? `<small class="thr-role">${mdi(role.icon, 14)}<span>${escape(this._t(role.key))}</span></small>` : "";
+      return `<span class="typ-ro">${CONN[type].icon(16)}<span>${escape(this._t(CONN[type].key))}</span></span>${roleLine}${
         d.connection_manual ? `<small>${escape(this._t("typeManual"))}</small>` : integ ? `<small>${escape(this._t(isLabelKey(d.connection_integration_source) ? "connByLabel" : "connByInteg"))}</small>` : ""
       }`;
     }
@@ -4617,7 +4631,6 @@ class DevicePanel extends HTMLElement {
     // Thread-Rolle und Netz aus der Matter-Diagnose (Zusatzangaben, ohne
     // Einstellung); die Verbindungsart von Hand bleibt davon unberührt.
     const mat = (d.connection_auto !== undefined ? d.connection_auto : d.connection) === "matter" ? this._matter.get(d.id) : null;
-    if (mat?.role) tiles.push(this._tile(this._t("threadRole"), `${escape(this._t(mat.role))}<small>${escape(this._t(`${mat.role}Hint`))}</small>`));
     if (mat?.network) tiles.push(this._tile(this._t("threadNet"), `${escape(mat.network)}<small>${escape(this._t("threadNetHint"))}</small>`));
     const entries = detail?.config_entries?.length
       ? detail.config_entries
@@ -6157,8 +6170,8 @@ class DevicePanel extends HTMLElement {
     const { start, end, points = [], kind, source, bucket, first, current, reason, steady_since: steady, via, smoothed } = h.data;
     const note = (text) => `<p class="dlg-note bh-src">${escape(text)}</p>`;
     // Empfänger (seit 2.112.0, Mockup signal-layout-v1 A): Weg-Balken, Live-Werte und Anteil je Empfänger in einer Karte
-    const viaBlock = this._receiversHtml(via, h.data.listeners, start, end, range);
-    const listenersHint = h.data.listeners?.length ? note(t("sigLiveHint")) : "";
+    const viaBlock = this._receiversHtml(via, h.data.listeners, start, end, range, h.data.thread_mode);
+    const listenersHint = h.data.listeners?.length ? note(t(h.data.thread_mode ? "thLiveHint" : "sigLiveHint")) : "";
     const viaNote = via ? `<p class="dlg-note sv-note">${escape(t("viaNote", this._fmtTime(via.since, true)))}</p>` : "";
     // Sensor, den der Recorder nicht aufzeichnet (seit 0.26.0): das Panel zeichnet selbst auf.
     const why = reason === "not_recorded" ? ` ${t("sigSrcNotRecorded")}` : "";
@@ -6255,7 +6268,9 @@ class DevicePanel extends HTMLElement {
   // Empfänger eine Zeile mit Name, Marken ("zählt" = sein Wert ist der Empfang, "N dB schwächer" = lief längere Zeit deutlich schlechter als
   // der Hauptempfänger), dem Stand jetzt (RSSI und Alter der letzten Meldung, alle paar Sekunden neu: _liveTick) sowie Anteil und Ø im Zeitraum;
   // darunter die letzten Wechsel. Empfänger nur live (nicht im Weg) stehen grau am Ende, Empfänger nur im Weg zeigen "gerade nicht gehört".
-  _receiversHtml(via, listeners, start, end, range) {
+  // threadMode (seit 2.230.0, docs/mockups/thread-v1): "parent" = Thread-Endgerät, die Karte heisst "Verbunden über" und zeigt seine Router;
+  // "neighbors" = Thread-Router, die Karte heisst "Nachbarn" und zeigt nur den jetzigen Stand (ohne Anteil)
+  _receiversHtml(via, listeners, start, end, range, threadMode = null) {
     const t = (k, ...a) => this._t(k, ...a);
     const live = Array.isArray(listeners) ? listeners : [];
     const hasVia = Boolean(via && end - start > 0 && via.segments?.length);
@@ -6291,11 +6306,17 @@ class DevicePanel extends HTMLElement {
     const far = new Map();
     if (main) rated.filter((r) => r.i !== main.i && r.share >= VIA_FAR_SHARE && main.avg - r.avg >= VIA_FAR_DBM).sort((a, b) => b.share - a.share).slice(0, 2).forEach((r) => far.set(r.i, r));
     const used = new Set();
+    // Thread: Art des Nachbarn (Router, Endgerät, schlafend; "hängt an diesem Gerät"), RSSI und LQI statt des Alters der Meldung
+    const threadSub = (l) => {
+      const kind = THREAD_ROLE_VIEW[l.kind]?.key;
+      const parts = [kind ? t(kind) : "", l.child ? t("thChild") : "", t("thNow", sigText({ kind: "dbm", value: l.rssi }), l.lqi)];
+      return parts.filter(Boolean).join(" · ");
+    };
     const rowHtml = (dot, label, liveRow, shareHtml, extra = "") => {
       const sub = liveRow
-        ? t("sigRowNow", sigText({ kind: "dbm", value: liveRow.rssi }), t("sigLiveAgo", liveRow.age))
-        : t("sigRecvIdle");
-      return `<div class="sv-row${liveRow ? "" : " off"}">${dot}<div class="sv-nm"><b>${escape(label)}</b>${liveRow?.used ? `<span class="sv-ok" title="${escape(t("sigLiveHint"))}">✓ ${escape(t("sigUsed"))}</span>` : ""}${extra}<small>${escape(sub)}</small></div>${shareHtml}</div>`;
+        ? liveRow.kind ? threadSub(liveRow) : t("sigRowNow", sigText({ kind: "dbm", value: liveRow.rssi }), t("sigLiveAgo", liveRow.age))
+        : threadMode ? t("thIdle") : t("sigRecvIdle");
+      return `<div class="sv-row${liveRow ? "" : " off"}">${dot}<div class="sv-nm"><b>${escape(label)}</b>${liveRow?.used ? `<span class="sv-ok" title="${escape(t(threadMode ? "thLiveHint" : "sigLiveHint"))}">✓ ${escape(t("sigUsed"))}</span>` : ""}${extra}<small>${escape(sub)}</small></div>${shareHtml}</div>`;
     };
     let rows = "";
     receivers.forEach((r, i) => {
@@ -6306,13 +6327,14 @@ class DevicePanel extends HTMLElement {
       const share = `<div class="sv-sh"><b>${escape(t("sigPct", r.share))}</b>${r.avg == null ? "" : `<small>${escape(t("sigAvgShort", Math.round(r.avg)))}</small>`}</div>`;
       rows += rowHtml(`<i class="sv-dot" style="background:${colour(i)}"></i>`, r.name, liveRow, share, warn);
     });
-    for (const l of live.filter((x) => !used.has(x))) rows += rowHtml(`<i class="sv-dot none"></i>`, l.name, l, `<div class="sv-sh"><b>–</b></div>`);
+    // Die Nachbarn eines Routers haben keinen Anteil: der Stand jetzt ist alles, was es gibt
+    for (const l of live.filter((x) => !used.has(x))) rows += rowHtml(`<i class="sv-dot${threadMode === "neighbors" ? "" : " none"}" ${threadMode === "neighbors" ? `style="background:${l.used ? colour(0) : "var(--dp-text3)"}"` : ""}></i>`, l.name, l, threadMode === "neighbors" ? "" : `<div class="sv-sh"><b>–</b></div>`);
     const dayOf = (at) => this._fmtTime(at, new Date(at * 1000).toDateString() !== new Date(end * 1000).toDateString());
     const changes = hasVia
       ? (via.changes || []).map(([at, from, to]) => `<p><span>${escape(dayOf(at))}</span><b>${escape(name(from))} → ${escape(name(to))}</b></p>`).join("")
       : "";
     const scope = hasVia ? `<small>${escape(t("sigScope", t("ranges")[range] || range))}</small>` : "";
-    return `<div class="sv sv-full"><div class="sv-top"><h3>${escape(t("sigReceivers"))}</h3>${scope}</div>${hasVia ? `<div class="sv-bar">${bar}</div>
+    return `<div class="sv sv-full"><div class="sv-top"><h3>${escape(t(threadMode === "parent" ? "viaLabel" : threadMode === "neighbors" ? "thNeighbors" : "sigReceivers"))}</h3>${scope}</div>${hasVia ? `<div class="sv-bar">${bar}</div>
       <div class="avail-ticks sv-ticks">${ticks}<span class="now-label">${escape(t("now"))}</span></div>` : ""}
       <div class="sv-leg" data-sig-live>${rows}</div>${changes ? `<div class="sv-chg"><h4>${escape(t("viaChanges"))}</h4>${changes}</div>` : ""}</div>`;
   }

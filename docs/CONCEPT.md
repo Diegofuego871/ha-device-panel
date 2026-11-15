@@ -156,7 +156,7 @@ und B, und alle Ideen aus den Mockups werden verfolgt:
 | Zigbee LQI/RSSI | ZHA-Gerätedaten (`lqi`, `rssi`, WebSocket `zha/devices`) | geprüft |
 | WLAN-Empfang | Sensoren mit `device_class: signal_strength` (dBm), z. B. Shelly, ESPHome | geprüft (Shelly) |
 | Bluetooth-Empfang und Proxy | `bluetooth.async_last_service_info` (RSSI, Quelle) | geprüft |
-| Thread-Empfang | Nachbartabelle des Matter-Knotens (`0/53/7` über `matter.helpers.node_from_ha_device_id`) | nur mit Attrappen geprüft (2.229.0) |
+| Thread-Empfang, Rolle, Elternteil | Thread-Diagnose des Matter-Knotens (`0/53/1` Rolle, `0/53/7` Nachbartabelle, `0/53/63` eigene Adresse, über `matter.helpers.node_from_ha_device_id`); Namen: Matter-Geräte (Adresse) und Border Router (`thread.discovery.async_read_zeroconf_cache`) | nur mit Attrappen geprüft (2.229.0, 2.230.0) |
 | Zigbee-Route | ZHA-Nachbartabelle | offen |
 | Verbindungsart von Hand | Popup, `.storage/device_panel.devices` ("connections"), Vorrang vor der Erkennung und der Matter-Diagnose | seit 0.12.0 |
 | Verbindungsart pro Integration | Option `connection_integrations` {Domain: Art} (primäre Integration), Spalte "Verbindungsart" neben "Typ" in "Geräte im Panel" › "Integrationen" (seit 2.0.4, vorher Abschnitt "Verbindungsart"); Vorrang: Gerät von Hand, dann Integration, dann Erkennung. Gilt für alle Geräte der Integration, auch richtig erkannte (Nutzer, 2026-10-02, Variante B: viele falsch erkannte, nicht nur unbekannte) | seit 0.16.0 |

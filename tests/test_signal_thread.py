@@ -100,7 +100,7 @@ async def test_source_is_thread_and_recorded_but_wifi_matter_keeps_its_sensor(ha
         return devices.signal_source(hass, device, entries, {"matter"}, smooth=False)
 
     signal, via, source = source_of(thread)
-    assert signal == {"kind": "dbm", "value": -64} and source == "thread" and via is None
+    assert signal == {"kind": "dbm", "value": -64} and source == "thread" and via == "Router …?"  # Nachbar ohne Adresse: Name unbekannt
     # Matter über WLAN: keine Nachbartabelle, der Sensor des Geräts gilt wie bisher
     signal, _via, source = source_of(wifi)
     assert signal and signal["value"] == -55 and source == rssi.entity_id
@@ -113,3 +113,137 @@ async def test_source_is_thread_and_recorded_but_wifi_matter_keeps_its_sensor(ha
     assert log._open[thread.id][1] == [-64.0]
     result = await signal_history.async_signal_history(hass, log, thread, "24h", time.time() + 3600)
     assert result["source"] == "log" and result["kind"] == "dbm" and result["current"] == -64
+
+
+# --- Rolle, Elternteil und Nachbarn (2.230.0) -----------------------------------------------------------------------------------------
+
+EXT_ROUTER = 0x00124B0001A1B2C3  # ein Router, den Home Assistant als Matter-Gerät kennt
+EXT_BORDER = 0x00124B0002D4E5F6  # ein Border Router der Integration "Thread"
+EXT_UNKNOWN = 0x00124B0003FFA1B2  # niemand kennt ihn
+ROLE = devices.THREAD_ROLE
+EXT = devices.THREAD_EXT
+
+
+def _thread_node(role: int | None, table: Any, ext: int | None = None, bridge: bool = False, available: bool = True) -> SimpleNamespace:
+    attrs: dict[str, Any] = {}
+    if role is not None:
+        attrs[ROLE] = role
+    if table is not None:
+        attrs[devices.THREAD_NEIGHBORS] = table
+    if ext is not None:
+        attrs[EXT] = ext
+    return SimpleNamespace(node_data=SimpleNamespace(attributes=attrs), available=available, is_bridge_device=bridge)
+
+
+def _neighbor(ext: int, avg: int, lqi: int = 3, child: bool = False, idle: bool = False, full: bool = True) -> dict[str, Any]:
+    return {"0": ext, "1": 12, "5": lqi, "6": avg, "7": avg, "10": idle, "11": full, "13": child}
+
+
+async def _thread_devices(hass: HomeAssistant, monkeypatch, nodes: dict[str, Any]) -> dict[str, dr.DeviceEntry]:
+    """Je Gerät (Schlüssel) ein Matter-Gerät in Home Assistant; nodes: Schlüssel -> Knoten (die Matter-Bibliothek ist im Test nicht geladen)."""
+    hass.config.components.add("matter")
+    entry = MockConfigEntry(domain="matter")
+    entry.add_to_hass(hass)
+    reg = dr.async_get(hass)
+    made = {key: reg.async_get_or_create(config_entry_id=entry.entry_id, identifiers={("matter", key)}, name=f"Gerät {key}") for key in nodes}
+    _fake_matter(monkeypatch, {made[key].id: node for key, node in nodes.items()})
+    # Keine Border Router aus Zeroconf im Test: der Zwischenspeicher ist gefüllt, die Aktualisierung gesperrt
+    hass.data[devices.DATA_THREAD_NAMES] = {"routers": {EXT_BORDER: "Google Nest Hub"}, "at": time.monotonic(), "refreshing": True}
+    return made
+
+
+async def test_end_device_knows_its_parent_by_name(hass: HomeAssistant, monkeypatch) -> None:
+    made = await _thread_devices(
+        hass,
+        monkeypatch,
+        {
+            "kontakt": _thread_node(2, [_neighbor(EXT_ROUTER, -64, 3)]),
+            "steckdose": _thread_node(5, [], ext=EXT_ROUTER),  # meldet seine Adresse: so bekommt der Router seinen Namen
+        },
+    )
+    info = devices.thread_info(hass, made["kontakt"])
+    assert info and info["role"] == "sleepy" and info["mode"] == "parent" and info["bridge"] is False
+    row = info["rows"][0]
+    assert row["name"] == "Gerät steckdose" and row["known"] and row["kind"] == "router" and row["rssi"] == -64 and row["lqi"] == 3 and row["used"]
+    assert devices.thread_parent(hass, made["kontakt"]) == (f"{EXT_ROUTER:016x}", "Gerät steckdose")
+    assert devices._thread_role_of(hass, made["kontakt"], {"matter"}) == "sleepy"
+
+
+async def test_border_router_and_unknown_router_names(hass: HomeAssistant, monkeypatch) -> None:
+    made = await _thread_devices(
+        hass,
+        monkeypatch,
+        {"a": _thread_node(3, [_neighbor(EXT_BORDER, -58)]), "b": _thread_node(3, [_neighbor(EXT_UNKNOWN, -83, 1)])},
+    )
+    assert devices.thread_info(hass, made["a"])["rows"][0]["name"] == "Google Nest Hub"
+    unknown = devices.thread_info(hass, made["b"])["rows"][0]
+    # Ohne Namen: das Ende der Adresse, in einer Schreibweise, die in jeder Sprache stimmt
+    assert unknown["name"] == "Router …A1B2" and unknown["known"] is False
+
+
+async def test_router_lists_neighbours_children_marked_and_strongest_counts(hass: HomeAssistant, monkeypatch) -> None:
+    table = [
+        _neighbor(EXT_UNKNOWN, -83, 1),
+        _neighbor(0x1111, -64, 3, child=True, idle=False, full=False),  # angehängtes Gerät, schläft
+        _neighbor(0x2222, -71, 2, child=True, idle=True, full=False),  # angehängtes Gerät, lauscht
+        _neighbor(EXT_BORDER, -58, 3),
+    ]
+    made = await _thread_devices(hass, monkeypatch, {"router": _thread_node(5, table), "leader": _thread_node(6, [])})
+    info = devices.thread_info(hass, made["router"])
+    assert info["mode"] == "neighbors" and info["role"] == "router"
+    assert [r["rssi"] for r in info["rows"]] == [-58, -64, -71, -83]  # der stärkste zuerst
+    assert [r["kind"] for r in info["rows"]] == ["router", "sleepy", "end", "router"]
+    assert [r["child"] for r in info["rows"]] == [False, True, True, False]
+    assert [r["used"] for r in info["rows"]] == [True, False, False, False]
+    # Ein Router hat kein "Verbunden über": nichts wird als Weg aufgezeichnet
+    assert devices.thread_parent(hass, made["router"]) is None
+    assert devices._thread_role_of(hass, made["leader"], {"matter"}) == "leader"
+    assert devices.thread_listeners(hass, made["router"])[0]["name"] == "Google Nest Hub"
+
+
+async def test_bridge_unknown_role_and_not_thread(hass: HomeAssistant, monkeypatch) -> None:
+    made = await _thread_devices(
+        hass,
+        monkeypatch,
+        {
+            "bridge": _thread_node(5, [], bridge=True),
+            "wifi": _thread_node(None, None),
+            "off": _thread_node(3, [_neighbor(EXT_ROUTER, -60)], available=False),
+        },
+    )
+    assert devices._thread_role_of(hass, made["bridge"], {"matter"}) == "bridge"
+    # Matter über WLAN: weder Rolle noch Tabelle
+    assert devices.thread_info(hass, made["wifi"]) is None and devices._thread_role_of(hass, made["wifi"], {"matter"}) is None
+    # Nicht erreichbar: die Rolle bleibt, die Tabelle ist veraltet und bleibt leer
+    off = devices.thread_info(hass, made["off"])
+    assert off["role"] == "end" and off["rows"] == [] and devices.thread_parent(hass, made["off"]) is None
+    assert devices._thread_role_of(hass, made["wifi"], {"zha"}) is None
+
+
+async def test_via_is_the_parent_and_changes_are_recorded(hass: HomeAssistant, monkeypatch) -> None:
+    await _setup(hass)
+    made = await _thread_devices(
+        hass,
+        monkeypatch,
+        {"kontakt": _thread_node(2, [_neighbor(EXT_ROUTER, -64)]), "steckdose": _thread_node(5, [], ext=EXT_ROUTER)},
+    )
+    kontakt = made["kontakt"]
+    contact = er.async_get(hass).async_get_or_create("binary_sensor", "matter", "k-c", device_id=kontakt.id)
+    hass.states.async_set(contact.entity_id, "off")
+    entries = er.async_entries_for_device(er.async_get(hass), kontakt.id)
+    signal, via, source = devices.signal_source(hass, kontakt, entries, {"matter"}, smooth=False)
+    assert signal == {"kind": "dbm", "value": -64} and via == "Gerät steckdose" and source == "thread"
+
+    monkeypatch.setattr(signal_history, "recorded", lambda _hass, _entity: True)
+    hass.data[DATA_AVAILABILITY].evaluate()
+    log: SignalLog = hass.data[DATA_SIGNAL]
+    log.sample()
+    assert [e[1] for e in log._via[kontakt.id]] == [f"{EXT_ROUTER:016x}"]
+    # Der Elternteil wechselt (anderer Router): ein Wechsel im Weg
+    kontakt_node = _thread_node(2, [_neighbor(EXT_BORDER, -70)])
+    _fake_matter(monkeypatch, {kontakt.id: kontakt_node, made["steckdose"].id: _thread_node(5, [], ext=EXT_ROUTER)})
+    log.sample(time.time() + 120)
+    assert [e[1] for e in log._via[kontakt.id]] == [f"{EXT_ROUTER:016x}", f"{EXT_BORDER:016x}"]
+    result = await signal_history.async_signal_history(hass, log, kontakt, "24h", time.time() + 3600)
+    assert result["thread_mode"] == "parent" and result["listeners"][0]["name"] == "Google Nest Hub"
+    assert [r["name"] for r in result["via"]["receivers"]] == ["Gerät steckdose", "Google Nest Hub"]

@@ -274,14 +274,27 @@
   // Wer das Bluetooth-Gerät gerade hört (ble_listeners): stärkster zuerst, "used" = Empfänger des angezeigten Werts. __listeners überschreibt;
   // jeder Abruf lässt das Alter um 5 s wachsen, damit die Live-Zeile im Test sichtbar weiterläuft.
   let listenerCalls = 0;
+  // Thread (nur mit ?thread=1): ein Endgerät kennt nur seinen Elternteil, ein Router seine Nachbarn und angehängten Geräte
+  const THREAD_ROWS = {
+    i: [{ name: "Steckdose Küche", kind: "router", rssi: -64, lqi: 3, age: 12, child: false, used: true }],
+    c: [
+      { name: "Google Nest Hub", kind: "router", rssi: -58, lqi: 3, age: 4, child: false, used: true },
+      { name: "Türschloss Haustür", kind: "sleepy", rssi: -64, lqi: 3, age: 12, child: true, used: false },
+      { name: "Rauchmelder Flur", kind: "end", rssi: -71, lqi: 2, age: 7, child: true, used: false },
+      { name: "Router …A1B2", kind: "router", rssi: -83, lqi: 1, age: 20, child: false, used: false },
+    ],
+  };
+  const threadMode = (d) => (window.__thread && d.thread_role ? (["sleepy", "end", "reed"].includes(d.thread_role) ? "parent" : "neighbors") : null);
   function listenersFor(d) {
+    if (threadMode(d)) return window.__threadRows || THREAD_ROWS[d.id] || [];
     if (d.connection !== "ble") return [];
     const rows = window.__listeners || [{ name: "Storen Büro", rssi: -76, age: 8, used: true }, { name: "Küche", rssi: -97, age: 3, used: false }];
     return rows.map((r) => ({ ...r, age: r.age + 5 * listenerCalls }));
   }
   // Weg des Bluetooth-Empfangs wie SignalLog.via_summary: Abschnitte [von, bis, Nr. | null], Empfänger mit Anteil und Ø, Wechsel (neueste zuerst).
   const VIA_NAMES = ["Storen Büro", "Proxy Garage", "Küche", "Bluetooth-Adapter (HA)"];
-  function viaFor(range, start, end, points) {
+  const THREAD_VIA_NAMES = ["Steckdose Küche", "Google Nest Hub", "Router …A1B2", "Steckdose Flur"];
+  function viaFor(range, start, end, points, d) {
     const plan = { "24h": [[22, 0], [8, 1], [38, 0], [4, null], [28, 2]], "7d": [[40, 0], [6, 1], [18, 2], [3, null], [26, 0], [7, 3]], "30d": [[55, 0], [12, 2], [4, null], [20, 0], [9, 3]] }[["90d", "180d", "365d"].includes(range) ? "30d" : range];
     const segments = [];
     let at = start;
@@ -300,7 +313,7 @@
     for (let i = 1; i < segments.length; i++) if (segments[i][2] != null && segments[i - 1][2] != null) changes.push([segments[i][0], segments[i - 1][2], segments[i][2]]);
     return {
       since: Math.round(end - 9 * D),
-      receivers: used.map((k, i) => ({ name: VIA_NAMES[k], seconds: secs(k), share: shares[i], avg: [-74, -82, -78, -88][k] })),
+      receivers: used.map((k, i) => ({ name: (d && threadMode(d) ? THREAD_VIA_NAMES : VIA_NAMES)[k], seconds: secs(k), share: shares[i], avg: [-74, -82, -78, -88][k] })),
       segments: segments.map(([a, b, k]) => [a, b, k == null ? null : used.indexOf(k)]),
       changes: changes.reverse().map(([t, f, to]) => [t, used.indexOf(f), used.indexOf(to)]).slice(0, 6),
     };
@@ -320,7 +333,7 @@
       const since = end - 3 * D;
       return { ...base, source: "history", entity_id: `sensor.${d.id}_signal`, points: [[Math.max(start, since), sig.value], [end, sig.value]], first: Math.max(start, since), steady_since: since };
     }
-    const logged = ["log-empty", "log", "not-recorded", "not-recorded-empty"].includes(forced) || (!forced && ["zigbee", "ble"].includes(d.connection));
+    const logged = ["log-empty", "log", "not-recorded", "not-recorded-empty"].includes(forced) || (!forced && (["zigbee", "ble"].includes(d.connection) || Boolean(threadMode(d))));
     const seed = [...d.id].reduce((a, c) => a + c.charCodeAt(0), 0);
     const wave = (t) => Math.sin(t / 7200 + seed) * (kind === "dbm" ? 4 : 18) + Math.sin(t / 900 + seed * 2) * (kind === "dbm" ? 2 : 8);
     const clamp = (v) => (kind === "dbm" ? Math.max(-110, Math.min(-30, v)) : Math.max(1, Math.min(255, v)));
@@ -337,7 +350,7 @@
         const spread = kind === "dbm" ? 3 + (seed % 4) : 10 + (seed % 15);
         points.push([t + bucket / 2, med, clamp(med - spread), clamp(med + Math.round(spread / 2))]);
       }
-      return { ...base, source: points.length ? "log" : "none", bucket, points, first, via: d.connection === "ble" && !window.__viaOff ? viaFor(range, start, end, points) : null, listeners: listenersFor(d), smoothed: d.connection === "ble" };
+      return { ...base, source: points.length ? "log" : "none", bucket, points, first, via: (d.connection === "ble" || threadMode(d) === "parent") && !window.__viaOff ? viaFor(range, start, end, points, d) : null, listeners: listenersFor(d), thread_mode: threadMode(d), smoothed: d.connection === "ble" };
     }
     const stats = ["30d", "90d", "180d", "365d"].includes(range);
     const points = [];
@@ -657,6 +670,13 @@
     };
   }
 
+  // Thread (2.230.0): mit ?thread=1 liefert der "Server" die Rolle im Thread-Netz (thread_role) und den Empfang: das Türschloss ist ein schlafendes
+  // Endgerät (hängt an einem Router), das Thermostat ein Router (mit Nachbarn). Ohne den Parameter bleiben die Matter-Geräte wie bisher (Rolle aus der Diagnose).
+  if (new URLSearchParams(location.search).has("thread")) {
+    Object.assign(devices.find((d) => d.id === "i"), { connection_auto: "matter", thread_role: "sleepy", signal: { kind: "dbm", value: -64 }, via: "Steckdose Küche" });
+    Object.assign(devices.find((d) => d.id === "c"), { connection_auto: "matter", thread_role: "router", signal: { kind: "dbm", value: -58 } });
+    window.__thread = true;
+  }
   window.__devices = devices;
   // Für Prüfungen, deren Erwartung von der Uhrzeit abhängt (Tagessäulen).
   window.__availHistory = availHistory;

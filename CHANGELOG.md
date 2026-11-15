@@ -7,6 +7,18 @@ All notable changes to this integration are documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/).
 
+## [2.230.0] - 2026-11-15
+
+Thread devices show their role in the network and which router they are connected through.
+
+### Added
+
+- **Role in the Thread network:** in the section "Connection" of the pop-up the role now stands as a second line under "Thread", with a small symbol: router, leader, end device, sleepy end device, router-eligible end device or bridge. It comes from the Thread diagnostics of the Matter node (no longer from a call of the browser to the Matter server), so it also works for the roles that were not shown before (leader, router-eligible end device, bridge). The separate tile "Thread role" is gone; "Network" stays. The role remains an additional note when the connection type is set by hand.
+- **"Connected via" for Thread end devices:** the tile names the router the device is attached to (Thread knows only this one), taken from the neighbour table of the device. The name comes from Home Assistant: Matter devices that report their own Thread address, and the border routers of the integration "Thread" (brand and model); an unknown router is called "Router …A1B2" (end of its address).
+- **Window "Signal" for Thread:** for an end device a card "Connected via" like the Bluetooth card "Receivers": a bar with the routers the device was connected through in the period, share and average signal, the current value with LQI (0 to 3), and the changes of the parent router (recorded by the panel from the update on). For a router (or leader) a card "Neighbours" with the current neighbour table, the strongest first, "✓ counts" on the one whose value is the signal, devices attached to it marked "attached to this device", without bar and share, since the state changes all the time.
+- **Tests:** new suite `thread-e2e` (88 checks) and 5 more Python tests; the suite `matter-e2e` follows the new place of the role. The mock-up is `docs/mockups/thread-v1`.
+- **Not yet checked with a real Matter server:** as with the signal of Thread devices (2.229.0). The names of routers work best with Matter devices that report their own address (newer firmware); border routers are found through the Zeroconf cache of Home Assistant. Please report what you see.
+
 ## [2.229.0] - 2026-11-15
 
 Signal strength for Thread devices, recorded like Bluetooth.
@@ -6171,6 +6183,7 @@ First pre-release.
   GitHub Actions for HACS/hassfest validation and tests.
 
 [2.6.0]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v2.6.0
+[2.230.0]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v2.230.0
 [2.229.0]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v2.229.0
 [2.228.0]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v2.228.0
 [2.227.0]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v2.227.0

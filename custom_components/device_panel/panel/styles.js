@@ -1224,6 +1224,9 @@ button.ai-head:focus-visible { outline: 2px solid #7c4dff; outline-offset: -2px;
 /* Typ im Geräte-Popup wählbar */
 .typ-ro { display: inline-flex; align-items: center; gap: 8px; color: var(--dp-text); }
 .typ-ro > svg { color: var(--dp-text2); }
+/* Rolle im Thread-Netz unter der Verbindungsart (seit 2.230.0): kleines Symbol und Text in der Akzentfarbe */
+.tile-v small.thr-role { display: flex; align-items: center; gap: 6px; margin-top: 3px; color: var(--dp-primary); font-size: 12.5px; }
+.thr-role svg { flex: none; }
 .dev-tabs { position: sticky; top: var(--dev-head-h, 0px); z-index: 3; padding: 4px 22px 8px; background: var(--dp-card); }
 /* Inhalt, der unter der Reiterzeile durchläuft, wird weich ausgeblendet statt hart abgeschnitten (kein "Kleben" der Kacheln) */
 .dev-tabs::after { content: ""; position: absolute; left: 0; right: 0; top: 100%; height: 12px; background: linear-gradient(var(--dp-card), transparent); pointer-events: none; }

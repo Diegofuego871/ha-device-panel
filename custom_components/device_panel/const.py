@@ -13,7 +13,7 @@ PANEL_HTML_FILE = "panel.html"
 STATIC_URL_PATH = f"/{DOMAIN}"
 PANEL_STATIC_URL_PATH = f"{STATIC_URL_PATH}/panel"
 # Cache-Buster: bei jeder Änderung unter panel/ von Hand erhöhen.
-PANEL_VERSION = "513"
+PANEL_VERSION = "514"
 PANEL_PAGE_URL = f"{PANEL_STATIC_URL_PATH}/{PANEL_HTML_FILE}?v={PANEL_VERSION}"
 # Dashboard-Karten (seit 2.216.0): ES-Modul im Ordner des Panels; ?v= ist der Cache-Buster
 CARD_URL = f"{PANEL_STATIC_URL_PATH}/card.js?v={PANEL_VERSION}"
@@ -473,6 +473,7 @@ DATA_PROTOCOL = f"{DOMAIN}_protocol"
 # Bluetooth: zuletzt gewählter stärkster Empfänger je Adresse (devices._ble_best)
 DATA_BLE_BEST = f"{DOMAIN}_ble_best"
 DATA_BLE_STAMPS = f"{DOMAIN}_ble_stamps"
+DATA_THREAD_NAMES = f"{DOMAIN}_thread_names"
 DATA_STATUS = f"{DOMAIN}_status"
 DATA_BACKUP_ALERT = f"{DOMAIN}_backup_alert"
 # Koordinator der eigenen Entitäten (seit 2.122.0, summary.py)

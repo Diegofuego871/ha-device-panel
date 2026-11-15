@@ -1,7 +1,8 @@
 // Thread-Rolle und Netzname im Geräte-Popup (0.32.0, docs/mockups/backlog-v1,
 // Punkt 4 A) aus matter/node_diagnostics. Die Verbindungsart von Hand bleibt
-// möglich und hat Vorrang; die Kacheln sind nur Zusatzangaben. Unbekannte
-// Rollen und Fehler zeigen nichts. DE/EN, Desktop/Handy.
+// möglich und hat Vorrang; Rolle und Netz sind nur Zusatzangaben. Seit 2.230.0 steht die Rolle als zweite Zeile unter der Verbindungsart
+// (docs/mockups/thread-v1, A) statt in einer eigenen Kachel; ohne Rolle vom Server (d.thread_role) gilt die Rolle der Diagnose.
+// Unbekannte Rollen und Fehler zeigen nichts. DE/EN, Desktop/Handy.
 import { chromium } from "playwright-core";
 import { launchOptions, outDir } from "../lib.mjs";
 
@@ -33,6 +34,8 @@ for (const lang of ["de", "en"]) {
     const wait = (code) => f.waitForFunction(new Function(`const r=${R};` + code), null, { timeout: 5000 }).then(() => true, () => false);
     const tiles = () => ev(`return [...r.querySelectorAll("dialog.device .tile")].map(t=>[t.querySelector(".tile-k").textContent.trim(), t.querySelector(".tile-v").textContent.replace(/\\s+/g," ").trim()])`);
     const find = async (label) => (await tiles()).find(([k]) => k === label);
+    // Die Rolle: zweite Zeile in der Kachel der Verbindungsart (leer, wenn es keine gibt)
+    const roleLine = () => ev(`return (r.querySelector("dialog.device .tile .thr-role")?.textContent || "").replace(/\\s+/g," ").trim()`);
     const open = async (id) => {
       await ev(`r.host._openDevice(${JSON.stringify(id)})`);
       await wait(`return r.querySelector("dialog.device")?.open && r.querySelector('dialog.device [data-tab=\"set\"]')`);
@@ -52,20 +55,19 @@ for (const lang of ["de", "en"]) {
     // Thermostat Bad (Matter über Thread, Endgerät)
     await wait(`return r.host._matter.size >= 2`);
     await open("c");
-    const role = await find(T.role);
     const net = await find(T.net);
-    check(`[${tag}] Kachel "${T.role}": ${T.end}`, role && role[1] === `${T.end}${T.endHint}`, JSON.stringify(role));
+    check(`[${tag}] Rolle unter der Verbindungsart: ${T.end}`, (await roleLine()) === T.end, await roleLine());
+    check(`[${tag}] keine eigene Kachel "${T.role}"`, !(await find(T.role)));
     check(`[${tag}] Kachel "${T.net}": ${T.netName}`, net && net[1] === `${T.netName}${T.netHint}`, JSON.stringify(net));
     await p.screenshot({ path: `${outDir}/matter-end-${tag.replace("/", "-")}.png` });
-    // Kacheln im Abschnitt "Verbindung", nach der Verbindungsart
+    // Kacheln im Abschnitt "Verbindung": Verbindungsart (mit der Rolle darunter) vor dem Netz
     const order = (await tiles()).map(([k]) => k);
-    check(`[${tag}] Reihenfolge: Verbindungsart vor Rolle und Netz`, order.indexOf(T.role) > order.indexOf(order.find((k) => k !== T.role && k !== T.net)) && order.indexOf(T.net) === order.indexOf(T.role) + 1, order.join(","));
+    check(`[${tag}] Reihenfolge: Verbindungsart vor dem Netz`, order.indexOf(T.net) > 0 && /Verbindungsart|Connection type/.test(order[0]), order.join(","));
     await close();
 
     // Türschloss: schlafendes Endgerät
     await open("i");
-    const sleepy = await find(T.role);
-    check(`[${tag}] schlafendes Endgerät`, sleepy && sleepy[1] === `${T.sleepy}${T.sleepyHint}`, JSON.stringify(sleepy));
+    check(`[${tag}] schlafendes Endgerät`, (await roleLine()) === T.sleepy, await roleLine());
 
     // Verbindungsart von Hand bleibt möglich und hat Vorrang; Kacheln bleiben
     await toSettings();
@@ -74,8 +76,7 @@ for (const lang of ["de", "en"]) {
     await wait(`return !!r.querySelector('select[data-dlg="conn"]')`);
     check(`[${tag}] Verbindungsart von Hand hat Vorrang (${T.wifi})`, (await ev(`return r.host._connOf(r.host._devices.find((x)=>x.id==="i"))`)) === "wifi" && (await ev(`const s=r.querySelector('select[data-dlg="conn"]'); return s.value`)) === "wifi");
     await toOverview();
-    const still = await find(T.role);
-    check(`[${tag}] Rolle bleibt als Zusatzangabe`, still && still[1].startsWith(T.sleepy), JSON.stringify(still));
+    check(`[${tag}] Rolle bleibt als Zusatzangabe`, (await roleLine()) === T.sleepy, await roleLine());
     await toSettings();
     await (await handle('select[data-dlg="conn"]')).selectOption("");
     await wait(`return r.host._devices.find((x)=>x.id==="i").connection_manual === false`);
@@ -85,27 +86,27 @@ for (const lang of ["de", "en"]) {
     await p.evaluate(() => { window.__matterDiag = { network_type: "thread", node_type: "routing_end_device", network_name: "Zuhause-Thread" }; });
     await refresh();
     await open("c");
-    check(`[${tag}] Router`, (await find(T.role))?.[1].startsWith(T.router), JSON.stringify(await find(T.role)));
+    check(`[${tag}] Router`, (await roleLine()) === T.router, await roleLine());
     await close();
     await p.evaluate(() => { window.__matterDiag = { network_type: "thread", node_type: "unbekannt_xyz", network_name: "" }; });
     await refresh();
     await open("c");
-    check(`[${tag}] unbekannte Rolle und leerer Netzname: keine Kacheln`, !(await find(T.role)) && !(await find(T.net)));
+    check(`[${tag}] unbekannte Rolle und leerer Netzname: keine Kacheln`, !(await roleLine()) && !(await find(T.net)));
     await close();
     await p.evaluate(() => { window.__matterDiag = { network_type: "wifi", node_type: "end_device", network_name: "MeinWLAN" }; });
     await refresh();
     await open("c");
-    check(`[${tag}] WLAN: keine Rolle, aber die SSID als Netz`, !(await find(T.role)) && (await find(T.net))?.[1].startsWith("MeinWLAN"), JSON.stringify(await find(T.net)));
+    check(`[${tag}] WLAN: keine Rolle, aber die SSID als Netz`, !(await roleLine()) && (await find(T.net))?.[1].startsWith("MeinWLAN"), JSON.stringify(await find(T.net)));
     await close();
     await p.evaluate(() => { window.__matterDiag = { network_type: "thread", node_type: "bridge", network_name: null }; });
     await refresh();
     await open("c");
-    check(`[${tag}] Bridge, ohne Netzname: keine Kacheln`, !(await find(T.role)) && !(await find(T.net)));
+    check(`[${tag}] Bridge, ohne Netzname: keine Kacheln`, !(await roleLine()) && !(await find(T.net)));
     await close();
     await p.evaluate(() => { window.__matterDiag = null; });
     await refresh();
     await open("c");
-    check(`[${tag}] Diagnose-Fehler: keine Kacheln, Popup funktioniert`, !(await find(T.role)) && !(await find(T.net)) && (await ev(`return !!r.querySelector('dialog.device [data-tab="set"]')`)));
+    check(`[${tag}] Diagnose-Fehler: keine Kacheln, Popup funktioniert`, !(await roleLine()) && !(await find(T.net)) && (await ev(`return !!r.querySelector('dialog.device [data-tab="set"]')`)));
     // Kein Passwort, kein Schlüssel im Popup
     check(`[${tag}] nichts Sicherheitsrelevantes im Popup`, !(await ev(`return /password|passwort|credential|secret/i.test(r.querySelector("dialog.device").textContent)`)));
     await close();

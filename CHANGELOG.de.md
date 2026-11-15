@@ -7,6 +7,18 @@ Alle nennenswerten Änderungen an dieser Integration stehen in dieser Datei.
 Das Format folgt [Keep a Changelog](https://keepachangelog.com/de/1.1.0/),
 die Versionsnummern folgen [Semantic Versioning](https://semver.org/lang/de/).
 
+## [2.230.0] - 2026-11-15
+
+Thread-Geräte zeigen ihre Rolle im Netz und über welchen Router sie verbunden sind.
+
+### Hinzugefügt
+
+- **Rolle im Thread-Netz:** im Abschnitt "Verbindung" des Popups steht die Rolle jetzt als zweite Zeile unter "Thread", mit kleinem Symbol: Router, Leader, Endgerät, schlafendes Endgerät, router-fähiges Endgerät oder Bridge. Sie kommt aus der Thread-Diagnose des Matter-Knotens (nicht mehr aus einem Aufruf des Browsers beim Matter-Server) und zeigt damit auch die Rollen, die vorher fehlten (Leader, router-fähiges Endgerät, Bridge). Die eigene Kachel "Thread-Rolle" entfällt, "Netz" bleibt. Die Rolle bleibt eine Zusatzangabe, auch wenn die Verbindungsart von Hand gesetzt ist.
+- **"Verbunden über" bei Thread-Endgeräten:** die Kachel nennt den Router, an dem das Gerät hängt (Thread kennt nur diesen einen), aus der Nachbartabelle des Geräts. Der Name kommt aus Home Assistant: Matter-Geräte, die ihre eigene Thread-Adresse melden, und die Border Router der Integration "Thread" (Marke und Modell); ein unbekannter Router heisst "Router …A1B2" (Ende seiner Adresse).
+- **Fenster "Empfang" bei Thread:** bei einem Endgerät eine Karte "Verbunden über" wie die Bluetooth-Karte "Empfänger": ein Balken mit den Routern, über die das Gerät im Zeitraum verbunden war, Anteil und mittlerer Empfang, der jetzige Wert mit LQI (0 bis 3) und die Wechsel des Elternteils (vom Panel ab dem Update aufgezeichnet). Bei einem Router (oder Leader) eine Karte "Nachbarn" mit der jetzigen Nachbartabelle, der stärkste zuerst, "✓ zählt" bei dem, dessen Wert der Empfang ist, angehängte Geräte als "hängt an diesem Gerät" gekennzeichnet, ohne Balken und Anteil, weil sich der Stand laufend ändert.
+- **Tests:** neue Suite `thread-e2e` (88 Prüfungen) und 5 weitere Python-Tests; die Suite `matter-e2e` folgt dem neuen Platz der Rolle. Das Mockup liegt unter `docs/mockups/thread-v1`.
+- **Noch nicht an einem echten Matter-Server geprüft:** wie beim Empfang der Thread-Geräte (2.229.0). Die Namen der Router klappen am besten bei Matter-Geräten, die ihre eigene Adresse melden (neuere Firmware); Border Router findet das Panel über den Zeroconf-Zwischenspeicher von Home Assistant. Bitte melden, was du siehst.
+
 ## [2.229.0] - 2026-11-15
 
 Empfang für Thread-Geräte, aufgezeichnet wie bei Bluetooth.
@@ -6272,6 +6284,7 @@ Erste Vorabversion.
   GitHub Actions für die Prüfungen von HACS und hassfest sowie die Tests.
 
 [2.6.0]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v2.6.0
+[2.230.0]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v2.230.0
 [2.229.0]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v2.229.0
 [2.228.0]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v2.228.0
 [2.227.0]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v2.227.0

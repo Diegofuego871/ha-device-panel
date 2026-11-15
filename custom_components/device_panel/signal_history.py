@@ -40,7 +40,18 @@ from .availability import ONLINE
 from .battery_history import STATS_FROM_DAYS, _history, _statistics, held, thin
 from .const import CONF_SIGNAL_DAYS, CONF_SIGNAL_MB, DATA_AVAILABILITY, DEFAULT_SIGNAL_DAYS, DOMAIN, SIGNAL_WEAK_DBM, SIGNAL_WEAK_LQI, STORAGE_VERSION
 from .compat import device_entry_ids
-from .devices import ble_listeners, ble_receiver, monitored_devices, signal_limit, signal_sensor, signal_source, signal_weak
+from .devices import (
+    ble_listeners,
+    ble_receiver,
+    monitored_devices,
+    signal_limit,
+    signal_sensor,
+    signal_source,
+    signal_weak,
+    thread_info,
+    thread_listeners,
+    thread_parent,
+)
 from .labels import strip_address
 from .options_api import effective
 from .storage_util import PeriodicSaver
@@ -315,7 +326,8 @@ class SignalLog:
             domains = {e.domain for eid in device_entry_ids(device) if (e := self.hass.config_entries.async_get_entry(eid))}
             signal, _via, source = signal_source(self.hass, device, entries, domains, smooth=False)
             # Der Weg gilt für jedes Bluetooth-Gerät, auch wenn sein Empfang aus einem Sensor (Recorder) kommt; ohne Adresse ist er None und ohne Folgen
-            wrote = self.note_via(device.id, ble_receiver(self.hass, device), now) or wrote
+            # Bei einem Thread-Endgerät (seit 2.230.0) der Router, an dem es hängt: dieselbe Aufzeichnung, Wechsel des Elternteils sind die Wechsel
+            wrote = self.note_via(device.id, ble_receiver(self.hass, device) or thread_parent(self.hass, device), now) or wrote
             if not signal or signal.get("value") is None:
                 continue
             if source not in LOGGED and (source is None or recorded(self.hass, source)):
@@ -626,14 +638,17 @@ async def async_signal_history(
     if log is not None:
         # Weg: auch bei ausgefallenem Gerät ("war"), solange es einen gibt; der Mittelwert je Empfänger aus den Punkten, wo es welche gibt
         result["via"] = log.via_summary(device.id, range_key, now, result["points"])
-    # Wer das Gerät gerade hört (seit 2.109.0): leer ohne Bluetooth-Adresse oder wenn es niemand hört
-    result["listeners"] = ble_listeners(hass, device)
+    # Wer das Gerät gerade hört (seit 2.109.0): leer ohne Bluetooth-Adresse oder wenn es niemand hört; bei Thread (seit 2.230.0) der Router, an dem
+    # ein Endgerät hängt ("parent"), oder die Nachbarn eines Routers ("neighbors")
+    result["listeners"] = async_signal_listeners(hass, device)
+    info = thread_info(hass, device)
+    result["thread_mode"] = info["mode"] if info and info["rows"] else None
     return result
 
 
 def async_signal_listeners(hass: HomeAssistant, device: dr.DeviceEntry) -> list[dict[str, Any]]:
     """Für die Live-Zeile: wer das Gerät gerade hört (ohne den Verlauf neu zu laden)."""
-    return ble_listeners(hass, device)
+    return ble_listeners(hass, device) or thread_listeners(hass, device)
 
 
 async def _signal_points(hass: HomeAssistant, log: SignalLog | None, device: dr.DeviceEntry, range_key: str, now: float) -> dict[str, Any]:
