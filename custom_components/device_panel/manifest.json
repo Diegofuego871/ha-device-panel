@@ -3,6 +3,7 @@
   "name": "Device Panel",
   "after_dependencies": [
     "bluetooth",
+    "matter",
     "recorder",
     "zha"
   ],
