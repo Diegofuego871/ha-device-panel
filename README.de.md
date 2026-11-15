@@ -10,6 +10,8 @@
 
 <p><a href="https://my.home-assistant.io/redirect/hacs_repository/?owner=Diegofuego871&repository=ha-device-panel&category=integration"><img src="https://my.home-assistant.io/badges/hacs_repository.svg" alt="Open your Home Assistant instance and open a repository inside the Marketplace."></a></p>
 
+<p>Erst mal ansehen? <a href="https://diegofuego871.github.io/ha-device-panel/docs/tour/"><b>Zur interaktiven Tour</b></a> im Browser, ohne Installation.</p>
+
 <p>
 <a href="https://hacs.xyz/"><img src="https://img.shields.io/badge/Marketplace-Default-41BDF5.svg" alt="Marketplace Default"></a>
 <a href="https://github.com/Diegofuego871/ha-device-panel/releases"><img src="https://img.shields.io/github/v/release/Diegofuego871/ha-device-panel?label=Release" alt="Neuste Version"></a>
@@ -343,6 +345,7 @@ Eine Lernseite mit kurzen Artikeln zu ausgefallenen Geräten (mit Pausen), Batte
 - **Nach dem Assistenten:** Die Seite öffnet oben mit "Einrichtung abgeschlossen" und einem grünen Haken, darunter die Kacheln. Der Assistent gilt mit "Fertigstellen" als beendet, auch wenn du die Themen nicht ansiehst oder das Fenster gleich schliesst.
 - **Später wieder:** Einstellungen › Panel › Allgemein, ganz unten, direkt unter dem Einrichtungsassistenten: "Mehr erfahren" › "Themen ansehen". Die Einstellungen bleiben dabei offen, auch mit ungespeicherten Änderungen.
 - **Nichts gespeichert:** Die Lernseite hat keine Einstellung und keinen Zustand; sie gehört deshalb auch nicht zur Sicherung.
+- **Im Browser:** dieselbe Seite als [interaktive Tour](https://diegofuego871.github.io/ha-device-panel/docs/tour/), ohne Installation (Deutsch oder Englisch, hell oder dunkel). Sie zeigt nur erfundene Daten. Die Links `#bat`, `#rt` und so weiter öffnen ein einzelnes Thema.
 
 ### Sichern und wiederherstellen
 

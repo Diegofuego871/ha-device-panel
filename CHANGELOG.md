@@ -13,7 +13,7 @@ New: the learn page as an **interactive tour** on its own web page, so you can l
 
 ### Added
 
-- **Interactive tour (`docs/tour`):** the same learn page as in the panel (nine topics with sketches and articles, same texts, styles and icons, loaded straight from the repository), as a page for GitHub Pages. Language (German or English) and appearance (light or dark) can be switched on the page; the browser language and colour scheme are the default. The address follows the topic (`#bat` for the battery article, `#rt` for routines), so a link can point to a single topic, and the browser's Back button works. The page shows made-up data only, talks to no Home Assistant and stores nothing.
+- **Interactive tour (`docs/tour`):** the same learn page as in the panel (nine topics with sketches and articles, same texts, styles and icons, loaded straight from the repository), as a page for GitHub Pages. Language (German or English) and appearance (light or dark) can be switched on the page; the browser language and colour scheme are the default. The address follows the topic (`#bat` for the battery article, `#rt` for routines), so a link can point to a single topic, and the browser's Back button works. The page shows made-up data only, talks to no Home Assistant and stores nothing. Both READMEs offer the tour in addition to the existing text: a line below the title and a bullet in the section "Learn more".
 - **Tests:** new suite `tour-e2e` (100 checks: German and English, desktop and phone, light and dark, topics, links, language and appearance switch).
 
 ### Changed

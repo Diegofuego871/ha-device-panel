@@ -13,7 +13,7 @@ Neu: die Lernseite als **interaktive Tour** auf einer eigenen Webseite, damit ma
 
 ### Hinzugefügt
 
-- **Interaktive Tour (`docs/tour`):** dieselbe Lernseite wie im Panel (neun Themen mit Skizzen und Artikeln, gleiche Texte, Stile und Symbole, direkt aus dem Repository geladen) als Seite für GitHub Pages. Sprache (Deutsch oder Englisch) und Darstellung (hell oder dunkel) lassen sich auf der Seite umschalten; Vorgabe sind Sprache und Farbschema des Browsers. Die Adresse folgt dem Thema (`#bat` für den Batterie-Artikel, `#rt` für Routinen), ein Link kann also auf ein einzelnes Thema zeigen, und die Zurück-Taste des Browsers geht. Die Seite zeigt nur erfundene Daten, spricht mit keinem Home Assistant und speichert nichts.
+- **Interaktive Tour (`docs/tour`):** dieselbe Lernseite wie im Panel (neun Themen mit Skizzen und Artikeln, gleiche Texte, Stile und Symbole, direkt aus dem Repository geladen) als Seite für GitHub Pages. Sprache (Deutsch oder Englisch) und Darstellung (hell oder dunkel) lassen sich auf der Seite umschalten; Vorgabe sind Sprache und Farbschema des Browsers. Die Adresse folgt dem Thema (`#bat` für den Batterie-Artikel, `#rt` für Routinen), ein Link kann also auf ein einzelnes Thema zeigen, und die Zurück-Taste des Browsers geht. Die Seite zeigt nur erfundene Daten, spricht mit keinem Home Assistant und speichert nichts. Beide READMEs bieten die Tour zusätzlich zum bestehenden Text an: eine Zeile unter dem Titel und ein Punkt im Abschnitt "Mehr erfahren".
 - **Tests:** neue Suite `tour-e2e` (100 Prüfungen: Deutsch und Englisch, Desktop und Handy, hell und dunkel, Themen, Links, Umschalten von Sprache und Darstellung).
 
 ### Geändert

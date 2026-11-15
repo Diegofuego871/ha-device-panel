@@ -10,6 +10,8 @@
 
 <p><a href="https://my.home-assistant.io/redirect/hacs_repository/?owner=Diegofuego871&repository=ha-device-panel&category=integration"><img src="https://my.home-assistant.io/badges/hacs_repository.svg" alt="Open your Home Assistant instance and open a repository inside the Marketplace."></a></p>
 
+<p>Want a look first? <a href="https://diegofuego871.github.io/ha-device-panel/docs/tour/"><b>Take the interactive tour</b></a> in your browser, no installation needed.</p>
+
 <p>
 <a href="https://hacs.xyz/"><img src="https://img.shields.io/badge/Marketplace-Default-41BDF5.svg" alt="Marketplace Default"></a>
 <a href="https://github.com/Diegofuego871/ha-device-panel/releases"><img src="https://img.shields.io/github/v/release/Diegofuego871/ha-device-panel?label=release" alt="Latest release"></a>
@@ -343,6 +345,7 @@ A learn page with short articles on offline devices (with pauses), battery warni
 - **After the wizard:** The page opens with "Setup complete" and a green tick on top, the tiles below. The wizard counts as finished with "Finish", even if you do not look at the topics or close the window right away.
 - **Again later:** Settings › Panel › General, at the very bottom, right below the setup wizard: "Learn more" › "View topics". The settings stay open, also with unsaved changes.
 - **Nothing stored:** The learn page has no setting and no state, so it is not part of the backup either.
+- **In the browser:** the same page as an [interactive tour](https://diegofuego871.github.io/ha-device-panel/docs/tour/), without installing anything (German or English, light or dark). It shows made-up data only. The links `#bat`, `#rt` and so on open a single topic.
 
 ### Back up and restore
 
