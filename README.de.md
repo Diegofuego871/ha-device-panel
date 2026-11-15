@@ -10,7 +10,7 @@
 
 <p><a href="https://my.home-assistant.io/redirect/hacs_repository/?owner=Diegofuego871&repository=ha-device-panel&category=integration"><img src="https://my.home-assistant.io/badges/hacs_repository.svg" alt="Open your Home Assistant instance and open a repository inside the Marketplace."></a></p>
 
-<p>Erst mal ansehen? <a href="https://diegofuego871.github.io/ha-device-panel/docs/tour/"><b>Zur interaktiven Tour</b></a> im Browser, ohne Installation.</p>
+<p>Neugierig, was es kann? <a href="https://diegofuego871.github.io/ha-device-panel/docs/tour/"><b>Die Funktionen in der interaktiven Tour entdecken</b></a>: kurze Erklärungen mit Beispieldaten, direkt im Browser.</p>
 
 <p>
 <a href="https://hacs.xyz/"><img src="https://img.shields.io/badge/Marketplace-Default-41BDF5.svg" alt="Marketplace Default"></a>

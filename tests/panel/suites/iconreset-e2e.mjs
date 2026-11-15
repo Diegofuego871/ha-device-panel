@@ -4,7 +4,7 @@ import { readFileSync } from "node:fs";
 import { chromium } from "playwright-core";
 import { launchOptions } from "../lib.mjs";
 
-const src = readFileSync(new URL("../../../custom_components/device_panel/panel/device-panel.js", import.meta.url), "utf8");
+const src = readFileSync(new URL("../../../custom_components/device_panel/panel/icons.js", import.meta.url), "utf8");
 const d = (src.match(/^ {2}reset: "([^"]+)"/m) || [])[1] || "";
 const b = await chromium.launch(launchOptions);
 let ok = true;
