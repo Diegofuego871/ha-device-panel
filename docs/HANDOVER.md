@@ -11,6 +11,12 @@ Einstieg für jede neue Claude-Code-Session. Zuerst diese Datei lesen, dann
 
 - `charge.py` `known_rechargeable`: Lademeldung gilt (global + Gerät/Integration), oder am Gerät ausdrücklich "Ein", oder Live-Aktivität für das Gerät an; `rechargeable()` und `charging_of()` nutzen sie (vorher nur `enabled()` mit globalem Schalter). Test `test_rechargeable_by_device_charge_or_live`.
 
+## Stand (2.229.0, Empfang von Thread-Geräten)
+
+- `devices._thread_signal` liest die Nachbartabelle `0/53/7` des Matter-Knotens (`matter.helpers.node_from_ha_device_id`, `node.node_data.attributes`): je Eintrag Tag 6 (averageRssi) vor Tag 7 (lastRssi), 1 bis 120 dBm negativ gilt, der stärkste Nachbar zählt; Knoten nicht erreichbar = Wert None (Art bleibt, Reiter bleibt); keine Tabelle (Matter über WLAN) oder Schnittstelle kaputt = None, der Sensor des Geräts gilt. `signal_source` setzt dann Quelle `"thread"`; `signal_history.LOGGED` enthält sie, die Aufzeichnung läuft wie bei Bluetooth. Kein Panel-Code, keine neue Einstellung (die Schwelle -80 dBm und die vier Ebenen gelten wie für jeden dBm-Empfang).
+- Vorbild: Alarmageddon 1.42.0 (`reception._thread`), dort ebenfalls nur mit Attrappen. **Nicht an einem echten Matter-Server geprüft:** bei der ersten echten Anlage klären, ob die Tabelle ankommt und wie frisch sie ist (der Matter-Server abonniert Attribute, die Nachbartabelle ändert sich aber laufend; Alter ungeprüft). `tests/test_signal_thread.py` (5 Tests, Matter-Hilfsmodul als Attrappe in `sys.modules`).
+- Matter-Struktur in der Bibliothek geprüft (python-matter-server 8.1.2): `get_attribute_value(endpoint, cluster, attribute)` und `node_data.attributes["0/53/7"]`, Strukturen als Wörterbuch mit Tags.
+
 ## Stand (2.228.0, Tour: Artikel zum Einrichtungsassistenten)
 
 - Nur die Tour hat ein zehntes Thema `wiz` ("Einrichtungsassistent", an dritter Stelle): `docs/tour/wizard.js` (Texte DE/EN, Skizze `.lrn-wz`, CSS in `docs/tour/index.html`). Im Panel nicht, dort haben die Nutzer den Assistenten gerade durchgespielt. Hook in `learn.js`: `deps.extraTopics` (id, icon, color, at, sketch), `this.topics` statt `TOPICS` in der Klasse; die Tour überschreibt `lrnSub` ("Zehn Themen") und ergänzt `lrnTopics.wiz` in ihrem `host._t`. Hash `#wiz`. Bei mehr als neun Themen setzt `learn.js` `--lrn-cols:4` an der Reiterleiste (Handy: Reihen zu vier, CSS `repeat(var(--lrn-cols, 3), …)`).

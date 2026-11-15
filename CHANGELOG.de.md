@@ -7,6 +7,15 @@ Alle nennenswerten Änderungen an dieser Integration stehen in dieser Datei.
 Das Format folgt [Keep a Changelog](https://keepachangelog.com/de/1.1.0/),
 die Versionsnummern folgen [Semantic Versioning](https://semver.org/lang/de/).
 
+## [2.229.0] - 2026-11-15
+
+Empfang für Thread-Geräte, aufgezeichnet wie bei Bluetooth.
+
+### Hinzugefügt
+
+- **Empfang von Thread-Geräten (Matter):** Home Assistant zeigt den Empfang eines Thread-Geräts nirgends als Entität. Device Panel liest ihn jetzt aus der Nachbartabelle, die Matter für das Gerät führt (Thread-Diagnose, Attribut 0/53/7): Der stärkste Nachbar zählt (bei einem Endgerät ist das sein Elternteil), je Nachbar der mittlere RSSI vor dem letzten; ungültige Werte (0 dBm, 127 dBm) fallen weg. Der Wert erscheint wie bei anderen Geräten: in der Liste, als Kachel "Empfang" und mit dem Verlauf (vom Panel selbst aufgezeichnet, Median der letzten Minuten), mit der Warnschwelle pro Gerät, Label, Integration oder global (Standard unter -80 dBm). Ein Gerät, das Matter gerade nicht erreicht, hat keinen Wert (die Tabelle ist dann veraltet), behält aber seinen Reiter mit dem Verlauf. Matter-Geräte über WLAN haben keine Nachbartabelle und behalten ihren eigenen Empfangs-Sensor.
+- **Noch nicht an einem echten Matter-Server geprüft:** Der Code ist mit Attrappen für den Matter-Knoten getestet. Wie frisch die Tabelle ist, hängt davon ab, wie oft der Matter-Server sie erneuert; bitte melden, wenn ein Thread-Gerät keinen Wert zeigt.
+
 ## [2.228.0] - 2026-11-15
 
 Die Tour-Seite hat ein zehntes Thema: eine Vorschau des Einrichtungsassistenten.
@@ -6263,6 +6272,7 @@ Erste Vorabversion.
   GitHub Actions für die Prüfungen von HACS und hassfest sowie die Tests.
 
 [2.6.0]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v2.6.0
+[2.229.0]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v2.229.0
 [2.228.0]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v2.228.0
 [2.227.0]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v2.227.0
 [2.225.0]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v2.225.0

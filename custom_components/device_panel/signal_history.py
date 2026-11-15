@@ -72,7 +72,7 @@ SAVE_DELAY = 900
 VIA_KEEP = DEFAULT_SIGNAL_DAYS * 86400  # Standard der Aufbewahrung
 VIA_CHANGES_MAX = 6
 # Quellen, die nur das Panel aufzeichnet.
-LOGGED = ("zha", "ble")
+LOGGED = ("zha", "ble", "thread")
 # Glättung (seit 2.111.0): "schwach" und die Anzeige in Liste und Popup richten sich nach dem Median der letzten Minuten, nicht nach dem
 # Einzelwert. Der Empfang eines Funkgeräts schwankt von Meldung zu Meldung um 10 dB und mehr (Fading, mehrere Empfänger); am Einzelwert
 # wechselte ein Gerät an der Schwelle ständig zwischen schwach und nicht schwach. Erst ab STEADY_MIN Messungen im Fenster, sonst der Einzelwert.

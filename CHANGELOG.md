@@ -7,6 +7,15 @@ All notable changes to this integration are documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/).
 
+## [2.229.0] - 2026-11-15
+
+Signal strength for Thread devices, recorded like Bluetooth.
+
+### Added
+
+- **Signal of Thread devices (Matter):** Home Assistant shows the signal of a Thread device nowhere as an entity. Device Panel now reads it from the neighbour table that Matter keeps for the device (Thread diagnostics, attribute 0/53/7): the strongest neighbour counts (for an end device that is its parent), per neighbour the average RSSI before the last one; invalid values (0 dBm, 127 dBm) are dropped. The value appears like the one of other devices: in the list, as the tile "Signal" and with the history (recorded by the panel itself, median of the last minutes), with the warning threshold set per device, label, integration or globally (default below -80 dBm). A device that Matter cannot reach at the moment has no value (the table is stale) but keeps its tab with the history. Matter devices over Wi-Fi have no neighbour table and keep their own signal sensor.
+- **Not yet checked with a real Matter server:** the code is tested with stand-ins for the Matter node. How fresh the table is depends on how often the Matter server refreshes it; please report if a Thread device shows no value.
+
 ## [2.228.0] - 2026-11-15
 
 The tour page has a tenth topic: a preview of the setup wizard.
@@ -6162,6 +6171,7 @@ First pre-release.
   GitHub Actions for HACS/hassfest validation and tests.
 
 [2.6.0]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v2.6.0
+[2.229.0]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v2.229.0
 [2.228.0]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v2.228.0
 [2.227.0]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v2.227.0
 [2.225.0]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v2.225.0

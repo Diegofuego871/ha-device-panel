@@ -353,7 +353,7 @@ def signal_source(
     """
     (Empfang, Empfänger, Quelle) wie in der Liste: ZHA vor dem Sensor,
     Bluetooth (seit 2.41.2) vor dem Sensor des Geräts. Quelle ist die Entität
-    des Sensors oder "zha" bzw. "ble" (Wert direkt aus der Integration, ohne
+    des Sensors oder "zha", "ble" bzw. "thread" (Wert direkt aus der Integration, ohne
     Verlauf im Recorder; signal_history zeichnet ihn selbst auf).
     Mit smooth (seit 2.111.0) gilt für Geräte mit eigener Aufzeichnung der Median der letzten Minuten statt des Einzelwerts
     (SignalLog.steady); die Aufzeichnung selbst liest den Rohwert (smooth=False), sonst glättete sie doppelt.
@@ -362,6 +362,10 @@ def signal_source(
     via = None
     if "zha" in domains and (zha := _zha_signal(hass, device.id)):
         signal, source = zha, "zha"
+    if "matter" in domains and (thread := _thread_signal(hass, device.id)):
+        # Thread-Gerät (seit 2.229.0): Matter zeigt den Empfang nirgends als Entität; ein WLAN-Gerät mit Matter hat keine Nachbartabelle
+        # (thread ist dann None) und behält seinen Sensor
+        signal, source = thread, "thread"
     ble = next((c[1] for c in device.connections if c[0] == dr.CONNECTION_BLUETOOTH), None)
     if ble:
         # Wert und Empfänger aus derselben Quelle: Der Sensor des Geräts (zum Beispiel SwitchBot "Bluetooth-Signal") liest den Scanner,
@@ -389,6 +393,53 @@ def _zha_signal(hass: HomeAssistant, device_id: str) -> dict[str, Any] | None:
     if lqi is None and rssi is None:
         return None
     return {"kind": "lqi", "value": lqi, "rssi": rssi} if lqi is not None else {"kind": "dbm", "value": rssi}
+
+
+# Thread-Empfang (seit 2.229.0, Vorbild: Alarmageddon 1.42.0): Matter legt für Thread-Geräte die Nachbartabelle der Thread-Diagnose ab (Endpunkt 0,
+# Cluster 53, Attribut 7), als Entität gibt es sie nicht. Ein Eintrag je Nachbar mit mittlerem (Tag 6) und letztem RSSI (Tag 7); bei einem
+# Endgerät ist der stärkste Nachbar sein Elternteil. Der Wert ist der letzte Stand, den der Matter-Server kennt.
+THREAD_NEIGHBORS = "0/53/7"
+_THREAD_RSSI_TAGS = (("averageRssi", "6"), ("lastRssi", "7"))
+_THREAD_RSSI_RANGE = (-120, -1)  # ausserhalb ist es kein Messwert (0 dBm, 127 dBm, "kein Wert")
+
+
+def _thread_field(entry: Any, names: tuple[str, ...]) -> Any:
+    """Feld eines Eintrags: der Matter-Server liefert Strukturen als Wörterbuch mit Tags, die Bibliothek als Objekt mit Namen."""
+    for name in names:
+        value = entry.get(name) if isinstance(entry, dict) else getattr(entry, name, None)
+        if value is not None:
+            return value
+    return None
+
+
+def _thread_signal(hass: HomeAssistant, device_id: str) -> dict[str, Any] | None:
+    """
+    {"kind": "dbm", "value": Zahl oder None} aus der Nachbartabelle eines Thread-Geräts (Matter); None, wenn das Gerät kein Thread-Gerät ist, die
+    Tabelle fehlt oder die Schnittstelle sich geändert hat (dann bleibt der Wert leer, die Liste scheitert nicht). Der stärkste Nachbar
+    zählt, je Nachbar der mittlere RSSI vor dem letzten. Ein Gerät, das Matter gerade nicht erreicht, hat keinen Wert (die Tabelle ist dann
+    veraltet), behält aber seinen Reiter "Empfang" mit dem Verlauf.
+    """
+    if "matter" not in hass.config.components:
+        return None
+    try:
+        from homeassistant.components.matter.helpers import node_from_ha_device_id  # noqa: PLC0415
+
+        node = node_from_ha_device_id(hass, device_id)
+        table = node.node_data.attributes.get(THREAD_NEIGHBORS) if node is not None else None
+        if not isinstance(table, list):
+            return None
+        low, high = _THREAD_RSSI_RANGE
+        values: list[int] = []
+        for entry in table:
+            for names in _THREAD_RSSI_TAGS:
+                rssi = _thread_field(entry, names)
+                if isinstance(rssi, (int, float)) and not isinstance(rssi, bool) and low <= rssi <= high:
+                    values.append(round(rssi))
+                    break
+        reachable = bool(getattr(node, "available", True))
+    except Exception:  # noqa: BLE001 - interne Schnittstelle von Matter
+        return None
+    return {"kind": "dbm", "value": max(values) if values and reachable else None}
 
 
 # Bluetooth-Empfang (seit 2.108.0): der stärkste Empfänger, nicht der, den Home Assistant gerade führt. HA behält die zuletzt gewählte
