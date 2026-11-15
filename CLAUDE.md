@@ -16,6 +16,9 @@ Bereich. Vorbild in Aufbau, Arbeitsweise und Design ist die Integration
 
 - Kommunikation mit dem Nutzer: Deutsch, Schweizer Rechtschreibung (nie "ß",
   immer "ss"), präzise, ohne Füllwörter. Anführungszeichen: "".
+- Zeitangaben an den Nutzer immer in Schweizer Zeit (Europe/Zurich: im Winter MEZ = UTC+1, im Sommer MESZ = UTC+2), nie in UTC. Gilt für
+  jede genannte Uhrzeit (geplante CI-Prüfungen, Zeitpunkte aus Logs, Release-Zeiten). Auch bei `send_later` und geplanten Aufgaben die Zeit
+  mit `[Europe/Zurich]` angeben und dem Nutzer die Schweizer Zeit nennen. Zeitstempel in Commits, Logs und Dateien bleiben unverändert.
 - Code-Kommentare und Docstrings auf Deutsch. Kommentare erklären das Warum,
   nicht das Was.
 - README in zwei Sprachen: `README.md` (Englisch) und `README.de.md`
