@@ -1,0 +1,97 @@
+<!doctype html><html lang="de"><meta charset="utf-8"><title>Thread: Rolle und Verbindung (Mockup, erfundene Daten)</title>
+<style>
+:root{--bg:#1c1c1c;--card:#262626;--tx:#e6e6e6;--tx2:#9a9a9a;--pri:#03a9f4;--line:#3a3a3a;--ok:#3ccf8e}
+*{box-sizing:border-box}body{margin:0;background:#0d0d0d;font:14px/1.35 Roboto,Arial,sans-serif;color:var(--tx);padding:24px;display:flex;flex-wrap:wrap;gap:24px;align-items:flex-start;width:1500px}
+.pop{width:720px;background:var(--bg);border-radius:22px;padding:20px 22px 24px;border:1px solid #333}
+h1{margin:0 0 2px;font-size:13px;color:#7d7d7d;font-weight:500;letter-spacing:.04em}
+.v{font-size:16px;font-weight:600;margin:0 0 4px;color:var(--tx)}.rec{color:var(--ok);font-size:12px;margin-left:6px;font-weight:500}
+.cap{font-size:12px;color:#7d7d7d;margin:0 0 14px}
+h3{margin:14px 0 8px;font-size:12px;letter-spacing:.06em;color:var(--tx2);font-weight:500}
+.tiles{display:grid;grid-template-columns:repeat(3,1fr);gap:10px}
+.tile{background:var(--card);border:1px solid var(--line);border-radius:14px;padding:10px 12px;min-height:74px}
+.tile small{display:block;color:var(--tx2);font-size:12px;margin-bottom:3px}.tile b{font-weight:500;font-size:15px;display:flex;align-items:center;gap:8px}
+.tile .sub{color:var(--tx2);font-size:12px;margin-top:3px;display:flex;align-items:center;gap:6px}
+.ic{width:18px;height:18px;fill:currentColor;flex:none}.ic.s{width:14px;height:14px}
+.role{color:#8ab4f8}
+.card{background:var(--card);border:1px solid var(--line);border-radius:16px;padding:14px 16px}
+.top{display:flex;justify-content:space-between;align-items:baseline}.top h4{margin:0;font-size:13px;letter-spacing:.05em}.top span{font-size:11px;color:var(--tx2)}
+.bar{display:flex;height:11px;border-radius:6px;overflow:hidden;margin:10px 0 4px}.bar i{display:block}
+.ticks{display:flex;justify-content:space-between;color:var(--tx2);font-size:11px;margin-bottom:6px}
+.row{display:flex;align-items:center;gap:10px;padding:9px 0;border-top:1px solid var(--line)}.row:first-of-type{border-top:0}
+.dot{width:9px;height:9px;border-radius:50%;flex:none}.row .nm{flex:1;min-width:0}.row .nm b{font-weight:500;display:block}.row .nm span{font-size:12px;color:var(--tx2)}
+.row .r{text-align:right;font-size:13px}.row .r span{display:block;font-size:12px;color:var(--tx2)}
+.ok{color:var(--ok);font-size:12px;font-weight:400}
+.chg{border-top:1px solid var(--line);margin-top:6px;padding-top:10px}.chg h5{margin:0 0 6px;font-size:11px;letter-spacing:.06em;color:var(--tx2);font-weight:500}.chg p{margin:0;padding:4px 0;display:flex;gap:14px;font-size:13px}.chg p em{font-style:normal;color:var(--tx2);width:42px}
+.note{font-size:12px;color:#7d7d7d;margin-top:12px}
+.tag{display:inline-block;font-size:11px;border:1px solid var(--line);border-radius:9px;padding:1px 8px;color:var(--tx2);margin-left:6px}
+.rec2{border:1px dashed #3ccf8e;border-radius:10px;padding:2px 8px;font-size:11px;color:var(--ok);margin-left:8px}
+</style>
+<body>
+<!-- Symbole -->
+<svg width="0" height="0" style="position:absolute"><defs>
+<symbol id="thread" viewBox="0 0 24 24"><path d="M12 3a3 3 0 1 1 0 6 3 3 0 0 1 0-6Zm-7.5 9a2.5 2.5 0 1 1 0 5 2.5 2.5 0 0 1 0-5Zm15 0a2.5 2.5 0 1 1 0 5 2.5 2.5 0 0 1 0-5ZM12 17a2.5 2.5 0 1 1 0 5 2.5 2.5 0 0 1 0-5Zm-.9-7.6 1.8 0 6 3.4-.9 1.6-5-2.8-5 2.8-.9-1.6Zm.9 4.6h1v3h-2v-3Z"/></symbol>
+<symbol id="router" viewBox="0 0 24 24"><path d="M12 3l9 5v8l-9 5-9-5V8l9-5Zm0 2.3L5 9.2v5.6l7 3.9 7-3.9V9.2l-7-3.9ZM12 9a3 3 0 1 1 0 6 3 3 0 0 1 0-6Z"/></symbol>
+<symbol id="end" viewBox="0 0 24 24"><path d="M12 7a5 5 0 1 1 0 10 5 5 0 0 1 0-10Zm0-5h1v3h-2V2h1Zm0 17h1v3h-2v-3h1ZM2 11h3v2H2v-2Zm17 0h3v2h-3v-2Z"/></symbol>
+<symbol id="sleep" viewBox="0 0 24 24"><path d="M12.4 3a9 9 0 1 0 8.6 11.6A7 7 0 0 1 12.4 3Z"/></symbol>
+<symbol id="crown" viewBox="0 0 24 24"><path d="M5 18h14l1.2-9-4.6 3.4L12 6l-3.6 6.4L3.8 9 5 18Zm0 2v-1h14v1H5Z"/></symbol>
+<symbol id="bridge" viewBox="0 0 24 24"><path d="M3 15h2v-3a7 7 0 0 1 14 0v3h2v2h-4v-5a5 5 0 0 0-10 0v5H3v-2Z"/></symbol>
+</defs></svg>
+
+<!-- ============ A ============ -->
+<section class="pop"><h1>GERÄTE-POPUP › ÜBERSICHT</h1><p class="v">Variante A <span class="rec2">Empfehlung</span></p>
+<p class="cap">Die Rolle steht als zweite Zeile unter der Verbindungsart, mit kleinem Symbol. "Verbunden über" nennt den Router, wie bei Bluetooth den Empfänger. Keine neue Kachel.</p>
+<h3>VERBINDUNG</h3>
+<div class="tiles">
+ <div class="tile"><small>Verbindungsart</small><b><svg class="ic"><use href="#thread"/></svg>Thread</b><div class="sub role"><svg class="ic s"><use href="#sleep"/></svg>Schlafendes Endgerät</div></div>
+ <div class="tile"><small>Verbunden über</small><b>Küche Steckdose</b><div class="sub">Router · -64 dBm</div></div>
+ <div class="tile"><small>Integration</small><b>Matter</b><div class="sub">Fensterkontakt Bad</div></div>
+</div>
+<h3>ROLLEN (je nach Gerät)</h3>
+<div class="tiles">
+ <div class="tile"><small>Verbindungsart</small><b><svg class="ic"><use href="#thread"/></svg>Thread</b><div class="sub role"><svg class="ic s"><use href="#router"/></svg>Router</div></div>
+ <div class="tile"><small>Verbindungsart</small><b><svg class="ic"><use href="#thread"/></svg>Thread</b><div class="sub role"><svg class="ic s"><use href="#end"/></svg>Endgerät</div></div>
+ <div class="tile"><small>Verbindungsart</small><b><svg class="ic"><use href="#thread"/></svg>Thread</b><div class="sub role"><svg class="ic s"><use href="#crown"/></svg>Leader (Router)</div></div>
+</div>
+<p class="note">Ein Matter-Gerät, das andere Geräte bündelt (Bridge), bekommt dieselbe Zeile "Bridge". Ohne bekannte Rolle (Gerät gerade nicht erreichbar) fehlt die Zeile.</p>
+</section>
+
+<!-- ============ B ============ -->
+<section class="pop"><h1>GERÄTE-POPUP › ÜBERSICHT</h1><p class="v">Variante B</p>
+<p class="cap">Die Rolle bekommt eine eigene vierte Kachel "Rolle im Netz" mit grösserem Symbol. Klarer, aber die Zeile "Verbindung" wird bei Thread breiter als bei allen anderen Arten.</p>
+<h3>VERBINDUNG</h3>
+<div class="tiles" style="grid-template-columns:repeat(4,1fr)">
+ <div class="tile"><small>Verbindungsart</small><b><svg class="ic"><use href="#thread"/></svg>Thread</b></div>
+ <div class="tile"><small>Rolle im Netz</small><b class="role"><svg class="ic"><use href="#sleep"/></svg>Schlafend</b><div class="sub">Endgerät, lauscht selten</div></div>
+ <div class="tile"><small>Verbunden über</small><b>Küche Steckdose</b><div class="sub">Router</div></div>
+ <div class="tile"><small>Integration</small><b>Matter</b></div>
+</div>
+<p class="note">Nachteil: vier Kacheln nebeneinander sind im Popup schmal; auf dem Handy rutscht eine in die nächste Zeile.</p>
+</section>
+
+<!-- ============ C: Empfang-Fenster Endgerät ============ -->
+<section class="pop"><h1>FENSTER "EMPFANG" · ENDGERÄT</h1><p class="v">Wie bei Bluetooth: Karte "Verbunden über" <span class="rec2">Empfehlung</span></p>
+<p class="cap">Ein Endgerät kennt nur seinen Elternteil (den Router, an dem es hängt), nicht mehrere Empfänger. Die Karte zeigt darum die Router, über die es im Zeitraum verbunden war, mit Anteil, mittlerem Empfang und den Wechseln. Der Empfang oben im Verlauf ist der des Routers.</p>
+<div class="card">
+ <div class="top"><h4>VERBUNDEN ÜBER</h4><span>Anteil und Ø: 24 Std.</span></div>
+ <div class="bar"><i style="width:71%;background:#3b82f6"></i><i style="width:21%;background:#f59e0b"></i><i style="width:8%;background:repeating-linear-gradient(45deg,#555 0 3px,#333 3px 6px)"></i></div>
+ <div class="ticks"><span>00:00</span><span>06:00</span><span>12:00</span><span>18:00</span><span>jetzt</span></div>
+ <div class="row"><i class="dot" style="background:#3b82f6"></i><div class="nm"><b>Küche Steckdose <span class="ok">✓ jetzt</span></b><span>Router · gerade -64 dBm · LQI 3</span></div><div class="r">71 %<span>Ø -66 dBm</span></div></div>
+ <div class="row"><i class="dot" style="background:#f59e0b"></i><div class="nm"><b>Nest Hub Wohnzimmer</b><span>Border Router · gerade nicht verbunden</span></div><div class="r">21 %<span>Ø -78 dBm</span></div></div>
+ <div class="chg"><h5>WECHSEL</h5><p><em>14:12</em><b>Nest Hub Wohnzimmer → Küche Steckdose</b></p><p><em>06:40</em><b>Küche Steckdose → Nest Hub Wohnzimmer</b></p></div>
+</div>
+<p class="note">Routernamen: Geräte, die Home Assistant kennt (Matter-Geräte mit Thread, Border Router der Integration "Thread"). Ein unbekannter Router heisst "Router …A1B2" (Ende seiner Adresse). Der Verlauf der Wechsel beginnt mit dem Update, ältere Wechsel lassen sich nicht nachträglich herstellen.</p>
+</section>
+
+<!-- ============ D: Empfang-Fenster Router ============ -->
+<section class="pop"><h1>FENSTER "EMPFANG" · ROUTER</h1><p class="v">Ein Router hört mehrere: Karte "Nachbarn"</p>
+<p class="cap">Ein Router oder Leader hat viele Nachbarn (andere Router und angehängte Geräte). Die Karte zeigt die jetzige Nachbartabelle, der stärkste zuerst; der Wert oben im Verlauf ist der stärkste Nachbar. Ohne Balken und Wechsel, weil der Stand sich laufend ändert.</p>
+<div class="card">
+ <div class="top"><h4>NACHBARN</h4><span>jetzt, 4 Geräte</span></div>
+ <div class="row"><i class="dot" style="background:#3b82f6"></i><div class="nm"><b>Nest Hub Wohnzimmer <span class="ok">✓ zählt</span></b><span>Border Router · Router</span></div><div class="r">-58 dBm<span>LQI 3</span></div></div>
+ <div class="row"><i class="dot" style="background:#3b82f6"></i><div class="nm"><b>Fensterkontakt Bad</b><span>Schlafendes Endgerät · hängt an diesem Gerät</span></div><div class="r">-64 dBm<span>LQI 3</span></div></div>
+ <div class="row"><i class="dot" style="background:#3b82f6"></i><div class="nm"><b>Rauchmelder Flur</b><span>Endgerät · hängt an diesem Gerät</span></div><div class="r">-71 dBm<span>LQI 2</span></div></div>
+ <div class="row"><i class="dot" style="background:#6b7280"></i><div class="nm"><b>Router …A1B2</b><span>unbekannt · Router</span></div><div class="r">-83 dBm<span>LQI 1</span></div></div>
+</div>
+<p class="note">Zusatz nur bei Routern. Wer lieber nur Endgeräte und Router mit einer einzigen Zeile "Verbunden über" haben will, lässt diese Karte weg.</p>
+</section>
+</body></html>
