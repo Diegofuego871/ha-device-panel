@@ -7,6 +7,14 @@ All notable changes to this integration are documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/).
 
+## [2.225.1] - 2026-11-15
+
+The topic "Battery warnings" of the learn page now also explains charging.
+
+### Changed
+
+- **Learn page, topic "Battery warnings":** two short sections. **Detecting charging:** the tile "Charging" in the pop-up (level, target "Full from", time left, time it will be done), the chip "Charging" in the list, the detection of a cleanly rising curve or of the device's own charging indicator, only for rechargeable devices, the last 20 charges in the window "Charges". **Watts, notification and live activity:** with the battery capacity in watt-hours the panel also estimates the power in watts; the charging notification (a push at "Full from" or when the charge ends early) and the live activity while charging (lock screen on iPhone, live update from Android 16, with "done around 14:35") are off by default and can be switched on per integration and device; the live activity needs the companion app.
+
 ## [2.225.0] - 2026-11-15
 
 The learn page "Learn more" now also explains system monitoring and backups, after outages and battery.
@@ -6106,6 +6114,7 @@ First pre-release.
   GitHub Actions for HACS/hassfest validation and tests.
 
 [2.6.0]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v2.6.0
+[2.225.1]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v2.225.1
 [2.225.0]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v2.225.0
 [2.224.1]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v2.224.1
 [2.224.0]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v2.224.0

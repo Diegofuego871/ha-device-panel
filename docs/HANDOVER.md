@@ -11,6 +11,10 @@ Einstieg für jede neue Claude-Code-Session. Zuerst diese Datei lesen, dann
 
 - `charge.py` `known_rechargeable`: Lademeldung gilt (global + Gerät/Integration), oder am Gerät ausdrücklich "Ein", oder Live-Aktivität für das Gerät an; `rechargeable()` und `charging_of()` nutzen sie (vorher nur `enabled()` mit globalem Schalter). Test `test_rechargeable_by_device_charge_or_live`.
 
+## Stand (2.225.1, Lernseite: Batterie mit Laden)
+
+- `lrnTopics.bat` (DE und EN) hat zwei Abschnitte mehr: "Laden erkennen" (Kachel "Lädt", Chip, Erkennung der Kurve oder der eigenen Ladeanzeige, nur aufladbare Geräte, 20 Ladungen) und "Watt, Meldung und Live-Aktivität" (Akku-Kapazität in Wh für die Wattschätzung, Lademeldung "Voll ab", Live-Aktivität beim Laden, beides standardmässig aus). Quelle: README "Laden" und "Live-Aktivität", `optChargeLiveInfo` (Companion-App nötig). Ändern sich Standard oder Namen, den Artikel nachführen. Test: `learn-e2e` (Schlüsselwörter, 222 Prüfungen).
+
 ## Stand (2.225.0, Lernseite: System und Backup)
 
 - `learn.js` `TOPICS` hat acht Einträge: out, bat, **sys** (Symbol `desktop`, Farbe wie die Status-App #2E8B57) und **bkp** (Symbol `save`, #455A64), dann push, rt, cards, lau. Skizzen `.lrn-sys` (drei Balken, die Festplatte an der Grenze), `.lrn-svc` mit `.lrn-sv` (Zeilen der Dienste; nicht `.sv`, das ist eine Panel-Klasse und kollidierte) und `.lrn-file` mit Vorschau; Meldungen ohne Schaltflächen (Auslastung, Backup-Fehler und -Erfolg tragen keine).

@@ -7,6 +7,14 @@ Alle nennenswerten Änderungen an dieser Integration stehen in dieser Datei.
 Das Format folgt [Keep a Changelog](https://keepachangelog.com/de/1.1.0/),
 die Versionsnummern folgen [Semantic Versioning](https://semver.org/lang/de/).
 
+## [2.225.1] - 2026-11-15
+
+Das Thema "Batterie-Warnungen" der Lernseite erklärt jetzt auch das Laden.
+
+### Geändert
+
+- **Lernseite, Thema "Batterie-Warnungen":** zwei kurze Abschnitte. **Laden erkennen:** die Kachel "Lädt" im Pop-up (Stand, Ziel "Voll ab", Restzeit, Uhrzeit des Endes), der Chip "Lädt" in der Liste, die Erkennung einer sauber steigenden Kurve oder der eigenen Ladeanzeige des Geräts, nur für aufladbare Geräte, die letzten 20 Ladungen im Fenster "Ladungen". **Watt, Meldung und Live-Aktivität:** mit der Akku-Kapazität in Wattstunden schätzt das Panel auch die Leistung in Watt; die Lademeldung (Push bei "Voll ab" oder wenn die Ladung vorzeitig endet) und die Live-Aktivität beim Laden (Sperrbildschirm am iPhone, Live-Update ab Android 16, mit "fertig gegen 14:35") sind standardmässig aus und pro Integration und Gerät einschaltbar; die Live-Aktivität braucht die Companion-App.
+
 ## [2.225.0] - 2026-11-15
 
 Die Lernseite "Mehr erfahren" erklärt jetzt auch die Systemüberwachung und die Backups, nach Ausfällen und Batterie.
@@ -6207,6 +6215,7 @@ Erste Vorabversion.
   GitHub Actions für die Prüfungen von HACS und hassfest sowie die Tests.
 
 [2.6.0]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v2.6.0
+[2.225.1]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v2.225.1
 [2.225.0]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v2.225.0
 [2.224.1]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v2.224.1
 [2.224.0]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v2.224.0
