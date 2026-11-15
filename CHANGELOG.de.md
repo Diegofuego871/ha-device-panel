@@ -7,6 +7,15 @@ Alle nennenswerten Änderungen an dieser Integration stehen in dieser Datei.
 Das Format folgt [Keep a Changelog](https://keepachangelog.com/de/1.1.0/),
 die Versionsnummern folgen [Semantic Versioning](https://semver.org/lang/de/).
 
+## [2.230.1] - 2026-11-15
+
+Namen von Thread-Routern werden bei mehr Geräten gefunden.
+
+### Behoben
+
+- **Namen der Router bei Thread-Geräten:** "Verbunden über" zeigte "Router …E46F" für einen Router, der ein Matter-Gerät ist, weil nur Geräte erkannt wurden, die ihre eigene Thread-Adresse melden (neuere Firmware). Das Panel liest jetzt auch die Hardware-Adresse der Thread-Schnittstelle, die jedes Matter-Gerät in seiner allgemeinen Diagnose meldet; ein Router, der in Home Assistant ein Matter-Gerät ist, erscheint damit mit seinem Namen. Ein Router, der weder ein Matter-Gerät noch ein Border Router der Integration "Thread" ist, heisst weiter "Router …A1B2".
+- **Der Abgleich der beiden Adressen ist noch nicht an einem echten Matter-Server geprüft;** bitte melden, wenn ein Name weiter fehlt.
+
 ## [2.230.0] - 2026-11-15
 
 Thread-Geräte zeigen ihre Rolle im Netz und über welchen Router sie verbunden sind.
@@ -6284,6 +6293,7 @@ Erste Vorabversion.
   GitHub Actions für die Prüfungen von HACS und hassfest sowie die Tests.
 
 [2.6.0]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v2.6.0
+[2.230.1]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v2.230.1
 [2.230.0]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v2.230.0
 [2.229.0]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v2.229.0
 [2.228.0]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v2.228.0

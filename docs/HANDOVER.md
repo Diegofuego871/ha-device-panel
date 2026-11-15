@@ -11,6 +11,11 @@ Einstieg für jede neue Claude-Code-Session. Zuerst diese Datei lesen, dann
 
 - `charge.py` `known_rechargeable`: Lademeldung gilt (global + Gerät/Integration), oder am Gerät ausdrücklich "Ein", oder Live-Aktivität für das Gerät an; `rechargeable()` und `charging_of()` nutzen sie (vorher nur `enabled()` mit globalem Schalter). Test `test_rechargeable_by_device_charge_or_live`.
 
+## Stand (2.230.1, Namen von Thread-Routern)
+
+- Am echten Gerät (Nutzer, 2.230.0) kamen Rolle, "Verbunden über" und der Wert an, der Router hiess aber "Router …E46F". Neu `devices._thread_addresses`: neben `0/53/63` auch die Hardware-Adresse der Thread-Schnittstelle in `0/51/0` (Eintrag mit Art Tag 7 = 4, Adresse Tag 4, Base64, 8 Bytes, Big-Endian wie die Adresse der Nachbartabelle). Test `test_router_name_from_the_hardware_address_of_its_thread_interface`.
+- Ungeprüft: dass die Hardware-Adresse der Schnittstelle die Adresse der Nachbartabelle ist (bei OpenThread mit zufälliger Adresse könnten sie abweichen). Fehlt der Name weiter, die Adressen des Routers und der Nachbartabelle (Diagnose-Download des Matter-Geräts) vergleichen.
+
 ## Stand (2.230.0, Thread: Rolle, Verbunden über, Nachbarn)
 
 - Backend `devices.py`: `thread_info(hass, device)` (Rolle aus `0/53/1`: 2 sleepy, 3 end, 4 reed, 5 router, 6 leader; Bridge aus `node.is_bridge_device`; Zeilen aus der Nachbartabelle mit Art (`child`, `rxOnWhenIdle`, `fullThreadDevice`), RSSI (mittlerer vor letztem), LQI 0 bis 3, Alter, `used` = stärkster; Modus `parent` bei Endgeräten, sonst `neighbors`), `thread_listeners`, `thread_parent` (Schlüssel = Adresse hex, Name), `_thread_role_of` (Feld `thread_role` in der Geräteliste, "bridge" gewinnt). Namen: `_thread_names` = Border Router aus dem Zeroconf-Zwischenspeicher (`thread.discovery.async_read_zeroconf_cache`, im Hintergrund alle 5 Min., Adresse `xa` = Adresse des Nachbarn: ungeprüft) und Matter-Geräte mit eigener Adresse `0/53/63` (alle 60 s neu); unbekannt = "Router …A1B2"/"Thread …A1B2". `DATA_THREAD_NAMES`. `signal_source`: Quelle `thread`, `via` = Elternteil (Endgerät). `manifest.after_dependencies` enthält `matter` (Hassfest).

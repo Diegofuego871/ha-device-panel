@@ -247,3 +247,22 @@ async def test_via_is_the_parent_and_changes_are_recorded(hass: HomeAssistant, m
     result = await signal_history.async_signal_history(hass, log, kontakt, "24h", time.time() + 3600)
     assert result["thread_mode"] == "parent" and result["listeners"][0]["name"] == "Google Nest Hub"
     assert [r["name"] for r in result["via"]["receivers"]] == ["Gerät steckdose", "Google Nest Hub"]
+
+
+async def test_router_name_from_the_hardware_address_of_its_thread_interface(hass: HomeAssistant, monkeypatch) -> None:
+    """2.230.1: Geräte ohne eigenes Attribut 0/53/63 (ältere Firmware) melden ihre Thread-Adresse in der allgemeinen Diagnose 0/51/0 (Base64)."""
+    import base64
+
+    iface = [
+        {"4": base64.b64encode(bytes.fromhex("AABBCCDDEEFF")).decode(), "7": 1, "1": True},  # WLAN (6 Bytes): zählt nicht
+        {"4": base64.b64encode(EXT_ROUTER.to_bytes(8, "big")).decode(), "7": 4, "1": True},  # Thread
+    ]
+    steckdose = _thread_node(5, [])
+    steckdose.node_data.attributes[devices.NETWORK_INTERFACES] = iface
+    made = await _thread_devices(hass, monkeypatch, {"kontakt": _thread_node(3, [_neighbor(EXT_ROUTER, -19)]), "steckdose": steckdose})
+    row = devices.thread_info(hass, made["kontakt"])["rows"][0]
+    assert row["name"] == "Gerät steckdose" and row["known"]
+    # Kaputte Werte bringen nichts durcheinander
+    broken = _thread_node(5, [])
+    broken.node_data.attributes[devices.NETWORK_INTERFACES] = [{"4": "###", "7": 4}, "kein Wörterbuch", {"4": b"\x01", "7": 4}]
+    assert devices._thread_addresses(broken) == set()

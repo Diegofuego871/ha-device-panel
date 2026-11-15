@@ -9,6 +9,7 @@ Schnittstelle, bleibt das Feld leer, statt dass die Liste scheitert.
 
 from __future__ import annotations
 
+import base64
 import logging
 import time
 from collections.abc import Iterator
@@ -406,6 +407,8 @@ def _zha_signal(hass: HomeAssistant, device_id: str) -> dict[str, Any] | None:
 THREAD_ROLE = "0/53/1"
 THREAD_NEIGHBORS = "0/53/7"
 THREAD_EXT = "0/53/63"
+NETWORK_INTERFACES = "0/51/0"  # Allgemeine Diagnose: Netzwerkschnittstellen des Geräts, bei Thread mit der Hardware-Adresse (Tag 4, Art Tag 7 = 4)
+_IFACE_THREAD = 4
 _THREAD_ROLES = {2: "sleepy", 3: "end", 4: "reed", 5: "router", 6: "leader"}
 _THREAD_ENDS = ("sleepy", "end", "reed")  # Rollen, die an einem Router hängen (Elternteil statt Nachbarn)
 _THREAD_RSSI_RANGE = (-120, -1)  # ausserhalb ist es kein Messwert (0 dBm, 127 dBm, "kein Wert")
@@ -491,18 +494,37 @@ def _thread_signal(hass: HomeAssistant, device_id: str) -> dict[str, Any] | None
     return {"kind": "dbm", "value": max(values) if values and reachable else None}
 
 
+def _thread_addresses(node: Any) -> set[int]:
+    """
+    Die Thread-Adressen (EUI-64) eines Matter-Knotens: sein eigenes Attribut 0/53/63 (nur neuere Geräte) und die Hardware-Adresse seiner Thread-
+    Schnittstelle in der allgemeinen Diagnose 0/51/0 (alle Geräte; der Matter-Server liefert Bytes als Base64-Text).
+    """
+    found: set[int] = set()
+    try:
+        attrs = node.node_data.attributes
+        if own := _thread_int(attrs.get(THREAD_EXT)):
+            found.add(own)
+        for iface in attrs.get(NETWORK_INTERFACES) or []:
+            if _thread_field(iface, ("type", "7")) != _IFACE_THREAD:
+                continue
+            raw = _thread_field(iface, ("hardwareAddress", "4"))
+            if isinstance(raw, str):
+                raw = base64.b64decode(raw)
+            if isinstance(raw, (bytes, bytearray)) and len(raw) == 8 and (value := int.from_bytes(raw, "big")):
+                found.add(value)
+    except Exception:  # noqa: BLE001 - interne Schnittstelle von Matter, kaputter Wert
+        pass
+    return found
+
+
 def _thread_device_names(hass: HomeAssistant) -> dict[int, str]:
-    """Adresse (Thread) -> Name der Matter-Geräte, die ihre eigene Adresse melden (Attribut 0/53/63, neuere Geräte)."""
+    """Adresse (Thread) -> Name der Matter-Geräte (eigene Adresse 0/53/63 oder Hardware-Adresse der Thread-Schnittstelle 0/51/0)."""
     names: dict[int, str] = {}
     for device in registry_devices(dr.async_get(hass)):
         if not any((e := hass.config_entries.async_get_entry(i)) and e.domain == "matter" for i in device_entry_ids(device)):
             continue
         node = _thread_node(hass, device.id)
-        try:
-            ext = _thread_int(node.node_data.attributes.get(THREAD_EXT)) if node is not None else None
-        except Exception:  # noqa: BLE001 - interne Schnittstelle von Matter
-            ext = None
-        if ext:
+        for ext in _thread_addresses(node) if node is not None else ():
             names[ext] = device.name_by_user or device.name or device.id
     return names
 
