@@ -7,6 +7,19 @@ Alle nennenswerten Änderungen an dieser Integration stehen in dieser Datei.
 Das Format folgt [Keep a Changelog](https://keepachangelog.com/de/1.1.0/),
 die Versionsnummern folgen [Semantic Versioning](https://semver.org/lang/de/).
 
+## [2.225.0] - 2026-11-15
+
+Die Lernseite "Mehr erfahren" erklärt jetzt auch die Systemüberwachung und die Backups, nach Ausfällen und Batterie.
+
+### Hinzugefügt
+
+- **Thema "System überwachen":** die App "Status" mit ihren drei Reitern (Dienste mit "läuft", "verspätet" oder "steht" und Neustart-Knopf je Teil, System mit den Grafiken zu Prozessor, Arbeitsspeicher und Festplatte, Einstellungen), **wie das Panel die Sensoren selbst findet** ("System Monitor" zuerst, sonst die Werte von Home Assistant Core aus der Supervisor-Integration als Werte des Prozesses gekennzeichnet, bei mehreren Festplatten die Hauptfestplatte "/" vorn, Hinweis und Knopf zum Einschalten, eigener Sensor unter "Quelle der Werte") und die **Warnung bei hoher Auslastung** (Grenze, Standard 99 %, Mindestdauer, Standard 3 Minuten, Entwarnung). Hinweis zur Festplatte (tiefere Grenze lohnt sich) und zur Grenze (steht Home Assistant selbst, meldet das niemand). Die Skizze zeigt drei Balken (Festplatte an der Grenze), den Zustand zweier Dienste mit Neustart und die Warnung.
+- **Thema "Backup":** **Einstellungen sichern und wiederherstellen** (Kapitel in Einstellungen › Panel › Allgemein: Teile wählen, Vorschau vor dem Übernehmen, was fehlt, wird genannt, keine Zugangsdaten in der Datei, "Kopieren" und "Text einfügen" am Handy), die **Warnung bei Backup-Fehler** (auch beim Hochladen oder bei einem Backup, das nicht fertig wird; Meldung bei Erfolg ersetzt die erste; "Sofort" oder "Einmal täglich") und **wie das Panel die längste Dauer selbst erkennt** ("Automatisch": das längste der letzten 5 erfolgreichen Backups plus 20 Minuten, 10 Minuten bis 24 Stunden; frühere Läufe aus dem Verlauf von Home Assistant; solange weniger als zwei Backups bekannt sind, gilt der feste Wert, "Fest" gibt die Dauer von Hand). Die Skizze zeigt die Sicherungsdatei mit Vorschau und die Meldungen bei Fehler und bei Erfolg.
+
+### Geändert
+
+- **Reihenfolge und Reiter:** System und Backup stehen nach Ausfällen und Batterie; die Seite hat nun acht Themen ("Acht Themen, je etwa 2 Minuten"). Die acht Reiter stehen am Desktop in einer Zeile, am Handy (und bei schmalen Fenstern) in zwei Zeilen zu vier.
+
 ## [2.224.1] - 2026-11-14
 
 Der Artikel zu Routinen auf der Lernseite beschreibt auch die Nutzung als Timer und als Schalter und Knopf in Home Assistant.
@@ -6194,6 +6207,7 @@ Erste Vorabversion.
   GitHub Actions für die Prüfungen von HACS und hassfest sowie die Tests.
 
 [2.6.0]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v2.6.0
+[2.225.0]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v2.225.0
 [2.224.1]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v2.224.1
 [2.224.0]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v2.224.0
 [2.222.0]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v2.222.0

@@ -2884,6 +2884,26 @@ dialog.learn-dlg[open] { display: flex; flex-direction: column; }
 .lrn-tip { padding: 10px 12px; border-left: 3px solid var(--lc); border-radius: 14px; background: var(--dp-subtle); color: color-mix(in srgb, var(--dp-text) 85%, transparent); font-size: 13px; line-height: 1.5; }
 .lrn-tip b { color: var(--dp-text); font-weight: 500; }
 /* Skizzen (in em) */
+.lrn-sys { display: flex; flex-direction: column; gap: .55em; padding: .8em 1em; border: 1px solid #3a3a3a; border-radius: 1.2em; background: #262626; color: #eee; }
+.lrn-sys .ls-r { display: grid; grid-template-columns: 9.6em minmax(0, 1fr) 3em; align-items: center; gap: .7em; font-size: 1em; }
+.lrn-sys .ls-r > span:first-child { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; color: #cfcfcf; }
+.lrn-sys .ls-r b { font-weight: 500; text-align: right; }
+.lrn-sys .ls-b { position: relative; height: .6em; border-radius: .3em; background: rgba(255,255,255,.14); overflow: hidden; }
+.lrn-sys .ls-b i { position: absolute; left: 0; top: 0; bottom: 0; border-radius: .3em; background: #66bb6a; }
+.lrn-sys .ls-b.hi i { background: #ef5350; }
+.lrn-svc { display: flex; flex-direction: column; gap: .5em; padding: .8em 1em; border: 1px solid #3a3a3a; border-radius: 1.2em; background: #262626; color: #eee; }
+.lrn-svc .lrn-sv { display: flex; align-items: center; gap: .7em; }
+.lrn-svc .lrn-sv i { flex: none; width: .7em; height: .7em; border-radius: 50%; background: #66bb6a; }
+.lrn-svc .lrn-sv i.late { background: #ffb74d; }
+.lrn-svc .lrn-sv b { flex: 1; min-width: 0; font-size: 1.05em; font-weight: 500; }
+.lrn-svc .lrn-sv em { color: #9a9a9a; font-size: .95em; font-style: normal; }
+.lrn-svc .lrn-sv u { padding: .1em .7em; border-radius: .8em; background: rgba(255,255,255,.1); color: #8ab4f8; font-size: .9em; text-decoration: none; }
+.lrn-file { padding: .8em 1em; border: 1px solid #3a3a3a; border-radius: 1.2em; background: #262626; color: #eee; }
+.lrn-file .lf-h { display: flex; align-items: center; gap: .7em; }
+.lrn-file .lf-ic { display: grid; place-items: center; flex: none; width: 2.4em; height: 2.4em; border-radius: .8em; background: #455A64; color: #fff; }
+.lrn-file b { display: block; font-size: 1.05em; font-weight: 500; overflow-wrap: anywhere; }
+.lrn-file small { display: block; color: #9a9a9a; font-size: .9em; }
+.lrn-file .lf-p { margin-top: .7em; padding-top: .6em; border-top: 1px solid rgba(255,255,255,.1); color: #cfd2d6; font-size: .95em; }
 .lrn-dev { display: flex; flex-direction: column; gap: .5em; padding: .8em 1em; border: 1px solid #3a3a3a; border-radius: 1.2em; background: #262626; color: #eee; }
 .lrn-dev .ld-r { display: flex; align-items: center; gap: .7em; }
 .lrn-dev b { flex: 1; min-width: 0; font-size: 1.1em; font-weight: 500; }
@@ -2931,6 +2951,9 @@ dialog.learn-dlg[open] { display: flex; flex-direction: column; }
 .lrn-lg .bd { position: absolute; top: -.4em; right: .1em; padding: 0 .45em; border-radius: 99px; background: #e53935; color: #fff; font-size: .9em; line-height: 1.5; }
 .lrn-kopf { display: flex; justify-content: flex-end; align-items: center; gap: .6em; color: rgba(255,255,255,.7); font-size: .9em; }
 .lrn-kopf i { display: grid; place-items: center; width: 2.2em; height: 2.2em; border: 1px solid rgba(255,255,255,.35); border-radius: 50%; color: #fff; }
+/* Acht Reiter: bei genug Breite eine Zeile (die allgemeine Regel ab acht Reitern gäbe vier Spalten), sonst vier Spalten in zwei Zeilen, auch auf schmalen Handys (dort gäbe die allgemeine Regel drei) */
+dialog.learn-dlg .sub-tabs.lrn-tabs { grid-auto-flow: column; grid-template-columns: none; }
+@media (max-width: 760px) { dialog.learn-dlg .sub-tabs.lrn-tabs { grid-auto-flow: row; grid-template-columns: repeat(4, minmax(0, 1fr)); } }
 @media (prefers-reduced-motion: reduce) { .lrn-ck, .lrn-ck::after, .lrn-ck path, .lrn-page.fx { animation: none; } .lrn-card { transition: none; } }
 @media (max-width: 600px) {
   dialog.learn-dlg { width: 100%; height: 100%; max-width: 100%; max-height: 100%; margin: 0; border-radius: 0; }
@@ -2938,8 +2961,6 @@ dialog.learn-dlg[open] { display: flex; flex-direction: column; }
   .lrn-tabs { margin: 4px 16px 6px; }
   .lrn-tabs .sub-tab { gap: 4px; padding: 0 2px; font-size: 12px; }
   .lrn-tabs .sub-tab svg { display: none; }
-  /* Sechs Reiter: drei Spalten, zwei Zeilen (die allgemeine Regel ab fünf Reitern gäbe 4 + 2) */
-  dialog.learn-dlg .sub-tabs.lrn-tabs { grid-auto-flow: row; grid-template-columns: repeat(3, minmax(0, 1fr)); }
   .lrn-cards { grid-template-columns: 1fr; }
   .lrn-card .lrn-sketch { font-size: 10px; }
   .lrn-art { display: flex; flex-direction: column; gap: 12px; }

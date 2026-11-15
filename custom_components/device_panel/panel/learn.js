@@ -1,5 +1,5 @@
 /**
- * Lernseite "Mehr erfahren" (seit 2.224.0, docs/mockups/learn-v4, Variante A2): sechs Themen (Ausgefallene Geräte mit Pausen, Batterie-Warnungen, Magic Push, Routinen, Dashboard-Karten, App-Launcher) als
+ * Lernseite "Mehr erfahren" (seit 2.223.0, ab 2.225.0 mit acht Themen, docs/mockups/learn-v4, Variante A2): acht Themen (Ausgefallene Geräte mit Pausen, Batterie-Warnungen, System, Backup, Magic Push, Routinen, Dashboard-Karten, App-Launcher) als
  * Kacheln mit einer kleinen Skizze der Funktion; ein Tipp öffnet einen kurzen Artikel mit Reitern, "Zurück" und "Weiter". Zwei Einstiege:
  * nach dem Einrichtungsassistenten (mit Kopf "Einrichtung abgeschlossen") und in Einstellungen › Panel › Mehr erfahren.
  *
@@ -14,6 +14,8 @@
 const TOPICS = [
   { id: "out", icon: "alert", color: "#D32F2F" },
   { id: "bat", icon: "battery", color: "#EF6C00" },
+  { id: "sys", icon: "desktop", color: "#2E8B57" },
+  { id: "bkp", icon: "save", color: "#455A64" },
   { id: "push", icon: "sparkle", color: "#8E24AA" },
   { id: "rt", icon: "flash", color: "#00838F" },
   { id: "cards", icon: "puzzle", color: "#1E88E5" },
@@ -128,6 +130,18 @@ export class LearnUi {
       const bar = `<div class="lrn-bat"><div class="lb-h"><span class="lb-ic">${mdi("battery", 20)}</span><b>${escape(k.batName)}</b><em>21 %</em></div>
         <div class="lb-bar"><i style="width:21%"></i><u style="left:15%"></u></div><div class="lb-s"><span>${escape(k.batThr)}</span>${full ? `<span>${escape(k.batFc)}</span>` : ""}</div></div>`;
       return bar + (full ? this.push(k.now, k.batTitle, k.batText, []) : "");
+    }
+    if (id === "sys") {
+      // Auslastung als drei Balken (die Festplatte an der Grenze); im Artikel dazu der Zustand der Dienste und die Warnung
+      const meter = (name, v, hi) => `<div class="ls-r"><span>${escape(name)}</span><span class="ls-b${hi ? " hi" : ""}"><i style="width:${v}%"></i></span><b>${v} %</b></div>`;
+      const load = `<div class="lrn-sys">${meter(k.sysCpu, 23)}${meter(k.sysRam, 61)}${meter(k.sysDisk, 99, true)}</div>`;
+      const svc = `<div class="lrn-svc"><div class="lrn-sv"><i class="ok"></i><b>${escape(k.svcRoutines)}</b><em>${escape(k.svcOk)}</em></div><div class="lrn-sv"><i class="late"></i><b>${escape(k.svcUpdates)}</b><em>${escape(k.svcLate)}</em><u>${escape(k.svcRestart)}</u></div></div>`;
+      return load + (full ? svc + this.push(k.now, k.sysPushTitle, k.sysPushText, []) : "");
+    }
+    if (id === "bkp") {
+      // Sicherungsdatei mit Vorschau; im Artikel dazu die Meldungen bei Fehler und bei Erfolg
+      const file = `<div class="lrn-file"><div class="lf-h"><span class="lf-ic">${mdi("save", 20)}</span><div><b>${escape(k.bkFile)}</b><small>${escape(k.bkParts)}</small></div></div><div class="lf-p">${escape(k.bkPrev)}</div></div>`;
+      return file + (full ? this.push("03:12", k.bkFailTitle, k.bkFailText, []) + this.push("04:17", k.bkOkTitle, k.bkOkText, []) : "");
     }
     if (id === "push") return this.push(k.now, k.pushTitle, k.pushText, [k.pushA1, k.pushA2, k.pushA3]);
     if (id === "rt") {

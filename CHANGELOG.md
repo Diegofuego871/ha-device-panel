@@ -7,6 +7,19 @@ All notable changes to this integration are documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/).
 
+## [2.225.0] - 2026-11-15
+
+The learn page "Learn more" now also explains system monitoring and backups, after outages and battery.
+
+### Added
+
+- **Topic "System monitoring":** the "Status" app with its three tabs (Services with "running", "late" or "stopped" and a restart button per part, System with the graphs for processor, memory and disk, Settings), **how the panel finds the sensors itself** ("System Monitor" first, otherwise the Home Assistant Core values from the Supervisor integration, marked as values of the process only, the main disk "/" first if there are several disks, a note and a button to switch them on, your own sensor under "Source of the values") and the **alert at high load** (limit, default 99 %, minimum duration, default 3 minutes, all-clear). A hint for the disk (a lower limit is worthwhile) and on the limit (if Home Assistant itself stops, nobody can report it). The sketch shows three bars (the disk at the limit), the state of two services with restart and the warning.
+- **Topic "Backups":** **backing up and restoring settings** (chapter in Settings › Panel › General: choose the parts, preview before applying, what is missing is named, no credentials in the file, "Copy" and "Paste text" on a phone), the **alert on a backup failure** (also while uploading or for a backup that does not finish; the message on success replaces the first one; "At once" or "Once a day") and **how the panel finds the longest duration itself** ("Automatic": the longest of the last 5 successful backups plus 20 minutes, 10 minutes to 24 hours; earlier runs from the history of Home Assistant; while fewer than two backups are known the fixed value applies, "Fixed" gives the duration by hand). The sketch shows the backup file with preview and the messages on failure and on success.
+
+### Changed
+
+- **Order and tabs:** System and backups come after outages and battery; the page now has eight topics ("Eight topics, about 2 minutes each"). The eight tabs stand in one row on the desktop and in two rows of four on a phone (and in narrow windows).
+
 ## [2.224.1] - 2026-11-14
 
 The article on routines on the learn page also describes the use as a timer and as a switch and button in Home Assistant.
@@ -6093,6 +6106,7 @@ First pre-release.
   GitHub Actions for HACS/hassfest validation and tests.
 
 [2.6.0]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v2.6.0
+[2.225.0]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v2.225.0
 [2.224.1]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v2.224.1
 [2.224.0]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v2.224.0
 [2.222.0]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v2.222.0

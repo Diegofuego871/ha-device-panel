@@ -11,6 +11,13 @@ Einstieg für jede neue Claude-Code-Session. Zuerst diese Datei lesen, dann
 
 - `charge.py` `known_rechargeable`: Lademeldung gilt (global + Gerät/Integration), oder am Gerät ausdrücklich "Ein", oder Live-Aktivität für das Gerät an; `rechargeable()` und `charging_of()` nutzen sie (vorher nur `enabled()` mit globalem Schalter). Test `test_rechargeable_by_device_charge_or_live`.
 
+## Stand (2.225.0, Lernseite: System und Backup)
+
+- `learn.js` `TOPICS` hat acht Einträge: out, bat, **sys** (Symbol `desktop`, Farbe wie die Status-App #2E8B57) und **bkp** (Symbol `save`, #455A64), dann push, rt, cards, lau. Skizzen `.lrn-sys` (drei Balken, die Festplatte an der Grenze), `.lrn-svc` mit `.lrn-sv` (Zeilen der Dienste; nicht `.sv`, das ist eine Panel-Klasse und kollidierte) und `.lrn-file` mit Vorschau; Meldungen ohne Schaltflächen (Auslastung, Backup-Fehler und -Erfolg tragen keine).
+- Inhalt aus README, CHANGELOG (2.185.0, 2.186.0, 2.68.0, 2.187.0) und `push.py` geprüft: Grenze 99 %, Mindestdauer 3 Minuten, eine Prüfung je Minute, Reihenfolge der Sensoren (System Monitor, dann Supervisor-Werte von Home Assistant Core, Hauptfestplatte "/" vorn), längste Backup-Dauer "Automatisch" (längstes der letzten 5 plus 20 Minuten, 10 Minuten bis 24 Stunden, solange weniger als zwei Backups bekannt sind der feste Wert, Voreinstellung 3 Stunden), "Sofort"/"Einmal täglich" (Voreinstellung 09:00), die Texte der Meldungen (`status_load_*`, `backup_failed_*`, `backup_ok_*`). Ändert sich eines davon, den Artikel in `lrnTopics` (DE und EN) nachführen.
+- Reiter: acht Reiter am Desktop in einer Zeile (Regel `dialog.learn-dlg .sub-tabs.lrn-tabs`, sonst gäbe die allgemeine Panel-Regel ab acht Reitern vier Spalten), bis 760 px und am Handy vier Spalten in zwei Zeilen.
+- Test: `learn-e2e` mit acht Themen (Reihenfolge, Skizzen, Inhalte der neuen Artikel, Reiterleiste Desktop/Handy ohne Beschneidung), 218 Prüfungen.
+
 ## Stand (2.224.1, Routinen-Artikel: Timer)
 
 - `strings.js` `lrnTopics.rt`: Abschnitt "Auch als Timer" (drei Wege am Beispiel Ladegerät: "In …", "Zurückschalten" › "Nach Dauer", Auslöser mit "mindestens so lange erfüllt"; Dauern `DELAY_MIN`/`BACK_MIN` 10 s bis `*_MAX` 7 Tage in `routines.py`, `hold_s` bis `magic.FOR_MAX` 7 Tage), Kachel-Text `short` nennt den Timer. Die Namen der Auswahlen stammen aus dem Panel (`rtKindIn`, `rtBackKindDuration`); ändern sie sich, den Artikel nachführen. Test: `learn-e2e` (Abschnitt mit drei Schritten und den Panel-Namen). README (Routinen): Zeile "Als Timer".
