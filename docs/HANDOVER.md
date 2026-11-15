@@ -11,6 +11,10 @@ Einstieg für jede neue Claude-Code-Session. Zuerst diese Datei lesen, dann
 
 - `charge.py` `known_rechargeable`: Lademeldung gilt (global + Gerät/Integration), oder am Gerät ausdrücklich "Ein", oder Live-Aktivität für das Gerät an; `rechargeable()` und `charging_of()` nutzen sie (vorher nur `enabled()` mit globalem Schalter). Test `test_rechargeable_by_device_charge_or_live`.
 
+## Stand (2.227.1, Link der Tour-Seite)
+
+- Link oben rechts: "Zurück zu GitHub" / "Back to GitHub", gleicher Tab (kein `target=_blank`). Nur `docs/tour/index.html`, keine Panel-Datei, PANEL_VERSION unverändert.
+
 ## Stand (2.227.0, interaktive Tour für GitHub Pages)
 
 - `docs/tour/index.html` zeigt die Lernseite als eigene Seite: lädt `strings.js`, `styles.js`, `icons.js`, `seg.js` und `learn.js` direkt aus `custom_components/device_panel/panel/` (relative Pfade, kein Build; GitHub Pages liefert das ganze Repository, Quelle: Branch `main`, Ordner `/`). Die Seite baut einen Shadow-Root mit `PANEL_CSS`, einer eigenen Leiste (Sprache, Hell/Dunkel, Link zu GitHub; Reiterleisten mit Kapsel über `initSeg`) und dem `<dialog class="learn-dlg lrn-embed" open>`. Hell/Dunkel über das Attribut `light` am Gastgeber und die HA-Variablen im Seiten-CSS. Sprache und Farbschema aus dem Browser, `?lang=de|en` und `?theme=light|dark` überschreiben. Adresse `#<Thema-ID>` (out, bat, sys, bkp, view, push, rt, cards, lau).

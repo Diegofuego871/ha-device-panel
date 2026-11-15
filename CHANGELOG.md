@@ -7,6 +7,14 @@ All notable changes to this integration are documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/).
 
+## [2.227.1] - 2026-11-15
+
+The link on the tour page now leads back to GitHub.
+
+### Changed
+
+- **Tour page:** the link at the top right is now "Back to GitHub" and opens in the same tab (before: "On GitHub", in a new tab).
+
 ## [2.227.0] - 2026-11-15
 
 New: the learn page as an **interactive tour** on its own web page, so you can look at the features without installing anything.
@@ -6143,6 +6151,7 @@ First pre-release.
   GitHub Actions for HACS/hassfest validation and tests.
 
 [2.6.0]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v2.6.0
+[2.227.1]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v2.227.1
 [2.227.0]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v2.227.0
 [2.225.0]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v2.225.0
 [2.224.1]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v2.224.1

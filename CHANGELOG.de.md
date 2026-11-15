@@ -7,6 +7,14 @@ Alle nennenswerten Änderungen an dieser Integration stehen in dieser Datei.
 Das Format folgt [Keep a Changelog](https://keepachangelog.com/de/1.1.0/),
 die Versionsnummern folgen [Semantic Versioning](https://semver.org/lang/de/).
 
+## [2.227.1] - 2026-11-15
+
+Der Link auf der Tour-Seite führt jetzt zurück zu GitHub.
+
+### Geändert
+
+- **Tour-Seite:** der Link oben rechts heisst jetzt "Zurück zu GitHub" und öffnet im selben Tab (vorher: "Auf GitHub", in einem neuen Tab).
+
 ## [2.227.0] - 2026-11-15
 
 Neu: die Lernseite als **interaktive Tour** auf einer eigenen Webseite, damit man die Funktionen ansehen kann, ohne etwas zu installieren.
@@ -6244,6 +6252,7 @@ Erste Vorabversion.
   GitHub Actions für die Prüfungen von HACS und hassfest sowie die Tests.
 
 [2.6.0]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v2.6.0
+[2.227.1]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v2.227.1
 [2.227.0]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v2.227.0
 [2.225.0]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v2.225.0
 [2.224.1]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v2.224.1

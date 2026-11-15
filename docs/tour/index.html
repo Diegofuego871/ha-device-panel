@@ -48,8 +48,8 @@ const root = document.getElementById("tour");
 
 // Eigene Texte der Seite (die Lernseite selbst bringt ihre Texte aus strings.js mit)
 const PAGE = {
-  de: { title: "Device Panel kennenlernen", lang: "Sprache", theme: "Darstellung", light: "Hell", dark: "Dunkel", repo: "Auf GitHub", loadFail: "Die Tour konnte nicht geladen werden. Die Beschreibung steht in der README:" },
-  en: { title: "Get to know Device Panel", lang: "Language", theme: "Appearance", light: "Light", dark: "Dark", repo: "On GitHub", loadFail: "The tour could not be loaded. The description is in the README:" },
+  de: { title: "Device Panel kennenlernen", lang: "Sprache", theme: "Darstellung", light: "Hell", dark: "Dunkel", repo: "Zurück zu GitHub", loadFail: "Die Tour konnte nicht geladen werden. Die Beschreibung steht in der README:" },
+  en: { title: "Get to know Device Panel", lang: "Language", theme: "Appearance", light: "Light", dark: "Dark", repo: "Back to GitHub", loadFail: "The tour could not be loaded. The description is in the README:" },
 };
 const REPO = "https://github.com/Diegofuego871/ha-device-panel";
 
@@ -108,7 +108,7 @@ try {
     bar.innerHTML = `<h1>${escape(p.title)}</h1>
       <div class="sub-tabs" role="tablist" aria-label="${escape(p.lang)}">${tab("tour-lang", "de", "Deutsch", lang === "de")}${tab("tour-lang", "en", "English", lang === "en")}</div>
       <div class="sub-tabs" role="tablist" aria-label="${escape(p.theme)}">${tab("tour-theme", "light", p.light, light)}${tab("tour-theme", "dark", p.dark, !light)}</div>
-      <a href="${REPO}" target="_blank" rel="noopener">${escape(p.repo)}</a>`;
+      <a href="${REPO}">${escape(p.repo)}</a>`;
   };
   const applyPage = () => {
     root.toggleAttribute("light", light);
