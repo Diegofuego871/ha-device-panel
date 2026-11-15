@@ -1,5 +1,5 @@
-// Lernseite "Mehr erfahren" (2.223.0, ab 2.225.0 mit acht Themen, docs/mockups/learn-v4, Variante A2): Einstieg in Einstellungen › Panel (Kapitel unter dem Einrichtungsassistenten),
-// Einstieg nach dem Assistenten mit dem Kopf "Einrichtung abgeschlossen" (ohne Zusatz "freiwillig"), acht Kacheln mit Skizze, Artikel mit Reitern (gleitende
+// Lernseite "Mehr erfahren" (2.223.0, ab 2.226.0 mit neun Themen, docs/mockups/learn-v4, Variante A2): Einstieg in Einstellungen › Panel (Kapitel unter dem Einrichtungsassistenten),
+// Einstieg nach dem Assistenten mit dem Kopf "Einrichtung abgeschlossen" (ohne Zusatz "freiwillig"), neun Kacheln mit Skizze, Artikel mit Reitern (gleitende
 // Kapsel), Weiter und Zurück, "Fertig" am Ende, Schliessen mit Kreuz, Esc und Tipp daneben, Handy als Vollbild, kein Überlauf, keine unaufgelösten Texte.
 // Deutsch und Englisch, Desktop und Handy, echte Klicks und Tipps.
 import { chromium } from "playwright-core";
@@ -12,19 +12,19 @@ const R = `document.querySelector("device-panel").shadowRoot`;
 const T = {
   de: {
     ttl: "Mehr erfahren", btn: "Themen ansehen", wiz: "Einrichtungsassistent", done: "Einrichtung abgeschlossen", doneText: "Alles ist gespeichert. Du kannst jetzt loslegen.",
-    pauseWord: "Pausieren bis online", pausedPill: "Pausiert bis", pausedChip: "Pausiert", timerH: "Auch als Timer", timerBits: ["In …", "2 Stunden", "Nach Dauer", "Steckdose ist ein"], haH: "Als Schalter und Knopf in Home Assistant", haBits: ["Schalter", "Knopf", "Automationen", "Dashboards"], sysBits: ["System Monitor", "99 %", "3 Minuten", "Quelle der Werte"], bkpBits: ["20 Minuten", "Vorschau", "Automatisch", "Sichern und wiederherstellen"], chargeBits: ["Laden erkennen", "Akku-Kapazität", "Watt", "Lademeldung", "Live-Aktivität", "Voll ab"], more: "Möchtest du mehr erfahren?", later: "Du findest das später unter Einstellungen › Panel › Mehr erfahren.", finish: "Fertig", close: "Schliessen", overview: "Übersicht",
-    names: ["Ausgefallene Geräte", "Batterie-Warnungen", "System überwachen", "Backup", "Magic Push", "Routinen", "Dashboard-Karten", "App-Launcher"], tabs: ["Ausfälle", "Batterie", "System", "Backup", "Magic Push", "Routinen", "Karten", "Launcher"],
-    titles: ["Wenn ein Gerät fehlt", "Bevor die Batterie leer ist", "Läuft Home Assistant gesund?", "Nichts geht verloren", "Meldungen nach Mass", "Schalten nach Plan", "Dein Dashboard, live", "Alles in einem Knopf"], of: (i) => `Thema ${i} von 8 · 2 Min.`, read: "2 Min. · Lesen",
+    pauseWord: "Pausieren bis online", pausedPill: "Pausiert bis", pausedChip: "Pausiert", timerH: "Auch als Timer", timerBits: ["In …", "2 Stunden", "Nach Dauer", "Steckdose ist ein"], haH: "Als Schalter und Knopf in Home Assistant", haBits: ["Schalter", "Knopf", "Automationen", "Dashboards"], sysBits: ["System Monitor", "99 %", "3 Minuten", "Quelle der Werte"], bkpBits: ["20 Minuten", "Vorschau", "Automatisch", "Sichern und wiederherstellen"], chargeBits: ["Laden erkennen", "Akku-Kapazität", "Watt", "Lademeldung", "Live-Aktivität", "Voll ab"], viewBits: ["Suchfeld", "Filter-Chips", "Ansicht", "Spalten", "Speichern", "Favoriten", "Startseite"], more: "Möchtest du mehr erfahren?", later: "Du findest das später unter Einstellungen › Panel › Mehr erfahren.", finish: "Fertig", close: "Schliessen", overview: "Übersicht",
+    names: ["Ausgefallene Geräte", "Batterie-Warnungen", "System überwachen", "Backup", "Ansicht und Liste", "Magic Push", "Routinen", "Dashboard-Karten", "App-Launcher"], tabs: ["Ausfälle", "Batterie", "System", "Backup", "Ansicht", "Magic Push", "Routinen", "Karten", "Launcher"],
+    titles: ["Wenn ein Gerät fehlt", "Bevor die Batterie leer ist", "Läuft Home Assistant gesund?", "Nichts geht verloren", "Die Liste, wie du sie brauchst", "Meldungen nach Mass", "Schalten nach Plan", "Dein Dashboard, live", "Alles in einem Knopf"], of: (i) => `Thema ${i} von 9 · 2 Min.`, read: "2 Min. · Lesen",
   },
   en: {
     ttl: "Learn more", btn: "View topics", wiz: "Setup wizard", done: "Setup complete", doneText: "Everything is saved. You can get started now.",
-    pauseWord: "Pause until online", pausedPill: "Paused until", pausedChip: "Paused", timerH: "Also as a timer", timerBits: ["In …", "2 hours", "After a time", "Socket is on"], haH: "As a switch and button in Home Assistant", haBits: ["switch", "button", "automations", "dashboards"], sysBits: ["System Monitor", "99 %", "3 minutes", "Source of the values"], bkpBits: ["20 minutes", "Preview", "Automatic", "Back up and restore"], chargeBits: ["Detecting charging", "battery capacity", "watts", "charging notification", "live activity", "Full from"], more: "Would you like to learn more?", later: "You can find this later under Settings › Panel › Learn more.", finish: "Done", close: "Close", overview: "Overview",
-    names: ["Offline devices", "Battery warnings", "System monitoring", "Backups", "Magic Push", "Routines", "Dashboard cards", "App launcher"], tabs: ["Outages", "Battery", "System", "Backup", "Magic Push", "Routines", "Cards", "Launcher"],
-    titles: ["When a device goes missing", "Before the battery runs out", "Is Home Assistant healthy?", "Nothing gets lost", "Notifications made to measure", "Switching on a schedule", "Your dashboard, live", "Everything in one button"], of: (i) => `Topic ${i} of 8 · 2 min`, read: "2 min · Read",
+    pauseWord: "Pause until online", pausedPill: "Paused until", pausedChip: "Paused", timerH: "Also as a timer", timerBits: ["In …", "2 hours", "After a time", "Socket is on"], haH: "As a switch and button in Home Assistant", haBits: ["switch", "button", "automations", "dashboards"], sysBits: ["System Monitor", "99 %", "3 minutes", "Source of the values"], bkpBits: ["20 minutes", "Preview", "Automatic", "Back up and restore"], chargeBits: ["Detecting charging", "battery capacity", "watts", "charging notification", "live activity", "Full from"], viewBits: ["search field", "Filter chips", "View", "Columns", "Save", "Favourites", "start page"], more: "Would you like to learn more?", later: "You can find this later under Settings › Panel › Learn more.", finish: "Done", close: "Close", overview: "Overview",
+    names: ["Offline devices", "Battery warnings", "System monitoring", "Backups", "View and list", "Magic Push", "Routines", "Dashboard cards", "App launcher"], tabs: ["Outages", "Battery", "System", "Backup", "View", "Magic Push", "Routines", "Cards", "Launcher"],
+    titles: ["When a device goes missing", "Before the battery runs out", "Is Home Assistant healthy?", "Nothing gets lost", "The list, the way you need it", "Notifications made to measure", "Switching on a schedule", "Your dashboard, live", "Everything in one button"], of: (i) => `Topic ${i} of 9 · 2 min`, read: "2 min · Read",
   },
 };
 // Skizze im Artikel je Thema (grosse Fassung): Klasse des zweiten Teils
-const SK = ["lrn-push", "lrn-push", "lrn-push", "lrn-push", "lrn-push", "lrn-push", "lrn-dc2", "lrn-kopf"];
+const SK = ["lrn-push", "lrn-push", "lrn-push", "lrn-push", "lrn-vwd", "lrn-push", "lrn-push", "lrn-dc2", "lrn-kopf"];
 
 for (const lang of ["de", "en"]) {
   const L = T[lang];
@@ -73,7 +73,7 @@ for (const lang of ["de", "en"]) {
     await tap('[data-set="learn-open"]');
     check(`[${tag}] öffnet über den Einstellungen, Übersicht`, (await wait(`return r.querySelector("${D}")?.open`)) && (await view()) === "overview" && (await ev(`return r.querySelector("dialog.settings").open`)));
     check(`[${tag}] Titel "${L.ttl}", kein Kopf "${L.done}"`, (await text(`${D} .dlg-title h2`)) === L.ttl && !(await ev(`return !!r.querySelector("${D} .lrn-done")`)));
-    check(`[${tag}] sechs Kacheln mit Name, Skizze und "${L.read}"`, await ev(`const c=[...r.querySelectorAll("${D} .lrn-card")]; return c.length===8 && c.every((x,i)=>x.querySelector(".lrn-tx b").textContent===${JSON.stringify(L.names)}[i] && x.querySelector(".lrn-sketch").children.length>0 && x.querySelector(".lrn-meta").textContent.replace(/\\s+/g," ").trim()===${JSON.stringify(L.read)} && x.querySelector(".cbtn svg"))`));
+    check(`[${tag}] neun Kacheln mit Name, Skizze und "${L.read}"`, await ev(`const c=[...r.querySelectorAll("${D} .lrn-card")]; return c.length===9 && c.every((x,i)=>x.querySelector(".lrn-tx b").textContent===${JSON.stringify(L.names)}[i] && x.querySelector(".lrn-sketch").children.length>0 && x.querySelector(".lrn-meta").textContent.replace(/\\s+/g," ").trim()===${JSON.stringify(L.read)} && x.querySelector(".cbtn svg"))`));
     const box = await ev(`const d = r.querySelector("${D}").getBoundingClientRect(); return [Math.round(d.left), Math.round(d.top), Math.round(d.width), Math.round(d.height), innerWidth, innerHeight]`);
     if (mobile) check(`[${tag}] Handy: Vollbild`, box[0] === 0 && box[1] === 0 && box[2] === box[4] && box[3] === box[5], JSON.stringify(box));
     else check(`[${tag}] Desktop: Popup in der Mitte, höchstens 900 px breit`, box[2] <= 900 && box[2] > 640 && Math.abs(box[0] + box[2] / 2 - box[4] / 2) < 4, JSON.stringify(box));
@@ -84,10 +84,10 @@ for (const lang of ["de", "en"]) {
 
     // --- Artikel: Kopf, Reiter mit Kapsel, Text mit Schritten, Skizze, Navigation
     await topicTap(0);
-    check(`[${tag}] Reihenfolge: Ausfälle, Batterie, System und Backup stehen vor Magic Push, Routinen, Karten und Launcher`, await ev(`return [...r.querySelectorAll("${D} .lrn-tabs .sub-tab")].map(x => x.dataset.i).join()==="0,1,2,3,4,5,6,7" && r.host._learn.s.i===0`));
+    check(`[${tag}] Reihenfolge: Ausfälle, Batterie, System, Backup und Ansicht stehen vor Magic Push, Routinen, Karten und Launcher`, await ev(`return [...r.querySelectorAll("${D} .lrn-tabs .sub-tab")].map(x => x.dataset.i).join()==="0,1,2,3,4,5,6,7,8" && r.host._learn.s.i===0`));
     check(`[${tag}] Artikel 1: Name "${L.names[0]}", "${L.of(1)}", Titel "${L.titles[0]}"`, (await text(`${D} .dlg-title h2`)) === L.names[0] && (await text(`${D} .dlg-sub`)) === L.of(1) && (await text(`${D} .lrn-txt h2`)) === L.titles[0]);
-    check(`[${tag}] Reiter: acht, der erste gewählt, mit gleitender Kapsel`, await ev(`const t=[...r.querySelectorAll("${D} .lrn-tabs .sub-tab")]; return t.length===8 && t.map(x=>x.innerText.trim()).join("|")===${JSON.stringify(L.tabs)}.join("|") && t[0].classList.contains("on") && t.filter(x=>x.classList.contains("on")).length===1 && !!r.querySelector("${D} .lrn-tabs .seg-pill") && t.every(x => { const s = x.querySelector("span"); return s.scrollWidth <= s.clientWidth + 1; })`));
-    check(`[${tag}] Reiter nur Symbole und Schrift der Reiterleiste (.sub-tab), keine eigene Leiste`, await ev(`return r.querySelector("${D} .lrn-tabs").classList.contains("sub-tabs") && [...r.querySelectorAll("${D} .lrn-tabs .sub-tab svg")].length===8`));
+    check(`[${tag}] Reiter: neun, der erste gewählt, mit gleitender Kapsel`, await ev(`const t=[...r.querySelectorAll("${D} .lrn-tabs .sub-tab")]; return t.length===9 && t.map(x=>x.innerText.trim()).join("|")===${JSON.stringify(L.tabs)}.join("|") && t[0].classList.contains("on") && t.filter(x=>x.classList.contains("on")).length===1 && !!r.querySelector("${D} .lrn-tabs .seg-pill") && t.every(x => { const s = x.querySelector("span"); return s.scrollWidth <= s.clientWidth + 1; })`));
+    check(`[${tag}] Reiter nur Symbole und Schrift der Reiterleiste (.sub-tab), keine eigene Leiste`, await ev(`return r.querySelector("${D} .lrn-tabs").classList.contains("sub-tabs") && [...r.querySelectorAll("${D} .lrn-tabs .sub-tab svg")].length===9`));
     check(`[${tag}] Schritte als Zeitleiste (mindestens drei) und Hinweis "Gut zu wissen"`, await ev(`return r.querySelectorAll("${D} .lt-st").length >= 3 && !!r.querySelector("${D} .lrn-tip b")`));
     check(`[${tag}] Skizze im Artikel: ausgefallenes und pausiertes Gerät, dazu die Meldung`, await ev(`return !!r.querySelector("${D} .lrn-hero .lrn-dev .ld-dot.off") && !!r.querySelector("${D} .lrn-hero .lrn-dev .ld-pill") && r.querySelectorAll("${D} .lrn-hero .lrn-push .lp-ac u").length === 3`));
     check(`[${tag}] Ausfälle erklären die Pause (Pille, Chip, Filter) und die Push-Aktion "${L.pauseWord}"`, await ev(`const t = r.querySelector("${D} .lrn-txt").innerText; return t.includes(${JSON.stringify(L.pauseWord)}) && t.includes(${JSON.stringify(L.pausedPill)}) && t.includes(${JSON.stringify(L.pausedChip)})`));
@@ -97,20 +97,20 @@ for (const lang of ["de", "en"]) {
     await shot("2-article");
 
     // Reiter wechseln das Thema, Weiter geht zum nächsten, Zurück zum vorigen
-    await tap(`${D} .lrn-tabs .sub-tab[data-i="6"]`);
-    await wait(`return r.host._learn.s.i === 6`);
-    check(`[${tag}] Reiter "${L.tabs[6]}": Artikel 7, Skizze mit zweiter Karte, Reiter gewählt`, (await text(`${D} .lrn-txt h2`)) === L.titles[6] && (await ev(`return !!r.querySelector("${D} .lrn-hero .lrn-dc2")`)) && (await ev(`return r.querySelector('${D} .lrn-tabs .sub-tab[data-i="6"]').classList.contains("on")`)));
-    await tap(`${D} .dlg-actions .dlg-btn.primary`);
+    await tap(`${D} .lrn-tabs .sub-tab[data-i="7"]`);
     await wait(`return r.host._learn.s.i === 7`);
-    check(`[${tag}] Weiter: Artikel 8 "${L.names[7]}", Fussleiste "${L.finish}"`, (await text(`${D} .dlg-title h2`)) === L.names[7] && (await text(`${D} .dlg-actions .dlg-btn.primary`)) === L.finish);
+    check(`[${tag}] Reiter "${L.tabs[7]}": Artikel 8, Skizze mit zweiter Karte, Reiter gewählt`, (await text(`${D} .lrn-txt h2`)) === L.titles[7] && (await ev(`return !!r.querySelector("${D} .lrn-hero .lrn-dc2")`)) && (await ev(`return r.querySelector('${D} .lrn-tabs .sub-tab[data-i="7"]').classList.contains("on")`)));
+    await tap(`${D} .dlg-actions .dlg-btn.primary`);
+    await wait(`return r.host._learn.s.i === 8`);
+    check(`[${tag}] Weiter: Artikel 9 "${L.names[8]}", Fussleiste "${L.finish}"`, (await text(`${D} .dlg-title h2`)) === L.names[8] && (await text(`${D} .dlg-actions .dlg-btn.primary`)) === L.finish);
     await tap(`${D} .dlg-actions .dlg-btn:not(.primary)`);
-    await wait(`return r.host._learn.s.i === 6`);
-    check(`[${tag}] Zurück: Artikel 7`, (await text(`${D} .dlg-title h2`)) === L.names[6]);
+    await wait(`return r.host._learn.s.i === 7`);
+    check(`[${tag}] Zurück: Artikel 8`, (await text(`${D} .dlg-title h2`)) === L.names[7]);
     await tap(`${D} .lrn-back`);
     check(`[${tag}] Pfeil oben links: zurück zur Übersicht`, await wait(`return r.host._learn.s?.view === "overview" && !!r.querySelector("${D} .lrn-card")`));
 
-    // Alle acht Artikel: Skizzen, kein Überlauf, keine unaufgelösten Texte
-    for (let i = 0; i < 8; i++) {
+    // Alle neun Artikel: Skizzen, kein Überlauf, keine unaufgelösten Texte
+    for (let i = 0; i < 9; i++) {
       await topicTap(i);
       const m = await ev(`const b=r.querySelector("${D} .lrn-body"), t=r.querySelector("${D} .lrn-tabs"), d=r.querySelector("${D}"); const txt=b.innerText; return {x: b.scrollWidth - b.clientWidth, tabs: t.scrollWidth - t.clientWidth, dlg: d.scrollWidth - d.clientWidth, bad: /undefined|\\[object|NaN|\\*\\*/.test(txt), sk: !!b.querySelector(".lrn-hero .lrn-sketch ." + ${JSON.stringify(SK[i])}), len: txt.length}`);
       check(`[${tag}] Artikel ${i + 1}: kein Überlauf, Skizze, keine unaufgelösten Texte, Länge`, m.x <= 1 && m.tabs <= 1 && m.dlg <= 1 && !m.bad && m.sk && m.len > 600, JSON.stringify(m));
@@ -128,7 +128,7 @@ for (const lang of ["de", "en"]) {
     await wait(`return r.host._learn.s?.view === "overview"`);
 
     // Routinen: der Abschnitt "Auch als Timer" mit den drei Wegen (einmal, ein dann aus, immer wieder am Beispiel Ladegerät)
-    await topicTap(5);
+    await topicTap(6);
     check(`[${tag}] Routinen: Abschnitt "${L.timerH}" mit drei Schritten und den Namen aus dem Panel`, await ev(`const h=[...r.querySelectorAll("${D} .lrn-txt h3")].find(x => x.textContent === ${JSON.stringify(L.timerH)}); if (!h) return false; let n = h.nextElementSibling; while (n && !n.classList.contains("lrn-tl")) n = n.nextElementSibling; const t = r.querySelector("${D} .lrn-txt").innerText; return !!n && n.querySelectorAll(".lt-st").length === 3 && ${JSON.stringify(L.timerBits)}.every(b => t.includes(b))`));
     check(`[${tag}] Routinen: Abschnitt "${L.haH}" (Schalter und Knopf, nutzbar in Automationen und Dashboards)`, await ev(`const h=[...r.querySelectorAll("${D} .lrn-txt h3")].find(x => x.textContent === ${JSON.stringify(L.haH)}); if (!h) return false; const p = h.nextElementSibling.innerText; return ${JSON.stringify(L.haBits)}.every(b => p.includes(b))`));
     await ev(`const h=[...r.querySelectorAll("${D} .lrn-txt h3")].find(x => x.textContent === ${JSON.stringify(L.timerH)}); h.scrollIntoView({block: "start"})`);
@@ -151,16 +151,24 @@ for (const lang of ["de", "en"]) {
     await tap(`${D} .lrn-back`);
     await wait(`return r.host._learn.s?.view === "overview"`);
 
-    // Reiterleiste: acht Reiter, am Handy 4 x 2, am Desktop eine Zeile; kein Reiter beschnitten
+    // Ansicht: Suche und Filter-Chips, im Artikel der Dialog mit Auge und Ziehgriff, eine Spalte ausgeblendet
+    await topicTap(4);
+    check(`[${tag}] Ansicht: Suchfeld mit vier Chips (einer gewählt), Dialog mit drei Spalten (eine ausgeblendet)`, await ev(`return !!r.querySelector("${D} .lrn-hero .lrn-vw .vw-s") && r.querySelectorAll("${D} .lrn-hero .lrn-vw .vw-c span").length === 4 && r.querySelectorAll("${D} .lrn-hero .lrn-vw .vw-c span.on").length === 1 && r.querySelectorAll("${D} .lrn-hero .lrn-vwd .vd-r").length === 3 && r.querySelectorAll("${D} .lrn-hero .lrn-vwd .vd-r.off").length === 1`));
+    check(`[${tag}] Ansicht erklärt Suche, Filter-Chips, Dialog, Spalten, Speichern, Favoriten und Startseite`, await ev(`const t = r.querySelector("${D} .lrn-txt").innerText; return ${JSON.stringify(L.viewBits)}.every(b => t.includes(b))`));
+    await shot("9-article-view");
+    await tap(`${D} .lrn-back`);
+    await wait(`return r.host._learn.s?.view === "overview"`);
+
+    // Reiterleiste: neun Reiter, am Handy 3 x 3, am Desktop eine Zeile; kein Reiter beschnitten
     await topicTap(0);
     const rows = await ev(`const t=[...r.querySelectorAll("${D} .lrn-tabs .sub-tab")]; return {rows: new Set(t.map(x => Math.round(x.getBoundingClientRect().top))).size, cols: new Set(t.map(x => Math.round(x.getBoundingClientRect().left))).size, cut: t.some(x => { const s = x.querySelector("span"); return s.scrollWidth > s.clientWidth + 1; })}`);
-    check(`[${tag}] ${mobile ? "Handy: Reiter in 2 Zeilen zu 4 Spalten" : "Desktop: Reiter in einer Zeile"}, keiner beschnitten`, mobile ? rows.rows === 2 && rows.cols === 4 && !rows.cut : rows.rows === 1 && rows.cols === 8 && !rows.cut, JSON.stringify(rows));
+    check(`[${tag}] ${mobile ? "Handy: Reiter in 3 Zeilen zu 3 Spalten" : "Desktop: Reiter in einer Zeile"}, keiner beschnitten`, mobile ? rows.rows === 3 && rows.cols === 3 && !rows.cut : rows.rows === 1 && rows.cols === 9 && !rows.cut, JSON.stringify(rows));
     await shot("4-article-out");
     await tap(`${D} .lrn-back`);
     await wait(`return r.host._learn.s?.view === "overview"`);
 
     // "Fertig" am Ende schliesst nur die Lernseite; die Einstellungen bleiben
-    await topicTap(7);
+    await topicTap(8);
     await tap(`${D} .dlg-actions .dlg-btn.primary`);
     check(`[${tag}] "${L.finish}" im letzten Artikel: Lernseite zu, Einstellungen noch offen`, (await wait(`return !r.querySelector("${D}").open`)) && (await ev(`return r.querySelector("dialog.settings").open`)));
 

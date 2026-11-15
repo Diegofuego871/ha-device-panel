@@ -7,7 +7,21 @@ All notable changes to this integration are documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/).
 
+## [2.226.0] - 2026-11-15
+
+The learn page "Learn more" now also explains the view and the list.
+
+### Added
+
+- **Topic "View and list":** **searching and filtering** (search across all columns, filter chips, area, integration and label, the label filter only if there are labels), the **dialog "View"** (button "View", on a phone the row "Sorting & view"; tab "Columns" or "Sorting" with the eye, dragging, sorting, "Groups or one list", per user and separately for desktop and phone; tab "Filter chips" for all users, administrators only; saving and "Discard changes?"), the **display** ("Details on the card", marks for own settings, off by default) and **favourites and start page** (heart, own chip, the panel as start page, language and accent colour per user). The sketch shows search and chips and the dialog with three columns, one of them hidden.
+
+### Changed
+
+- **Order and tabs:** "View and list" comes after backups; the page now has nine topics ("Nine topics, about 2 minutes each"). The tabs now show only their names (with an icon they would be cut off at nine tabs on the desktop); on the desktop they stand in one row and stay on top while reading, on a phone in three rows of three and scroll away with the text.
+
 ## [2.225.1] - 2026-11-15
+
+Not released; included in 2.226.0.
 
 The topic "Battery warnings" of the learn page now also explains charging.
 
@@ -6114,7 +6128,7 @@ First pre-release.
   GitHub Actions for HACS/hassfest validation and tests.
 
 [2.6.0]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v2.6.0
-[2.225.1]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v2.225.1
+[2.226.0]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v2.226.0
 [2.225.0]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v2.225.0
 [2.224.1]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v2.224.1
 [2.224.0]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v2.224.0

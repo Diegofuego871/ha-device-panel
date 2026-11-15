@@ -1,5 +1,5 @@
 /**
- * Lernseite "Mehr erfahren" (seit 2.223.0, ab 2.225.0 mit acht Themen, docs/mockups/learn-v4, Variante A2): acht Themen (Ausgefallene Geräte mit Pausen, Batterie-Warnungen, System, Backup, Magic Push, Routinen, Dashboard-Karten, App-Launcher) als
+ * Lernseite "Mehr erfahren" (seit 2.223.0, ab 2.226.0 mit neun Themen, docs/mockups/learn-v4, Variante A2): neun Themen (Ausgefallene Geräte mit Pausen, Batterie-Warnungen, System, Backup, Ansicht, Magic Push, Routinen, Dashboard-Karten, App-Launcher) als
  * Kacheln mit einer kleinen Skizze der Funktion; ein Tipp öffnet einen kurzen Artikel mit Reitern, "Zurück" und "Weiter". Zwei Einstiege:
  * nach dem Einrichtungsassistenten (mit Kopf "Einrichtung abgeschlossen") und in Einstellungen › Panel › Mehr erfahren.
  *
@@ -16,6 +16,7 @@ const TOPICS = [
   { id: "bat", icon: "battery", color: "#EF6C00" },
   { id: "sys", icon: "desktop", color: "#2E8B57" },
   { id: "bkp", icon: "save", color: "#455A64" },
+  { id: "view", icon: "tune", color: "#5C6BC0" },
   { id: "push", icon: "sparkle", color: "#8E24AA" },
   { id: "rt", icon: "flash", color: "#00838F" },
   { id: "cards", icon: "puzzle", color: "#1E88E5" },
@@ -143,6 +144,14 @@ export class LearnUi {
       const file = `<div class="lrn-file"><div class="lf-h"><span class="lf-ic">${mdi("save", 20)}</span><div><b>${escape(k.bkFile)}</b><small>${escape(k.bkParts)}</small></div></div><div class="lf-p">${escape(k.bkPrev)}</div></div>`;
       return file + (full ? this.push("03:12", k.bkFailTitle, k.bkFailText, []) + this.push("04:17", k.bkOkTitle, k.bkOkText, []) : "");
     }
+    if (id === "view") {
+      // Suche und Filter-Chips; im Artikel dazu der Dialog "Ansicht" mit Spalten (Auge, Ziehgriff; eine ausgeblendet)
+      const chip = (t, on, heart) => `<span class="${on ? "on" : ""}">${heart ? mdi("heart", 11) : ""}${escape(t)}</span>`;
+      const bar = `<div class="lrn-vw"><div class="vw-s">${mdi("search", 16)}<span>${escape(k.vwSearch)}</span></div><div class="vw-c">${chip(k.vwChip1, false)}${chip(k.vwChip2, true)}${chip(k.vwChip3, false)}${chip(k.vwChip4, false, true)}</div></div>`;
+      const row = (t, hidden) => `<div class="vd-r${hidden ? " off" : ""}">${mdi("drag", 16)}<span>${escape(t)}</span>${mdi(hidden ? "eyeOff" : "eye", 16)}</div>`;
+      const dlg = `<div class="lrn-vwd"><div class="vd-t">${escape(k.vwDlg)}</div>${row(k.vwCol1, false)}${row(k.vwCol2, false)}${row(k.vwCol3, true)}</div>`;
+      return bar + (full ? dlg : "");
+    }
     if (id === "push") return this.push(k.now, k.pushTitle, k.pushText, [k.pushA1, k.pushA2, k.pushA3]);
     if (id === "rt") {
       const row = `<div class="lrn-rt"><span class="lr-ic">${mdi("fan", 22)}</span><div><b>${escape(k.rtName)}</b><small>${escape(k.rtSub)}</small></div><span class="lr-sw"></span></div>`;
@@ -230,14 +239,14 @@ export class LearnUi {
       const last = i === TOPICS.length - 1;
       head = `<div class="dlg-head"><button type="button" class="dlg-close lrn-back" data-lrn="overview" title="${escape(t("lrnBackOverview"))}" aria-label="${escape(t("lrnBackOverview"))}">${mdi("arrowLeft", 18)}</button>
         <div class="dlg-title"><h2>${escape(x.name)}</h2><div class="dlg-sub">${escape(t("lrnOf", i + 1, TOPICS.length, 2))}</div></div>${close}</div>`;
-      tabs = `<div class="sub-tabs lrn-tabs" role="tablist">${TOPICS.map((tp, n) => `<button type="button" class="sub-tab${n === i ? " on" : ""}" role="tab" aria-selected="${n === i}" data-lrn="topic" data-i="${n}">${mdi(tp.icon, 15)}<span>${escape(this.topic(tp.id).tab)}</span></button>`).join("")}</div>`;
+      tabs = `<div class="lrn-tabsbar"><div class="sub-tabs lrn-tabs" role="tablist">${TOPICS.map((tp, n) => `<button type="button" class="sub-tab${n === i ? " on" : ""}" role="tab" aria-selected="${n === i}" data-lrn="topic" data-i="${n}">${mdi(tp.icon, 15)}<span>${escape(this.topic(tp.id).tab)}</span></button>`).join("")}</div></div>`;
       body = this.articleHtml(i);
       const prev = i > 0 ? this.topic(TOPICS[i - 1].id).name : t("lrnOverview");
       foot = `<button type="button" class="dlg-btn" data-lrn="${i > 0 ? "topic" : "overview"}" data-i="${i - 1}">${mdi("arrowLeft", 18)}<span>${escape(prev)}</span></button>
         ${last ? `<button type="button" class="dlg-btn primary" data-lrn="close">${mdi("check", 18)}${escape(t("lrnFinish"))}</button>` : `<button type="button" class="dlg-btn primary" data-lrn="topic" data-i="${i + 1}"><span>${escape(this.topic(TOPICS[i + 1].id).name)}</span>${mdi("arrowRight", 18)}</button>`}`;
     }
     dlg.setAttribute("aria-label", t("lrnTitle"));
-    dlg.innerHTML = `${head}${tabs}<div class="dlg-body lrn-body"><div class="lrn-page${animate ? " fx" : ""}">${body}</div></div><div class="dlg-actions">${foot}</div>`;
+    dlg.innerHTML = `${head}<div class="dlg-body lrn-body">${tabs}<div class="lrn-page${animate ? " fx" : ""}">${body}</div></div><div class="dlg-actions">${foot}</div>`;
     dlg.querySelector(".lrn-body").scrollTop = 0;
     if (focusKey) dlg.querySelector(focusKey)?.focus({ preventScroll: true });
   }

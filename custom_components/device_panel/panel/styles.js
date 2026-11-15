@@ -2832,8 +2832,11 @@ dialog.learn-dlg[open] { display: flex; flex-direction: column; }
 .learn-dlg .dlg-actions .dlg-btn { min-width: 0; }
 .learn-dlg .dlg-actions .dlg-btn > span { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 .dlg-avatar.app-learn { background: #F9A825; }
-.lrn-tabs { margin: 4px 22px 6px; }
+.lrn-tabsbar { position: sticky; top: 0; z-index: 3; margin: 0 -22px; padding: 4px 22px 6px; background: var(--dp-card); }
+.lrn-tabs { margin: 0; }
 .lrn-tabs .sub-tab { gap: 6px; }
+/* Neun Reiter: nur die Namen (mit Symbol würden sie auch am Desktop beschnitten) */
+.lrn-tabs .sub-tab svg { display: none; }
 .lrn-tabs .sub-tab span { overflow: hidden; text-overflow: ellipsis; }
 .lrn-page.fx { animation: lrn-in .24s ease-out; }
 @keyframes lrn-in { from { opacity: 0; transform: translateY(8px); } to { opacity: 1; transform: none; } }
@@ -2865,7 +2868,7 @@ dialog.learn-dlg[open] { display: flex; flex-direction: column; }
 .lrn-meta { display: flex; justify-content: space-between; align-items: center; margin-top: 5px; color: var(--dp-primary); font-size: 12px; }
 /* Artikel */
 .lrn-art { display: grid; grid-template-columns: minmax(0, 1fr) 330px; gap: 22px; align-items: start; padding-top: 12px; }
-.lrn-art aside { position: sticky; top: 0; }
+.lrn-art aside { position: sticky; top: 64px; }
 .lrn-hero { padding: 18px 14px; border-radius: 20px; }
 .lrn-hero .lrn-sketch { width: 100%; font-size: 11.5px; }
 .lrn-cap { margin-top: 7px; color: var(--dp-text2); font-size: 11.5px; text-align: center; }
@@ -2884,6 +2887,15 @@ dialog.learn-dlg[open] { display: flex; flex-direction: column; }
 .lrn-tip { padding: 10px 12px; border-left: 3px solid var(--lc); border-radius: 14px; background: var(--dp-subtle); color: color-mix(in srgb, var(--dp-text) 85%, transparent); font-size: 13px; line-height: 1.5; }
 .lrn-tip b { color: var(--dp-text); font-weight: 500; }
 /* Skizzen (in em) */
+.lrn-vw, .lrn-vwd { padding: .8em 1em; border: 1px solid #3a3a3a; border-radius: 1.2em; background: #262626; color: #eee; }
+.lrn-vw .vw-s { display: flex; align-items: center; gap: .6em; padding: .45em .8em; border-radius: 1em; background: rgba(255,255,255,.08); color: #9a9a9a; font-size: 1em; }
+.lrn-vw .vw-c { display: flex; flex-wrap: wrap; gap: .45em; margin-top: .7em; }
+.lrn-vw .vw-c span { display: inline-flex; align-items: center; gap: .3em; padding: .25em .8em; border: 1px solid #4a4a4a; border-radius: 1em; font-size: .92em; color: #cfcfcf; }
+.lrn-vw .vw-c span.on { border-color: #5C6BC0; background: rgba(92,107,192,.3); color: #fff; }
+.lrn-vwd .vd-t { margin-bottom: .5em; font-size: 1.05em; font-weight: 500; }
+.lrn-vwd .vd-r { display: flex; align-items: center; gap: .7em; padding: .45em 0; border-top: 1px solid rgba(255,255,255,.08); color: #cfcfcf; }
+.lrn-vwd .vd-r span { flex: 1; min-width: 0; }
+.lrn-vwd .vd-r.off { opacity: .5; }
 .lrn-sys { display: flex; flex-direction: column; gap: .55em; padding: .8em 1em; border: 1px solid #3a3a3a; border-radius: 1.2em; background: #262626; color: #eee; }
 .lrn-sys .ls-r { display: grid; grid-template-columns: 9.6em minmax(0, 1fr) 3em; align-items: center; gap: .7em; font-size: 1em; }
 .lrn-sys .ls-r > span:first-child { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; color: #cfcfcf; }
@@ -2951,16 +2963,17 @@ dialog.learn-dlg[open] { display: flex; flex-direction: column; }
 .lrn-lg .bd { position: absolute; top: -.4em; right: .1em; padding: 0 .45em; border-radius: 99px; background: #e53935; color: #fff; font-size: .9em; line-height: 1.5; }
 .lrn-kopf { display: flex; justify-content: flex-end; align-items: center; gap: .6em; color: rgba(255,255,255,.7); font-size: .9em; }
 .lrn-kopf i { display: grid; place-items: center; width: 2.2em; height: 2.2em; border: 1px solid rgba(255,255,255,.35); border-radius: 50%; color: #fff; }
-/* Acht Reiter: bei genug Breite eine Zeile (die allgemeine Regel ab acht Reitern gäbe vier Spalten), sonst vier Spalten in zwei Zeilen, auch auf schmalen Handys (dort gäbe die allgemeine Regel drei) */
+/* Neun Reiter: bei genug Breite eine Zeile (die allgemeine Regel ab neun Reitern gäbe fünf Spalten), sonst drei Spalten in drei Zeilen, auch auf schmalen Handys */
 dialog.learn-dlg .sub-tabs.lrn-tabs { grid-auto-flow: column; grid-template-columns: none; }
-@media (max-width: 760px) { dialog.learn-dlg .sub-tabs.lrn-tabs { grid-auto-flow: row; grid-template-columns: repeat(4, minmax(0, 1fr)); } }
+@media (max-width: 760px) { dialog.learn-dlg .sub-tabs.lrn-tabs { grid-auto-flow: row; grid-template-columns: repeat(3, minmax(0, 1fr)); } }
 @media (prefers-reduced-motion: reduce) { .lrn-ck, .lrn-ck::after, .lrn-ck path, .lrn-page.fx { animation: none; } .lrn-card { transition: none; } }
 @media (max-width: 600px) {
   dialog.learn-dlg { width: 100%; height: 100%; max-width: 100%; max-height: 100%; margin: 0; border-radius: 0; }
   .learn-dlg .dlg-body { padding: 0 16px 16px; }
-  .lrn-tabs { margin: 4px 16px 6px; }
+  /* Am Handy scrollt die Reiterleiste mit dem Inhalt weg (Zurück und Weiter unten führen weiter); sonst nähme sie bei neun Reitern ein Drittel des Bildschirms ein */
+  .lrn-tabsbar { position: static; margin: 0 -16px; padding: 4px 16px 6px; }
+  .lrn-tabs .sub-tab { min-height: 36px; }
   .lrn-tabs .sub-tab { gap: 4px; padding: 0 2px; font-size: 12px; }
-  .lrn-tabs .sub-tab svg { display: none; }
   .lrn-cards { grid-template-columns: 1fr; }
   .lrn-card .lrn-sketch { font-size: 10px; }
   .lrn-art { display: flex; flex-direction: column; gap: 12px; }

@@ -11,6 +11,12 @@ Einstieg für jede neue Claude-Code-Session. Zuerst diese Datei lesen, dann
 
 - `charge.py` `known_rechargeable`: Lademeldung gilt (global + Gerät/Integration), oder am Gerät ausdrücklich "Ein", oder Live-Aktivität für das Gerät an; `rechargeable()` und `charging_of()` nutzen sie (vorher nur `enabled()` mit globalem Schalter). Test `test_rechargeable_by_device_charge_or_live`.
 
+## Stand (2.226.0, Lernseite: Ansicht und Liste)
+
+- `learn.js` `TOPICS` hat neun Einträge, neu **view** (Symbol `tune`, Farbe #5C6BC0; nicht `viewSettings`: das ist ein SVG mit fester Mask-ID und würde in den Reitern kollidieren) nach bkp. Skizze `.lrn-vw` (Suche, Chips) und `.lrn-vwd` (Dialog mit Ziehgriff und Auge, eine Spalte ausgeblendet). Inhalt aus README ("Deine eigene Ansicht", "Suchen, filtern, sortieren") und den Panel-Texten geprüft (`viewBtn`, `viewLineTitle`, `viewTabSort`, `viewGroupsOrList`, `viewFields`, `viewMarks`, `discardTitle`). Ändern sich die Namen im Dialog "Ansicht", den Artikel in `lrnTopics` nachführen.
+- Reiter: Symbole der Reiter sind überall ausgeblendet (`.lrn-tabs .sub-tab svg`), bei neun wären die Namen am Desktop beschnitten. Die Leiste (`.lrn-tabsbar`) liegt jetzt im Scrollbereich: am Desktop `position: sticky` (der Hero rechts steht mit `top: 64px` darunter), am Handy (bis 760 px) scrollt sie weg, drei Spalten, 36 px hohe Reiter. Test: `learn-e2e` (234 Prüfungen) mit neun Themen, Reihenfolge, Ansicht-Artikel und Leiste Desktop/Handy.
+- 2.225.1 hatte keinen Tag und wird übersprungen (CHANGELOG: "Nicht veröffentlicht; enthalten in 2.226.0", keine Fussnote).
+
 ## Stand (2.225.1, Lernseite: Batterie mit Laden)
 
 - `lrnTopics.bat` (DE und EN) hat zwei Abschnitte mehr: "Laden erkennen" (Kachel "Lädt", Chip, Erkennung der Kurve oder der eigenen Ladeanzeige, nur aufladbare Geräte, 20 Ladungen) und "Watt, Meldung und Live-Aktivität" (Akku-Kapazität in Wh für die Wattschätzung, Lademeldung "Voll ab", Live-Aktivität beim Laden, beides standardmässig aus). Quelle: README "Laden" und "Live-Aktivität", `optChargeLiveInfo` (Companion-App nötig). Ändern sich Standard oder Namen, den Artikel nachführen. Test: `learn-e2e` (Schlüsselwörter, 222 Prüfungen).
