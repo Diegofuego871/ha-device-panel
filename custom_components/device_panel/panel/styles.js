@@ -2965,7 +2965,7 @@ dialog.learn-dlg[open] { display: flex; flex-direction: column; }
 .lrn-kopf i { display: grid; place-items: center; width: 2.2em; height: 2.2em; border: 1px solid rgba(255,255,255,.35); border-radius: 50%; color: #fff; }
 /* Neun Reiter: bei genug Breite eine Zeile (die allgemeine Regel ab neun Reitern gäbe fünf Spalten), sonst drei Spalten in drei Zeilen, auch auf schmalen Handys */
 dialog.learn-dlg .sub-tabs.lrn-tabs { grid-auto-flow: column; grid-template-columns: none; }
-@media (max-width: 760px) { dialog.learn-dlg .sub-tabs.lrn-tabs { grid-auto-flow: row; grid-template-columns: repeat(3, minmax(0, 1fr)); } }
+@media (max-width: 760px) { dialog.learn-dlg .sub-tabs.lrn-tabs { grid-auto-flow: row; grid-template-columns: repeat(var(--lrn-cols, 3), minmax(0, 1fr)); } }
 @media (prefers-reduced-motion: reduce) { .lrn-ck, .lrn-ck::after, .lrn-ck path, .lrn-page.fx { animation: none; } .lrn-card { transition: none; } }
 @media (max-width: 600px) {
   dialog.learn-dlg { width: 100%; height: 100%; max-width: 100%; max-height: 100%; margin: 0; border-radius: 0; }

@@ -345,7 +345,7 @@ A learn page with short articles on offline devices (with pauses), battery warni
 - **After the wizard:** The page opens with "Setup complete" and a green tick on top, the tiles below. The wizard counts as finished with "Finish", even if you do not look at the topics or close the window right away.
 - **Again later:** Settings › Panel › General, at the very bottom, right below the setup wizard: "Learn more" › "View topics". The settings stay open, also with unsaved changes.
 - **Nothing stored:** The learn page has no setting and no state, so it is not part of the backup either.
-- **In the browser:** the same page as an [interactive tour](https://diegofuego871.github.io/ha-device-panel/docs/tour/), without installing anything (German or English, light or dark). It shows made-up data only. The links `#bat`, `#rt` and so on open a single topic.
+- **In the browser:** the same page as an [interactive tour](https://diegofuego871.github.io/ha-device-panel/docs/tour/), without installing anything (German or English, light or dark). It shows made-up data only. It has one more article than the panel, a preview of the setup wizard (third place). The links `#bat`, `#rt` and so on open a single topic.
 
 ### Back up and restore
 

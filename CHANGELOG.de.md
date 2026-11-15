@@ -7,7 +7,18 @@ Alle nennenswerten Änderungen an dieser Integration stehen in dieser Datei.
 Das Format folgt [Keep a Changelog](https://keepachangelog.com/de/1.1.0/),
 die Versionsnummern folgen [Semantic Versioning](https://semver.org/lang/de/).
 
+## [2.228.0] - 2026-11-15
+
+Die Tour-Seite hat ein zehntes Thema: eine Vorschau des Einrichtungsassistenten.
+
+### Hinzugefügt
+
+- **Tour, Thema "Einrichtungsassistent" (an dritter Stelle):** ein Artikel für Leute, die Device Panel noch nicht installiert haben. Er erklärt, dass die Einrichtung in einem Assistenten in etwa zwei Minuten erledigt ist: die sieben Schritte (Integrationen, Gerätetypen, Geräte, Meldungen, Labels, Backup, Ruhezeit und System, Zusammenfassung), dass erst am Ende angewendet wird und ein geschlossener Assistent dort weitermacht, wo er stand, dass alle Werte vorbelegt sind und sich jede Wahl später ändern lässt (der Assistent lässt sich in den Einstellungen wieder öffnen, ohne dass etwas zurückgesetzt wird). Die Skizze zeigt das Assistenten-Fenster mit seiner Schrittleiste. Das Thema gibt es nur auf der Tour-Seite, nicht im Panel: dort haben die Nutzer den Assistenten gerade durchgespielt. Die Tour sagt jetzt "Zehn Themen".
+- **Intern:** `learn.js` nimmt zusätzliche Themen an (`extraTopics`: Kennung, Symbol, Farbe, Stelle, Skizze); das Panel gibt keine mit. Am Handy stehen zehn Reiter in Reihen zu vier.
+
 ## [2.227.1] - 2026-11-15
+
+Nicht veröffentlicht; enthalten in 2.228.0.
 
 Der Link auf der Tour-Seite führt jetzt zurück zu GitHub.
 
@@ -6252,7 +6263,7 @@ Erste Vorabversion.
   GitHub Actions für die Prüfungen von HACS und hassfest sowie die Tests.
 
 [2.6.0]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v2.6.0
-[2.227.1]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v2.227.1
+[2.228.0]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v2.228.0
 [2.227.0]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v2.227.0
 [2.225.0]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v2.225.0
 [2.224.1]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v2.224.1

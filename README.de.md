@@ -345,7 +345,7 @@ Eine Lernseite mit kurzen Artikeln zu ausgefallenen Geräten (mit Pausen), Batte
 - **Nach dem Assistenten:** Die Seite öffnet oben mit "Einrichtung abgeschlossen" und einem grünen Haken, darunter die Kacheln. Der Assistent gilt mit "Fertigstellen" als beendet, auch wenn du die Themen nicht ansiehst oder das Fenster gleich schliesst.
 - **Später wieder:** Einstellungen › Panel › Allgemein, ganz unten, direkt unter dem Einrichtungsassistenten: "Mehr erfahren" › "Themen ansehen". Die Einstellungen bleiben dabei offen, auch mit ungespeicherten Änderungen.
 - **Nichts gespeichert:** Die Lernseite hat keine Einstellung und keinen Zustand; sie gehört deshalb auch nicht zur Sicherung.
-- **Im Browser:** dieselbe Seite als [interaktive Tour](https://diegofuego871.github.io/ha-device-panel/docs/tour/), ohne Installation (Deutsch oder Englisch, hell oder dunkel). Sie zeigt nur erfundene Daten. Die Links `#bat`, `#rt` und so weiter öffnen ein einzelnes Thema.
+- **Im Browser:** dieselbe Seite als [interaktive Tour](https://diegofuego871.github.io/ha-device-panel/docs/tour/), ohne Installation (Deutsch oder Englisch, hell oder dunkel). Sie zeigt nur erfundene Daten. Sie hat einen Artikel mehr als das Panel, eine Vorschau des Einrichtungsassistenten (an dritter Stelle). Die Links `#bat`, `#rt` und so weiter öffnen ein einzelnes Thema.
 
 ### Sichern und wiederherstellen
 

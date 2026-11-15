@@ -7,7 +7,18 @@ All notable changes to this integration are documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/).
 
+## [2.228.0] - 2026-11-15
+
+The tour page has a tenth topic: a preview of the setup wizard.
+
+### Added
+
+- **Tour, topic "Setup wizard" (third place):** an article for people who have not installed Device Panel yet. It explains that the setup is done in one wizard in about two minutes: the seven steps (integrations, device types, devices, notifications, labels, backup, quiet hours and system, summary), that nothing is applied until the end and that a closed wizard continues where it stopped, that all values are pre-filled and that every choice can be changed later (the wizard can be opened again in the settings without resetting anything). The sketch shows the wizard window with its step bar. The topic exists only on the tour page, not in the panel: there the users have just gone through the wizard. The tour now says "Ten topics".
+- **Internal:** `learn.js` accepts additional topics (`extraTopics`: id, icon, colour, position, sketch); the panel passes none. On a phone ten tabs stand in rows of four.
+
 ## [2.227.1] - 2026-11-15
+
+Not released; included in 2.228.0.
 
 The link on the tour page now leads back to GitHub.
 
@@ -6151,7 +6162,7 @@ First pre-release.
   GitHub Actions for HACS/hassfest validation and tests.
 
 [2.6.0]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v2.6.0
-[2.227.1]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v2.227.1
+[2.228.0]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v2.228.0
 [2.227.0]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v2.227.0
 [2.225.0]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v2.225.0
 [2.224.1]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v2.224.1

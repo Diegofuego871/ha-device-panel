@@ -10,10 +10,10 @@ let ok = true;
 const check = (l, c, i = "") => { ok &&= !!c; console.log(`${c ? "PASS" : "FAIL"} ${l}${i ? " - " + i : ""}`); };
 const URL0 = "http://127.0.0.1:8950/ha-device-panel/docs/tour/";
 const R = `document.getElementById("tour").shadowRoot`;
-const IDS = ["out", "bat", "sys", "bkp", "view", "push", "rt", "cards", "lau"];
+const IDS = ["out", "bat", "wiz", "sys", "bkp", "view", "push", "rt", "cards", "lau"];
 const T = {
-  de: { title: "Device Panel kennenlernen", name1: "Ausgefallene Geräte", name2: "Batterie-Warnungen", sub: "Neun Themen, je etwa 2 Minuten", other: "English" },
-  en: { title: "Get to know Device Panel", name1: "Offline devices", name2: "Battery warnings", sub: "Nine topics, about 2 minutes each", other: "Deutsch" },
+  de: { title: "Device Panel kennenlernen", name1: "Ausgefallene Geräte", name2: "Batterie-Warnungen", sub: "Zehn Themen, je etwa 2 Minuten", wiz: "Einrichtungsassistent", wizKey: "Nichts passiert, bis du fertig bist", other: "English" },
+  en: { title: "Get to know Device Panel", name1: "Offline devices", name2: "Battery warnings", sub: "Ten topics, about 2 minutes each", wiz: "Setup wizard", wizKey: "Nothing happens until you are done", other: "Deutsch" },
 };
 
 for (const lang of ["de", "en"]) {
@@ -41,7 +41,8 @@ for (const lang of ["de", "en"]) {
     // --- Übersicht
     check(`${tag}: Seitentitel ${L.title}`, (await p.title()) === L.title, await p.title());
     check(`${tag}: Seitensprache`, (await p.evaluate(() => document.documentElement.lang)) === lang);
-    check(`${tag}: neun Kacheln`, (await ev(`return r.querySelectorAll(".lrn-card").length`)) === 9);
+    check(`${tag}: zehn Kacheln`, (await ev(`return r.querySelectorAll(".lrn-card").length`)) === 10);
+    check(`${tag}: dritte Kachel ist der Assistent mit Skizze`, (await text('.lrn-card[data-i="2"]')).includes(L.wiz) && (await ev(`return !!r.querySelector('.lrn-card[data-i="2"] .lrn-wz')`)));
     check(`${tag}: Kopf mit Titel und Untertitel`, (await text(".lrn-body, .dlg-head")).includes(L.sub) || (await text(".dlg-head")).includes(L.sub), await text(".dlg-head"));
     check(`${tag}: erste Kachel ${L.name1}, zweite ${L.name2}`, (await text('.lrn-card[data-i="0"]')).includes(L.name1) && (await text('.lrn-card[data-i="1"]')).includes(L.name2));
     check(`${tag}: kein Schliessen-Knopf`, (await ev(`return r.querySelectorAll('[data-lrn="close"]').length`)) === 0);
@@ -61,15 +62,18 @@ for (const lang of ["de", "en"]) {
 
     // --- Weiter, Zurück
     await tap('.dlg-actions [data-lrn="topic"].primary');
-    check(`${tag}: Weiter zum dritten Thema`, await wait(`return r.querySelector('.lrn-tabs .sub-tab.on')?.dataset.i === "2"`) && (await p.evaluate(() => location.hash)) === "#sys");
+    check(`${tag}: Weiter zum dritten Thema (Assistent)`, await wait(`return r.querySelector('.lrn-tabs .sub-tab.on')?.dataset.i === "2"`) && (await p.evaluate(() => location.hash)) === "#wiz");
+    check(`${tag}: Assistent-Artikel mit Text, Skizze und sieben Schritten`, (await text(".lrn-art")).includes(L.wizKey) && (await ev(`return !!r.querySelector(".lrn-art aside .lrn-wz") && r.querySelectorAll(".lrn-art .lt-st").length === 7`)));
+    check(`${tag}: Assistent-Skizze zeigt Schrittleiste mit sieben Balken`, (await ev(`return r.querySelectorAll(".lrn-art aside .wz-bars i").length`)) === 7);
+    await shot("wizard");
     await p.goBack();
     check(`${tag}: Browser-Zurück führt zu Batterie`, await wait(`return r.querySelector('.lrn-tabs .sub-tab.on')?.dataset.i === "1"`));
     await tap('.dlg-head [data-lrn="overview"]');
     check(`${tag}: Zurück zur Übersicht, Adresse ohne Thema`, await wait(`return !!r.querySelector(".lrn-card")`) && (await p.evaluate(() => location.hash)) === "");
 
     // --- Letztes Thema: Knopf führt zur Übersicht
-    await tap('.lrn-card[data-i="8"]');
-    await wait(`return r.querySelector('.lrn-tabs .sub-tab.on')?.dataset.i === "8"`);
+    await tap('.lrn-card[data-i="9"]');
+    await wait(`return r.querySelector('.lrn-tabs .sub-tab.on')?.dataset.i === "9"`);
     check(`${tag}: letztes Thema, Knopf "Zurück zur Übersicht"`, (await ev(`return r.querySelectorAll('.dlg-actions .primary[data-lrn="overview"]').length`)) === 1);
     await tap('.dlg-actions .primary[data-lrn="overview"]');
     check(`${tag}: Übersicht wieder da`, await wait(`return !!r.querySelector(".lrn-card")`));
@@ -87,7 +91,9 @@ for (const lang of ["de", "en"]) {
 
     // --- Direktlink auf ein Thema
     await p.goto(`${URL0}?lang=${lang}&theme=dark#rt`);
-    check(`${tag}: Direktlink #rt öffnet Routinen`, await wait(`return r.querySelector('.lrn-tabs .sub-tab.on')?.dataset.i === "6"`, 15000));
+    check(`${tag}: Direktlink #rt öffnet Routinen`, await wait(`return r.querySelector('.lrn-tabs .sub-tab.on')?.dataset.i === "7"`, 15000));
+    await p.goto(`${URL0}?lang=${lang}&theme=dark#wiz`);
+    check(`${tag}: Direktlink #wiz öffnet den Assistenten`, await wait(`return r.querySelector('.lrn-tabs .sub-tab.on')?.dataset.i === "2"`, 15000));
 
     check(`${tag}: keine Fehler in der Konsole`, errors.length === 0, errors.join(" | ").slice(0, 200));
     await ctx.close();
@@ -100,7 +106,7 @@ for (const lang of ["de", "en"]) {
   const p = await ctx.newPage();
   await p.goto(`${URL0}#gibtsnicht`);
   await p.waitForFunction(new Function(`return !!${R}?.querySelector(".lrn-card")`), null, { timeout: 15000 });
-  check("Unbekannter Anker zeigt die Übersicht", (await p.evaluate(new Function(`return ${R}.querySelectorAll(".lrn-card").length`))) === 9);
+  check("Unbekannter Anker zeigt die Übersicht", (await p.evaluate(new Function(`return ${R}.querySelectorAll(".lrn-card").length`))) === 10);
   check("Sprache aus dem Browser (de-CH): Deutsch", (await p.title()) === T.de.title);
   check("Darstellung aus dem Browser (hell)", await p.evaluate(() => document.getElementById("tour").hasAttribute("light")));
   await ctx.close();
@@ -112,7 +118,7 @@ for (const lang of ["de", "en"]) {
   await p.goto(`${URL0}?lang=en`);
   await p.waitForFunction(new Function(`return !!${R}?.querySelector(".lrn-card")`), null, { timeout: 15000 });
   const n = await p.evaluate(new Function(`return ${R}.querySelectorAll(".lrn-card").length`));
-  check(`Neun Themen: ${IDS.join(", ")}`, n === IDS.length);
+  check(`Zehn Themen: ${IDS.join(", ")}`, n === IDS.length);
   await ctx.close();
 }
 

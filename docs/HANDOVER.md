@@ -11,6 +11,12 @@ Einstieg für jede neue Claude-Code-Session. Zuerst diese Datei lesen, dann
 
 - `charge.py` `known_rechargeable`: Lademeldung gilt (global + Gerät/Integration), oder am Gerät ausdrücklich "Ein", oder Live-Aktivität für das Gerät an; `rechargeable()` und `charging_of()` nutzen sie (vorher nur `enabled()` mit globalem Schalter). Test `test_rechargeable_by_device_charge_or_live`.
 
+## Stand (2.228.0, Tour: Artikel zum Einrichtungsassistenten)
+
+- Nur die Tour hat ein zehntes Thema `wiz` ("Einrichtungsassistent", an dritter Stelle): `docs/tour/wizard.js` (Texte DE/EN, Skizze `.lrn-wz`, CSS in `docs/tour/index.html`). Im Panel nicht, dort haben die Nutzer den Assistenten gerade durchgespielt. Hook in `learn.js`: `deps.extraTopics` (id, icon, color, at, sketch), `this.topics` statt `TOPICS` in der Klasse; die Tour überschreibt `lrnSub` ("Zehn Themen") und ergänzt `lrnTopics.wiz` in ihrem `host._t`. Hash `#wiz`. Bei mehr als neun Themen setzt `learn.js` `--lrn-cols:4` an der Reiterleiste (Handy: Reihen zu vier, CSS `repeat(var(--lrn-cols, 3), …)`).
+- Text des Artikels: Schritte wie im Assistenten (README "Setup wizard"), nichts versprochen, was der Assistent nicht tut. `tour-e2e`: 116 Prüfungen.
+- 2.227.1 hatte keinen Tag und wird übersprungen (CHANGELOG: "Nicht veröffentlicht; enthalten in 2.228.0", keine Fussnote).
+
 ## Stand (2.227.1, Link der Tour-Seite)
 
 - Link oben rechts: "Zurück zu GitHub" / "Back to GitHub", gleicher Tab (kein `target=_blank`). Nur `docs/tour/index.html`, keine Panel-Datei, PANEL_VERSION unverändert.

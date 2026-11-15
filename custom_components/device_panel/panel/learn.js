@@ -27,6 +27,10 @@ export class LearnUi {
   constructor(host, deps) {
     this.host = host;
     this.h = deps;
+    // Zusätzliche Themen (nur die Tour-Seite: Vorschau des Assistenten, docs/tour/wizard.js); im Panel gibt es keine.
+    // Jedes: { id, icon, color, at (Stelle), sketch(full) }; Texte kommen über host._t("lrnTopics") wie bei allen.
+    this.topics = [...TOPICS];
+    for (const x of deps.extraTopics || []) this.topics.splice(Math.min(x.at ?? this.topics.length, this.topics.length), 0, x);
     // s: null (zu) oder { source: "wizard" | "settings", view: "overview" | "article", i }
     this.s = null;
   }
@@ -97,7 +101,7 @@ export class LearnUi {
     const s = this.s;
     if (!s) return;
     s.view = view;
-    s.i = Math.max(0, Math.min(TOPICS.length - 1, i));
+    s.i = Math.max(0, Math.min(this.topics.length - 1, i));
     this.render(true);
   }
 
@@ -122,6 +126,8 @@ export class LearnUi {
 
   // Skizze eines Themas; full: die grosse Fassung im Artikel mit zweitem Teil
   sketch(id, full) {
+    const extra = (this.h.extraTopics || []).find((x) => x.id === id);
+    if (extra) return extra.sketch(full);
     const { escape, mdi } = this.h;
     const k = this.host._t("lrnSk");
     if (id === "out") {
@@ -189,7 +195,7 @@ export class LearnUi {
 
   overviewHtml() {
     const { escape, mdi } = this.h;
-    const cards = TOPICS.map((tp, n) => {
+    const cards = this.topics.map((tp, n) => {
       const x = this.topic(tp.id);
       return `<div class="lrn-card" role="button" tabindex="0" data-lrn="topic" data-i="${n}" style="--lc:${tp.color}">
         <span class="lrn-sk"><span class="lrn-sketch">${this.sketch(tp.id, false)}</span></span>
@@ -201,7 +207,7 @@ export class LearnUi {
   }
 
   articleHtml(i) {
-    const tp = TOPICS[i];
+    const tp = this.topics[i];
     const x = this.topic(tp.id);
     const { escape } = this.h;
     const blocks = (x.blocks || [])
@@ -241,15 +247,15 @@ export class LearnUi {
         : `<button type="button" class="dlg-btn" data-lrn="close">${mdi("close", 18)}${escape(t("close"))}</button>`;
     } else {
       const i = s.i;
-      const x = this.topic(TOPICS[i].id);
-      const last = i === TOPICS.length - 1;
+      const x = this.topic(this.topics[i].id);
+      const last = i === this.topics.length - 1;
       head = `<div class="dlg-head"><button type="button" class="dlg-close lrn-back" data-lrn="overview" title="${escape(t("lrnBackOverview"))}" aria-label="${escape(t("lrnBackOverview"))}">${mdi("arrowLeft", 18)}</button>
-        <div class="dlg-title"><h2>${escape(x.name)}</h2><div class="dlg-sub">${escape(t("lrnOf", i + 1, TOPICS.length, 2))}</div></div>${close}</div>`;
-      tabs = `<div class="lrn-tabsbar"><div class="sub-tabs lrn-tabs" role="tablist">${TOPICS.map((tp, n) => `<button type="button" class="sub-tab${n === i ? " on" : ""}" role="tab" aria-selected="${n === i}" data-lrn="topic" data-i="${n}">${mdi(tp.icon, 15)}<span>${escape(this.topic(tp.id).tab)}</span></button>`).join("")}</div></div>`;
+        <div class="dlg-title"><h2>${escape(x.name)}</h2><div class="dlg-sub">${escape(t("lrnOf", i + 1, this.topics.length, 2))}</div></div>${close}</div>`;
+      tabs = `<div class="lrn-tabsbar"><div class="sub-tabs lrn-tabs" role="tablist"${this.topics.length > 9 ? ' style="--lrn-cols:4"' : ""}>${this.topics.map((tp, n) => `<button type="button" class="sub-tab${n === i ? " on" : ""}" role="tab" aria-selected="${n === i}" data-lrn="topic" data-i="${n}">${mdi(tp.icon, 15)}<span>${escape(this.topic(tp.id).tab)}</span></button>`).join("")}</div></div>`;
       body = this.articleHtml(i);
-      const prev = i > 0 ? this.topic(TOPICS[i - 1].id).name : t("lrnOverview");
+      const prev = i > 0 ? this.topic(this.topics[i - 1].id).name : t("lrnOverview");
       foot = `<button type="button" class="dlg-btn" data-lrn="${i > 0 ? "topic" : "overview"}" data-i="${i - 1}">${mdi("arrowLeft", 18)}<span>${escape(prev)}</span></button>
-        ${last ? (embed ? `<button type="button" class="dlg-btn primary" data-lrn="overview">${mdi("apps", 18)}<span>${escape(t("lrnBackOverview"))}</span></button>` : `<button type="button" class="dlg-btn primary" data-lrn="close">${mdi("check", 18)}${escape(t("lrnFinish"))}</button>`) : `<button type="button" class="dlg-btn primary" data-lrn="topic" data-i="${i + 1}"><span>${escape(this.topic(TOPICS[i + 1].id).name)}</span>${mdi("arrowRight", 18)}</button>`}`;
+        ${last ? (embed ? `<button type="button" class="dlg-btn primary" data-lrn="overview">${mdi("apps", 18)}<span>${escape(t("lrnBackOverview"))}</span></button>` : `<button type="button" class="dlg-btn primary" data-lrn="close">${mdi("check", 18)}${escape(t("lrnFinish"))}</button>`) : `<button type="button" class="dlg-btn primary" data-lrn="topic" data-i="${i + 1}"><span>${escape(this.topic(this.topics[i + 1].id).name)}</span>${mdi("arrowRight", 18)}</button>`}`;
     }
     dlg.setAttribute("aria-label", t("lrnTitle"));
     dlg.innerHTML = `${head}<div class="dlg-body lrn-body">${tabs}<div class="lrn-page${animate ? " fx" : ""}">${body}</div></div>${foot ? `<div class="dlg-actions">${foot}</div>` : ""}`;
