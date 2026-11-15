@@ -5,6 +5,8 @@
     "bluetooth",
     "matter",
     "recorder",
+    "thread",
+    "zeroconf",
     "zha"
   ],
   "codeowners": [
