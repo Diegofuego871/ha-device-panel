@@ -7,7 +7,17 @@ Alle nennenswerten Änderungen an dieser Integration stehen in dieser Datei.
 Das Format folgt [Keep a Changelog](https://keepachangelog.com/de/1.1.0/),
 die Versionsnummern folgen [Semantic Versioning](https://semver.org/lang/de/).
 
+## [2.233.0] - 2026-11-16
+
+Thread-Router zeigen ihren stärksten Nachbarn.
+
+### Hinzugefügt
+
+- **"Stärkster Nachbar" bei Thread-Routern:** Ein Thread-Router (oder Leader) hat keinen einzelnen Elternteil und darum kein "Verbunden über". Der Abschnitt "Verbindung" zeigt jetzt die Kachel "Stärkster Nachbar": der stärkste Nachbar unter den Routern (angehängte Geräte des Routers zählen nicht) mit Namen und, wenn das Panel dieses Gerät zeigt, als Knopf mit dem runden Pfeil-Knopf wie "Verbunden über". Es ist die erste Zeile der Karte "Nachbarn" im Fenster "Empfang".
+
 ## [2.232.1] - 2026-11-16
+
+Nicht veröffentlicht; enthalten in 2.233.0.
 
 Der Link von "Verbunden über" bei Bluetooth klappt jetzt auch bei Shelly-Geräten.
 
@@ -6321,7 +6331,7 @@ Erste Vorabversion.
   GitHub Actions für die Prüfungen von HACS und hassfest sowie die Tests.
 
 [2.6.0]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v2.6.0
-[2.232.1]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v2.232.1
+[2.233.0]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v2.233.0
 [2.232.0]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v2.232.0
 [2.230.1]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v2.230.1
 [2.230.0]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v2.230.0

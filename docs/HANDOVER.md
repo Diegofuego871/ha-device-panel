@@ -11,6 +11,11 @@ Einstieg für jede neue Claude-Code-Session. Zuerst diese Datei lesen, dann
 
 - `charge.py` `known_rechargeable`: Lademeldung gilt (global + Gerät/Integration), oder am Gerät ausdrücklich "Ein", oder Live-Aktivität für das Gerät an; `rechargeable()` und `charging_of()` nutzen sie (vorher nur `enabled()` mit globalem Schalter). Test `test_rechargeable_by_device_charge_or_live`.
 
+## Stand (2.233.0, Thread-Router: Kachel "Stärkster Nachbar")
+
+- Nutzer: Bei Thread-Routern fehlte "Verbunden über" (absichtlich: ein Router hat keinen Elternteil). Neu `devices.thread_neighbor` (stärkster Nachbar, der ein Router ist, nicht angehängt; `{name, id}`), Geräteliste `thread_neighbor` (nur Quelle `thread`, nur Modus `neighbors`); Panel: Hilfsfunktion `linkTile` in `_connSectionHtml` (gleiche Kachel für "Verbunden über" und "Stärkster Nachbar", Link wenn das Panel das Gerät zeigt), Text `thStrongest`. Tests: `test_signal_thread`, `thread-e2e` (116).
+- 2.232.1 hatte noch keinen Tag und wird übersprungen (CHANGELOG: "Nicht veröffentlicht; enthalten in 2.233.0", keine Fussnote).
+
 ## Stand (2.232.1, Bluetooth-Link auch bei Shelly)
 
 - Am echten System (Nutzer, 2.232.0) war der Empfänger "Storen Schlafzimmer" (Shelly) ohne Link: die Quelle eines Shelly-Scanners ist seine Bluetooth-Adresse (`bluetooth_mac_from_primary_mac`), nicht seine MAC. `_ble_scanner_device` liest jetzt zuerst den Eintrag der Bluetooth-Integration (`async_entries("bluetooth")`, `unique_id` = Quelle, `data["source_device_id"]`, von `async_register_hass_scanner` angelegt), danach wie bisher die Verbindungen. Test `test_remote_receiver_found_through_the_entry_of_the_bluetooth_integration`.

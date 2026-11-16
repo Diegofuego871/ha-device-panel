@@ -7,7 +7,17 @@ All notable changes to this integration are documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/).
 
+## [2.233.0] - 2026-11-16
+
+Thread routers show their strongest neighbour.
+
+### Added
+
+- **"Strongest neighbour" for Thread routers:** a Thread router (or leader) has no single parent, so it had no "Connected via". The section "Connection" now shows the tile "Strongest neighbour": the strongest neighbouring router (devices attached to the router do not count), by name, and, if the panel shows that device, as a button with the round arrow button like "Connected via". It is the first row of the card "Neighbours" in the window "Signal".
+
 ## [2.232.1] - 2026-11-16
+
+Not released; included in 2.233.0.
 
 The link of "Connected via" for Bluetooth now also works for Shelly devices.
 
@@ -6220,7 +6230,7 @@ First pre-release.
   GitHub Actions for HACS/hassfest validation and tests.
 
 [2.6.0]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v2.6.0
-[2.232.1]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v2.232.1
+[2.233.0]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v2.233.0
 [2.232.0]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v2.232.0
 [2.230.1]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v2.230.1
 [2.230.0]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v2.230.0

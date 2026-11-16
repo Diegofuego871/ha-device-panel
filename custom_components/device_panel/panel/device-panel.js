@@ -4627,16 +4627,17 @@ class DevicePanel extends HTMLElement {
     const detail = this._detail?.id === d.id ? this._detail.data : null;
     const connSel = this._connSelHtml(d, false);
     const tiles = [this._tile(this._t("connType"), connSel)];
-    if (d.via) {
-      // Ist der Router, über den ein Thread-Gerät verbunden ist (d.via_id), ein Gerät, das dieses Panel zeigt, führt ein Tipp auf die Kachel
-      // zu dessen Geräteansicht (seit 2.231.0); Border Router und unbekannte Router sind kein Gerät im Panel: dort bleibt es Text
-      const target = d.via_id && d.via_id !== d.id ? this._devices.find((x) => x.id === d.via_id) : null;
-      tiles.push(
-        target
-          ? `<button type="button" class="tile tile-link" data-dlg="open-via" data-id="${escape(target.id)}" title="${escape(this._t("viaOpen", d.via))}" aria-label="${escape(this._t("viaOpen", d.via))}"><div class="tile-k">${escape(this._t("viaLabel"))}</div><div class="tile-v">${escape(d.via)}</div><span class="cbtn" aria-hidden="true">${mdi("chevronRight", 16)}</span></button>`
-          : this._tile(this._t("viaLabel"), escape(d.via)),
-      );
-    }
+    // Ist der Router, über den ein Thread-Gerät verbunden ist (d.via_id), oder der Proxy eines Bluetooth-Geräts, ein Gerät, das dieses Panel zeigt,
+    // führt ein Tipp auf die Kachel zu dessen Geräteansicht (seit 2.231.0); Border Router und unbekannte Empfänger sind kein Gerät im Panel: dort bleibt
+    // es Text. Ein Thread-Router hat keinen einzelnen Elternteil: seine Kachel heisst "Stärkster Nachbar" (d.thread_neighbor, seit 2.233.0).
+    const linkTile = (label, name, id) => {
+      const target = id && id !== d.id ? this._devices.find((x) => x.id === id) : null;
+      return target
+        ? `<button type="button" class="tile tile-link" data-dlg="open-via" data-id="${escape(target.id)}" title="${escape(this._t("viaOpen", name))}" aria-label="${escape(this._t("viaOpen", name))}"><div class="tile-k">${escape(label)}</div><div class="tile-v">${escape(name)}</div><span class="cbtn" aria-hidden="true">${mdi("chevronRight", 16)}</span></button>`
+        : this._tile(label, escape(name));
+    };
+    if (d.via) tiles.push(linkTile(this._t("viaLabel"), d.via, d.via_id));
+    if (d.thread_neighbor?.name) tiles.push(linkTile(this._t("thStrongest"), d.thread_neighbor.name, d.thread_neighbor.id));
     // Thread-Rolle und Netz aus der Matter-Diagnose (Zusatzangaben, ohne
     // Einstellung); die Verbindungsart von Hand bleibt davon unberührt.
     const mat = (d.connection_auto !== undefined ? d.connection_auto : d.connection) === "matter" ? this._matter.get(d.id) : null;

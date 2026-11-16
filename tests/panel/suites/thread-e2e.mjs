@@ -9,8 +9,8 @@ let ok = true;
 const check = (l, c, i = "") => { ok &&= !!c; console.log(`${c ? "PASS" : "FAIL"} ${l}${i ? " - " + i : ""}`); };
 const R = `document.querySelector("device-panel").shadowRoot`;
 const T = {
-  de: { sleepy: "Schlafendes Endgerät", router: "Router", via: "Verbunden über", neighbours: "Nachbarn", used: "zählt", child: "hängt an diesem Gerät", now: "gerade -64 dBm · LQI 3", end: "Endgerät" },
-  en: { sleepy: "Sleepy end device", router: "Router", via: "Connected via", neighbours: "Neighbours", used: "counts", child: "attached to this device", now: "now -64 dBm · LQI 3", end: "End device" },
+  de: { sleepy: "Schlafendes Endgerät", router: "Router", via: "Verbunden über", neighbours: "Nachbarn", used: "zählt", child: "hängt an diesem Gerät", now: "gerade -64 dBm · LQI 3", end: "Endgerät", strongest: "Stärkster Nachbar" },
+  en: { sleepy: "Sleepy end device", router: "Router", via: "Connected via", neighbours: "Neighbours", used: "counts", child: "attached to this device", now: "now -64 dBm · LQI 3", end: "End device", strongest: "Strongest neighbour" },
 };
 
 for (const lang of ["de", "en"]) {
@@ -93,6 +93,10 @@ for (const lang of ["de", "en"]) {
     await openDevice("c");
     check(`[${tag}] Router: Rolle ${L.router}`, (await text("dialog.device .tile .thr-role")) === L.router, await text("dialog.device .tile .thr-role"));
     check(`[${tag}] Router: kein "${L.via}" (er hängt an keinem Router)`, !(await tiles()).some(([k]) => k === L.via));
+    // Ein Router hat keinen Elternteil: die Kachel heisst "Stärkster Nachbar" und verlinkt, wenn der Nachbar ein Gerät des Panels ist
+    const strongest = (await tiles()).find(([k]) => k === L.strongest);
+    check(`[${tag}] Router: Kachel "${L.strongest}": Steckdose Kaffeemaschine`, strongest && strongest[1] === "Steckdose Kaffeemaschine", JSON.stringify(strongest));
+    check(`[${tag}] Router: Kachel "${L.strongest}" ist ein Link mit Pfeil-Knopf`, await ev(`const t=r.querySelector('dialog.device button.tile-link[data-dlg="open-via"]'); return !!t && !!t.querySelector(".cbtn") && t.dataset.id==="k"`));
     check(`[${tag}] Fenster Empfang (Router) öffnet`, await openSignal());
     check(`[${tag}] Karte heisst "${L.neighbours}"`, (await text("dialog.stat-dlg .sv h3")) === L.neighbours, await text("dialog.stat-dlg .sv h3"));
     check(`[${tag}] vier Nachbarn`, (await ev(`return r.querySelectorAll("dialog.stat-dlg .sv-row").length`)) === 4);

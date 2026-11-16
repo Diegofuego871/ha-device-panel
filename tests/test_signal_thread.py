@@ -202,6 +202,9 @@ async def test_router_lists_neighbours_children_marked_and_strongest_counts(hass
     assert devices.thread_parent(hass, made["router"]) is None
     assert devices._thread_role_of(hass, made["leader"], {"matter"}) == "leader"
     assert devices.thread_listeners(hass, made["router"])[0]["name"] == "Google Nest Hub"
+    # Der stärkste Nachbar, der selbst ein Router ist (nicht die angehängten Geräte), für die Kachel "Stärkster Nachbar"
+    assert devices.thread_neighbor(hass, made["router"]) == {"name": "Google Nest Hub", "id": None}
+    assert devices.thread_neighbor(hass, made["leader"]) is None
 
 
 async def test_bridge_unknown_role_and_not_thread(hass: HomeAssistant, monkeypatch) -> None:

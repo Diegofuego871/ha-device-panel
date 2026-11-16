@@ -652,6 +652,18 @@ def thread_parent_id(hass: HomeAssistant, device: dr.DeviceEntry) -> str | None:
     return row["device_id"] if row else None
 
 
+def thread_neighbor(hass: HomeAssistant, device: dr.DeviceEntry) -> dict[str, Any] | None:
+    """
+    Der stärkste Nachbar eines Thread-Routers, der selbst ein Router ist (kein angehängtes Gerät), für die Kachel "Stärkster Nachbar" (seit 2.233.0):
+    {"name", "id"} (Kennung des Geräts in Home Assistant oder None). Ein Router hat keinen einzelnen Elternteil, darum steht es nicht unter "via".
+    """
+    info = thread_info(hass, device)
+    if not info or info["mode"] != "neighbors":
+        return None
+    row = next((r for r in info["rows"] if not r["child"] and r["rssi"] is not None), None)
+    return {"name": row["name"], "id": row["device_id"]} if row else None
+
+
 def thread_parent(hass: HomeAssistant, device: dr.DeviceEntry) -> tuple[str, str] | None:
     """(Schlüssel, Name) des Routers, an dem ein Thread-Endgerät hängt (stärkster Nachbar, der kein angehängtes Gerät ist); sonst None."""
     info = thread_info(hass, device)
@@ -2213,6 +2225,8 @@ async def async_list_devices(hass: HomeAssistant, log: Any = None) -> dict[str, 
                 )
                 if via
                 else None,
+                # Stärkster Nachbar eines Thread-Routers (seit 2.233.0): {"name", "id"} oder None
+                "thread_neighbor": thread_neighbor(hass, device) if _source == "thread" else None,
                 # Rolle im Thread-Netz (seit 2.230.0): router, leader, end, sleepy, reed oder bridge; None ohne Thread
                 "thread_role": _thread_role_of(hass, device, domains),
                 **bat_fields,
