@@ -11,6 +11,11 @@ Einstieg für jede neue Claude-Code-Session. Zuerst diese Datei lesen, dann
 
 - `charge.py` `known_rechargeable`: Lademeldung gilt (global + Gerät/Integration), oder am Gerät ausdrücklich "Ein", oder Live-Aktivität für das Gerät an; `rechargeable()` und `charging_of()` nutzen sie (vorher nur `enabled()` mit globalem Schalter). Test `test_rechargeable_by_device_charge_or_live`.
 
+## Stand (2.235.1, automatisches Update installiert Vorabversionen)
+
+- Nutzer: "Updates automatisch installieren" tat nichts, die neue Version wurde nur angezeigt. Ursache: `update_check.async_refresh_issue` startete `async_auto_install` nur, wenn das stabile Release (`releases/latest`) neuer war als die installierte Version; wer mit Vorabversionen testet, hat ein neueres Panel als das stabile Release. Neu: bei `auto_update` und `prerelease` zählt auch `async_latest_prerelease`; die Meldung unter "Reparaturen" bleibt stabil-only. Tests `test_auto_update_installs_a_prerelease_when_offered` (schlug vorher fehl) und `..._ignores_a_prerelease_without_the_wish`.
+- Offen/Annahme: das Marketplace-Gerät muss die Vorabversion selbst anbieten (Schalter "Pre-release"); sonst steht im Debug-Protokoll "Der Marketplace kennt noch keine neuere Version". Nicht an einer echten Installation geprüft; falls es trotzdem nicht installiert, Protokoll (Kategorie Updates) ansehen.
+
 ## Stand (2.235.0, Verbindungsart USB, Thread-Adresse unbekannter Router)
 
 - Neue Verbindungsart `usb` (`const.CONNECTION_TYPES` vor `unknown`, `devices.CONN_USB`, `_DOMAIN_CONN`: `homeassistant_connect_zbt2`, `homeassistant_sky_connect`; Panel `CONN.usb` mit eigenem Symbol, `CHIP_DEFAULT`, Text `connUsb`, Übersetzungen der Auswahl; Simulator-Listen; Suiten `chips`, `conn`, `chiporder` an die neue Liste angepasst). Weitere Domains (andere Sticks) bei Bedarf in `_DOMAIN_CONN` ergänzen.

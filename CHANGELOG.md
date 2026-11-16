@@ -7,6 +7,14 @@ All notable changes to this integration are documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/).
 
+## [2.235.1] - 2026-11-16
+
+Automatic update now also installs pre-releases.
+
+### Fixed
+
+- **Automatic installation of pre-releases:** with "Update automatically" and "Show pre-releases" switched on, a newer pre-release was found and shown, but never installed. The check that starts the installation only looked at the latest stable release, which is older than the installed version when you test with pre-releases. It now also takes the latest pre-release into account (only if pre-releases are offered). The message "Version available" under Settings › Repairs still concerns stable releases only. The Marketplace must also offer the pre-release (switch "Pre-release" of the repository in the Marketplace).
+
 ## [2.235.0] - 2026-11-16
 
 New connection type "USB", and the Thread address of an unknown router.
@@ -6247,6 +6255,7 @@ First pre-release.
   GitHub Actions for HACS/hassfest validation and tests.
 
 [2.6.0]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v2.6.0
+[2.235.1]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v2.235.1
 [2.235.0]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v2.235.0
 [2.234.0]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v2.234.0
 [2.233.0]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v2.233.0

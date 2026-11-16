@@ -715,6 +715,32 @@ async def test_auto_update_starts_as_soon_as_a_check_finds_a_version(hass: HomeA
     assert ir.async_get(hass).async_get_issue(DOMAIN, update_check.RESTART_ISSUE_ID) is not None
 
 
+async def test_auto_update_installs_a_prerelease_when_offered(hass: HomeAssistant, entry, github_offline) -> None:
+    """Seit 2.236.0: eine neuere Vorabversion (GitHub-Pre-Release, Nummer ohne Zusatz) löst die Installation aus, wenn Vorabversionen
+    angeboten werden. Vorher zählte nur das stabile Release, das Update wurde angezeigt, aber nie installiert."""
+    installed = await update_check.async_installed_version(hass)
+    calls = await _auto_setup(hass, entry, github_offline, prerelease=True)
+    github_offline[LATEST] = (_release("v0.0.1"), None)  # stabil: älter als die installierte Version
+    github_offline[RELEASES] = ([_release("v99.0.0", prerelease=True), _release("v0.0.1")], None)
+    entity = await _hacs_entity(hass, installed, "99.0.0")
+    await update_check.async_refresh_issue(hass)
+    await hass.async_block_till_done()
+    assert [c.data["entity_id"] for c in calls] == [entity]
+    # Die Meldung "Version verfügbar" unter "Reparaturen" bleibt beim stabilen Release: keine Meldung
+    assert ir.async_get(hass).async_get_issue(DOMAIN, update_check.ISSUE_ID) is None
+
+
+async def test_auto_update_ignores_a_prerelease_without_the_wish(hass: HomeAssistant, entry, github_offline) -> None:
+    installed = await update_check.async_installed_version(hass)
+    calls = await _auto_setup(hass, entry, github_offline, prerelease=False)
+    github_offline[LATEST] = (_release("v0.0.1"), None)
+    github_offline[RELEASES] = ([_release("v99.0.0", prerelease=True), _release("v0.0.1")], None)
+    await _hacs_entity(hass, installed, "99.0.0")
+    await update_check.async_refresh_issue(hass)
+    await hass.async_block_till_done()
+    assert calls == []
+
+
 async def test_no_install_trigger_when_auto_update_is_off(hass: HomeAssistant, entry, github_offline) -> None:
     installed = await update_check.async_installed_version(hass)
     calls = await _auto_setup(hass, entry, github_offline, auto=False)

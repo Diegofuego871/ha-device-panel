@@ -272,7 +272,16 @@ async def async_refresh_issue(hass: HomeAssistant, release: dict[str, Any] | Non
     if release is None:
         release = await async_latest_release(hass)
     latest = release.get("latest")
-    if not installed or not latest:
+    if not installed:
+        return
+    # Vorabversion (seit 2.235.1): wer Vorabversionen angeboten bekommt und automatisch installieren lässt, soll auch sie automatisch
+    # bekommen. Bisher zählte hier nur das stabile Release, eine neuere Vorabversion löste nie eine Installation aus. Die Meldung
+    # unter "Reparaturen" bleibt beim stabilen Release (sie meldet nie Vorabversionen).
+    if auto_update_active(hass) and panel_settings(hass).get("prerelease"):
+        pre = (await async_latest_prerelease(hass)).get("prerelease")
+        if pre and compare_versions(pre, installed) > 0 and compare_versions(pre, latest) > 0:
+            hass.async_create_task(async_auto_install(hass), f"{DOMAIN}_auto_install")
+    if not latest:
         return
     if compare_versions(latest, installed) > 0:
         # Automatisch installieren (seit 2.23.0): sobald irgendeine Prüfung eine neuere Version findet (Start, tägliche Prüfung,

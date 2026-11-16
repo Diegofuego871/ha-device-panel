@@ -7,6 +7,14 @@ Alle nennenswerten Änderungen an dieser Integration stehen in dieser Datei.
 Das Format folgt [Keep a Changelog](https://keepachangelog.com/de/1.1.0/),
 die Versionsnummern folgen [Semantic Versioning](https://semver.org/lang/de/).
 
+## [2.235.1] - 2026-11-16
+
+Das automatische Update installiert jetzt auch Vorabversionen.
+
+### Behoben
+
+- **Automatisches Installieren von Vorabversionen:** Mit "Updates automatisch installieren" und "Vorabversionen anzeigen" wurde eine neuere Vorabversion gefunden und angezeigt, aber nie installiert. Die Prüfung, die die Installation startet, sah nur das neueste stabile Release; das ist älter als die installierte Version, wenn man mit Vorabversionen testet. Jetzt zählt auch die neueste Vorabversion (nur wenn Vorabversionen angeboten werden). Die Meldung "Version verfügbar" unter Einstellungen › Reparaturen betrifft weiterhin nur stabile Releases. Der Marketplace muss die Vorabversion ebenfalls anbieten (Schalter "Pre-release" des Repositories im Marketplace).
+
 ## [2.235.0] - 2026-11-16
 
 Neue Verbindungsart "USB" und die Thread-Adresse eines unbekannten Routers.
@@ -6348,6 +6356,7 @@ Erste Vorabversion.
   GitHub Actions für die Prüfungen von HACS und hassfest sowie die Tests.
 
 [2.6.0]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v2.6.0
+[2.235.1]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v2.235.1
 [2.235.0]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v2.235.0
 [2.234.0]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v2.234.0
 [2.233.0]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v2.233.0
