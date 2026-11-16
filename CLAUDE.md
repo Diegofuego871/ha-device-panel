@@ -112,7 +112,11 @@ Bereich. Vorbild in Aufbau, Arbeitsweise und Design ist die Integration
     `## X.Y.Z (JJJJ-MM-TT)`. Grundlage ist der Abschnitt aus
     `CHANGELOG.md` (`python3 .github/scripts/changelog_section.py X.Y.Z`).
   - **Offizielles Release nach Vorabversionen:** Machen wir eine Version offiziell, fassen die Notes alles seit dem letzten *offiziellen*
-    Release zusammen (alle Vorabversionen dazwischen, wie bei übersprungenen Versionen), mit dem Satz "Includes the changes from X and Y".
+    Release zusammen (alle Vorabversionen dazwischen, wie bei übersprungenen Versionen). Die Notes lesen sich für den Nutzer wie ein
+    grosser Schritt: keine Einzelversionen nennen, auch nicht "Includes the changes from X and Y" und nicht "kam schon in einer
+    Vorabversion". Was in den Vorabversionen ein- und wieder ausgebaut oder geändert wurde, nur im Endstand erwähnen (nichts doppelt);
+    erwähnt wird nur, was im Release wirklich drin ist. Hinweise "noch nicht geprüft" aus Vorabversionen entfallen. Wir testen mit
+    Vorabversionen; die Einzelabschnitte bleiben im CHANGELOG.
   - **Übersprungene Versionen:** Gibt es zwischen dem letzten
     veröffentlichten Release und der aktuellen Version Versionen ohne
     Release, fassen die Notes alles seit dem letzten Release zusammen:
