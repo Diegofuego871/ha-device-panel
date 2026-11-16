@@ -11,6 +11,11 @@ Einstieg für jede neue Claude-Code-Session. Zuerst diese Datei lesen, dann
 
 - `charge.py` `known_rechargeable`: Lademeldung gilt (global + Gerät/Integration), oder am Gerät ausdrücklich "Ein", oder Live-Aktivität für das Gerät an; `rechargeable()` und `charging_of()` nutzen sie (vorher nur `enabled()` mit globalem Schalter). Test `test_rechargeable_by_device_charge_or_live`.
 
+## Stand (2.232.1, Bluetooth-Link auch bei Shelly)
+
+- Am echten System (Nutzer, 2.232.0) war der Empfänger "Storen Schlafzimmer" (Shelly) ohne Link: die Quelle eines Shelly-Scanners ist seine Bluetooth-Adresse (`bluetooth_mac_from_primary_mac`), nicht seine MAC. `_ble_scanner_device` liest jetzt zuerst den Eintrag der Bluetooth-Integration (`async_entries("bluetooth")`, `unique_id` = Quelle, `data["source_device_id"]`, von `async_register_hass_scanner` angelegt), danach wie bisher die Verbindungen. Test `test_remote_receiver_found_through_the_entry_of_the_bluetooth_integration`.
+- Offen: Der Link braucht, dass das Panel das Gerät zeigt (nicht ausgeblendet, nicht ausgeschlossen).
+
 ## Stand (2.232.0, Bluetooth: Name und Link des Empfängers)
 
 - `devices._ble_scanner_device(hass, source)`: Quelle des Empfängers -> (Name, Kennung) des HA-Geräts über `async_get_device` mit den Verbindungen `mac` (ESPHome-Proxy: Quelle = MAC), `bluetooth` (Adapter des Servers, Quelle = Adresse, gross und wie gemeldet); sonst der Name des Empfängers. Angewendet in `_ble_seen` und im Rückfall von `_ble_best`, damit Kachel, Weg (`note_via`), Liste und Wechsel denselben Namen tragen (ein umbenannter Empfänger ändert nur den Namen, siehe `via_names`). `ble_receiver_device_id`; Geräteliste `via_id` auch für Quelle `ble`. Panel unverändert (die Kachel aus 2.231.0 ist generisch).

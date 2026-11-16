@@ -686,14 +686,24 @@ def _ble_stamps(hass: HomeAssistant, scanner: Any, now: float) -> dict[str, floa
 
 def _ble_scanner_device(hass: HomeAssistant, source: str) -> tuple[str, str] | None:
     """
-    (Name, Kennung) des Geräts in Home Assistant, das ein Bluetooth-Empfänger ist (seit 2.232.0): der Adapter des Servers (Verbindung "bluetooth" mit
-    seiner Adresse) oder ein Proxy wie ESPHome (die Quelle ist seine MAC-Adresse, Verbindung "mac"). None: kein Gerät dazu (Shelly, nicht
-    angelegter Adapter), dann gilt der Name, den der Empfänger selbst meldet.
+    (Name, Kennung) des Geräts in Home Assistant, das ein Bluetooth-Empfänger ist (seit 2.232.0). Verlässlich (seit 2.232.1): für jeden
+    entfernten Empfänger (ESPHome, Shelly …) legt die Bluetooth-Integration einen Eintrag an, dessen Kennung die Quelle ist und der das Gerät
+    des Empfängers als "source_device_id" trägt; die Bluetooth-Adresse eines Shelly ist nicht seine MAC-Adresse. Sonst der Adapter des
+    Servers (Verbindung "bluetooth" mit seiner Adresse) oder ein Gerät mit der Quelle als MAC-Adresse. None: kein Gerät dazu, dann gilt der
+    Name, den der Empfänger selbst meldet.
     """
+    dev_reg = dr.async_get(hass)
+    found = None
     try:
-        found = dr.async_get(hass).async_get_device(
-            connections={(dr.CONNECTION_NETWORK_MAC, source), (dr.CONNECTION_BLUETOOTH, source), (dr.CONNECTION_BLUETOOTH, source.upper())}
-        )
+        wanted = source.upper()
+        for entry in hass.config_entries.async_entries("bluetooth"):
+            if str(entry.unique_id or "").upper() == wanted and (device_id := entry.data.get("source_device_id")):
+                found = dev_reg.async_get(device_id)
+                break
+        if found is None:
+            found = dev_reg.async_get_device(
+                connections={(dr.CONNECTION_NETWORK_MAC, source), (dr.CONNECTION_BLUETOOTH, source), (dr.CONNECTION_BLUETOOTH, wanted)}
+            )
     except Exception:  # noqa: BLE001 - ungültige Adresse oder Registry nicht bereit
         return None
     return (found.name_by_user or found.name or found.id, found.id) if found else None

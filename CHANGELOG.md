@@ -7,6 +7,14 @@ All notable changes to this integration are documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/).
 
+## [2.232.1] - 2026-11-16
+
+The link of "Connected via" for Bluetooth now also works for Shelly devices.
+
+### Fixed
+
+- **Bluetooth receiver that is a Shelly device (or another remote receiver):** "Connected via" showed the name but no link, because the receiver was only looked up by its MAC address, and the Bluetooth address of a Shelly is not its MAC address. Home Assistant stores the device of every remote receiver (ESPHome proxy, Shelly …) in the entry of the Bluetooth integration; the panel now reads it there, so the name and the link are found for every such receiver. The link still needs the device to be shown by the panel.
+
 ## [2.232.0] - 2026-11-16
 
 "Connected via" of a Bluetooth device shows the name of the proxy and leads to it.
@@ -6212,6 +6220,7 @@ First pre-release.
   GitHub Actions for HACS/hassfest validation and tests.
 
 [2.6.0]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v2.6.0
+[2.232.1]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v2.232.1
 [2.232.0]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v2.232.0
 [2.230.1]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v2.230.1
 [2.230.0]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v2.230.0

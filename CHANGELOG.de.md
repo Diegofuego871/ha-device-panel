@@ -7,6 +7,14 @@ Alle nennenswerten Änderungen an dieser Integration stehen in dieser Datei.
 Das Format folgt [Keep a Changelog](https://keepachangelog.com/de/1.1.0/),
 die Versionsnummern folgen [Semantic Versioning](https://semver.org/lang/de/).
 
+## [2.232.1] - 2026-11-16
+
+Der Link von "Verbunden über" bei Bluetooth klappt jetzt auch bei Shelly-Geräten.
+
+### Behoben
+
+- **Bluetooth-Empfänger, der ein Shelly-Gerät ist (oder ein anderer entfernter Empfänger):** "Verbunden über" zeigte den Namen, aber keinen Link, weil der Empfänger nur über seine MAC-Adresse gesucht wurde und die Bluetooth-Adresse eines Shelly nicht seine MAC-Adresse ist. Home Assistant hält das Gerät jedes entfernten Empfängers (ESPHome-Proxy, Shelly …) im Eintrag der Bluetooth-Integration fest; das Panel liest es jetzt dort, damit werden Name und Link für jeden solchen Empfänger gefunden. Der Link braucht weiter, dass das Panel das Gerät zeigt.
+
 ## [2.232.0] - 2026-11-16
 
 "Verbunden über" bei einem Bluetooth-Gerät zeigt den Namen des Proxys und führt zu ihm.
@@ -6313,6 +6321,7 @@ Erste Vorabversion.
   GitHub Actions für die Prüfungen von HACS und hassfest sowie die Tests.
 
 [2.6.0]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v2.6.0
+[2.232.1]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v2.232.1
 [2.232.0]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v2.232.0
 [2.230.1]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v2.230.1
 [2.230.0]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v2.230.0

@@ -63,3 +63,21 @@ def test_adapter_found_by_its_bluetooth_connection_and_unknown_receiver_keeps_it
     assert devices.ble_receiver_device_id(hass, sensor) is None
     assert devices.ble_receiver(hass, sensor) == (STRANGER, "Proxy Keller (DE:AD:BE:EF:00:01)")
     assert devices._ble_scanner_device(hass, "kein-mac") is None
+
+
+def test_remote_receiver_found_through_the_entry_of_the_bluetooth_integration(hass: HomeAssistant, monkeypatch) -> None:
+    """2.232.1: Die Bluetooth-Adresse eines Shelly ist nicht seine MAC-Adresse; der Eintrag der Bluetooth-Integration kennt das Gerät (source_device_id)."""
+    sensor, _proxy, _adapter = _devices(hass)
+    entry = MockConfigEntry(domain="shelly")
+    entry.add_to_hass(hass)
+    shelly = dr.async_get(hass).async_get_or_create(
+        config_entry_id=entry.entry_id, identifiers={("shelly", "storen")}, name="Storen Schlafzimmer", connections={(dr.CONNECTION_NETWORK_MAC, "aa:bb:cc:dd:ee:00")}
+    )
+    shelly_source = "AA:BB:CC:DD:EE:02"  # abgeleitet von der MAC-Adresse, nicht gleich
+    MockConfigEntry(domain="bluetooth", unique_id=shelly_source.lower(), data={"source": shelly_source, "source_device_id": shelly.id}).add_to_hass(hass)
+    _fake_bluetooth(monkeypatch, [(shelly_source, "Storen Schlafzimmer (AA:BB:CC:DD:EE:02)", -60)])
+    assert devices.ble_receiver(hass, sensor) == (shelly_source, "Storen Schlafzimmer")
+    assert devices.ble_receiver_device_id(hass, sensor) == shelly.id
+    # Eintrag ohne Gerät (Adapter): die Suche über die Verbindung gilt weiter
+    MockConfigEntry(domain="bluetooth", unique_id=ADAPTER, data={}).add_to_hass(hass)
+    assert devices._ble_scanner_device(hass, ADAPTER)[0] == "Bluetooth-Adapter"
