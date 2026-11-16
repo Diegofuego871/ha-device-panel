@@ -7,6 +7,14 @@ All notable changes to this integration are documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/).
 
+## [2.234.0] - 2026-11-16
+
+The list shows the strongest neighbour of Thread routers; the column "Hub / bridge" is now called "Connected via".
+
+### Changed
+
+- **Column "Connected via" (before "Hub / bridge"):** it holds more than hubs and bridges: the hub of a device, the proxy of a Bluetooth device, the router of a Thread device. For a Thread router, which has no single parent, the list now shows its strongest neighbour (as in the tile "Strongest neighbour" of the pop-up), in the column and as "neighbour …" under the connection type in the table. The column can be sorted and searched with this value, too.
+
 ## [2.233.0] - 2026-11-16
 
 Thread routers show their strongest neighbour.
@@ -6230,6 +6238,7 @@ First pre-release.
   GitHub Actions for HACS/hassfest validation and tests.
 
 [2.6.0]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v2.6.0
+[2.234.0]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v2.234.0
 [2.233.0]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v2.233.0
 [2.232.0]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v2.232.0
 [2.230.1]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v2.230.1

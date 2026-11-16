@@ -2399,7 +2399,7 @@ class DevicePanel extends HTMLElement {
     if (!this._search) return true;
     const integs = (d.integrations || []).map((dom) => this._integrations[dom] || dom);
     const labels = (d.labels || []).map((id) => this._labelInfo(id)?.name || id);
-    return [d.name, d.area, d.manufacturer, d.model, d.sw_version, ...integs, ...labels, d.integration?.title, this._t(typeKey(d.type)), this._t(CONN[this._connOf(d)].key), d.via]
+    return [d.name, d.area, d.manufacturer, d.model, d.sw_version, ...integs, ...labels, d.integration?.title, this._t(typeKey(d.type)), this._t(CONN[this._connOf(d)].key), d.via, d.thread_neighbor?.name]
       .join(" ")
       .toLowerCase()
       .includes(this._search);
@@ -2462,7 +2462,8 @@ class DevicePanel extends HTMLElement {
       case "software":
         return d.sw_version || null;
       case "via":
-        return d.via || null;
+        // Auch bei einem Thread-Router (seit 2.234.0): sein stärkster Nachbar
+        return d.via || d.thread_neighbor?.name || null;
       default:
         return null;
     }
@@ -3768,7 +3769,8 @@ class DevicePanel extends HTMLElement {
     const type = this._connOf(d);
     const level = devSigLevel(d);
     const sig = level ? ` ${bars(level, d.online === false)} <span class="val">${escape(sigText(d.signal))}</span>` : "";
-    const via = withVia && d.via ? `<span class="sub">${escape(this._t("via", d.via))}</span>` : "";
+    // Ein Thread-Router hat keinen Elternteil: dort steht sein stärkster Nachbar (seit 2.234.0)
+    const via = withVia && (d.via || d.thread_neighbor?.name) ? `<span class="sub">${escape(d.via ? this._t("via", d.via) : this._t("thNeighborOf", d.thread_neighbor.name))}</span>` : "";
     return `<span class="sig">${CONN[type].icon(16)} ${escape(this._t(CONN[type].key))}${sig}</span>${via}`;
   }
 
@@ -3891,7 +3893,7 @@ class DevicePanel extends HTMLElement {
       software: (d) => this._softwareHtml(d),
       area: (d) => (d.area ? escape(d.area) : dash),
       outages: (d) => (d.avail24 ? `<span class="${d.avail24.outages ? "nbad" : ""}">${d.avail24.outages || 0}</span>` : dash),
-      via: (d) => (d.via ? escape(d.via) : dash),
+      via: (d) => (d.via || d.thread_neighbor?.name ? escape(d.via || d.thread_neighbor.name) : dash),
     };
     // Kopf: Klick sortiert (aufsteigend, absteigend, Standard).
     const th = (key) => {

@@ -9,8 +9,8 @@ let ok = true;
 const check = (l, c, i = "") => { ok &&= !!c; console.log(`${c ? "PASS" : "FAIL"} ${l}${i ? " - " + i : ""}`); };
 const R = `document.querySelector("device-panel").shadowRoot`;
 const T = {
-  de: { sleepy: "Schlafendes Endgerät", router: "Router", via: "Verbunden über", neighbours: "Nachbarn", used: "zählt", child: "hängt an diesem Gerät", now: "gerade -64 dBm · LQI 3", end: "Endgerät", strongest: "Stärkster Nachbar" },
-  en: { sleepy: "Sleepy end device", router: "Router", via: "Connected via", neighbours: "Neighbours", used: "counts", child: "attached to this device", now: "now -64 dBm · LQI 3", end: "End device", strongest: "Strongest neighbour" },
+  de: { sleepy: "Schlafendes Endgerät", router: "Router", via: "Verbunden über", neighbours: "Nachbarn", used: "zählt", child: "hängt an diesem Gerät", now: "gerade -64 dBm · LQI 3", end: "Endgerät", strongest: "Stärkster Nachbar", nbOf: "Nachbar", colVia: "Verbunden über" },
+  en: { sleepy: "Sleepy end device", router: "Router", via: "Connected via", neighbours: "Neighbours", used: "counts", child: "attached to this device", now: "now -64 dBm · LQI 3", end: "End device", strongest: "Strongest neighbour", nbOf: "neighbour", colVia: "Connected via" },
 };
 
 for (const lang of ["de", "en"]) {
@@ -87,6 +87,14 @@ for (const lang of ["de", "en"]) {
     check(`[${tag}] Bluetooth: Kachel "${L.via}" mit dem Namen des Proxys ist ein Link mit Pfeil-Knopf`, await ev(`const t=r.querySelector('dialog.device button.tile-link[data-dlg="open-via"]'); return !!t && !!t.querySelector(".cbtn") && t.dataset.id==="k" && t.textContent.includes("Proxy Garage")`));
     await tap('dialog.device button.tile-link[data-dlg="open-via"]');
     check(`[${tag}] Bluetooth: Tipp öffnet das Gerät des Proxys`, await wait(`return r.querySelector("dialog.device")?.open && r.host._detailId === "k"`));
+
+    // --- Liste: ein Thread-Router zeigt seinen stärksten Nachbarn, wo andere Geräte ihr "Verbunden über" haben (2.234.0)
+    await closeAll();
+    const listRow = await ev(`const el=r.querySelector('${mobile ? ".mc" : "tr"}[data-open="c"]'); return (el?.textContent||"").replace(/\\s+/g," ")`);
+    // Die Tabelle zeigt es; die Karten am Handy zeigen kein "über …" (auch bei anderen Geräten nicht)
+    if (!mobile) check(`[${tag}] Liste: Router "Thermostat Bad" nennt den Nachbarn (${L.nbOf})`, listRow.includes(`${L.nbOf} Steckdose Kaffeemaschine`), listRow.slice(0, 160));
+    const colHead = await ev(`return r.host._t("colVia")`);
+    check(`[${tag}] Spalte heisst "${L.colVia}"`, colHead === L.colVia, colHead);
 
     // --- Thermostat: Router mit Nachbarn
     await closeAll();

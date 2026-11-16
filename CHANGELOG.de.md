@@ -7,6 +7,14 @@ Alle nennenswerten Änderungen an dieser Integration stehen in dieser Datei.
 Das Format folgt [Keep a Changelog](https://keepachangelog.com/de/1.1.0/),
 die Versionsnummern folgen [Semantic Versioning](https://semver.org/lang/de/).
 
+## [2.234.0] - 2026-11-16
+
+Die Liste zeigt bei Thread-Routern den stärksten Nachbarn; die Spalte "Hub / Bridge" heisst jetzt "Verbunden über".
+
+### Geändert
+
+- **Spalte "Verbunden über" (vorher "Hub / Bridge"):** sie enthält mehr als Hubs und Bridges: den Hub eines Geräts, den Proxy eines Bluetooth-Geräts, den Router eines Thread-Geräts. Bei einem Thread-Router, der keinen einzelnen Elternteil hat, zeigt die Liste jetzt seinen stärksten Nachbarn (wie die Kachel "Stärkster Nachbar" im Popup), in der Spalte und als "Nachbar …" unter der Verbindungsart in der Tabelle. Nach diesem Wert lässt sich die Spalte auch sortieren und suchen.
+
 ## [2.233.0] - 2026-11-16
 
 Thread-Router zeigen ihren stärksten Nachbarn.
@@ -6331,6 +6339,7 @@ Erste Vorabversion.
   GitHub Actions für die Prüfungen von HACS und hassfest sowie die Tests.
 
 [2.6.0]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v2.6.0
+[2.234.0]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v2.234.0
 [2.233.0]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v2.233.0
 [2.232.0]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v2.232.0
 [2.230.1]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v2.230.1

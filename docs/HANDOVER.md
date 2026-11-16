@@ -11,6 +11,10 @@ Einstieg für jede neue Claude-Code-Session. Zuerst diese Datei lesen, dann
 
 - `charge.py` `known_rechargeable`: Lademeldung gilt (global + Gerät/Integration), oder am Gerät ausdrücklich "Ein", oder Live-Aktivität für das Gerät an; `rechargeable()` und `charging_of()` nutzen sie (vorher nur `enabled()` mit globalem Schalter). Test `test_rechargeable_by_device_charge_or_live`.
 
+## Stand (2.234.0, Liste: Nachbar bei Thread-Routern, Spalte "Verbunden über")
+
+- Spalte `via` (`colVia`) heisst jetzt "Verbunden über"/"Connected via" (vorher "Hub / Bridge"); Wert, Sortierung, Suche und die Zeile unter der Verbindungsart ("Nachbar X"/"neighbour X", `thNeighborOf`) fallen für Thread-Router auf `d.thread_neighbor.name` zurück. Karten am Handy zeigen wie bisher kein "über …". `thread-e2e` (122). Der Typ "Hub / Bridge" (`typeHub`) bleibt.
+
 ## Stand (2.233.0, Thread-Router: Kachel "Stärkster Nachbar")
 
 - Nutzer: Bei Thread-Routern fehlte "Verbunden über" (absichtlich: ein Router hat keinen Elternteil). Neu `devices.thread_neighbor` (stärkster Nachbar, der ein Router ist, nicht angehängt; `{name, id}`), Geräteliste `thread_neighbor` (nur Quelle `thread`, nur Modus `neighbors`); Panel: Hilfsfunktion `linkTile` in `_connSectionHtml` (gleiche Kachel für "Verbunden über" und "Stärkster Nachbar", Link wenn das Panel das Gerät zeigt), Text `thStrongest`. Tests: `test_signal_thread`, `thread-e2e` (116).
