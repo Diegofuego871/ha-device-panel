@@ -62,7 +62,13 @@ for (const lang of ["de", "en"]) {
     check(`[${tag}] keine eigene Kachel "Thread-Rolle" mehr`, !(await tiles()).some(([k]) => /Thread-Rolle|Thread role/.test(k)), JSON.stringify((await tiles()).map(([k]) => k)));
     const via = (await tiles()).find(([k]) => k === L.via);
     check(`[${tag}] "${L.via}": Steckdose Küche`, via && via[1] === "Steckdose Küche", JSON.stringify(via));
+    // Der Router ist ein Gerät, das das Panel zeigt (im Simulator "k"): die Kachel ist ein Knopf mit rundem Pfeil und führt dorthin
+    check(`[${tag}] Kachel "${L.via}" ist ein Link mit Pfeil-Knopf`, await ev(`const t=r.querySelector('dialog.device button.tile-link[data-dlg="open-via"]'); return !!t && !!t.querySelector(".cbtn") && t.dataset.id==="k"`));
     await shot("popup");
+    await tap('dialog.device button.tile-link[data-dlg="open-via"]');
+    check(`[${tag}] Tipp öffnet das Gerät des Routers`, await wait(`return r.querySelector("dialog.device")?.open && r.host._detailId === "k" && r.querySelector("dialog.device .dlg-title h2, dialog.device h2")?.textContent.includes("Steckdose Kaffeemaschine")`));
+    check(`[${tag}] das neue Popup hat keine Link-Kachel (kein Thread-Gerät)`, await ev(`return !r.querySelector("dialog.device button.tile-link")`));
+    await openDevice("i");
 
     // --- Fenster "Empfang": Karte "Verbunden über"
     check(`[${tag}] Fenster Empfang öffnet`, await openSignal());

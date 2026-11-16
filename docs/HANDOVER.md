@@ -11,6 +11,12 @@ Einstieg für jede neue Claude-Code-Session. Zuerst diese Datei lesen, dann
 
 - `charge.py` `known_rechargeable`: Lademeldung gilt (global + Gerät/Integration), oder am Gerät ausdrücklich "Ein", oder Live-Aktivität für das Gerät an; `rechargeable()` und `charging_of()` nutzen sie (vorher nur `enabled()` mit globalem Schalter). Test `test_rechargeable_by_device_charge_or_live`.
 
+## Stand (2.231.0, "Verbunden über" verlinkt den Router)
+
+- Backend: `_thread_device_names` liefert je Adresse (Name, Geräte-Kennung), `_thread_names` Border Router mit Kennung None; `thread_info`-Zeilen haben `device_id`; `thread_parent_id`; Geräteliste: `via_id` (nur Quelle `thread`).
+- Panel: Kachel "Verbunden über" in `_connSectionHtml` ist ein `<button class="tile tile-link" data-dlg="open-via" data-id>` mit `.cbtn`, wenn `d.via_id` ein Gerät in `this._devices` ist; Handler `open-via` über `_requestCloseDevice` + `_openDevice`; CSS `button.tile.tile-link`. Zeilen im Fenster "Empfang" sind (noch) keine Links (Nutzer hat nur die Kachel gewünscht).
+- Tests: `thread-e2e` (100, mit Tipp auf den Link), `test_signal_thread` (11).
+
 ## Stand (2.230.1, Namen von Thread-Routern)
 
 - Am echten Gerät (Nutzer, 2.230.0) kamen Rolle, "Verbunden über" und der Wert an, der Router hiess aber "Router …E46F". Neu `devices._thread_addresses`: neben `0/53/63` auch die Hardware-Adresse der Thread-Schnittstelle in `0/51/0` (Eintrag mit Art Tag 7 = 4, Adresse Tag 4, Base64, 8 Bytes, Big-Endian wie die Adresse der Nachbartabelle). Test `test_router_name_from_the_hardware_address_of_its_thread_interface`.

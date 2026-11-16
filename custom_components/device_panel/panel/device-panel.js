@@ -4627,7 +4627,16 @@ class DevicePanel extends HTMLElement {
     const detail = this._detail?.id === d.id ? this._detail.data : null;
     const connSel = this._connSelHtml(d, false);
     const tiles = [this._tile(this._t("connType"), connSel)];
-    if (d.via) tiles.push(this._tile(this._t("viaLabel"), escape(d.via)));
+    if (d.via) {
+      // Ist der Router, über den ein Thread-Gerät verbunden ist (d.via_id), ein Gerät, das dieses Panel zeigt, führt ein Tipp auf die Kachel
+      // zu dessen Geräteansicht (seit 2.231.0); Border Router und unbekannte Router sind kein Gerät im Panel: dort bleibt es Text
+      const target = d.via_id && d.via_id !== d.id ? this._devices.find((x) => x.id === d.via_id) : null;
+      tiles.push(
+        target
+          ? `<button type="button" class="tile tile-link" data-dlg="open-via" data-id="${escape(target.id)}" title="${escape(this._t("viaOpen", d.via))}" aria-label="${escape(this._t("viaOpen", d.via))}"><div class="tile-k">${escape(this._t("viaLabel"))}</div><div class="tile-v">${escape(d.via)}</div><span class="cbtn" aria-hidden="true">${mdi("chevronRight", 16)}</span></button>`
+          : this._tile(this._t("viaLabel"), escape(d.via)),
+      );
+    }
     // Thread-Rolle und Netz aus der Matter-Diagnose (Zusatzangaben, ohne
     // Einstellung); die Verbindungsart von Hand bleibt davon unberührt.
     const mat = (d.connection_auto !== undefined ? d.connection_auto : d.connection) === "matter" ? this._matter.get(d.id) : null;
@@ -5604,6 +5613,10 @@ class DevicePanel extends HTMLElement {
       // HA-Seite der Integration dieses Geräts (seit 2.84.0); der Domainname kommt aus dem Registry-Eintrag, nicht aus freier Eingabe
       const domain = btn.dataset.domain;
       if (/^[a-z0-9_]+$/.test(domain || "")) this._requestCloseDevice(() => this._navigate(`/config/integrations/integration/${domain}`));
+    } else if (action === "open-via") {
+      // Zum Gerät, über das dieses verbunden ist (Thread-Router): das Popup wechselt, nach der Frage zu ungespeicherten Änderungen
+      const id = btn.dataset.id;
+      if (this._devices.some((x) => x.id === id)) this._requestCloseDevice(() => this._openDevice(id));
     } else if (action === "open-device") {
       const id = this._detailId;
       this._requestCloseDevice(() => this._navigate(`/config/devices/device/${id}`));

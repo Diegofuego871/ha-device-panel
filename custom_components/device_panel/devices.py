@@ -517,15 +517,15 @@ def _thread_addresses(node: Any) -> set[int]:
     return found
 
 
-def _thread_device_names(hass: HomeAssistant) -> dict[int, str]:
-    """Adresse (Thread) -> Name der Matter-Geräte (eigene Adresse 0/53/63 oder Hardware-Adresse der Thread-Schnittstelle 0/51/0)."""
-    names: dict[int, str] = {}
+def _thread_device_names(hass: HomeAssistant) -> dict[int, tuple[str, str]]:
+    """Adresse (Thread) -> (Name, Geräte-Kennung) der Matter-Geräte (eigene Adresse 0/53/63 oder Hardware-Adresse der Thread-Schnittstelle 0/51/0)."""
+    names: dict[int, tuple[str, str]] = {}
     for device in registry_devices(dr.async_get(hass)):
         if not any((e := hass.config_entries.async_get_entry(i)) and e.domain == "matter" for i in device_entry_ids(device)):
             continue
         node = _thread_node(hass, device.id)
         for ext in _thread_addresses(node) if node is not None else ():
-            names[ext] = device.name_by_user or device.name or device.id
+            names[ext] = (device.name_by_user or device.name or device.id, device.id)
     return names
 
 
@@ -551,8 +551,11 @@ async def _thread_refresh_routers(hass: HomeAssistant) -> None:
         store["refreshing"] = False
 
 
-def _thread_names(hass: HomeAssistant) -> dict[int, str]:
-    """Namen zu Thread-Adressen: Matter-Geräte (ohne Zwischenspeicher, billig) vor den Border Routern (im Hintergrund erneuert)."""
+def _thread_names(hass: HomeAssistant) -> dict[int, tuple[str, str | None]]:
+    """
+    Adresse -> (Name, Geräte-Kennung oder None) zu Thread-Adressen: Matter-Geräte (mit Kennung, damit das Panel dorthin verlinken kann) vor den
+    Border Routern der Integration "Thread" (nur Name, im Hintergrund erneuert).
+    """
     store: dict[str, Any] = hass.data.setdefault(DATA_THREAD_NAMES, {})
     now = time.monotonic()
     if "thread" in hass.config.components and not store.get("refreshing") and now - store.get("at", -1e9) > THREAD_NAMES_TTL_S:
@@ -563,7 +566,7 @@ def _thread_names(hass: HomeAssistant) -> dict[int, str]:
     if now - store.get("devices_at", -1e9) > THREAD_DEVICES_TTL_S:
         store["devices_at"] = now
         store["devices"] = _thread_device_names(hass)
-    return {**store.get("routers", {}), **store.get("devices", {})}
+    return {**{ext: (name, None) for ext, name in store.get("routers", {}).items()}, **store.get("devices", {})}
 
 
 def _thread_kind(row: dict[str, Any]) -> str:
@@ -597,12 +600,14 @@ def thread_info(hass: HomeAssistant, device: dr.DeviceEntry) -> dict[str, Any] |
         for r in table:
             kind = _thread_kind(r)
             short = f"{r['ext']:016X}"[-4:] if r["ext"] else "?"
-            name = names.get(r["ext"]) if r["ext"] else None
+            name, device_id = names.get(r["ext"], (None, None)) if r["ext"] else (None, None)
             rows.append(
                 {
                     "key": f"{r['ext']:016x}" if r["ext"] else short,
                     "name": name or f"{'Router' if kind == 'router' else 'Thread'} …{short}",
                     "known": bool(name),
+                    # Ein Gerät in Home Assistant (nicht nur ein Border Router): das Panel verlinkt dorthin, wenn es das Gerät zeigt (seit 2.231.0)
+                    "device_id": device_id,
                     "kind": kind,
                     "rssi": r["rssi"],
                     "lqi": r["lqi"],
@@ -636,6 +641,15 @@ def thread_listeners(hass: HomeAssistant, device: dr.DeviceEntry) -> list[dict[s
     """Für die Karte im Fenster "Empfang": die Zeilen von thread_info mit den Feldern, die die Bluetooth-Karte kennt (name, rssi, age, used)."""
     info = thread_info(hass, device)
     return [{**r, "rssi": r["rssi"]} for r in info["rows"] if r["rssi"] is not None] if info else []
+
+
+def thread_parent_id(hass: HomeAssistant, device: dr.DeviceEntry) -> str | None:
+    """Kennung des Geräts in Home Assistant, an dem ein Thread-Endgerät hängt (für den Link im Popup); None, wenn es keines ist (Border Router) oder unbekannt."""
+    info = thread_info(hass, device)
+    if not info or info["mode"] != "parent":
+        return None
+    row = next((r for r in info["rows"] if not r["child"] and r["rssi"] is not None), None)
+    return row["device_id"] if row else None
 
 
 def thread_parent(hass: HomeAssistant, device: dr.DeviceEntry) -> tuple[str, str] | None:
@@ -2157,6 +2171,8 @@ async def async_list_devices(hass: HomeAssistant, log: Any = None) -> dict[str, 
                 # Herkunft ("integration", "global" oder None = fester Standard).
                 "signal_default": signal_default(opts, scope, manual_conn or integ_conn or auto_conn or "unknown", signal),
                 "via": via,
+                # Kennung des Geräts hinter "Verbunden über" (Thread, seit 2.231.0), damit ein Tipp darauf dorthin führt; None sonst
+                "via_id": thread_parent_id(hass, device) if via and _source == "thread" else None,
                 # Rolle im Thread-Netz (seit 2.230.0): router, leader, end, sleepy, reed oder bridge; None ohne Thread
                 "thread_role": _thread_role_of(hass, device, domains),
                 **bat_fields,

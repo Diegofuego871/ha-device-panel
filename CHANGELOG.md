@@ -7,6 +7,15 @@ All notable changes to this integration are documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/).
 
+## [2.231.0] - 2026-11-16
+
+"Connected via" of a Thread device now leads to the router.
+
+### Added
+
+- **Link to the router:** if the router a Thread device is connected through is a device that the panel shows, the tile "Connected via" in the section "Connection" becomes a button with the round arrow button and opens the device view of that router. It asks about unsaved changes first, like every other change of device. Border routers (for example a speaker or a hub) and unknown routers are no device of the panel: there the tile stays plain text. The device view of the router has its own "Connected via" if it is a Thread end device itself.
+- **Not yet checked with a real Matter server:** the link follows the name resolution of 2.230.1 (it works where the name is shown).
+
 ## [2.230.1] - 2026-11-15
 
 Names of Thread routers are found for more devices.
@@ -6192,6 +6201,7 @@ First pre-release.
   GitHub Actions for HACS/hassfest validation and tests.
 
 [2.6.0]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v2.6.0
+[2.231.0]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v2.231.0
 [2.230.1]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v2.230.1
 [2.230.0]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v2.230.0
 [2.229.0]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v2.229.0

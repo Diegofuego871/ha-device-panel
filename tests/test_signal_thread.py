@@ -166,6 +166,8 @@ async def test_end_device_knows_its_parent_by_name(hass: HomeAssistant, monkeypa
     row = info["rows"][0]
     assert row["name"] == "Gerät steckdose" and row["known"] and row["kind"] == "router" and row["rssi"] == -64 and row["lqi"] == 3 and row["used"]
     assert devices.thread_parent(hass, made["kontakt"]) == (f"{EXT_ROUTER:016x}", "Gerät steckdose")
+    # Der Router ist ein Gerät in Home Assistant: seine Kennung für den Link im Popup; ein Border Router hat keine
+    assert row["device_id"] == made["steckdose"].id and devices.thread_parent_id(hass, made["kontakt"]) == made["steckdose"].id
     assert devices._thread_role_of(hass, made["kontakt"], {"matter"}) == "sleepy"
 
 
@@ -176,6 +178,7 @@ async def test_border_router_and_unknown_router_names(hass: HomeAssistant, monke
         {"a": _thread_node(3, [_neighbor(EXT_BORDER, -58)]), "b": _thread_node(3, [_neighbor(EXT_UNKNOWN, -83, 1)])},
     )
     assert devices.thread_info(hass, made["a"])["rows"][0]["name"] == "Google Nest Hub"
+    assert devices.thread_info(hass, made["a"])["rows"][0]["device_id"] is None and devices.thread_parent_id(hass, made["a"]) is None
     unknown = devices.thread_info(hass, made["b"])["rows"][0]
     # Ohne Namen: das Ende der Adresse, in einer Schreibweise, die in jeder Sprache stimmt
     assert unknown["name"] == "Router …A1B2" and unknown["known"] is False

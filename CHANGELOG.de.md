@@ -7,6 +7,15 @@ Alle nennenswerten Änderungen an dieser Integration stehen in dieser Datei.
 Das Format folgt [Keep a Changelog](https://keepachangelog.com/de/1.1.0/),
 die Versionsnummern folgen [Semantic Versioning](https://semver.org/lang/de/).
 
+## [2.231.0] - 2026-11-16
+
+"Verbunden über" bei einem Thread-Gerät führt jetzt zum Router.
+
+### Hinzugefügt
+
+- **Link zum Router:** Ist der Router, über den ein Thread-Gerät verbunden ist, ein Gerät, das das Panel zeigt, wird die Kachel "Verbunden über" im Abschnitt "Verbindung" zu einem Knopf mit dem runden Pfeil-Knopf und öffnet die Geräteansicht dieses Routers. Vorher fragt es nach ungespeicherten Änderungen, wie bei jedem Wechsel des Geräts. Border Router (zum Beispiel ein Lautsprecher oder ein Hub) und unbekannte Router sind kein Gerät des Panels: dort bleibt die Kachel Text. Die Geräteansicht des Routers hat ihr eigenes "Verbunden über", wenn er selbst ein Thread-Endgerät ist.
+- **Noch nicht an einem echten Matter-Server geprüft:** der Link folgt der Namensauflösung aus 2.230.1 (er klappt dort, wo der Name steht).
+
 ## [2.230.1] - 2026-11-15
 
 Namen von Thread-Routern werden bei mehr Geräten gefunden.
@@ -6293,6 +6302,7 @@ Erste Vorabversion.
   GitHub Actions für die Prüfungen von HACS und hassfest sowie die Tests.
 
 [2.6.0]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v2.6.0
+[2.231.0]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v2.231.0
 [2.230.1]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v2.230.1
 [2.230.0]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v2.230.0
 [2.229.0]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v2.229.0

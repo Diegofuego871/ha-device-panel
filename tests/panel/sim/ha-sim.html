@@ -673,7 +673,7 @@
   // Thread (2.230.0): mit ?thread=1 liefert der "Server" die Rolle im Thread-Netz (thread_role) und den Empfang: das Türschloss ist ein schlafendes
   // Endgerät (hängt an einem Router), das Thermostat ein Router (mit Nachbarn). Ohne den Parameter bleiben die Matter-Geräte wie bisher (Rolle aus der Diagnose).
   if (new URLSearchParams(location.search).has("thread")) {
-    Object.assign(devices.find((d) => d.id === "i"), { connection_auto: "matter", thread_role: "sleepy", signal: { kind: "dbm", value: -64 }, via: "Steckdose Küche" });
+    Object.assign(devices.find((d) => d.id === "i"), { connection_auto: "matter", thread_role: "sleepy", signal: { kind: "dbm", value: -64 }, via: "Steckdose Küche", via_id: "k" });
     Object.assign(devices.find((d) => d.id === "c"), { connection_auto: "matter", thread_role: "router", signal: { kind: "dbm", value: -58 } });
     window.__thread = true;
   }

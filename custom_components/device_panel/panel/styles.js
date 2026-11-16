@@ -1339,6 +1339,11 @@ button.ver-link { border: none; background: none; font: inherit; font-size: 13px
 /* Update verfügbar (seit 2.163.0): Kachel "Software" mit Rand in der Akzentfarbe */
 .tile.has-upd { box-shadow: 0 0 0 1px var(--dp-primary) inset; background: color-mix(in srgb, var(--dp-primary) 8%, var(--dp-subtle)); }
 .tile-k { color: var(--dp-text2); font-size: 12px; min-height: 18px; }
+/* Kachel als Link (seit 2.231.0, zum Beispiel "Verbunden über" bei Thread): wie eine Kachel, mit rundem Pfeil-Knopf unten rechts */
+button.tile.tile-link { position: relative; display: flex; flex-direction: column; align-items: stretch; justify-content: flex-start; width: 100%; padding-right: 44px; border: 0; font: inherit; color: inherit; text-align: left; cursor: pointer; }
+button.tile.tile-link:hover { background: var(--dp-hover); }
+button.tile.tile-link:focus-visible { outline: 2px solid var(--dp-primary); outline-offset: 2px; }
+button.tile.tile-link .cbtn { position: absolute; right: 10px; bottom: 10px; }
 .tile-v { margin-top: 2px; font-size: 14px; overflow-wrap: anywhere; }
 .tile-v small { display: block; color: var(--dp-text3); font-size: 12px; }
 .tile-v small.warn { color: var(--dp-warning); }
