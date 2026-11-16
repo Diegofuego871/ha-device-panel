@@ -112,7 +112,7 @@ for (const lang of ["de", "en"]) {
     check(`[${tag}] alle aus`, await ev(`return [...r.querySelectorAll('input[data-list="hide_chips"]')].every(i=>!i.checked)`));
     check(`[${tag}] Zusammenfassung "${T.sumAll}" (plus Verbindungsart)`, (await ev(`return !!r.querySelector('.sub-tab[data-key="chips"].chg')`)));
     const savedAll = (await save()) && (await lastSet());
-    check(`[${tag}] alle zehn Chips und alle zehn Verbindungsarten gespeichert`, savedAll && savedAll.hide_chips?.join() === SAVED_KEYS.join() && savedAll.hide_connections?.length === 10, JSON.stringify(savedAll));
+    check(`[${tag}] alle zehn Chips und alle elf Verbindungsarten gespeichert`, savedAll && savedAll.hide_chips?.join() === SAVED_KEYS.join() && savedAll.hide_connections?.length === 11, JSON.stringify(savedAll));
     const none = await wait(`const c=r.querySelector(".chips"); return !c.querySelector("[data-hint]") && !c.querySelector("[data-problems]")`) && await present();
     check(`[${tag}] nur "Alle" bleibt`, none && !none.area && !none.integration && !none.problems && none.hints === "", JSON.stringify(none));
     check(`[${tag}] nur "Alle" da, kein Trenner`, await ev(`const c=r.querySelector(".chips"); return c.querySelectorAll(".chip").length === 1 && !!c.querySelector('[data-conn="all"]') && !c.querySelector(".vsep")`));
