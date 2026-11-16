@@ -7,7 +7,18 @@ Alle nennenswerten Änderungen an dieser Integration stehen in dieser Datei.
 Das Format folgt [Keep a Changelog](https://keepachangelog.com/de/1.1.0/),
 die Versionsnummern folgen [Semantic Versioning](https://semver.org/lang/de/).
 
+## [2.232.0] - 2026-11-16
+
+"Verbunden über" bei einem Bluetooth-Gerät zeigt den Namen des Proxys und führt zu ihm.
+
+### Hinzugefügt
+
+- **Bluetooth: Name und Link des Empfängers:** Ist der Empfänger, über den ein Bluetooth-Gerät gehört wird (ein Bluetooth-Proxy wie ESPHome oder der Bluetooth-Adapter des Servers), ein Gerät in Home Assistant, zeigt die Kachel "Verbunden über" den Namen dieses Geräts statt des Namens, den der Empfänger über sich selbst meldet, und wird, wenn das Panel dieses Gerät zeigt, zu einem Knopf mit dem runden Pfeil-Knopf, der seine Geräteansicht öffnet, im selben Stil wie bei Thread (2.231.0). Der Name ist überall derselbe: in der Kachel, im Balken, in der Liste und bei den Wechseln im Fenster "Empfang". Ein Empfänger, der kein Gerät in Home Assistant ist (zum Beispiel manche Shelly-Geräte), behält den Namen, den er meldet, als Text.
+- **Noch nicht an einem echten Home Assistant geprüft:** die Empfänger werden über ihre Adresse zu Geräten zugeordnet (ein ESPHome-Proxy über seine MAC-Adresse, der Adapter über seine Bluetooth-Adresse). Bitte melden, wenn ein Proxy nicht mit Namen erscheint.
+
 ## [2.231.0] - 2026-11-16
+
+Nicht veröffentlicht; enthalten in 2.232.0.
 
 "Verbunden über" bei einem Thread-Gerät führt jetzt zum Router.
 
@@ -6302,7 +6313,7 @@ Erste Vorabversion.
   GitHub Actions für die Prüfungen von HACS und hassfest sowie die Tests.
 
 [2.6.0]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v2.6.0
-[2.231.0]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v2.231.0
+[2.232.0]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v2.232.0
 [2.230.1]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v2.230.1
 [2.230.0]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v2.230.0
 [2.229.0]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v2.229.0

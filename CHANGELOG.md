@@ -7,7 +7,18 @@ All notable changes to this integration are documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/).
 
+## [2.232.0] - 2026-11-16
+
+"Connected via" of a Bluetooth device shows the name of the proxy and leads to it.
+
+### Added
+
+- **Bluetooth: name and link of the receiver:** if the receiver through which a Bluetooth device is heard (a Bluetooth proxy such as ESPHome, or the Bluetooth adapter of the server) is a device in Home Assistant, the tile "Connected via" shows the name of that device instead of the name the receiver reports about itself, and, if the panel shows that device, becomes a button with the round arrow button that opens its device view, in the same style as for Thread (2.231.0). The name is the same everywhere: in the tile, in the bar, in the list and in the changes of the window "Signal". A receiver that is no device in Home Assistant (for example some Shelly devices) keeps the name it reports, as plain text.
+- **Not yet checked with a real Home Assistant:** the receivers are matched to devices by their address (an ESPHome proxy by its MAC address, the adapter by its Bluetooth address). Please report if a proxy does not show up by name.
+
 ## [2.231.0] - 2026-11-16
+
+Not released; included in 2.232.0.
 
 "Connected via" of a Thread device now leads to the router.
 
@@ -6201,7 +6212,7 @@ First pre-release.
   GitHub Actions for HACS/hassfest validation and tests.
 
 [2.6.0]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v2.6.0
-[2.231.0]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v2.231.0
+[2.232.0]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v2.232.0
 [2.230.1]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v2.230.1
 [2.230.0]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v2.230.0
 [2.229.0]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v2.229.0

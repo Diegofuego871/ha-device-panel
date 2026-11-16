@@ -684,6 +684,21 @@ def _ble_stamps(hass: HomeAssistant, scanner: Any, now: float) -> dict[str, floa
     return stamps
 
 
+def _ble_scanner_device(hass: HomeAssistant, source: str) -> tuple[str, str] | None:
+    """
+    (Name, Kennung) des Geräts in Home Assistant, das ein Bluetooth-Empfänger ist (seit 2.232.0): der Adapter des Servers (Verbindung "bluetooth" mit
+    seiner Adresse) oder ein Proxy wie ESPHome (die Quelle ist seine MAC-Adresse, Verbindung "mac"). None: kein Gerät dazu (Shelly, nicht
+    angelegter Adapter), dann gilt der Name, den der Empfänger selbst meldet.
+    """
+    try:
+        found = dr.async_get(hass).async_get_device(
+            connections={(dr.CONNECTION_NETWORK_MAC, source), (dr.CONNECTION_BLUETOOTH, source), (dr.CONNECTION_BLUETOOTH, source.upper())}
+        )
+    except Exception:  # noqa: BLE001 - ungültige Adresse oder Registry nicht bereit
+        return None
+    return (found.name_by_user or found.name or found.id, found.id) if found else None
+
+
 def _ble_seen(hass: HomeAssistant, address: str) -> list[tuple[float, int, str, str]]:
     """
     Die letzte Meldung jedes Empfängers (Adapter oder Proxy) zu einem Gerät: (Alter in Sekunden, RSSI, Quelle, Name). Ungültige Werte
@@ -704,7 +719,9 @@ def _ble_seen(hass: HomeAssistant, address: str) -> list[tuple[float, int, str, 
             stamp = _ble_stamps(hass, item.scanner, now).get(address)
             age = max(0.0, now - stamp) if isinstance(stamp, (int, float)) else 0.0
             source = str(item.scanner.source)
-            seen.append((age, int(rssi), source, str(getattr(item.scanner, "name", None) or source)))
+            # Der Name des Geräts in Home Assistant (seit 2.232.0), sonst der, den der Empfänger meldet; überall derselbe (Kachel, Weg, Liste)
+            known = _ble_scanner_device(hass, source)
+            seen.append((age, int(rssi), source, known[0] if known else str(getattr(item.scanner, "name", None) or source)))
         return seen
     except Exception:  # noqa: BLE001 - interne Schnittstelle von HA
         return []
@@ -741,7 +758,8 @@ def _ble_best(hass: HomeAssistant, address: str) -> tuple[int, str, str] | None:
         if info is None or not info.source:
             return None
         scanner = bluetooth.async_scanner_by_source(hass, info.source)
-        return info.rssi, str(info.source), str(getattr(scanner, "name", None) or info.source)
+        known = _ble_scanner_device(hass, str(info.source))
+        return info.rssi, str(info.source), known[0] if known else str(getattr(scanner, "name", None) or info.source)
     except Exception:  # noqa: BLE001 - interne Schnittstelle von HA
         return None
 
@@ -767,6 +785,14 @@ def _ble_signal(hass: HomeAssistant, address: str) -> tuple[dict[str, Any] | Non
     if best is None:
         return None, None
     return {"kind": "dbm", "value": best[0]}, strip_address(best[2])
+
+
+def ble_receiver_device_id(hass: HomeAssistant, device: dr.DeviceEntry) -> str | None:
+    """Kennung des Geräts in Home Assistant, über das ein Bluetooth-Gerät gerade am stärksten gehört wird (für den Link im Popup); sonst None."""
+    address = next((c[1] for c in device.connections if c[0] == dr.CONNECTION_BLUETOOTH), None)
+    best = _ble_best(hass, address) if address else None
+    known = _ble_scanner_device(hass, best[1]) if best else None
+    return known[1] if known else None
 
 
 def ble_receiver(hass: HomeAssistant, device: dr.DeviceEntry) -> tuple[str, str] | None:
@@ -2171,8 +2197,12 @@ async def async_list_devices(hass: HomeAssistant, log: Any = None) -> dict[str, 
                 # Herkunft ("integration", "global" oder None = fester Standard).
                 "signal_default": signal_default(opts, scope, manual_conn or integ_conn or auto_conn or "unknown", signal),
                 "via": via,
-                # Kennung des Geräts hinter "Verbunden über" (Thread, seit 2.231.0), damit ein Tipp darauf dorthin führt; None sonst
-                "via_id": thread_parent_id(hass, device) if via and _source == "thread" else None,
+                # Kennung des Geräts hinter "Verbunden über" (Thread seit 2.231.0, Bluetooth seit 2.232.0), damit ein Tipp darauf dorthin führt; None sonst
+                "via_id": (
+                    thread_parent_id(hass, device) if _source == "thread" else ble_receiver_device_id(hass, device) if _source == "ble" else None
+                )
+                if via
+                else None,
                 # Rolle im Thread-Netz (seit 2.230.0): router, leader, end, sleepy, reed oder bridge; None ohne Thread
                 "thread_role": _thread_role_of(hass, device, domains),
                 **bat_fields,

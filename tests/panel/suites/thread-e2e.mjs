@@ -81,6 +81,13 @@ for (const lang of ["de", "en"]) {
     await shot("parent");
     await tap('dialog.stat-dlg [data-stat="close"]');
 
+    // --- Bluetooth (2.232.0): gleicher Link, wenn der Proxy ein Gerät des Panels ist (Simulator: Gerät "a", Proxy "k")
+    await closeAll();
+    await openDevice("a");
+    check(`[${tag}] Bluetooth: Kachel "${L.via}" mit dem Namen des Proxys ist ein Link mit Pfeil-Knopf`, await ev(`const t=r.querySelector('dialog.device button.tile-link[data-dlg="open-via"]'); return !!t && !!t.querySelector(".cbtn") && t.dataset.id==="k" && t.textContent.includes("Proxy Garage")`));
+    await tap('dialog.device button.tile-link[data-dlg="open-via"]');
+    check(`[${tag}] Bluetooth: Tipp öffnet das Gerät des Proxys`, await wait(`return r.querySelector("dialog.device")?.open && r.host._detailId === "k"`));
+
     // --- Thermostat: Router mit Nachbarn
     await closeAll();
     await openDevice("c");
