@@ -48,7 +48,7 @@ for (const lang of ["de", "en"]) {
     await open("p");
     check(`[${tag}] erkannt: unbekannt`, (await sel()) === `|${T.auto}`, await sel());
     const values = await ev(`return [...r.querySelectorAll('select[data-dlg="conn"] option')].map(o=>o.value).join()`);
-    check(`[${tag}] alle Arten ausser unbekannt`, values === ",zigbee,thread,zwave,matter,ble,wifi,ethernet,network,cloud", values);
+    check(`[${tag}] alle Arten ausser unbekannt`, values === ",zigbee,thread,zwave,matter,ble,wifi,ethernet,network,cloud,usb", values);
     // Wie ein Benutzer: Auswahl hat den Fokus, dann Zigbee
     const s = await handle('select[data-dlg="conn"]');
     await s.focus();
@@ -115,7 +115,7 @@ for (const lang of ["de", "en"]) {
     await tap('[data-set="section"][data-id="devices"]');
     await wait(`return !!r.querySelector('select[data-conn-integ="shelly"]')`);
     const shellyRow = await ev(`const s=r.querySelector('select[data-conn-integ="shelly"]'); return s ? [s.title, s.value, s.options[0].textContent, s.options.length] : null`);
-    check(`[${tag}] Sprung: Zeile in "Geräte im Panel" mit Erkennung und Auswahl neben dem Typ`, JSON.stringify(shellyRow) === JSON.stringify([T.shelly, "", T.autoOpt, 10]) && await ev(`const row = r.querySelector('select[data-conn-integ="shelly"]').closest(".ex-row"); return !!row.querySelector("select[data-type-integ]") && row.querySelectorAll(".ex-col.sel").length === 2`) && (await text(".ex-head")).includes(T.title), JSON.stringify(shellyRow));
+    check(`[${tag}] Sprung: Zeile in "Geräte im Panel" mit Erkennung und Auswahl neben dem Typ`, JSON.stringify(shellyRow) === JSON.stringify([T.shelly, "", T.autoOpt, 11]) && await ev(`const row = r.querySelector('select[data-conn-integ="shelly"]').closest(".ex-row"); return !!row.querySelector("select[data-type-integ]") && row.querySelectorAll(".ex-col.sel").length === 2`) && (await text(".ex-head")).includes(T.title), JSON.stringify(shellyRow));
     const sh = await handle('select[data-conn-integ="shelly"]');
     await sh.scrollIntoViewIfNeeded();
     await sh.selectOption("ethernet");

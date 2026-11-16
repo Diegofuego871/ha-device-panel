@@ -338,6 +338,8 @@ const CONN = {
   ethernet: { key: "connEthernet", icon: (s) => mdi("lan", s) },
   network: { key: "connNetwork", icon: (s) => mdi("lan", s) },
   cloud: { key: "connCloud", icon: (s) => mdi("cloud", s) },
+  // Stick am Server (seit 2.235.0, zum Beispiel Home Assistant Connect ZBT-2): das USB-Zeichen mit Pfeil, Kreis und Quadrat
+  usb: { key: "connUsb", icon: (s) => stroke(`<path d="M12 18.5V4"/><path d="M12 3.2l-1.8 2.3h3.6z"/><path d="M12 14l-4-2.4V9.2"/><circle cx="8" cy="7.9" r="1.3"/><path d="M12 10.8l4-2.4V7"/><rect x="14.9" y="4.6" width="2.2" height="2.2"/><circle cx="12" cy="19.6" r="1.7"/>`, s) },
   unknown: { key: "connUnknown", icon: (s) => stroke(`<circle cx="12" cy="12" r="9.2"/><path d="M9.6 9.4a2.5 2.5 0 1 1 3.4 2.3c-.6.3-1 .8-1 1.5v.6M12 16.8v.2"/>`, s) },
 };
 const MATTER_TYPES = { thread: "thread", wifi: "wifi", ethernet: "ethernet" };
@@ -436,7 +438,7 @@ const chipKind = (key) => (key === "area" || key === "integration" || key === "l
 // hinten die seltenen Chips.
 const CHIP_DEFAULT = [
   "all", "pin", "favorites", "integration", "label", "new", "offline", "nostatus", "paused", "problems", "battery", "batteries", "charging", "area",
-  "thread", "wifi", "ble", "zigbee", "ethernet", "cloud", "matter", "network", "unknown", "zwave",
+  "thread", "wifi", "ble", "zigbee", "ethernet", "cloud", "usb", "matter", "network", "unknown", "zwave",
   "signal", "update", "override",
 ];
 // Vollständige Folge aus der gespeicherten (leer = Standard): Unbekanntes und
@@ -4632,14 +4634,15 @@ class DevicePanel extends HTMLElement {
     // Ist der Router, über den ein Thread-Gerät verbunden ist (d.via_id), oder der Proxy eines Bluetooth-Geräts, ein Gerät, das dieses Panel zeigt,
     // führt ein Tipp auf die Kachel zu dessen Geräteansicht (seit 2.231.0); Border Router und unbekannte Empfänger sind kein Gerät im Panel: dort bleibt
     // es Text. Ein Thread-Router hat keinen einzelnen Elternteil: seine Kachel heisst "Stärkster Nachbar" (d.thread_neighbor, seit 2.233.0).
-    const linkTile = (label, name, id) => {
+    const linkTile = (label, name, id, addr = null) => {
       const target = id && id !== d.id ? this._devices.find((x) => x.id === id) : null;
       return target
         ? `<button type="button" class="tile tile-link" data-dlg="open-via" data-id="${escape(target.id)}" title="${escape(this._t("viaOpen", name))}" aria-label="${escape(this._t("viaOpen", name))}"><div class="tile-k">${escape(label)}</div><div class="tile-v">${escape(name)}</div><span class="cbtn" aria-hidden="true">${mdi("chevronRight", 16)}</span></button>`
-        : this._tile(label, escape(name));
+        : this._tile(label, `${escape(name)}${addr ? `<small>${escape(this._t("thAddr", addr))}</small>` : ""}`);
     };
-    if (d.via) tiles.push(linkTile(this._t("viaLabel"), d.via, d.via_id));
-    if (d.thread_neighbor?.name) tiles.push(linkTile(this._t("thStrongest"), d.thread_neighbor.name, d.thread_neighbor.id));
+    // Ein Router ohne bekannten Namen zeigt darunter seine Thread-Adresse (seit 2.235.0), zum Vergleich mit der Thread-Seite von Home Assistant
+    if (d.via) tiles.push(linkTile(this._t("viaLabel"), d.via, d.via_id, d.via_addr));
+    if (d.thread_neighbor?.name) tiles.push(linkTile(this._t("thStrongest"), d.thread_neighbor.name, d.thread_neighbor.id, d.thread_neighbor.addr));
     // Thread-Rolle und Netz aus der Matter-Diagnose (Zusatzangaben, ohne
     // Einstellung); die Verbindungsart von Hand bleibt davon unberührt.
     const mat = (d.connection_auto !== undefined ? d.connection_auto : d.connection) === "matter" ? this._matter.get(d.id) : null;

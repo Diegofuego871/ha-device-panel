@@ -64,7 +64,7 @@ Einstellungen → Geräte & Dienste → "Device Panel" → ⋮ → Löschen. Das
 
 ## Übersicht und Geräteliste
 
-Oben steht, wie viele Geräte online sind, wer gerade ausgefallen ist, und der Ausfall-Puls. Darunter ist die Liste in ausgefallene, instabile und online Geräte gegliedert. Jede Zeile zeigt Status, Verbindung, Verfügbarkeit der letzten 24 Stunden, Gerätetyp, Integration, Batterie, Hersteller und Software. Typ und Verbindungsart (Zigbee, Thread, Z-Wave, Matter, Bluetooth, WLAN, Ethernet, Netzwerk, Cloud) werden automatisch erkannt und lassen sich pro Integration oder pro Gerät korrigieren.
+Oben steht, wie viele Geräte online sind, wer gerade ausgefallen ist, und der Ausfall-Puls. Darunter ist die Liste in ausgefallene, instabile und online Geräte gegliedert. Jede Zeile zeigt Status, Verbindung, Verfügbarkeit der letzten 24 Stunden, Gerätetyp, Integration, Batterie, Hersteller und Software. Typ und Verbindungsart (Zigbee, Thread, Z-Wave, Matter, Bluetooth, WLAN, Ethernet, Netzwerk, Cloud, USB) werden automatisch erkannt und lassen sich pro Integration oder pro Gerät korrigieren.
 
 ### Ausfälle auf einen Blick
 

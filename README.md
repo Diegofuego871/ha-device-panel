@@ -64,7 +64,7 @@ Settings → Devices & services → "Device Panel" → ⋮ → Delete. This also
 
 ## Overview and device list
 
-The top shows how many devices are online, who is offline right now and the outage pulse. Below, the list is grouped into offline, unstable and online devices. Every row shows status, connection, availability of the last 24 hours, device type, integration, battery, manufacturer and software. Type and connection type (Zigbee, Thread, Z-Wave, Matter, Bluetooth, Wi-Fi, Ethernet, network, cloud) are detected automatically and can be corrected per integration or per device.
+The top shows how many devices are online, who is offline right now and the outage pulse. Below, the list is grouped into offline, unstable and online devices. Every row shows status, connection, availability of the last 24 hours, device type, integration, battery, manufacturer and software. Type and connection type (Zigbee, Thread, Z-Wave, Matter, Bluetooth, Wi-Fi, Ethernet, network, cloud, USB) are detected automatically and can be corrected per integration or per device.
 
 ### Outages at a glance
 

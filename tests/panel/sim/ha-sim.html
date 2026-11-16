@@ -1016,7 +1016,7 @@
       if (msg.type === "device_panel/set_device_connection") {
         if (window.__connFails) throw new Error(window.__connFails);
         if (!devices.some((d) => d.id === msg.device_id)) throw { code: "not_found", message: "device not found" };
-        if (msg.connection !== null && !["zigbee", "thread", "zwave", "matter", "ble", "wifi", "ethernet", "network", "cloud"].includes(msg.connection)) throw { code: "invalid_format", message: "connection" };
+        if (msg.connection !== null && !["zigbee", "thread", "zwave", "matter", "ble", "wifi", "ethernet", "network", "cloud", "usb"].includes(msg.connection)) throw { code: "invalid_format", message: "connection" };
         if (msg.connection === null) delete window.__connOverrides[msg.device_id];
         else window.__connOverrides[msg.device_id] = msg.connection;
         return { connection: msg.connection };
@@ -1122,26 +1122,26 @@
           msg.values.hide_chips = known.filter((k) => v.includes(k));
         }
         if ("hide_connections" in msg.values) {
-          const known = ["zigbee", "thread", "zwave", "matter", "ble", "wifi", "ethernet", "network", "cloud", "unknown"];
+          const known = ["zigbee", "thread", "zwave", "matter", "ble", "wifi", "ethernet", "network", "cloud", "usb", "unknown"];
           const v = msg.values.hide_connections;
           if (!Array.isArray(v) || v.some((x) => !known.includes(x))) throw { code: "invalid_format", message: "connections" };
           msg.values.hide_connections = [...new Set(v)].sort();
         }
         if ("connection_order" in msg.values) {
-          const known = ["zigbee", "thread", "zwave", "matter", "ble", "wifi", "ethernet", "network", "cloud", "unknown"];
+          const known = ["zigbee", "thread", "zwave", "matter", "ble", "wifi", "ethernet", "network", "cloud", "usb", "unknown"];
           const v = msg.values.connection_order;
           if (!Array.isArray(v) || v.some((x) => !known.includes(x))) throw { code: "invalid_format", message: "order" };
           msg.values.connection_order = [...new Set(v)];
         }
         if ("chip_order" in msg.values) {
-          const known = ["area", "integration", "label", "all", "zigbee", "thread", "zwave", "matter", "ble", "wifi", "ethernet", "network", "cloud", "unknown", "offline", "nostatus", "paused", "problems", "batteries", "battery", "signal", "update", "override", "new", "charging", "favorites", "pin"];
+          const known = ["area", "integration", "label", "all", "zigbee", "thread", "zwave", "matter", "ble", "wifi", "ethernet", "network", "cloud", "usb", "unknown", "offline", "nostatus", "paused", "problems", "batteries", "battery", "signal", "update", "override", "new", "charging", "favorites", "pin"];
           const v = msg.values.chip_order;
           if (!Array.isArray(v) || v.some((x) => !known.includes(x))) throw { code: "invalid_format", message: "chip order" };
           msg.values.chip_order = [...new Set(v)];
         }
         if ("connection_integrations" in msg.values) {
           const m = msg.values.connection_integrations;
-          const kinds = ["zigbee", "thread", "zwave", "matter", "ble", "wifi", "ethernet", "network", "cloud"];
+          const kinds = ["zigbee", "thread", "zwave", "matter", "ble", "wifi", "ethernet", "network", "cloud", "usb"];
           if (!m || typeof m !== "object" || Array.isArray(m) || Object.entries(m).some(([k, v]) => !KEY_RE.test(k) || !kinds.includes(v))) throw { code: "invalid_format", message: "connection map" };
         }
         if ("type_integrations" in msg.values) {
@@ -1234,7 +1234,7 @@
         // Wie options_api.signal_map / signal_integrations_map (seit 1.17.0): Verbindungsart ->
         // "off" oder Zahl (dBm -110..-40, LQI 1..200); je Integration verschachtelt, leere fallen weg.
         {
-          const kinds = ["zigbee", "thread", "zwave", "matter", "ble", "wifi", "ethernet", "network", "cloud", "unknown"];
+          const kinds = ["zigbee", "thread", "zwave", "matter", "ble", "wifi", "ethernet", "network", "cloud", "usb", "unknown"];
           const sigValue = (v) => v === "off" || (Number.isInteger(v) && ((v >= -110 && v <= -40) || (v >= 1 && v <= 200)));
           const sigMap = (m) => {
             if (!m || typeof m !== "object" || Array.isArray(m) || Object.entries(m).some(([k, v]) => !kinds.includes(k) || !sigValue(v))) throw { code: "invalid_format", message: "signal map" };

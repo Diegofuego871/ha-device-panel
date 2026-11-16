@@ -180,6 +180,9 @@ async def test_border_router_and_unknown_router_names(hass: HomeAssistant, monke
     assert devices.thread_info(hass, made["a"])["rows"][0]["name"] == "Google Nest Hub"
     assert devices.thread_info(hass, made["a"])["rows"][0]["device_id"] is None and devices.thread_parent_id(hass, made["a"]) is None
     unknown = devices.thread_info(hass, made["b"])["rows"][0]
+    # Die volle Adresse für den Vergleich mit der Thread-Seite von Home Assistant; nur solange der Name unbekannt ist
+    assert unknown["addr"] == "00:12:4b:00:03:ff:a1:b2" and devices.thread_parent_addr(hass, made["b"]) == unknown["addr"]
+    assert devices.thread_parent_addr(hass, made["a"]) is None
     # Ohne Namen: das Ende der Adresse, in einer Schreibweise, die in jeder Sprache stimmt
     assert unknown["name"] == "Router …A1B2" and unknown["known"] is False
 
@@ -203,7 +206,7 @@ async def test_router_lists_neighbours_children_marked_and_strongest_counts(hass
     assert devices._thread_role_of(hass, made["leader"], {"matter"}) == "leader"
     assert devices.thread_listeners(hass, made["router"])[0]["name"] == "Google Nest Hub"
     # Der stärkste Nachbar, der selbst ein Router ist (nicht die angehängten Geräte), für die Kachel "Stärkster Nachbar"
-    assert devices.thread_neighbor(hass, made["router"]) == {"name": "Google Nest Hub", "id": None}
+    assert devices.thread_neighbor(hass, made["router"]) == {"name": "Google Nest Hub", "id": None, "addr": None}  # bekannter Name: keine Adresse
     assert devices.thread_neighbor(hass, made["leader"]) is None
 
 
@@ -272,3 +275,14 @@ async def test_router_name_from_the_hardware_address_of_its_thread_interface(has
     broken = _thread_node(5, [])
     broken.node_data.attributes[devices.NETWORK_INTERFACES] = [{"4": "###", "7": 4}, "kein Wörterbuch", {"4": b"\x01", "7": 4}]
     assert devices._thread_addresses(broken) == set()
+
+
+def test_usb_stick_has_the_connection_type_usb() -> None:
+    """2.235.0: Home Assistant Connect ZBT-2 (und ZBT-1) ist ein Stick am Server: Verbindungsart "usb" statt "Unbekannt"."""
+    from custom_components.device_panel.const import CONNECTION_MANUAL, CONNECTION_TYPES
+
+    device = SimpleNamespace(connections=set(), via_device_id=None, identifiers={("homeassistant_connect_zbt2", "441BF683CE18")})
+    assert devices._connection(device, ["homeassistant_connect_zbt2"], [], None, {}) == "usb"
+    assert devices._connection(device, ["homeassistant_sky_connect"], [], None, {}) == "usb"
+    # Wählbar von Hand, und "unknown" bleibt der Rückfall am Ende der Liste
+    assert "usb" in CONNECTION_MANUAL and CONNECTION_TYPES[-1] == "unknown"

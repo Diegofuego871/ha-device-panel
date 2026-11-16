@@ -11,6 +11,12 @@ Einstieg für jede neue Claude-Code-Session. Zuerst diese Datei lesen, dann
 
 - `charge.py` `known_rechargeable`: Lademeldung gilt (global + Gerät/Integration), oder am Gerät ausdrücklich "Ein", oder Live-Aktivität für das Gerät an; `rechargeable()` und `charging_of()` nutzen sie (vorher nur `enabled()` mit globalem Schalter). Test `test_rechargeable_by_device_charge_or_live`.
 
+## Stand (2.235.0, Verbindungsart USB, Thread-Adresse unbekannter Router)
+
+- Neue Verbindungsart `usb` (`const.CONNECTION_TYPES` vor `unknown`, `devices.CONN_USB`, `_DOMAIN_CONN`: `homeassistant_connect_zbt2`, `homeassistant_sky_connect`; Panel `CONN.usb` mit eigenem Symbol, `CHIP_DEFAULT`, Text `connUsb`, Übersetzungen der Auswahl; Simulator-Listen; Suiten `chips`, `conn`, `chiporder` an die neue Liste angepasst). Weitere Domains (andere Sticks) bei Bedarf in `_DOMAIN_CONN` ergänzen.
+- Nutzer: der Router "…4EDF" bei Thread-Geräten blieb unbekannt; er vermutete die HA-Thread-Antenne (ZBT-2). Die wird als Border Router über die Zeroconf-Liste der Thread-Integration aufgelöst (bei anderen Geräten steht "homeassistant OpenThread Border Router"), "…4EDF" ist also ein anderer Router. Neu: Zeilen der Nachbartabelle tragen `addr` (volle EUI-64), Geräteliste `via_addr` und `thread_neighbor.addr` nur bei unbekanntem Namen; die Kachel zeigt sie darunter (`thAddr`).
+- Offen: welches Gerät "…4EDF" ist; Vergleich mit der Thread-Seite von HA (erweiterte Adresse) oder dem Diagnose-Download des Geräts (Attribute 0/53/63, 0/51/0). Weitere mögliche Zuordnung über `rloc16` (Tag 2 der Nachbartabelle, `0/53/64` der Geräte) ist nicht gebaut.
+
 ## Stand (2.234.0, Liste: Nachbar bei Thread-Routern, Spalte "Verbunden über")
 
 - Spalte `via` (`colVia`) heisst jetzt "Verbunden über"/"Connected via" (vorher "Hub / Bridge"); Wert, Sortierung, Suche und die Zeile unter der Verbindungsart ("Nachbar X"/"neighbour X", `thNeighborOf`) fallen für Thread-Router auf `d.thread_neighbor.name` zurück. Karten am Handy zeigen wie bisher kein "über …". `thread-e2e` (122). Der Typ "Hub / Bridge" (`typeHub`) bleibt.

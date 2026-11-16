@@ -7,6 +7,15 @@ All notable changes to this integration are documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/).
 
+## [2.235.0] - 2026-11-16
+
+New connection type "USB", and the Thread address of an unknown router.
+
+### Added
+
+- **Connection type "USB":** sticks that sit in the server, such as Home Assistant Connect ZBT-2 and ZBT-1 (Thread/Zigbee radio), were shown as "Unknown". They are now recognised as "USB" and the type can also be chosen by hand, per integration, label and device, like the others; it has its own chip in the list and its own symbol. Other USB devices (for example a Z-Wave stick) stay what they are (Z-Wave).
+- **Thread address of an unknown router:** if the router in the tiles "Connected via" and "Strongest neighbour" has no name, the tile now shows its full Thread address ("00:12:4b:…") below it, to compare with the Thread page of Home Assistant (Settings › Devices & services › Thread, the extended address of the border routers). A name appears as soon as the router is a Matter device or a border router of that page.
+
 ## [2.234.0] - 2026-11-16
 
 The list shows the strongest neighbour of Thread routers; the column "Hub / bridge" is now called "Connected via".
@@ -6238,6 +6247,7 @@ First pre-release.
   GitHub Actions for HACS/hassfest validation and tests.
 
 [2.6.0]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v2.6.0
+[2.235.0]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v2.235.0
 [2.234.0]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v2.234.0
 [2.233.0]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v2.233.0
 [2.232.0]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v2.232.0

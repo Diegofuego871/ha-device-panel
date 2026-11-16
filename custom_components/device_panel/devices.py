@@ -121,6 +121,7 @@ CONN_BLE = "ble"
 CONN_WIFI = "wifi"
 CONN_NETWORK = "network"  # IP-Netzwerk, LAN oder WLAN unbekannt
 CONN_CLOUD = "cloud"
+CONN_USB = "usb"  # Stick am Server (seit 2.235.0): Home Assistant Connect ZBT-1/ZBT-2 (Zigbee-, Thread-Funkmodul)
 
 # Integrationen, deren Geräte immer über dieselbe Funkart laufen.
 _DOMAIN_CONN = {
@@ -128,6 +129,8 @@ _DOMAIN_CONN = {
     "zwave_js": CONN_ZWAVE,
     "zwave_me": CONN_ZWAVE,
     "matter": CONN_MATTER,
+    "homeassistant_connect_zbt2": CONN_USB,
+    "homeassistant_sky_connect": CONN_USB,
 }
 # Bridges: die Bridge selbst hängt am Netzwerk, die Geräte dahinter funken Zigbee.
 _ZIGBEE_BRIDGE_DOMAINS = {"hue", "deconz"}
@@ -606,6 +609,8 @@ def thread_info(hass: HomeAssistant, device: dr.DeviceEntry) -> dict[str, Any] |
                     "key": f"{r['ext']:016x}" if r["ext"] else short,
                     "name": name or f"{'Router' if kind == 'router' else 'Thread'} …{short}",
                     "known": bool(name),
+                    # Die volle Thread-Adresse (EUI-64, "00:12:4b:…"), damit man einen unbekannten Router mit der Thread-Seite von Home Assistant vergleichen kann
+                    "addr": ":".join(f"{b:02x}" for b in r["ext"].to_bytes(8, "big")) if r["ext"] else None,
                     # Ein Gerät in Home Assistant (nicht nur ein Border Router): das Panel verlinkt dorthin, wenn es das Gerät zeigt (seit 2.231.0)
                     "device_id": device_id,
                     "kind": kind,
@@ -643,6 +648,15 @@ def thread_listeners(hass: HomeAssistant, device: dr.DeviceEntry) -> list[dict[s
     return [{**r, "rssi": r["rssi"]} for r in info["rows"] if r["rssi"] is not None] if info else []
 
 
+def thread_parent_addr(hass: HomeAssistant, device: dr.DeviceEntry) -> str | None:
+    """Die Thread-Adresse des Routers, an dem ein Thread-Endgerät hängt, solange sein Name unbekannt ist (für die Kachel "Verbunden über"); sonst None."""
+    info = thread_info(hass, device)
+    if not info or info["mode"] != "parent":
+        return None
+    row = next((r for r in info["rows"] if not r["child"] and r["rssi"] is not None), None)
+    return row["addr"] if row and not row["known"] else None
+
+
 def thread_parent_id(hass: HomeAssistant, device: dr.DeviceEntry) -> str | None:
     """Kennung des Geräts in Home Assistant, an dem ein Thread-Endgerät hängt (für den Link im Popup); None, wenn es keines ist (Border Router) oder unbekannt."""
     info = thread_info(hass, device)
@@ -661,7 +675,7 @@ def thread_neighbor(hass: HomeAssistant, device: dr.DeviceEntry) -> dict[str, An
     if not info or info["mode"] != "neighbors":
         return None
     row = next((r for r in info["rows"] if not r["child"] and r["rssi"] is not None), None)
-    return {"name": row["name"], "id": row["device_id"]} if row else None
+    return {"name": row["name"], "id": row["device_id"], "addr": None if row["known"] else row["addr"]} if row else None
 
 
 def thread_parent(hass: HomeAssistant, device: dr.DeviceEntry) -> tuple[str, str] | None:
@@ -2225,6 +2239,8 @@ async def async_list_devices(hass: HomeAssistant, log: Any = None) -> dict[str, 
                 )
                 if via
                 else None,
+                # Thread-Adresse des Routers hinter "Verbunden über", solange sein Name unbekannt ist (seit 2.235.0)
+                "via_addr": thread_parent_addr(hass, device) if via and _source == "thread" else None,
                 # Stärkster Nachbar eines Thread-Routers (seit 2.233.0): {"name", "id"} oder None
                 "thread_neighbor": thread_neighbor(hass, device) if _source == "thread" else None,
                 # Rolle im Thread-Netz (seit 2.230.0): router, leader, end, sleepy, reed oder bridge; None ohne Thread

@@ -218,6 +218,7 @@
         "ethernet": "LAN",
         "network": "Netzwerk",
         "cloud": "Cloud",
+        "usb": "USB",
         "unknown": "Unbekannt"
       }
     },

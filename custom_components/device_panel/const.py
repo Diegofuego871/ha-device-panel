@@ -13,7 +13,7 @@ PANEL_HTML_FILE = "panel.html"
 STATIC_URL_PATH = f"/{DOMAIN}"
 PANEL_STATIC_URL_PATH = f"{STATIC_URL_PATH}/panel"
 # Cache-Buster: bei jeder Änderung unter panel/ von Hand erhöhen.
-PANEL_VERSION = "517"
+PANEL_VERSION = "518"
 PANEL_PAGE_URL = f"{PANEL_STATIC_URL_PATH}/{PANEL_HTML_FILE}?v={PANEL_VERSION}"
 # Dashboard-Karten (seit 2.216.0): ES-Modul im Ordner des Panels; ?v= ist der Cache-Buster
 CARD_URL = f"{PANEL_STATIC_URL_PATH}/card.js?v={PANEL_VERSION}"
@@ -532,7 +532,7 @@ CONF_HIDE_CHIPS = "hide_chips"
 # Ausfälle; der Schlüssel blieb, damit gespeicherte Einstellungen gültig bleiben).
 # Seit 2.155.0: "label" (Filter "Label", wie "Bereich" und "Integration" eine Auswahl; nur da, wenn es in Home Assistant ein Label mit Geräten gibt).
 CHIP_KEYS = ("area", "integration", "label", "offline", "nostatus", "paused", "problems", "batteries", "battery", "signal", "update", "override", "new", "charging", "favorites")
-CONNECTION_TYPES = ("zigbee", "thread", "zwave", "matter", "ble", "wifi", "ethernet", "network", "cloud", "unknown")
+CONNECTION_TYPES = ("zigbee", "thread", "zwave", "matter", "ble", "wifi", "ethernet", "network", "cloud", "usb", "unknown")
 # Reihenfolge aller Chips über der Liste (seit 1.13.0, seit 1.14.0 eine Folge):
 # "all" und jede Verbindungsart sind Einträge wie die übrigen Chips. Leer =
 # Standardfolge des Panels (seit 1.18.0 feste Folge mit angeheftetem "Alle", vorher
