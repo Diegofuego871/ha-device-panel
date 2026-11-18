@@ -22,6 +22,8 @@
 <a href="https://github.com/Diegofuego871/ha-device-panel/actions/workflows/validate.yml"><img src="https://img.shields.io/github/actions/workflow/status/Diegofuego871/ha-device-panel/validate.yml?branch=main&label=Marketplace%20%2F%20hassfest" alt="Marketplace / hassfest"></a>
 </p>
 
+<p><a href="https://www.buymeacoffee.com/Diego871" target="_blank"><img src="https://cdn.buymeacoffee.com/buttons/v2/default-yellow.png" alt="Buy Me a Coffee" width="217" height="60"></a></p>
+
 </div>
 
 ## Installation
