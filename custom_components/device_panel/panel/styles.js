@@ -3002,6 +3002,7 @@ dialog.learn-dlg.lrn-embed { position: relative; inset: auto; margin: 0; width: 
 .hc-sum-tx small.hc-bad, .hc-err { color: var(--dp-error); }
 .hc-sum-btns { flex: 1 1 100%; display: flex; flex-wrap: nowrap; gap: 8px; }
 .hc-sum-btns .dlg-btn { flex: 1 1 0; min-width: 0; justify-content: center; }
+@media (max-width: 520px) { .hc-sum-btns .dlg-btn { padding: 0 8px; white-space: nowrap; } .hc-sum-btns .dlg-btn svg { display: none; } }
 .hc-t2 { color: var(--dp-text2); font-size: 13px; }
 .hc-err { display: block; margin-top: 4px; font-size: 13px; }
 .hc-mono, .hc-addr { font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace; }
