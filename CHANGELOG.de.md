@@ -15,6 +15,7 @@ Die zwei Knöpfe des Kapitels "HealthCheck-Dienste" zeigen auf dem Handy wieder 
 
 - **Kapitel-Knöpfe auf dem Handy:** "Dienst hinzufügen" und "Dienste anzeigen" zeigen ihre Symbole wieder.
 - **Strich nach dem Kapitel:** das Kapitel "HealthCheck-Dienste" endet mit einem Strich wie die anderen Kapitel.
+- **Symbole in den runden Knöpfen:** die Symbole (Warnung, Haken, Stift, Protokoll, Papierkorb) wirken gleich gross; jedes hat seine eigene Grösse, weil ihre Formen die Fläche verschieden füllen.
 - **Runde Knöpfe auf dem Handy:** alle runden Knöpfe der HealthCheck-Fenster (Protokoll, Test, Bearbeiten, Entfernen) sind so gross wie das Schliessen-Kreuz (38 px), nicht grösser.
 
 ## [2.237.0] - 2026-11-21

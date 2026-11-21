@@ -8,7 +8,7 @@
  * nur gezeichnet. Ladeanzeige nach der Regel für Grafiken: der Reiter wechselt sofort, die alte Grafik bleibt gedimmt, die Punkte stehen darüber; überholte Antworten
  * werden verworfen, geholte Zeiträume 30 Sekunden behalten. Die URL steht ganz im Reiter "Dienst" (Ausnahme vom Geheimnis-Grundsatz); das Protokoll kennt sie nicht.
  */
-import { applySuffix, suggest } from "./healthcheck.js";
+import { applySuffix, ibSize, suggest } from "./healthcheck.js";
 
 const RANGES = [3, 12, 24, 168, 720, 4320, 8760];
 const RANGE_LABEL = { 3: "hlR3h", 12: "hlR12h", 24: "hlR1d", 168: "hlR7d", 720: "hlR30d", 4320: "hlR6m", 8760: "hlR1y" };
@@ -362,7 +362,7 @@ export class HealthLogUi {
     const { escape, mdi } = this.h;
     const hc = this.host._hc;
     const busy = (kind) => hc.busy.has(`${item.id}|${kind}`);
-    const btn = (act, icon, label, extra = "", cls = "") => `<button type="button" class="hc-ib${cls ? ` ${cls}` : ""}" data-hl="${act}" ${extra} title="${escape(label)}" aria-label="${escape(label)}">${mdi(icon, 18)}</button>`;
+    const btn = (act, icon, label, extra = "", cls = "") => `<button type="button" class="hc-ib${cls ? ` ${cls}` : ""}" data-hl="${act}" ${extra} title="${escape(label)}" aria-label="${escape(label)}">${mdi(icon, ibSize(icon))}</button>`;
     const tests = item.fail_suffix ? btn("test", "alert", this._t("hcTestError"), `data-kind="error" ${busy("error") ? "disabled" : ""}`, "warn") : "";
     return `<div class="hl-acts">${tests}${btn("test", "check", this._t("hcTestOk"), `data-kind="ok" ${busy("ok") ? "disabled" : ""}`, "good")}${btn("edit", "pencil", this._t("hcEdit"))}</div>`;
   }

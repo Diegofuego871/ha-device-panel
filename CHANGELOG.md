@@ -15,6 +15,7 @@ The two buttons of the chapter "HealthCheck services" show their icons again on 
 
 - **Chapter buttons on the phone:** "Add service" and "Show services" show their icons again.
 - **Divider after the chapter:** the chapter "HealthCheck services" ends with a divider line like the other chapters.
+- **Icons in the round buttons:** the icons (warning, check, pencil, log, bin) look equally big now; each has its own size because their shapes fill the area differently.
 - **Round buttons on the phone:** all round buttons of the HealthCheck windows (log, check, edit, remove, test) are as big as the close button (38 px), not larger.
 
 ## [2.237.0] - 2026-11-21
