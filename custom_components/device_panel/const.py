@@ -13,7 +13,7 @@ PANEL_HTML_FILE = "panel.html"
 STATIC_URL_PATH = f"/{DOMAIN}"
 PANEL_STATIC_URL_PATH = f"{STATIC_URL_PATH}/panel"
 # Cache-Buster: bei jeder Änderung unter panel/ von Hand erhöhen.
-PANEL_VERSION = "518"
+PANEL_VERSION = "519"
 PANEL_PAGE_URL = f"{PANEL_STATIC_URL_PATH}/{PANEL_HTML_FILE}?v={PANEL_VERSION}"
 # Dashboard-Karten (seit 2.216.0): ES-Modul im Ordner des Panels; ?v= ist der Cache-Buster
 CARD_URL = f"{PANEL_STATIC_URL_PATH}/card.js?v={PANEL_VERSION}"
@@ -589,3 +589,34 @@ DATA_TYPE_OVERRIDES = f"{DOMAIN}_type_overrides"
 # Labels, gilt das strengste (nicht überwachen vor einer Zeit, die längere Zeit, aus vor an), bei allem anderen das Label weiter oben in der Liste.
 CONF_LABELS = "labels"
 LABEL_PREFIX = "label:"
+
+# HealthCheck-Dienste (seit 2.236.0, Wunsch des Nutzers, Vorbild Alarmageddon): Lebenszeichen an externe Dienste wie Healthchecks.io, Cronitor,
+# Better Stack oder Uptime Kuma. Fällt Home Assistant, das Netz oder der Strom aus, bleibt das Lebenszeichen aus, und der Dienst alarmiert; das kann
+# das Panel selbst nicht melden. Bis zu MAX_HEALTHCHECKS Dienste, je mit Namen, URL und einem Abstand. Generisch: kein Anbieter zur Auswahl, das Panel
+# schlägt den Zusatz für bekannte Dienste nur vor. Statt eines "Fehler" des Selbsttests (das Panel hat keinen) gibt es "Fälle" (HEALTHCHECK_CASES):
+# je Fall eine Zeile mit eigenem URL-Zusatz, die ruft den Dienst auf, solange der Fall zutrifft. Treffen mehrere zu, gilt die oberste Zeile.
+MAX_HEALTHCHECKS = 5
+HEALTHCHECK_CASES = ("offline", "battery", "backup")
+HEALTHCHECK_SUFFIX_MAX = 200
+HEALTHCHECK_INTERVAL_RANGE = (60, 86400)
+HEALTHCHECK_DEFAULT_INTERVAL = 300
+HEALTHCHECK_URL_MAX = 500
+HEALTHCHECK_NAME_MAX = 60
+HEALTHCHECK_TIMEOUT = 10
+HEALTHCHECK_MIN_GAP = 60
+# Takt: alle so viele Sekunden schauen, welcher Dienst fällig ist (nie zwei fast gleichzeitig) und ob ein Fall begonnen oder geendet hat
+HEALTHCHECK_TICK = 10
+HEALTHCHECK_START_DELAY = 30
+HEALTHCHECK_STORE_KEY = f"{DOMAIN}.healthcheck"
+DATA_HEALTHCHECK = f"{DOMAIN}_healthcheck"
+# Protokoll je Dienst (healthcheck_log.py): einzelne Aufrufe HEALTHLOG_CALL_HOURS Stunden, Stundenwerte HEALTHLOG_HOUR_DAYS Tage, Tageswerte
+# HEALTHLOG_DAY_DAYS Tage, Ereignisse HEALTHLOG_EVENT_DAYS Tage und höchstens HEALTHLOG_EVENT_MAX je Dienst. Geschrieben gesammelt, nie bei jedem Aufruf.
+HEALTHLOG_STORE_KEY = f"{DOMAIN}.healthcheck_log"
+HEALTHLOG_CALL_HOURS = 24
+HEALTHLOG_HOUR_DAYS = 30
+HEALTHLOG_DAY_DAYS = 366
+HEALTHLOG_EVENT_DAYS = 366
+HEALTHLOG_EVENT_MAX = 1000
+HEALTHLOG_SAVE_DELAY = 600
+HEALTHLOG_GAP_DAY_MINUTES = 30
+HEALTHLOG_RANGES = (3, 12, 24, 168, 720, 4320, 8760)

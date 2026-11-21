@@ -21,6 +21,7 @@ from homeassistant.helpers import device_registry as dr
 from homeassistant.helpers import entity_registry as er
 
 from . import options_api
+from .healthcheck import valid_items as valid_healthcheck_items
 from .const import (
     BATTERY_OFF,
     LABEL_PREFIX,
@@ -42,7 +43,9 @@ from .const import (
     DATA_BATTERY,
     DATA_CHARGE,
     DATA_MAGIC,
+    DATA_HEALTHCHECK,
     DATA_ROUTINES,
+    MAX_HEALTHCHECKS,
     DEVICE_TYPES,
     DOMAIN,
     NOTIFY_NONE,
@@ -197,6 +200,9 @@ async def async_export(hass: HomeAssistant, sections: list[str]) -> dict[str, An
         if section == "monitor":
             panel = update_check.panel_settings(hass)
             body["options"].update({key: bool(panel.get(name)) for key, name in _PANEL_SETTINGS.items()})
+            # HealthCheck-Dienste (seit 2.236.0): mit der URL (ein Geheimnis des Dienstes; Entscheid des Nutzers, wie bei Alarmageddon), ohne Zustand und Protokoll
+            healthcheck = hass.data.get(DATA_HEALTHCHECK)
+            body["healthchecks"] = [dict(i) for i in healthcheck.items()] if healthcheck is not None else []
         if section == "devices":
             await async_load_type_overrides(hass)
             registry = dr.async_get(hass)
@@ -649,6 +655,41 @@ def check_file(data: Any) -> dict[str, Any]:
     return data["sections"]
 
 
+async def _healthchecks_part(hass: HomeAssistant, items: Any, dry_run: bool, replace: bool, rep: dict[str, Any]) -> None:
+    """
+    HealthCheck-Dienste (seit 2.236.0): jeder Dienst wird wie im Panel geprüft; ein beschädigter fällt einzeln weg. Ohne `replace` bleiben bestehende
+    Dienste mit anderer Kennung stehen (höchstens MAX_HEALTHCHECKS insgesamt), mit `replace` gilt die Liste der Datei.
+    """
+    healthcheck = hass.data.get(DATA_HEALTHCHECK)
+    if healthcheck is None or not isinstance(items, list):
+        return
+    current = {i["id"]: i for i in healthcheck.items()}
+    clean = {i["id"]: i for i in valid_healthcheck_items(items)}
+    for raw in items:
+        hid = raw.get("id") if isinstance(raw, dict) else None
+        if hid not in clean:
+            rep["skipped"].append({"what": str(raw.get("name") or hid or "?") if isinstance(raw, dict) else "?", "reason": "invalid"})
+    result = dict(current) if not replace else {}
+    for hid, item in clean.items():
+        if hid in result and result[hid] == item:
+            _same(rep, item["name"])
+            continue
+        if hid not in result and len(result) >= MAX_HEALTHCHECKS:
+            rep["skipped"].append({"what": item["name"], "reason": "too_many"})
+            continue
+        rep["changed"] += 1
+        # Die Vorschau nennt nur den Namen und die Fälle, nie die URL (sie steht in der Datei, nicht im Bericht)
+        _example(rep, item["name"], "–" if hid not in result else "geändert", "neu" if hid not in result else "angepasst",
+                 detail=", ".join(c["kind"] for c in item["cases"]) or None)
+        result[hid] = item
+    if replace:
+        for hid in [h for h in current if h not in clean]:
+            rep["changed"] += 1
+            _example(rep, current[hid]["name"], "vorhanden", "entfällt")
+    if not dry_run and (result != current):
+        await healthcheck.async_set_items(list(result.values()))
+
+
 async def async_import(hass: HomeAssistant, data: Any, sections: list[str] | None, *, dry_run: bool, replace: bool = False) -> dict[str, Any]:
     """Wiederherstellen (oder nur die Vorschau). Bericht je Bereich und Summen."""
     file_sections = check_file(data)
@@ -662,6 +703,7 @@ async def async_import(hass: HomeAssistant, data: Any, sections: list[str] | Non
         _options_part(hass, entry, section, body.get("options"), dry_run, rep, body.get("names") if isinstance(body.get("names"), dict) else None)
         if section == "monitor":
             await _panel_part(hass, body.get("options"), dry_run, rep)
+            await _healthchecks_part(hass, body.get("healthchecks"), dry_run, replace, rep)
         if section == "devices":
             await _devices_part(hass, body, dry_run, replace, rep)
         elif section in ("routines", "magic"):

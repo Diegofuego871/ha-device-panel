@@ -52,6 +52,8 @@ from .status import COMMANDS as STATUS_COMMANDS
 from .wizard import COMMANDS as WIZARD_COMMANDS
 from .system_stats import COMMANDS as SYSTEM_COMMANDS
 from .backup_alert import BackupAlert
+from .healthcheck import async_get_healthcheck, async_stop_healthcheck
+from .healthcheck_ws import COMMANDS as HEALTHCHECK_COMMANDS
 from .status import StatusWatch
 from .ai_assessment import ASK_ANSWER_MAX, ASK_MAX, ASK_QUESTION_MAX, AiError, async_ask, async_assess, async_clear, async_last, async_preview
 from .ai_prompt import DEFAULT_PROMPT
@@ -252,6 +254,11 @@ async def async_setup_entry(hass: HomeAssistant, entry: ConfigEntry) -> bool:
         backup_alert = BackupAlert(hass)
         await backup_alert.async_start()
         hass.data[DATA_BACKUP_ALERT] = backup_alert
+    # HealthCheck-Dienste (seit 2.236.0): nach Ausfällen, Batterie und Backup-Wächter, deren Zustand sie lesen. Ein Fehler hier darf das Panel nicht verhindern.
+    try:
+        (await async_get_healthcheck(hass)).async_start()
+    except Exception:  # noqa: BLE001 - Zusatz: das Panel läuft auch ohne die Lebenszeichen
+        _LOGGER.exception("Starting the health check services failed; the panel runs without them")
     # Eigene Entitäten (seit 2.122.0): ein Fehler hier darf das Panel nicht verhindern, die Entitäten bleiben dann nur nicht verfügbar
     if DATA_SUMMARY not in hass.data:
         summary_coordinator = SummaryCoordinator(hass, entry)
@@ -336,6 +343,7 @@ async def async_unload_entry(hass: HomeAssistant, entry: ConfigEntry) -> bool:
         await signal_log.async_stop()
     if (magic_push := hass.data.pop(DATA_MAGIC, None)) is not None:
         await magic_push.async_stop()
+    await async_stop_healthcheck(hass)
     if (backup_alert := hass.data.pop(DATA_BACKUP_ALERT, None)) is not None:
         await backup_alert.async_stop()
     if (status_watch := hass.data.pop(DATA_STATUS, None)) is not None:
@@ -1471,7 +1479,7 @@ def _async_register_websocket_commands(hass: HomeAssistant) -> None:
     websocket_api.async_register_command(hass, _ws_set_panel)
     for command in (_ws_magic_get, _ws_magic_list, _ws_magic_entity_search, _ws_magic_save, _ws_magic_delete, _ws_magic_enable, _ws_magic_preview, _ws_magic_test, _ws_magic_history):
         websocket_api.async_register_command(hass, command)
-    for command in (*ROUTINE_COMMANDS, *PROTOCOL_COMMANDS, *STORAGE_COMMANDS, *STATUS_COMMANDS, *SYSTEM_COMMANDS, *WIZARD_COMMANDS):
+    for command in (*ROUTINE_COMMANDS, *PROTOCOL_COMMANDS, *STORAGE_COMMANDS, *STATUS_COMMANDS, *SYSTEM_COMMANDS, *WIZARD_COMMANDS, *HEALTHCHECK_COMMANDS):
         websocket_api.async_register_command(hass, command)
     websocket_api.async_register_command(hass, _ws_get_options)
     websocket_api.async_register_command(hass, _ws_charges)

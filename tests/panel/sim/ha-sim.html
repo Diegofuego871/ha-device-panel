@@ -2217,6 +2217,52 @@
         if (window.__listDelay) await new Promise((r) => setTimeout(r, window.__listDelay));
         return res;
       }
+      // HealthCheck-Dienste (2.236.0): window.__hc = Liste der Dienste { id, name, url, interval, cases: [{ kind, suffix }], status, log }; window.__hcPing = [Aufrufe]
+      if (String(msg.type).startsWith("device_panel/healthcheck_")) {
+        const hc = (window.__hc ||= []);
+        const info = () => ({ items: hc.map((i) => JSON.parse(JSON.stringify(i))), max: 5, cases: ["offline", "battery", "backup"] });
+        const err = (code, message) => Object.assign(new Error(message), { code });
+        const act = msg.type.slice("device_panel/healthcheck_".length);
+        if (act === "list") {
+          if (window.__hcError) throw err("home_assistant_error", window.__hcError);
+          return info();
+        }
+        if (act === "save") {
+          const url = String(msg.url || "").trim();
+          if (!/^https?:\/\/[^\s/]+/.test(url)) throw err("invalid_url", "invalid url");
+          const entry = { name: msg.name.trim(), url, interval: msg.interval, cases: msg.cases.map((c) => ({ kind: c.kind, suffix: c.suffix })) };
+          let id = msg.check_id;
+          if (id) {
+            const i = hc.findIndex((x) => x.id === id);
+            if (i < 0) throw err("not_found", "no such health check");
+            hc[i] = { ...hc[i], ...entry };
+          } else {
+            if (hc.length >= 5) throw err("too_many", "too many");
+            id = `hc${hc.length + 1}${Math.floor(Math.random() * 1000)}`;
+            hc.push({ id, ...entry, status: null, log: null });
+          }
+          return { id, ...info() };
+        }
+        if (act === "delete") {
+          const i = hc.findIndex((x) => x.id === msg.check_id);
+          if (i < 0) throw err("not_found", "no such health check");
+          hc.splice(i, 1);
+          return info();
+        }
+        if (act === "ping") {
+          const item = hc.find((x) => x.id === msg.check_id);
+          if (!item || (msg.kind !== "ok" && !item.cases.some((c) => c.kind === msg.kind))) throw err("not_found", "no such health check");
+          (window.__hcPing ||= []).push({ id: item.id, kind: msg.kind });
+          const fail = window.__hcFail?.[item.id];
+          item.status = { at: new Date().toISOString(), sent: msg.kind, result: fail ? "http" : "ok", code: fail ? 503 : 200, test: true };
+          return { status: item.status, ...info() };
+        }
+        if (act === "history") {
+          const item = hc.find((x) => x.id === msg.check_id);
+          if (!item) throw err("not_found", "no such health check");
+          return window.__hcHistory(item, msg.hours);
+        }
+      }
       if (msg.type === "update/release_notes") return window.__updNotes ?? null;
       if (msg.type === "device_panel/charges") return { charges: window.__charges?.[msg.device_id] || [], wh: window.__devSettings.chargeWh[msg.device_id] ?? null };
       // App "Geräte-Updates" (2.164.0): window.__appUpdates überschreibt die Liste; window.__uq ist die Warteschlange des Servers

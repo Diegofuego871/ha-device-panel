@@ -368,9 +368,9 @@ def test_every_store_is_classified() -> None:
     import re
     from pathlib import Path
 
-    backed_up = {"devices", "magic", "routines", "panel"}
+    backed_up = {"devices", "magic", "routines", "panel", "healthcheck"}  # healthcheck: die Dienste (mit URL); Zustand dort ist Laufzeit
     runtime = {
-        "ai", "availability", "backup_alert", "battery", "charge", "debug", "new", "notify", "protocol_index", "push_log", "quiet", "signal",
+        "ai", "availability", "backup_alert", "battery", "charge", "debug", "healthcheck_log", "new", "notify", "protocol_index", "push_log", "quiet", "signal",
         "summary", "timers", "updates",
     }
     found: set[str] = set()

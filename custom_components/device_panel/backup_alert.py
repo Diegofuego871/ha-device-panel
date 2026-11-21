@@ -175,6 +175,11 @@ class BackupAlert:
             return fallback_minutes(secs, opts[CONF_STATUS_BACKUP_MINUTES])
         return opts[CONF_STATUS_BACKUP_MINUTES]
 
+    @property
+    def failing(self) -> bool:
+        """Steht gerade ein Backup-Fehler offen (seit 2.236.0, für die HealthCheck-Dienste): ein Fehler oder Hänger ist vermerkt und danach gelang kein Backup."""
+        return self._open is not None or (self._pending is not None and self._pending["kind"] in ("failed", "hang"))
+
     def info(self) -> dict[str, Any]:
         """Für die Anzeige in der Status-App: die berechnete Dauer (None = zu wenige Läufe), die Dauer, die dann gilt, und die Zahl der bekannten Läufe."""
         secs = [r["secs"] for r in self._runs]

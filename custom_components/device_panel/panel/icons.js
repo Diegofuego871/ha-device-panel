@@ -137,6 +137,8 @@ export const MDI = {
 // Zusammengesetztes Symbol (seit 2.85.0): Auge mit kleinem Zahnrad für "Ansicht" (Einstellungen der Ansicht), das Zahnrad schneidet das Auge aus.
 // Beginnt ein Eintrag mit "<", ist er fertiges SVG-Innenleben (siehe mdiPath), sonst ein einzelner Pfad.
 MDI.viewSettings = `<defs><mask id="dp-vs-mask"><rect width="24" height="24" fill="#fff"/><circle cx="17.7" cy="17.5" r="6.4" fill="#000"/></mask></defs><g mask="url(#dp-vs-mask)"><path fill="currentColor" transform="translate(-0.5 -1.6) scale(.92)" d="${MDI.eye}"/></g><path fill="currentColor" transform="translate(11.5 11.3) scale(.52)" d="${MDI.gear}"/>`;
+// Herz mit Pulslinie (seit 2.236.0) für die HealthCheck-Dienste: Strichzeichnung, damit das Symbol auch klein lesbar bleibt
+MDI.heartPulse = `<g fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><path d="M12 20.3C5.4 15.2 3 11.8 3 8.6A4.6 4.6 0 0 1 12 6.7 4.6 4.6 0 0 1 21 8.6c0 3.2-2.4 6.6-9 11.7Z"/><path d="M6.4 12.3h2.9l1.5-2.9 2.3 5 1.6-2.1h2.9"/></g>`;
 export const mdiPath = (d, size) =>
   `<svg class="ic" width="${size}" height="${size}" viewBox="0 0 24 24" aria-hidden="true">${d.startsWith("<") ? d : `<path fill="currentColor" d="${d}"/>`}</svg>`;
 export const mdi = (name, size = 18) => mdiPath(MDI[name], size);
