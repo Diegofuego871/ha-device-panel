@@ -2993,7 +2993,7 @@ dialog.learn-dlg.lrn-embed { position: relative; inset: auto; margin: 0; width: 
 @media (max-width: 600px) { dialog.learn-dlg.lrn-embed { border-radius: 0; box-shadow: none; } }
 /* HealthCheck-Dienste (seit 2.236.0, healthcheck.js): Kapitel in den Einstellungen, Fenster mit der Liste und das Formular. Farben und Rundungen wie die übrigen Fenster. */
 .dlg-avatar.app-health { background: #D81B60; }
-.hc-sum { display: flex; flex-wrap: wrap; align-items: center; gap: 12px 14px; padding: 4px 0 10px; border: 0; background: none; }
+.hc-sum { display: flex; flex-wrap: wrap; align-items: center; gap: 12px 14px; padding: 4px 0 14px; border: 0; border-bottom: 1px solid var(--dp-divider); background: none; }
 .hc-ico { flex: none; display: grid; place-items: center; width: 42px; height: 42px; border-radius: 12px; background: var(--dp-subtle); color: var(--dp-text3); }
 .hc-ico.on { background: color-mix(in srgb, #D81B60 16%, transparent); color: #E91E63; }
 .hc-sum-tx { flex: 1 1 160px; min-width: 0; display: flex; flex-direction: column; gap: 2px; }
