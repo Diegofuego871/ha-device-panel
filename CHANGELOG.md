@@ -23,6 +23,11 @@ HealthCheck services: one URL suffix for errors, with tick boxes for the error c
 - **New cases:** high load (CPU, memory, disk) and system stall.
 - **Backup and restore:** the error suffix and the ticked cases are part of the backup.
 
+### Fixed
+
+- **Log window, service switcher:** the drop-down for switching the service did nothing (the header had lost its anchor, so the menu sat outside the window). It works now and is shown only when there is more than one service.
+- **Log window on the phone:** the close button sits where it does in the settings and the test buttons below it on the right, as big as the close button; the tab "Service" is laid out like the original (value right, copy button always at the right edge); the two buttons at the foot of the list and the form are equally wide.
+
 ## [2.236.1] - 2026-11-21
 
 Not released; included in 2.237.0.

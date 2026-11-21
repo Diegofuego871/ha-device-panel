@@ -23,6 +23,11 @@ HealthCheck-Dienste: ein URL-Zusatz für Fehler, dazu Kästchen für die Fehlerf
 - **Neue Fälle:** hohe Auslastung (CPU, Arbeitsspeicher, Festplatte) und Systemstillstand.
 - **Sicherung und Wiederherstellung:** Fehler-Zusatz und angekreuzte Fälle gehören zur Sicherung.
 
+### Behoben
+
+- **Protokoll-Fenster, Auswahl des Dienstes:** das Dropdown zum Wechseln des Dienstes tat nichts (dem Kopf fehlte der Bezugspunkt, das Menü lag ausserhalb des Fensters). Es funktioniert jetzt und erscheint nur, wenn es mehr als einen Dienst gibt.
+- **Protokoll-Fenster auf dem Handy:** das Kreuz sitzt wie in den Einstellungen, die Testknöpfe rechts darunter und so gross wie das Kreuz; der Reiter "Dienst" ist wie im Vorbild aufgebaut (Wert rechts, Kopierknopf immer am rechten Rand); die zwei Knöpfe am Fuss von Liste und Formular sind gleich breit.
+
 ## [2.236.1] - 2026-11-21
 
 Nicht veröffentlicht; enthalten in 2.237.0.
