@@ -296,8 +296,8 @@ Ein externer Dienst wie [Healthchecks.io](https://healthchecks.io), [Cronitor](h
 
 - **Wo:** Einstellungen › Überwachung und Meldungen, das Kapitel "HealthCheck-Dienste" oberhalb der "Systemmeldungen": "Dienst hinzufügen" und "Dienste anzeigen". Bis zu fünf Dienste, nur für Administratoren.
 - **Ein Dienst:** ein Name, die Ping-URL und ein Abstand (1 Minute bis 24 Stunden). Bekannte Dienste (Healthchecks.io, Better Stack, Cronitor, Uptime Kuma) erkennt das Panel an der URL.
-- **Fälle:** je Dienst Zeilen mit einer Art (Gerät ausgefallen, Batterie schwach, Backup fehlgeschlagen) und einem URL-Zusatz (zum Beispiel "/fail" oder "?state=fail"). Solange ein Fall zutrifft, ruft das Panel die URL mit dem Zusatz der obersten zutreffenden Zeile auf statt des einfachen Lebenszeichens; das Ende folgt als Lebenszeichen. Der Zusatz wird für bekannte Dienste vorgeschlagen und bleibt deine Sache.
-- **Test und Protokoll:** jeder Dienst hat je Fall einen Testknopf und "OK senden" sowie ein Protokoll mit Grafik (Herzschlag, Zeitleiste, Raster bis zu einem Jahr), Kennzahlen, Antwortzeiten und der Liste der Ereignisse und Aufrufe. Die URL steht Administratoren ganz im Panel und in der Sicherungsdatei (privat halten); im Protokoll steht sie nie.
+- **Fehler:** ein URL-Zusatz je Dienst (zum Beispiel "/fail" oder "?state=fail"; für bekannte Dienste vorgeschlagen und deine Sache) und Kästchen für die Fälle, die ihn auslösen: Gerät ausgefallen, Backup fehlgeschlagen, hohe Auslastung (CPU, Arbeitsspeicher, Festplatte) und Systemstillstand. Solange ein angekreuzter Fall zutrifft, ruft das Panel die URL mit dem Zusatz auf statt des einfachen Lebenszeichens; das Ende folgt als Lebenszeichen. Ein Kästchen ist ausgegraut, wenn die Meldung dafür aus ist oder keinen Grenzwert hat.
+- **Test und Protokoll:** jeder Dienst hat "Fehler senden" und "OK senden" sowie ein Protokoll mit Grafik (Herzschlag, Zeitleiste, Raster bis zu einem Jahr), Kennzahlen, Antwortzeiten und der Liste der Ereignisse und Aufrufe. Die URL steht Administratoren ganz im Panel und in der Sicherungsdatei (privat halten); im Protokoll steht sie nie.
 
 ## App-Launcher und Protokoll
 

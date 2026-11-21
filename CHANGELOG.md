@@ -7,7 +7,25 @@ All notable changes to this integration are documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/).
 
+## [2.237.0] - 2026-11-21
+
+HealthCheck services: one URL suffix for errors, with tick boxes for the error cases.
+
+### Changed
+
+- **One error suffix per service, tick boxes for the cases:** the rows with a kind and their own suffix are gone. A service has one "URL suffix" ("/…" is added to the path, "?…" or "&…" sets parameters; suggested for known services) and below it tick boxes for the cases that trigger it: device offline, backup failed, high load (CPU, memory, disk) and system stall. While a ticked case applies, the panel calls the URL with the suffix instead of the plain heartbeat; the first ticked case in the fixed order decides; the heartbeat follows when it ends.
+- **Greyed out when it cannot apply:** a box is greyed out (with the reason underneath) when the notification for it is off or has no limit (device offline: outage notification; backup: backup alert; high load: the alert and a sensor; stall: status notification). A box ticked earlier stays ticked but has no effect until the notification is on again.
+- **One error test:** the list and the log have "Send error" (with the suffix) and "Send OK" instead of one test per case.
+- **Existing services are migrated:** the first suffix of the old rows becomes the error suffix and their kinds are ticked; "battery low" is dropped.
+
+### Added
+
+- **New cases:** high load (CPU, memory, disk) and system stall.
+- **Backup and restore:** the error suffix and the ticked cases are part of the backup.
+
 ## [2.236.1] - 2026-11-21
+
+Not released; included in 2.237.0.
 
 The chapter "HealthCheck services" looks like the other chapters, and the log window slides and scrolls properly.
 
@@ -6282,7 +6300,7 @@ First pre-release.
   GitHub Actions for HACS/hassfest validation and tests.
 
 [2.6.0]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v2.6.0
-[2.236.1]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v2.236.1
+[2.237.0]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v2.237.0
 [2.236.0]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v2.236.0
 [2.235.1]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v2.235.1
 [2.235.0]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v2.235.0

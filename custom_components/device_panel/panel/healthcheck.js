@@ -13,18 +13,16 @@ const MIN = 60;
 const MAX = 86400;
 // Schnellwahl des Abstands: Zahl und Einheit gehen für jeden anderen Wert von 1 Minute bis 24 Stunden
 const PRESETS = [60, 300, 900, 3600, 21600, 86400];
-export const CASES = ["offline", "battery", "backup"];
-const CASE_ICON = { offline: "signalOff", battery: "battery", backup: "save" };
-// Nachrichten der Vorschläge bleiben Englisch (Vorgabe des Nutzers bei Alarmageddon): der Dienst zeigt sie in seinem Verlauf
-const CASE_MSG = { offline: "Device+offline", battery: "Battery+low", backup: "Backup+failed" };
+export const CASES = ["offline", "backup", "cpu", "ram", "disk", "stall"];
 
-// Bekannte Dienste: erkannt an der URL. `suffix(kind)` ist der Zusatz, den das Panel für einen Fall vorschlägt (Healthchecks.io und Better Stack kennen nur "/fail").
+// Bekannte Dienste: erkannt an der URL. `suffix` ist der Fehler-Zusatz, den das Panel vorschlägt (Healthchecks.io und Better Stack kennen nur "/fail"; die Nachricht
+// bei Cronitor und Uptime Kuma bleibt Englisch: der Dienst zeigt sie in seinem Verlauf).
 const KNOWN = [
-  { name: "Healthchecks.io", suffix: () => "/fail", test: (u) => u.hostname === "hc-ping.com" },
-  { name: "Healthchecks", suffix: () => "/fail", test: (u) => /^\/ping\/[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}\/?$/i.test(u.pathname) },
-  { name: "Better Stack", suffix: () => "/fail", test: (u) => /(^|\.)(betterstack\.com|betteruptime\.com)$/.test(u.hostname) && u.pathname.includes("/heartbeat/") },
-  { name: "Cronitor", suffix: (k) => `?state=fail&message=${CASE_MSG[k]}`, test: (u) => u.hostname === "cronitor.link" },
-  { name: "Uptime Kuma", suffix: (k) => `?status=down&msg=${CASE_MSG[k]}`, test: (u) => u.pathname.includes("/api/push/") },
+  { name: "Healthchecks.io", suffix: "/fail", test: (u) => u.hostname === "hc-ping.com" },
+  { name: "Healthchecks", suffix: "/fail", test: (u) => /^\/ping\/[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}\/?$/i.test(u.pathname) },
+  { name: "Better Stack", suffix: "/fail", test: (u) => /(^|\.)(betterstack\.com|betteruptime\.com)$/.test(u.hostname) && u.pathname.includes("/heartbeat/") },
+  { name: "Cronitor", suffix: "?state=fail&message=Device+Panel+error", test: (u) => u.hostname === "cronitor.link" },
+  { name: "Uptime Kuma", suffix: "?status=down&msg=Device+Panel+error", test: (u) => u.pathname.includes("/api/push/") },
 ];
 
 // Beispiele unter der Liste (zum Aufklappen); dieselben Anbieter wie KNOWN. Uptime Kuma läuft meist beim Nutzer selbst: sinnvoll nur ausserhalb von Home Assistant.
@@ -85,12 +83,13 @@ export class HealthCheckUi {
     this.host = host;
     this.h = deps;
     this.items = [];
+    this.available = {}; // welche Fehlerfälle sich ankreuzen lassen (die Meldung dafür ist an und hat einen Wert), vom Server
     this.max = 5;
     this.loaded = false;
     this.error = "";
     this.q = "";
     this.sort = { key: "name", dir: "asc" };
-    this.form = null; // offenes Formular: { id, name, url, value, unit, cases: [{kind, suffix, touched}], pick, error, saving, shown }
+    this.form = null; // offenes Formular: { id, name, url, suffix, touched, cases: [Arten], value, unit, error, saving, shown }
     this.busy = new Set(); // laufende Tests "id|ok" oder "id|<Fall>"
     this.aboutOpen = false;
   }
@@ -117,6 +116,7 @@ export class HealthCheckUi {
     try {
       const res = await this.host._hass.callWS({ type: "device_panel/healthcheck_list" });
       this.items = res.items || [];
+      this.available = res.available || {};
       this.max = res.max || 5;
       this.error = "";
     } catch (err) {
@@ -129,6 +129,7 @@ export class HealthCheckUi {
   _apply(res) {
     if (res?.items) {
       this.items = res.items;
+      this.available = res.available || this.available;
       this.max = res.max || this.max;
       this.loaded = true;
     }
@@ -178,7 +179,7 @@ export class HealthCheckUi {
 
   statusText(s) {
     if (!s) return this.t("hcStNone");
-    const what = s.sent === "ok" ? this.t("hcStOkSent") : this.t("hcStCaseSent", this.caseLabel(s.sent));
+    const what = s.sent === "ok" ? this.t("hcStOkSent") : s.sent === "error" ? this.t("hcStErrorSent") : this.t("hcStCaseSent", this.caseLabel(s.sent));
     const test = s.test ? ` (${this.t("hcStTest")})` : "";
     if (s.result === "ok") return `${what}${test} · HTTP ${s.code}`;
     const why = s.result === "http" ? `HTTP ${s.code}` : this.t(s.result === "timeout" ? "hcStTimeout" : "hcStError");
@@ -257,7 +258,7 @@ export class HealthCheckUi {
   matches(i) {
     const q = this.q.trim().toLowerCase();
     if (!q) return true;
-    const hay = [i.name, i.url, suggest(i.url)?.name || "", ...(i.cases || []).flatMap((c) => [this.caseLabel(c.kind), c.suffix]), this.statusText(i.status), this.host._fmtSeconds(i.interval)];
+    const hay = [i.name, i.url, suggest(i.url)?.name || "", i.fail_suffix || "", ...(i.cases || []).map((k) => this.caseLabel(k)), this.statusText(i.status), this.host._fmtSeconds(i.interval)];
     return hay.some((x) => String(x || "").toLowerCase().includes(q));
   }
 
@@ -275,13 +276,14 @@ export class HealthCheckUi {
     const btn = (act, icon, label, id, extra = "", cls = "") => `<button type="button" class="hc-ib${cls ? ` ${cls}` : ""}" data-hc="${act}" data-id="${escape(id)}" ${extra} title="${escape(label)}" aria-label="${escape(label)}">${mdi(icon, 18)}</button>`;
     const rows = list.map((i) => {
       const known = suggest(i.url);
-      const cases = (i.cases || []).map((c) => `<span class="hc-case-chip">${mdi(CASE_ICON[c.kind], 14)}<span class="hc-cl">${escape(this.caseLabel(c.kind))}</span><span class="hc-cs">${escape(c.suffix)}</span></span>`).join("");
-      const tests = (i.cases || []).map((c) => btn("test", CASE_ICON[c.kind], this.t("hcTestCase", this.caseLabel(c.kind)), i.id, `data-kind="${escape(c.kind)}" ${this.busy.has(`${i.id}|${c.kind}`) ? "disabled" : ""}`, "warn")).join("");
+      // Angekreuzte Fehlerfälle als Marken; ausgegraut, wenn die Meldung dafür inzwischen aus ist (der Fall gilt dann nicht)
+      const cases = (i.cases || []).map((k) => `<span class="hc-case-chip${this.available[k] === false ? " off" : ""}"><span class="hc-cl">${escape(this.caseLabel(k))}</span></span>`).join("");
+      const failBtn = i.fail_suffix ? btn("test", "alert", this.t("hcTestError"), i.id, `data-kind="error" ${this.busy.has(`${i.id}|error`) ? "disabled" : ""}`, "warn") : "";
       return `<div class="hc-row" data-hc-row="${escape(i.id)}"><div class="hc-main"><b class="hc-name">${escape(i.name || i.url)}</b><span class="hc-addr" title="${escape(i.url)}">${escape(i.url)}</span>
-          <div class="hc-tags">${known ? `<span class="hc-tag">${escape(known.name)}</span>` : ""}${cases || `<span class="hc-t2">${escape(this.t("hcCasesNone"))}</span>`}</div>
+          <div class="hc-tags">${known ? `<span class="hc-tag">${escape(known.name)}</span>` : ""}${cases || `<span class="hc-t2">${escape(this.t(i.fail_suffix ? "hcCasesNone" : "hcNoErrorUrl"))}</span>`}</div>
           <div class="hc-state ${this.tone(i.status)}">${escape(this.statusText(i.status))}</div>
           <div class="hc-t2">${escape(`${this.t("hcColInterval")}: ${this.host._fmtSeconds(i.interval)} · ${this.t("hcColLast")}: ${i.status ? this.when(i.status.at) : "–"}`)}</div></div>
-        <div class="hc-btns">${btn("log", "history", this.t("hlOpen"), i.id)}${tests}${btn("test", "check", this.t("hcTestOk"), i.id, `data-kind="ok" ${this.busy.has(`${i.id}|ok`) ? "disabled" : ""}`, "good")}${btn("edit", "pencil", this.t("hcEdit"), i.id)}${btn("delete", "trash", this.t("hcRemove"), i.id, "", "bad")}</div></div>`;
+        <div class="hc-btns">${btn("log", "history", this.t("hlOpen"), i.id)}${failBtn}${btn("test", "check", this.t("hcTestOk"), i.id, `data-kind="ok" ${this.busy.has(`${i.id}|ok`) ? "disabled" : ""}`, "good")}${btn("edit", "pencil", this.t("hcEdit"), i.id)}${btn("delete", "trash", this.t("hcRemove"), i.id, "", "bad")}</div></div>`;
     }).join("");
     const keys = ["name", "last", "interval", "status"];
     const sortSel = `<label class="hc-sort"><span class="hc-t2">${escape(this.t("hcSortBy"))}</span><select data-hc="sort" aria-label="${escape(this.t("hcSortBy"))}">${keys.map((k) => `<option value="${k}" ${sort.key === k ? "selected" : ""}>${escape(this.t(`hcCol_${k}`))}</option>`).join("")}</select>
@@ -296,9 +298,7 @@ export class HealthCheckUi {
     if (!item && this.items.length >= this.max) return;
     const interval = item?.interval ?? 300;
     const hours = interval % 3600 === 0;
-    const cases = (item?.cases || []).map((c) => ({ kind: c.kind, suffix: c.suffix, touched: true }));
-    this.form = { id: item?.id || null, name: item?.name || "", url: item?.url || "", value: hours ? interval / 3600 : Math.round(interval / 60), unit: hours ? "h" : "min", cases, pick: "", error: "", saving: false, shown: false };
-    this.form.pick = this._free()[0] || "";
+    this.form = { id: item?.id || null, name: item?.name || "", url: item?.url || "", suffix: item?.fail_suffix || "", touched: Boolean(item), cases: [...(item?.cases || [])], value: hours ? interval / 3600 : Math.round(interval / 60), unit: hours ? "h" : "min", error: "", saving: false, shown: false };
     this.renderForm(true);
     const dlg = this.formDlg;
     if (!dlg) return;
@@ -308,6 +308,8 @@ export class HealthCheckUi {
     }
     this.host._blurOnTouch();
     if (!item) dlg.querySelector('[data-hc="f-name"]')?.focus();
+    // Den Stand der Meldungen frisch holen: ein Kästchen ist nur ankreuzbar, solange die Meldung dafür an ist
+    this.load();
   }
 
   closeForm() {
@@ -317,10 +319,6 @@ export class HealthCheckUi {
       if (typeof dlg.close === "function") dlg.close();
       else dlg.removeAttribute("open");
     }
-  }
-
-  _free(f = this.form) {
-    return CASES.filter((k) => !f?.cases.some((c) => c.kind === k));
   }
 
   seconds(f = this.form) {
@@ -334,13 +332,17 @@ export class HealthCheckUi {
     const name = String(f.name || "").trim();
     if (!name || name.length > 60) out.name = this.t(name ? "hcErrNameLong" : "hcErrName");
     if (!validUrl(f.url)) out.url = this.t(String(f.url || "").trim() ? "hcErrUrl" : "hcErrUrlEmpty");
-    f.cases.forEach((c, i) => {
-      if (!String(c.suffix || "").trim()) out[`case${i}`] = this.t("hcErrCaseEmpty");
-      else if (validUrl(f.url) && !validSuffix(f.url, c.suffix)) out[`case${i}`] = this.t("hcErrSuffix");
-    });
+    const suffix = String(f.suffix || "").trim();
+    if (suffix && validUrl(f.url) && !validSuffix(f.url, suffix)) out.suffix = this.t("hcErrSuffix");
+    else if (!suffix && f.cases.length) out.suffix = this.t("hcErrSuffixNeeded");
     const sec = this.seconds(f);
     if (!Number.isFinite(sec) || sec < MIN || sec > MAX) out.interval = this.t("hcErrInterval");
     return out;
+  }
+
+  // Ein Fehlerfall lässt sich nur ankreuzen, solange die Meldung dafür an ist (und es einen Wert gibt); ein schon angekreuzter bleibt stehen und wirkt dann nicht
+  isAvailable(kind) {
+    return this.available[kind] !== false;
   }
 
   // Teile des Formulars, die sich beim Tippen ändern (Erkennung, Vorschlag, Vorschau, Fehler); die Felder selbst werden nie neu gebaut
@@ -349,22 +351,19 @@ export class HealthCheckUi {
     const f = this.form;
     const bad = this.problems();
     const known = suggest(f.url);
-    const shown = (key, value) => (bad[key] && (f.shown || String(value ?? "").trim()) ? `<small class="hc-err">${escape(bad[key])}</small>` : "");
-    const out = {
+    const suffix = String(f.suffix || "").trim();
+    const shown = (key, value) => (bad[key] && (f.shown || String(value ?? "").trim() || f.cases.length) ? `<small class="hc-err">${escape(bad[key])}</small>` : "");
+    const preview = validUrl(f.url) && validSuffix(f.url, suffix) ? applySuffix(f.url, suffix) : null;
+    return {
       known: known ? `<span class="hc-tag">${escape(this.t("hcKnown", known.name))}</span>` : "",
       "err-name": shown("name", f.name),
       "err-url": shown("url", f.url),
-      "err-interval": "",
+      offer: known && known.suffix !== suffix ? `<div class="hc-offer"><span class="hc-t2">${escape(this.t("hcSuggest", known.name, known.suffix))}</span><button type="button" class="lnk" data-hc="f-take">${escape(this.t("hcTake"))}</button></div>` : "",
+      prev: preview ? `${escape(this.t("hcPreview"))} <span class="hc-mono">${escape(preview)}</span>` : escape(this.t(suffix ? "hcPreviewNone" : "hcPreviewEmpty")),
+      "err-suffix": shown("suffix", f.suffix),
+      "err-interval": bad.interval ? `<small class="hc-err">${escape(bad.interval)}</small>` : "",
       presets: PRESETS.map((sec) => `<button type="button" class="sub-tab${this.seconds() === sec ? " on" : ""}" data-hc="f-preset" data-set="hc-preset" data-sec="${sec}" aria-pressed="${this.seconds() === sec}">${escape(this.host._fmtSeconds(sec, true))}</button>`).join(""),
     };
-    out["err-interval"] = bad.interval ? `<small class="hc-err">${escape(bad.interval)}</small>` : "";
-    f.cases.forEach((c, i) => {
-      const preview = validUrl(f.url) && validSuffix(f.url, c.suffix) ? applySuffix(f.url, c.suffix) : null;
-      const sug = known?.suffix(c.kind);
-      out[`case${i}`] = `${sug && sug !== String(c.suffix || "").trim() ? `<div class="hc-offer"><span class="hc-t2">${escape(this.t("hcSuggest", known.name, sug))}</span><button type="button" class="lnk" data-hc="f-take" data-i="${i}">${escape(this.t("hcTake"))}</button></div>` : ""}
-        <small class="hc-t2 hc-prev">${preview ? `${escape(this.t("hcPreview"))} <span class="hc-mono">${escape(preview)}</span>` : escape(this.t(String(c.suffix || "").trim() ? "hcPreviewNone" : "hcPreviewEmpty"))}</small>${shown(`case${i}`, c.suffix || (f.shown ? "x" : ""))}`;
-    });
-    return out;
   }
 
   renderForm(force = false) {
@@ -375,18 +374,12 @@ export class HealthCheckUi {
     const p = this.parts();
     const bad = this.problems();
     const field = (key, body) => `<label class="hc-field"><span class="hc-label">${escape(this.t(key))}</span>${body}</label>`;
-    const free = this._free();
-    const caseRows = f.cases.map((c, i) => `<div class="hc-case" data-case="${i}"><span class="hc-case-ic">${mdi(CASE_ICON[c.kind], 20)}</span>
-        <div class="hc-case-b"><b>${escape(this.caseLabel(c.kind))}</b>
-          <input class="hc-in" type="text" data-hc="f-case" data-i="${i}" value="${escape(c.suffix)}" placeholder="/fail" autocomplete="off" spellcheck="false" maxlength="200" aria-label="${escape(this.t("hcSuffix"))}">
-          <div data-hcp="case${i}">${p[`case${i}`]}</div></div>
-        <div class="hc-case-act"><button type="button" class="hc-ib sm" data-hc="f-up" data-i="${i}" ${i ? "" : "disabled"} title="${escape(this.t("hcUp"))}" aria-label="${escape(this.t("hcUp"))}">${mdi("arrowUp", 16)}</button>
-          <button type="button" class="hc-ib sm" data-hc="f-down" data-i="${i}" ${i < f.cases.length - 1 ? "" : "disabled"} title="${escape(this.t("hcDown"))}" aria-label="${escape(this.t("hcDown"))}">${mdi("arrowDown", 16)}</button>
-          <button type="button" class="hc-ib sm bad" data-hc="f-del" data-i="${i}" title="${escape(this.t("hcRemove"))}" aria-label="${escape(this.t("hcRemove"))}">${mdi("trash", 16)}</button></div></div>`).join("");
-    const pick = free.length
-      ? `<div class="hc-addcase"><select class="hc-in" data-hc="f-pick" aria-label="${escape(this.t("hcCaseAdd"))}">${free.map((k) => `<option value="${k}" ${f.pick === k ? "selected" : ""}>${escape(this.caseLabel(k))}</option>`).join("")}</select>
-          <button type="button" class="dlg-btn" data-hc="f-addcase">${mdi("plus", 18)}${escape(this.t("hcCaseAdd"))}</button></div>`
-      : "";
+    // Kästchen je Fehlerfall: ausgegraut, wenn die Meldung dafür aus ist oder es keinen Wert gibt (dann mit dem Grund darunter)
+    const checks = CASES.map((k) => {
+      const on = this.isAvailable(k);
+      return `<label class="hc-chk${on ? "" : " off"}"><input type="checkbox" data-hc="f-case" data-kind="${k}" ${f.cases.includes(k) ? "checked" : ""} ${on ? "" : "disabled"}>
+        <span class="hc-chk-t"><b>${escape(this.caseLabel(k))}</b>${on ? "" : `<small>${escape(this.t(`hcOff_${k}`))}</small>`}</span></label>`;
+    }).join("");
     dlg.innerHTML = `<form class="hc-form" data-hc-form novalidate>
       <div class="dlg-head"><span class="dlg-avatar app app-health">${mdi("heartPulse", 28)}</span><div class="dlg-title"><h2>${escape(this.t(f.id ? "hcEditTitle" : "hcAddTitle"))}</h2></div>
         <button type="button" class="dlg-close" data-hc="f-cancel" title="${escape(this.t("close"))}" aria-label="${escape(this.t("close"))}">${mdi("close", 18)}</button></div>
@@ -395,9 +388,11 @@ export class HealthCheckUi {
         ${field("hcName", `<input class="hc-in" type="text" data-hc="f-name" value="${escape(f.name)}" placeholder="${escape(this.t("hcNamePh"))}" autocomplete="off" maxlength="60" required><span data-hcp="err-name">${p["err-name"]}</span>`)}
         ${field("hcUrl", `<input class="hc-in" type="url" inputmode="url" data-hc="f-url" value="${escape(f.url)}" placeholder="https://…" autocomplete="off" spellcheck="false" maxlength="500">
           <small class="hc-t2">${escape(this.t("hcUrlHint"))}</small><span data-hcp="known">${p.known}</span><span data-hcp="err-url">${p["err-url"]}</span>`)}
-        <div class="set-title">${escape(this.t("hcChapCases"))}</div>
-        <p class="dlg-note">${escape(this.t("hcCasesHint"))}</p>
-        <div class="hc-cases">${caseRows || `<p class="dlg-note small">${escape(this.t("hcCasesNone"))}</p>`}</div>${pick}
+        <div class="set-title">${escape(this.t("hcChapFail"))}</div>
+        ${field("hcSuffix", `<input class="hc-in" type="text" data-hc="f-suffix" value="${escape(f.suffix)}" placeholder="/fail" autocomplete="off" spellcheck="false" maxlength="200">
+          <small class="hc-t2">${escape(this.t("hcSuffixHint"))}</small><div data-hcp="offer">${p.offer}</div><small class="hc-t2 hc-prev" data-hcp="prev">${p.prev}</small><span data-hcp="err-suffix">${p["err-suffix"]}</span>`)}
+        <div class="hc-label hc-chk-head">${escape(this.t("hcCasesTitle"))}</div>
+        <div class="hc-checks">${checks}</div>
         <div class="set-title">${escape(this.t("hcChapInterval"))}</div>
         <div class="hc-field"><div class="hc-int"><span class="opt-input${bad.interval ? " bad" : ""}"><input type="number" min="1" max="${f.unit === "h" ? 24 : 1440}" step="1" inputmode="numeric" data-hc="f-value" value="${escape(f.value)}" aria-label="${escape(this.t("hcInterval"))}"></span>
           <select class="hc-in" data-hc="f-unit" aria-label="${escape(this.t("hcUnit"))}"><option value="min" ${f.unit === "min" ? "selected" : ""}>${escape(this.t("hcMinutes"))}</option><option value="h" ${f.unit === "h" ? "selected" : ""}>${escape(this.t("hcHours"))}</option></select></div>
@@ -419,10 +414,8 @@ export class HealthCheckUi {
       if (el && el.innerHTML !== html) el.innerHTML = html;
     }
     const active = this.host.shadowRoot.activeElement;
-    f.cases.forEach((c, i) => {
-      const input = dlg.querySelector(`[data-hc="f-case"][data-i="${i}"]`);
-      if (input && input !== active && input.value !== c.suffix) input.value = c.suffix;
-    });
+    const suffix = dlg.querySelector('[data-hc="f-suffix"]');
+    if (suffix && suffix !== active && suffix.value !== f.suffix) suffix.value = f.suffix;
     const value = dlg.querySelector('[data-hc="f-value"]');
     if (value) {
       value.max = f.unit === "h" ? "24" : "1440";
@@ -452,7 +445,7 @@ export class HealthCheckUi {
     try {
       const res = await this.host._hass.callWS({
         type: "device_panel/healthcheck_save", ...(f.id ? { check_id: f.id } : {}), name: String(f.name).trim(), url: f.url.trim(), interval: this.seconds(),
-        cases: f.cases.map((c) => ({ kind: c.kind, suffix: String(c.suffix).trim() })),
+        fail_suffix: String(f.suffix || "").trim(), cases: [...f.cases],
       });
       this._apply(res);
       this.closeForm();
@@ -560,28 +553,11 @@ export class HealthCheckUi {
         f.value = hours ? sec / 3600 : sec / 60;
         this.refreshForm();
       }
-    } else if (f && act === "f-addcase") {
-      const kind = f.pick || this._free()[0];
-      if (kind) {
-        const sug = suggest(f.url)?.suffix(kind) || "";
-        f.cases.push({ kind, suffix: sug, touched: false });
-        f.pick = this._free()[0] || "";
-        this.renderForm();
-        this.formDlg.querySelector(`[data-hc="f-case"][data-i="${f.cases.length - 1}"]`)?.focus();
-      }
-    } else if (f && ["f-up", "f-down", "f-del"].includes(act)) {
-      const i = Number(el.dataset.i);
-      const j = act === "f-up" ? i - 1 : act === "f-down" ? i + 1 : -1;
-      if (act === "f-del") f.cases.splice(i, 1);
-      else if (j >= 0 && j < f.cases.length) [f.cases[i], f.cases[j]] = [f.cases[j], f.cases[i]];
-      f.pick = this._free().includes(f.pick) ? f.pick : this._free()[0] || "";
-      this.renderForm();
     } else if (f && act === "f-take") {
-      const c = f.cases[Number(el.dataset.i)];
-      const sug = c && suggest(f.url)?.suffix(c.kind);
+      const sug = suggest(f.url)?.suffix;
       if (sug) {
-        c.suffix = sug;
-        c.touched = true;
+        f.suffix = sug;
+        f.touched = true;
         this.refreshForm();
       }
     } else if (act === "search" || act.startsWith("f-")) {
@@ -610,16 +586,14 @@ export class HealthCheckUi {
     else if (act === "f-url") {
       f.url = el.value;
       // Vorschlag nur, solange niemand den Zusatz berührt hat: der Nutzer hat das letzte Wort
-      const known = suggest(f.url);
-      for (const c of f.cases) if (!c.touched) c.suffix = known ? known.suffix(c.kind) : "";
+      if (!f.touched) f.suffix = suggest(f.url)?.suffix || "";
+    } else if (act === "f-suffix") {
+      f.suffix = el.value;
+      f.touched = true;
     } else if (act === "f-case") {
-      const c = f.cases[Number(el.dataset.i)];
-      if (c) {
-        c.suffix = el.value;
-        c.touched = true;
-      }
-    } else if (act === "f-pick") f.pick = el.value;
-    else if (act === "f-value") f.value = el.value.trim() === "" ? "" : Number(el.value);
+      const kind = el.dataset.kind;
+      f.cases = CASES.filter((k) => (k === kind ? el.checked : f.cases.includes(k)));
+    } else if (act === "f-value") f.value = el.value.trim() === "" ? "" : Number(el.value);
     else if (act === "f-unit") {
       // Umrechnen, wo es aufgeht (90 min -> 1,5 h geht nicht: dann bleibt die Zahl, und die Prüfung meldet die Grenzen)
       const sec = this.seconds();

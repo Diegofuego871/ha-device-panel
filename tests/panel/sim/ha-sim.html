@@ -2238,7 +2238,7 @@
         for (let t = Math.floor(callsFrom / interval) * interval + interval; t <= now; t += interval) {
           if (t > now - 9 * HOUR && t < now - 8 * HOUR) continue; // eine Lücke ohne Daten
           const kind = kindAt(t);
-          calls.push({ t: iso(t), kind, result: kind === "fail" ? "timeout" : "ok", code: kind === "fail" ? null : 200, ms: kind === "fail" ? null : 90 + (t / 1000 % 70), by: kind === "report" ? "case" : "tick", sent: kind === "report" ? (item.cases?.[0]?.kind || "offline") : "ok" });
+          calls.push({ t: iso(t), kind, result: kind === "fail" ? "timeout" : "ok", code: kind === "fail" ? null : 200, ms: kind === "fail" ? null : 90 + (t / 1000 % 70), by: kind === "report" ? "case" : "tick", sent: kind === "report" ? (item.cases?.[0] || "offline") : "ok" });
         }
         calls.push({ t: iso(now - 600000), kind: "test", result: "ok", code: 200, ms: 140, by: "test", sent: "ok" });
         const inRange = calls.filter((c) => new Date(c.t).getTime() > start);
@@ -2252,7 +2252,7 @@
           events: [
             { kind: "back", t: iso(now - 4.9 * HOUR), result: "ok", by: "tick", from: "fail", code: 200, ms: 110 },
             { kind: "fail", t: iso(now - 5 * HOUR), result: "timeout", by: "tick", n: 3, end: iso(now - 4.95 * HOUR) },
-            { kind: "report", t: iso(now - 2 * HOUR), result: "ok", by: "case", sent: item.cases?.[0]?.kind || "offline", n: 3, end: iso(now - 1.95 * HOUR), code: 200, ms: 100 },
+            { kind: "report", t: iso(now - 2 * HOUR), result: "ok", by: "case", sent: item.cases?.[0] || "offline", n: 3, end: iso(now - 1.95 * HOUR), code: 200, ms: 100 },
             { kind: "test", t: iso(now - 600000), result: "ok", by: "test", sent: "ok", code: 200, ms: 140 },
           ],
           events_total: 4, calls: [...inRange].reverse(), calls_total: inRange.length, calls_from: iso(callsFrom),
@@ -2276,7 +2276,8 @@
       // HealthCheck-Dienste (2.236.0): window.__hc = Liste der Dienste { id, name, url, interval, cases: [{ kind, suffix }], status, log }; window.__hcPing = [Aufrufe]
       if (String(msg.type).startsWith("device_panel/healthcheck_")) {
         const hc = (window.__hc ||= []);
-        const info = () => ({ items: hc.map((i) => JSON.parse(JSON.stringify(i))), max: 5, cases: ["offline", "battery", "backup"] });
+        // window.__hcAvail = { Art: false } schaltet einzelne Kästchen aus (Meldung aus oder kein Sensor)
+        const info = () => ({ items: hc.map((i) => JSON.parse(JSON.stringify(i))), max: 5, cases: ["offline", "backup", "cpu", "ram", "disk", "stall"], available: Object.fromEntries(["offline", "backup", "cpu", "ram", "disk", "stall"].map((k) => [k, window.__hcAvail?.[k] !== false])) });
         const err = (code, message) => Object.assign(new Error(message), { code });
         const act = msg.type.slice("device_panel/healthcheck_".length);
         if (act === "list") {
@@ -2286,7 +2287,12 @@
         if (act === "save") {
           const url = String(msg.url || "").trim();
           if (!/^https?:\/\/[^\s/]+/.test(url)) throw err("invalid_url", "invalid url");
-          const entry = { name: msg.name.trim(), url, interval: msg.interval, cases: msg.cases.map((c) => ({ kind: c.kind, suffix: c.suffix })) };
+          const suffix = String(msg.fail_suffix || "").trim();
+          if (suffix && !/^[/?&]/.test(suffix)) throw err("invalid_suffix", "invalid suffix");
+          if ((msg.cases || []).length && !suffix) throw err("invalid_suffix", "suffix needed");
+          const order = ["offline", "backup", "cpu", "ram", "disk", "stall"];
+          const entry = { name: msg.name.trim(), url, interval: msg.interval, fail_suffix: suffix, cases: order.filter((k) => (msg.cases || []).includes(k)) };
+          window.__hcSaved = JSON.parse(JSON.stringify({ ...entry, check_id: msg.check_id || null }));
           let id = msg.check_id;
           if (id) {
             const i = hc.findIndex((x) => x.id === id);
@@ -2307,7 +2313,7 @@
         }
         if (act === "ping") {
           const item = hc.find((x) => x.id === msg.check_id);
-          if (!item || (msg.kind !== "ok" && !item.cases.some((c) => c.kind === msg.kind))) throw err("not_found", "no such health check");
+          if (!item || (msg.kind === "error" && !item.fail_suffix)) throw err("not_found", "no such health check");
           (window.__hcPing ||= []).push({ id: item.id, kind: msg.kind });
           const fail = window.__hcFail?.[item.id];
           item.status = { at: new Date().toISOString(), sent: msg.kind, result: fail ? "http" : "ok", code: fail ? 503 : 200, test: true };

@@ -1653,7 +1653,7 @@ button.pill.live.off:hover { background: var(--dp-hover); }
   /* Geräte-Popup am Handy: Name eine Stufe kleiner (24 → 21 px), damit neben Protokoll, Herz und Kreuz mehr Platz bleibt (seit 2.121.0) */
   dialog.device .dlg-title h2, .stat-head .dlg-title h2 { font-size: 21px; }
   /* Vollbild-Fenster (Einstellungen, Protokoll, Routinen): das Kreuz sitzt auf gleicher Höhe wie der Zahnrad-Knopf der Übersicht (12 px vom oberen Rand) */
-  dialog.settings .dlg-head .dlg-close, dialog.log-dlg .dlg-head .dlg-close, dialog.rtall-dlg .dlg-head .dlg-close, dialog.mgall-dlg .dlg-head .dlg-close, dialog.status-dlg .dlg-head .dlg-close, dialog.updapp-dlg .dlg-head .dlg-close, dialog.charges-dlg .dlg-head .dlg-close,
+  dialog.settings .dlg-head .dlg-close, dialog.log-dlg .dlg-head .dlg-close, dialog.rtall-dlg .dlg-head .dlg-close, dialog.mgall-dlg .dlg-head .dlg-close, dialog.status-dlg .dlg-head .dlg-close, dialog.updapp-dlg .dlg-head .dlg-close, dialog.charges-dlg .dlg-head .dlg-close, dialog.hc-dlg .dlg-head .dlg-close, dialog.hc-form-dlg .dlg-head .dlg-close, dialog.hl-dlg .dlg-head .dlg-close,
   dialog.settings .dlg-head .dlg-acts, dialog.rtall-dlg .dlg-head .dlg-acts, dialog.mgall-dlg .dlg-head .dlg-acts, dialog.updapp-dlg .dlg-head .dlg-acts, dialog.charges-dlg .dlg-head .dlg-acts { margin-top: -6px; }
   .dlg-quick { padding: 0 16px 14px; flex-wrap: nowrap; gap: 6px; }
   .why-tags.dlg-why { padding: 0 16px 12px; }
@@ -3012,6 +3012,8 @@ dialog.hc-form-dlg { width: min(600px, calc(100vw - 48px)); height: min(860px, c
 dialog.hc-dlg[open], dialog.hc-form-dlg[open], dialog.hl-dlg[open] { display: flex; flex-direction: column; }
 dialog.hc-dlg::backdrop, dialog.hc-form-dlg::backdrop, dialog.hl-dlg::backdrop { background: rgba(0,0,0,0.5); }
 .hc-dlg .dlg-head, .hc-form-dlg .dlg-head, .hl-dlg .dlg-head { flex: none; position: static; }
+/* Die zwei Knöpfe am Fuss (Schliessen / Dienst hinzufügen, Abbrechen / Speichern) sind gleich breit */
+.hc-dlg .dlg-actions .dlg-btn, .hc-form-dlg .dlg-actions .dlg-btn { flex: 1 1 0; min-width: 0; }
 .hc-dlg .dlg-title, .hc-form-dlg .dlg-title { align-self: center; }
 .hc-dlg .dlg-title h2, .hc-form-dlg .dlg-title h2 { margin: 0; }
 .hc-dlg .dlg-body, .hc-form-dlg .dlg-body, .hl-dlg .dlg-body { flex: 1 1 auto; min-height: 0; overflow: auto; padding: 0 22px 24px; }
@@ -3029,7 +3031,8 @@ dialog.hc-dlg::backdrop, dialog.hc-form-dlg::backdrop, dialog.hl-dlg::backdrop {
 .hc-addr { display: block; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; color: var(--dp-text2); font-size: 13px; }
 .hc-tags { display: flex; flex-wrap: wrap; align-items: center; gap: 6px; }
 .hc-tag, .hc-case-chip { display: inline-flex; align-items: center; gap: 5px; padding: 2px 10px; border-radius: 999px; background: var(--dp-hover); border: 1px solid var(--dp-divider); font-size: 12.5px; }
-.hc-case-chip { flex: 1 1 100%; min-width: 0; align-items: flex-start; border-radius: 12px; padding: 6px 12px; }
+.hc-case-chip { flex: 0 1 auto; min-width: 0; }
+.hc-case-chip.off { opacity: .45; }
 .hc-case-chip svg { margin-top: 2px; flex: none; }
 .hc-cl { flex: none; font-weight: 600; white-space: nowrap; }
 .hc-cs { flex: 1 1 auto; min-width: 0; overflow-wrap: anywhere; color: var(--dp-text2); font-size: 12px; font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace; }
@@ -3063,6 +3066,17 @@ dialog.hc-dlg::backdrop, dialog.hc-form-dlg::backdrop, dialog.hl-dlg::backdrop {
 .hc-case-act { flex: none; display: flex; flex-direction: column; gap: 6px; }
 .hc-offer { display: flex; flex-wrap: wrap; align-items: center; gap: 4px 10px; }
 .hc-prev { overflow-wrap: anywhere; }
+.hc-chk-head { margin: 4px 0 6px; }
+.hc-checks { display: flex; flex-direction: column; gap: 2px; margin-bottom: 4px; }
+.hc-chk { display: flex; align-items: flex-start; gap: 12px; padding: 9px 4px; border-bottom: 1px solid var(--dp-divider); cursor: pointer; }
+.hc-chk:last-child { border-bottom: 0; }
+.hc-chk input { flex: none; width: 20px; height: 20px; margin: 1px 0 0; accent-color: var(--dp-primary); cursor: pointer; }
+.hc-chk-t { display: flex; flex-direction: column; gap: 2px; min-width: 0; }
+.hc-chk-t b { font-weight: 500; font-size: 15px; }
+.hc-chk-t small { color: var(--dp-text3); font-size: 12.5px; }
+.hc-chk.off { cursor: default; }
+.hc-chk.off input { cursor: default; }
+.hc-chk.off .hc-chk-t b { color: var(--dp-text3); }
 .hc-addcase { display: flex; flex-wrap: wrap; gap: 10px; margin: 12px 0 4px; }
 .hc-addcase .hc-in { flex: 1 1 200px; width: auto; }
 .hc-int { display: flex; gap: 10px; }
@@ -3074,15 +3088,19 @@ dialog.hc-dlg::backdrop, dialog.hc-form-dlg::backdrop, dialog.hl-dlg::backdrop {
   .hc-btns { flex: 1 1 100%; justify-content: flex-start; margin-left: 0; }
 }
 /* Protokoll der HealthCheck-Dienste (seit 2.236.0, healthlog.js): Kopf mit Auswahl, Reiter, Zeitraum, Kennzahlen, Grafiken (SVG, Farben über Klassen), Liste */
-.hl-head { position: relative; flex-wrap: wrap; }
-.hl-head .dlg-title { flex: 1 1 180px; min-width: 0; align-self: center; }
+/* Spezifität wie die Regel oben (.hl-dlg .dlg-head ist static): sonst hängt das Auswahlmenü am Fenster statt am Kopf und liegt ausserhalb des Sichtbereichs */
+.hl-dlg .hl-head { position: relative; z-index: 5; flex-wrap: nowrap; }
+.hl-head .dlg-title { flex: 1 1 0; min-width: 0; align-self: center; }
+/* Testknöpfe und Stift stehen in einer Reihe mit dem Schliessen-Knopf und sind genau so gross */
+.hl-head .hl-acts .hc-ib { width: 42px; height: 42px; }
 .hl-pick { display: inline-flex; align-items: center; gap: 6px; max-width: 100%; padding: 0; border: 0; background: none; color: var(--dp-text); font: inherit; cursor: pointer; }
-.hl-pick b { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; font-size: 21px; font-weight: 700; }
+.hl-pick b, b.hl-pick.one { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; font-size: 21px; font-weight: 700; }
+b.hl-pick.one { display: block; }
 .hl-pill { display: inline-block; margin-top: 6px; padding: 2px 10px; border-radius: 999px; font-size: 12.5px; background: var(--dp-hover); border: 1px solid var(--dp-divider); color: var(--dp-text2); }
 .hl-pill.ok { background: var(--dp-success-soft); border-color: transparent; color: var(--dp-success); }
 .hl-pill.report { background: var(--dp-warning-soft); border-color: transparent; color: var(--dp-warning); }
 .hl-pill.fail { background: var(--dp-error-soft); border-color: transparent; color: var(--dp-error); }
-.hl-acts { flex: none; display: flex; flex-wrap: wrap; gap: 8px; align-self: center; margin-left: auto; }
+.hl-acts { flex: none; display: flex; flex-wrap: nowrap; gap: 8px; align-self: flex-start; margin-left: auto; }
 .hl-menu { position: absolute; left: 22px; right: 22px; top: calc(100% - 6px); z-index: 6; display: flex; flex-direction: column; padding: 6px; border: 1px solid var(--dp-divider); border-radius: 14px; background: var(--dp-card); box-shadow: var(--dp-shadow); }
 .hl-menu[hidden] { display: none; }
 .hl-mi { display: flex; align-items: center; gap: 12px; width: 100%; padding: 10px 12px; border: 0; border-radius: 10px; background: none; color: var(--dp-text); font: inherit; text-align: left; cursor: pointer; }
@@ -3147,18 +3165,24 @@ dialog.hc-dlg::backdrop, dialog.hc-form-dlg::backdrop, dialog.hl-dlg::backdrop {
 .hl-ev .hl-dot-s { margin-top: 6px; }
 .hl-ev small { display: block; color: var(--dp-text2); font-size: 12.5px; }
 .hl-tag { padding: 2px 8px; border-radius: 999px; background: var(--dp-hover); border: 1px solid var(--dp-divider); font-size: 12px; white-space: nowrap; }
-.hl-device .set-title:first-child { margin-top: 6px; }
+.hl-sec { margin: 14px 2px 8px; font-size: 13px; letter-spacing: .06em; text-transform: uppercase; color: var(--dp-text2); }
+.hl-sec:first-child { margin-top: 6px; }
+.hl-cp { flex: none; display: inline-grid; place-items: center; width: 32px; height: 32px; padding: 0; border: 0; border-radius: 8px; background: none; color: var(--dp-text2); cursor: pointer; }
+.hl-cp:hover { background: var(--dp-hover); color: var(--dp-text); }
 .hl-card { border: 1px solid var(--dp-divider); border-radius: 16px; background: var(--dp-subtle); padding: 4px 14px; }
-.hl-drow { display: flex; align-items: center; gap: 10px; padding: 8px 0; border-bottom: 1px solid var(--dp-divider); }
+.hl-drow { display: flex; align-items: center; gap: 10px; padding: 10px 0; border-bottom: 1px solid var(--dp-divider); }
 .hl-drow:last-child { border-bottom: 0; }
-.hl-drow > span { flex: 0 0 38%; max-width: 200px; }
-.hl-drow > b { flex: 1 1 auto; min-width: 0; font-weight: 500; overflow-wrap: anywhere; }
+.hl-drow > span { flex: 0 0 auto; max-width: 42%; }
+.hl-drow > b { flex: 1 1 0; min-width: 0; text-align: right; font-weight: 500; overflow-wrap: anywhere; }
 .hl-drow.mono > b { font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace; font-size: 13px; }
+/* Handy: die Knöpfe stehen rechts in einer eigenen Zeile unter dem Schliessen-Knopf (der Knopf sitzt wie in den Einstellungen) */
+@media (max-width: 600px) {
+  .hl-dlg .hl-head { flex-wrap: wrap; }
+  .hl-head .hl-acts .hc-ib { width: 38px; height: 38px; }
+  .hl-acts { flex: 1 1 100%; justify-content: flex-end; margin-left: 0; order: 5; gap: 8px; }
+}
 @media (max-width: 700px) {
-  .hl-head .dlg-title { flex-basis: 60%; }
-  .hl-acts { flex: 1 1 100%; margin-left: 0; order: 5; }
   .hl-menu { left: 16px; right: 16px; }
-  .hl-pick b { font-size: 19px; }
-  .hl-drow { flex-wrap: wrap; } .hl-drow > span { flex-basis: 100%; max-width: none; }
+  .hl-pick b, b.hl-pick.one { font-size: 19px; }
 }
 `;

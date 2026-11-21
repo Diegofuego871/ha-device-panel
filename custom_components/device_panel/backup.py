@@ -680,7 +680,7 @@ async def _healthchecks_part(hass: HomeAssistant, items: Any, dry_run: bool, rep
         rep["changed"] += 1
         # Die Vorschau nennt nur den Namen und die Fälle, nie die URL (sie steht in der Datei, nicht im Bericht)
         _example(rep, item["name"], "–" if hid not in result else "geändert", "neu" if hid not in result else "angepasst",
-                 detail=", ".join(c["kind"] for c in item["cases"]) or None)
+                 detail=", ".join(item["cases"]) or None)
         result[hid] = item
     if replace:
         for hid in [h for h in current if h not in clean]:

@@ -296,8 +296,8 @@ An external service such as [Healthchecks.io](https://healthchecks.io), [Cronito
 
 - **Where:** Settings › Monitoring and notifications, the chapter "HealthCheck services" above "System alerts": "Add service" and "Show services". Up to five services, administrators only.
 - **A service:** a name, the ping URL and an interval (1 minute to 24 hours). Known services (Healthchecks.io, Better Stack, Cronitor, Uptime Kuma) are recognised by the URL.
-- **Cases:** per service rows with a kind (device offline, battery low, backup failed) and a URL suffix (for example "/fail" or "?state=fail"). While a case applies, the panel calls the URL with the suffix of the top matching row instead of the plain heartbeat; the end follows as a heartbeat. The suffix is suggested for known services and stays yours to change.
-- **Test and log:** every service has a test button per case and "Send OK", and a log with chart (heartbeat, timeline, grids up to a year), key figures, response times and the list of events and calls. The URL is shown in full to administrators and is part of the backup file (keep it private); it is never in the log.
+- **Errors:** one URL suffix per service (for example "/fail" or "?state=fail"; suggested for known services, yours to change) and tick boxes for the cases that trigger it: device offline, backup failed, high load (CPU, memory, disk) and system stall. While a ticked case applies, the panel calls the URL with the suffix instead of the plain heartbeat; the end follows as a heartbeat. A box is greyed out when the notification for it is off or has no limit.
+- **Test and log:** every service has "Send error" and "Send OK", and a log with chart (heartbeat, timeline, grids up to a year), key figures, response times and the list of events and calls. The URL is shown in full to administrators and is part of the backup file (keep it private); it is never in the log.
 
 ## App launcher and history
 

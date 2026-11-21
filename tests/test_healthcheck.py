@@ -18,7 +18,7 @@ from pytest_homeassistant_custom_component.test_util.aiohttp import AiohttpClien
 from custom_components.device_panel import backup
 from custom_components.device_panel.const import (
     DATA_BACKUP_ALERT,
-    DATA_BATTERY,
+    DATA_STATUS,
     DATA_HEALTHCHECK,
     DATA_OUTAGE,
     DOMAIN,
@@ -27,12 +27,12 @@ from custom_components.device_panel.const import (
     HEALTHCHECK_TIMEOUT,
     MAX_HEALTHCHECKS,
 )
-from custom_components.device_panel.healthcheck import active_case, apply_suffix, case_url, host_of, valid_items, valid_suffix
+from custom_components.device_panel.healthcheck import active_case, apply_suffix, case_available, fail_url, host_of, valid_items, valid_suffix
 
 # Erfundene Kennungen (nie eine echte URL eines Nutzers in Tests)
 HC = "https://hc-ping.com/00000000-1111-2222-3333-444444444444"
 CR = "https://cronitor.link/p/0123456789abcdef/haus"
-CASES = [{"kind": "offline", "suffix": "/fail"}, {"kind": "battery", "suffix": "/1"}]
+CASES = ["offline", "backup"]  # angekreuzte Fehlerfälle; der Fehler-Zusatz ist "/fail"
 
 
 @pytest.fixture
@@ -57,7 +57,7 @@ async def advance(hass: HomeAssistant, freezer, seconds: float) -> None:
 
 
 async def add(client, **values: Any) -> dict[str, Any]:
-    return await ws(client, type=f"{DOMAIN}/healthcheck_save", **{"name": "Haus", "url": HC, "interval": 300, "cases": CASES, **values})
+    return await ws(client, type=f"{DOMAIN}/healthcheck_save", **{"name": "Haus", "url": HC, "interval": 300, "fail_suffix": "/fail", "cases": CASES, **values})
 
 
 def calls(aioclient_mock: AiohttpClientMocker) -> list[str]:
@@ -65,7 +65,7 @@ def calls(aioclient_mock: AiohttpClientMocker) -> list[str]:
 
 
 class _Flag:
-    """Zustand der echten Wächter nachstellen: das Panel liest nur `offline`, `low` und `failing`."""
+    """Zustand der echten Wächter nachstellen: das Panel liest nur Ausfälle, das Backup, die Auslastung und den Stillstand."""
 
     def __init__(self, hass: HomeAssistant) -> None:
         self._hass = hass
@@ -79,20 +79,23 @@ class _Flag:
         self._hass.data[DATA_OUTAGE]._offline = value  # noqa: SLF001
 
     @property
-    def low(self) -> dict[str, Any]:
-        return self._hass.data[DATA_BATTERY]._low  # noqa: SLF001
-
-    @low.setter
-    def low(self, value: dict[str, Any]) -> None:
-        self._hass.data[DATA_BATTERY]._low = value  # noqa: SLF001
-
-    @property
     def failing(self) -> bool:
         return self._hass.data[DATA_BACKUP_ALERT].failing
 
     @failing.setter
     def failing(self, value: bool) -> None:
         self._hass.data[DATA_BACKUP_ALERT]._open = 1.0 if value else None  # noqa: SLF001
+
+    def load(self, kind: str, over: bool) -> None:
+        self._hass.data[DATA_STATUS]._load[kind] = {"over": 0, "under": 0, "alerted": over, "since": 0.0}  # noqa: SLF001
+
+    def stalled(self, parts: set[str]) -> None:
+        self._hass.data[DATA_STATUS]._alerted = set(parts)  # noqa: SLF001
+
+    def options(self, **values: Any) -> None:
+        """Meldungen ein- oder ausschalten (Optionen der Integration)."""
+        entry = next(iter(self._hass.config_entries.async_entries(DOMAIN)))
+        self._hass.config_entries.async_update_entry(entry, options={**entry.options, **values})
 
 
 @pytest.fixture
@@ -104,21 +107,27 @@ def flags(hass: HomeAssistant, entry) -> _Flag:
 
 
 def test_values_are_checked_one_by_one() -> None:
-    """Höchstens fünf, nur http oder https, Abstand 1 Minute bis 24 Stunden; ein kaputter Eintrag fällt einzeln weg, ein kaputter Zusatz macht die Zeile ungültig."""
+    """Höchstens fünf, nur http oder https, Abstand 1 Minute bis 24 Stunden; ein kaputter Eintrag fällt einzeln weg, ein kaputter Zusatz wird leer, Fälle nur bekannte Arten."""
     items = [{"id": f"a{i}", "url": HC, "interval": 300} for i in range(7)]
     assert len(valid_items(items)) == MAX_HEALTHCHECKS
     out = valid_items([
-        {"id": "ok", "url": f" {CR} ", "interval": 5, "cases": [{"kind": "offline", "suffix": " ?state=fail "}, {"kind": "offline", "suffix": "/doppelt"}, {"kind": "ufo", "suffix": "/x"}]},
+        {"id": "ok", "url": f" {CR} ", "interval": 5, "fail_suffix": " ?state=fail ", "cases": ["stall", "offline", "offline", "ufo", "battery"]},
         {"id": "ftp", "url": "ftp://hc-ping.com/x", "interval": 300},
         {"id": "js", "url": "javascript:alert(1)", "interval": 300},
         {"id": "ok", "url": HC, "interval": 300},  # doppelt
         {"id": "Gross!", "url": HC, "interval": 300},
-        {"id": "lang", "url": "http://192.168.1.5:8000/ping/x", "interval": 999999, "cases": [{"kind": "battery", "suffix": "fail"}, {"kind": "backup", "suffix": ""}]},
+        {"id": "lang", "url": "http://192.168.1.5:8000/ping/x", "interval": 999999, "fail_suffix": "fail", "cases": "offline"},
     ])
     assert [i["id"] for i in out] == ["ok", "lang"]
-    assert out[0]["url"] == CR and out[0]["interval"] == 60 and out[0]["name"] == "cronitor.link"
-    assert out[0]["cases"] == [{"kind": "offline", "suffix": "?state=fail"}]  # doppelte Art und unbekannte Art fallen weg
-    assert out[1]["interval"] == 86400 and out[1]["cases"] == []  # Zusatz ohne "/", "?" oder "&" und leerer Zusatz: keine Zeile
+    assert out[0]["url"] == CR and out[0]["interval"] == 60 and out[0]["name"] == "cronitor.link" and out[0]["fail_suffix"] == "?state=fail"
+    assert out[0]["cases"] == ["offline", "stall"]  # feste Reihenfolge; doppelte, unbekannte und entfallene Art ("battery") fallen weg
+    assert out[1]["interval"] == 86400 and out[1]["fail_suffix"] == "" and out[1]["cases"] == []  # Zusatz ohne "/", "?" oder "&": leer
+
+
+def test_services_from_2_236_0_are_migrated() -> None:
+    """Vorher eine Zeile je Fall mit eigenem Zusatz: der erste Zusatz wird der Fehler-Zusatz, die Arten werden angekreuzt, "battery" entfällt."""
+    out = valid_items([{"id": "alt", "name": "Haus", "url": HC, "interval": 300, "cases": [{"kind": "battery", "suffix": "/1"}, {"kind": "backup", "suffix": "/2"}, {"kind": "offline", "suffix": "/3"}]}])
+    assert out == [{"id": "alt", "name": "Haus", "url": HC, "interval": 300, "fail_suffix": "/1", "cases": ["offline", "backup"]}]
 
 
 @pytest.mark.parametrize(
@@ -144,23 +153,47 @@ def test_only_a_valid_suffix_is_accepted() -> None:
 
 def test_only_the_host_is_named() -> None:
     assert host_of(HC) == "hc-ping.com" and host_of("kaputt") == "?"
-    assert case_url({"url": HC, "cases": CASES}, "offline") == HC + "/fail"
-    assert case_url({"url": HC, "cases": CASES}, "backup") is None
+    assert fail_url({"url": HC, "fail_suffix": "/fail"}) == HC + "/fail"
+    assert fail_url({"url": HC, "fail_suffix": ""}) is None
 
 
 # ----- Fälle -----
 
 
-async def test_the_top_row_that_applies_wins(hass: HomeAssistant, entry, flags: _Flag) -> None:
-    item = {"url": HC, "cases": [{"kind": "backup", "suffix": "/b"}, {"kind": "offline", "suffix": "/o"}, {"kind": "battery", "suffix": "/l"}]}
+async def test_cases_apply_only_when_ticked_available_and_true(hass: HomeAssistant, entry, flags: _Flag) -> None:
+    item = {"url": HC, "fail_suffix": "/fail", "cases": ["offline", "backup", "cpu", "ram", "disk", "stall"]}
+    flags.options(notify_outage=True, status_backup_alert=True, status_notify=True)
     assert active_case(hass, item) is None
     flags.offline = {"d1": 1.0}
     assert active_case(hass, item) == "offline"
-    flags.low = {"d2": {}}
-    assert active_case(hass, item) == "offline"  # die Reihenfolge der Zeilen entscheidet, nicht die Art
+    # ohne angekreuzten Fall und ohne Fehler-Zusatz nie
+    assert active_case(hass, {**item, "cases": ["backup"]}) is None
+    assert active_case(hass, {**item, "fail_suffix": ""}) is None
+    # die oberste Art in fester Reihenfolge gilt (Ausfall vor Backup)
     flags.failing = True
+    assert active_case(hass, item) == "offline"
+    flags.offline = {}
     assert active_case(hass, item) == "backup"
-    assert active_case(hass, {"url": HC, "cases": []}) is None  # ohne Zeilen nie ein Fall
+    flags.failing = False
+    # Stillstand eines Teils und Auslastung kommen vom Wächter der Status-App
+    flags.stalled({"routines"})
+    assert active_case(hass, item) == "stall"
+    flags.stalled(set())
+    flags.load("ram", True)
+    flags.options(status_ram_alert=True)
+    # ohne Wert in Prozent (kein Sensor) ist die Auslastung nicht verfügbar, also kein Fall
+    assert case_available(hass, "ram") is False and active_case(hass, item) is None
+
+
+async def test_availability_follows_the_notifications(hass: HomeAssistant, entry, flags: _Flag) -> None:
+    """Ein Kästchen ist ausgegraut, wenn die Meldung dafür aus ist (oder es keinen Wert gibt); die Fälle gelten dann nicht, auch wenn sie angekreuzt sind."""
+    flags.options(notify_outage=False, status_backup_alert=False, status_notify=False, status_cpu_alert=False, status_ram_alert=False, status_disk_alert=False)
+    assert [case_available(hass, k) for k in ("offline", "backup", "stall", "cpu", "ram", "disk")] == [False] * 6
+    flags.options(notify_outage=True, status_backup_alert=True, status_notify=True)
+    assert [case_available(hass, k) for k in ("offline", "backup", "stall")] == [True] * 3
+    flags.offline = {"d1": 1.0}
+    flags.options(notify_outage=False)
+    assert active_case(hass, {"url": HC, "fail_suffix": "/fail", "cases": ["offline"]}) is None  # angekreuzt, aber die Meldung ist aus
 
 
 # ----- Aufrufe -----
@@ -179,8 +212,9 @@ async def test_pings_after_the_start_and_in_its_interval(hass: HomeAssistant, en
     assert calls(aioclient_mock) == [HC, HC]
     # Panel: Dienst mit der ganzen URL (Entscheid des Nutzers) und dem letzten Ergebnis
     listing = (await ws(client, type=f"{DOMAIN}/healthcheck_list"))["result"]
-    assert listing["max"] == MAX_HEALTHCHECKS and listing["cases"] == ["offline", "battery", "backup"]
-    assert listing["items"][0]["url"] == HC and listing["items"][0]["status"]["result"] == "ok" and listing["items"][0]["cases"] == CASES
+    assert listing["max"] == MAX_HEALTHCHECKS and listing["cases"] == ["offline", "backup", "cpu", "ram", "disk", "stall"]
+    assert set(listing["available"]) == set(listing["cases"])  # für das Panel: welche Kästchen sich ankreuzen lassen
+    assert listing["items"][0]["url"] == HC and listing["items"][0]["status"]["result"] == "ok" and listing["items"][0]["cases"] == CASES and listing["items"][0]["fail_suffix"] == "/fail"
 
 
 async def test_a_case_sends_its_address_at_once_and_the_end_the_heartbeat(
@@ -188,6 +222,7 @@ async def test_a_case_sends_its_address_at_once_and_the_end_the_heartbeat(
 ) -> None:
     aioclient_mock.get(HC, status=200)
     aioclient_mock.get(HC + "/fail", status=200)
+    flags.options(notify_outage=True, status_backup_alert=True)
     client = await hass_ws_client(hass)
     saved = await add(client, interval=3600)
     await advance(hass, freezer, HEALTHCHECK_START_DELAY + 1)  # der Takt ruht in den ersten Sekunden nach dem Start
@@ -207,14 +242,15 @@ async def test_a_case_sends_its_address_at_once_and_the_end_the_heartbeat(
     assert hass.data[DATA_HEALTHCHECK].status[hid]["sent"] == "ok"
 
 
-async def test_a_service_without_a_row_for_the_case_only_sends_the_heartbeat(
+async def test_an_unticked_case_only_sends_the_heartbeat(
     hass: HomeAssistant, entry, freezer, hass_ws_client, aioclient_mock: AiohttpClientMocker, flags: _Flag
 ) -> None:
     aioclient_mock.get(HC, status=200)
+    flags.options(notify_outage=True)
     client = await hass_ws_client(hass)
-    await add(client, cases=[{"kind": "backup", "suffix": "/b"}], interval=60)
+    await add(client, cases=["backup"], interval=60)
     await advance(hass, freezer, HEALTHCHECK_START_DELAY + 1)
-    flags.offline = {"d1": 1.0}  # keine Zeile dafür
+    flags.offline = {"d1": 1.0}  # nicht angekreuzt
     await advance(hass, freezer, 70)
     assert set(calls(aioclient_mock)) == {HC}
 
@@ -222,22 +258,20 @@ async def test_a_service_without_a_row_for_the_case_only_sends_the_heartbeat(
 async def test_the_test_buttons_send_exactly_what_they_say(hass: HomeAssistant, entry, freezer, hass_ws_client, aioclient_mock: AiohttpClientMocker) -> None:
     aioclient_mock.get(HC, status=200)
     aioclient_mock.get(HC + "/fail", status=200)
-    aioclient_mock.get(HC + "/1", status=200)
     client = await hass_ws_client(hass)
     hid = (await add(client))["result"]["id"]
     await advance(hass, freezer, 2)
-    aioclient_mock.clear_requests()
-    aioclient_mock.get(HC, status=200)
-    aioclient_mock.get(HC + "/fail", status=200)
-    aioclient_mock.get(HC + "/1", status=200)
     aioclient_mock.mock_calls.clear()
-    for kind, url in (("offline", HC + "/fail"), ("battery", HC + "/1"), ("ok", HC)):
+    for kind, url in (("error", HC + "/fail"), ("ok", HC)):
         result = await ws(client, type=f"{DOMAIN}/healthcheck_ping", check_id=hid, kind=kind)
         assert result["success"] and result["result"]["status"]["test"] is True and result["result"]["status"]["sent"] == kind
         assert calls(aioclient_mock)[-1] == url
-    # Ein Fall ohne Zeile lässt sich nicht testen
-    result = await ws(client, type=f"{DOMAIN}/healthcheck_ping", check_id=hid, kind="backup")
+    # Ohne Fehler-Zusatz gibt es "Fehler senden" nicht
+    other = (await add(client, name="Ohne", fail_suffix="", cases=[]))["result"]["id"]
+    result = await ws(client, type=f"{DOMAIN}/healthcheck_ping", check_id=other, kind="error")
     assert not result["success"] and result["error"]["code"] == "not_found"
+    # Unbekannte Art: vom Schema abgelehnt
+    assert (await ws(client, type=f"{DOMAIN}/healthcheck_ping", check_id=hid, kind="offline"))["error"]["code"] == "invalid_format"
 
 
 async def test_a_failing_call_is_recorded_without_the_address(hass: HomeAssistant, entry, freezer, hass_ws_client, aioclient_mock: AiohttpClientMocker, caplog) -> None:
@@ -294,8 +328,10 @@ async def test_save_edit_delete_and_limits(hass: HomeAssistant, entry, freezer, 
     for url in ("", "ftp://x/y", "kein url", "https://"):
         assert (await add(client, url=url))["error"]["code"] == "invalid_url"
     assert (await add(client, name="  "))["error"]["code"] == "invalid_name"
-    assert (await add(client, cases=[{"kind": "offline", "suffix": "fail"}]))["error"]["code"] == "invalid_suffix"
-    assert (await add(client, cases=[{"kind": "offline", "suffix": "/a"}, {"kind": "offline", "suffix": "/b"}]))["error"]["code"] == "invalid_suffix"
+    assert (await add(client, fail_suffix="fail"))["error"]["code"] == "invalid_suffix"
+    assert (await add(client, fail_suffix="", cases=["offline"]))["error"]["code"] == "invalid_suffix"  # Fälle brauchen den Fehler-Zusatz
+    assert (await add(client, cases=["offline", "offline"]))["error"]["code"] == "invalid_suffix"
+    assert (await add(client, cases=["ufo"]))["error"]["code"] == "invalid_format"
     assert (await ws(client, type=f"{DOMAIN}/healthcheck_save", name="x", url=HC, interval=5, cases=[]))["error"]["code"] == "invalid_format"
     ids = []
     for n in range(MAX_HEALTHCHECKS):
@@ -304,10 +340,10 @@ async def test_save_edit_delete_and_limits(hass: HomeAssistant, entry, freezer, 
         ids.append(saved["result"]["id"])
     assert (await add(client))["error"]["code"] == "too_many"
     # Ändern: Name, Zeilen und Reihenfolge
-    edited = await add(client, check_id=ids[0], name="Neu", cases=[{"kind": "battery", "suffix": "/l"}, {"kind": "offline", "suffix": "/o"}])
+    edited = await add(client, check_id=ids[0], name="Neu", fail_suffix="/down", cases=["stall", "cpu"])
     assert edited["success"]
     first = next(i for i in edited["result"]["items"] if i["id"] == ids[0])
-    assert first["name"] == "Neu" and [c["kind"] for c in first["cases"]] == ["battery", "offline"]
+    assert first["name"] == "Neu" and first["fail_suffix"] == "/down" and first["cases"] == ["cpu", "stall"]  # in fester Reihenfolge
     assert (await add(client, check_id="gibtsnicht"))["error"]["code"] == "not_found"
     deleted = await ws(client, type=f"{DOMAIN}/healthcheck_delete", check_id=ids[1])
     assert deleted["success"] and len(deleted["result"]["items"]) == MAX_HEALTHCHECKS - 1
@@ -340,10 +376,10 @@ async def test_health_checks_are_part_of_the_backup(hass: HomeAssistant, entry, 
     aioclient_mock.get(HC, status=200)
     client = await hass_ws_client(hass)
     await add(client, name="Eins")
-    await add(client, name="Zwei", url=CR, cases=[{"kind": "backup", "suffix": "?state=fail"}])
+    await add(client, name="Zwei", url=CR, fail_suffix="?state=fail", cases=["backup"])
     file = await backup.async_export(hass, ["monitor"])
     saved = file["sections"]["monitor"]["healthchecks"]
-    assert [i["name"] for i in saved] == ["Eins", "Zwei"] and saved[1]["url"] == CR and saved[1]["cases"] == [{"kind": "backup", "suffix": "?state=fail"}]
+    assert [i["name"] for i in saved] == ["Eins", "Zwei"] and saved[1]["url"] == CR and saved[1]["fail_suffix"] == "?state=fail" and saved[1]["cases"] == ["backup"]
     # Zurücksetzen
     for item in list(saved):
         await ws(client, type=f"{DOMAIN}/healthcheck_delete", check_id=item["id"])

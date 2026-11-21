@@ -7,7 +7,25 @@ Alle nennenswerten Änderungen an dieser Integration stehen in dieser Datei.
 Das Format folgt [Keep a Changelog](https://keepachangelog.com/de/1.1.0/),
 die Versionsnummern folgen [Semantic Versioning](https://semver.org/lang/de/).
 
+## [2.237.0] - 2026-11-21
+
+HealthCheck-Dienste: ein URL-Zusatz für Fehler, dazu Kästchen für die Fehlerfälle.
+
+### Geändert
+
+- **Ein Fehler-Zusatz pro Dienst, Kästchen für die Fälle:** die Zeilen mit Art und eigenem Zusatz entfallen. Ein Dienst hat einen "URL-Zusatz" ("/…" hängt sich an den Pfad, "?…" oder "&…" setzt Parameter; für bekannte Dienste vorgeschlagen) und darunter Kästchen für die Fälle, die ihn auslösen: Gerät ausgefallen, Backup fehlgeschlagen, hohe Auslastung (CPU, Arbeitsspeicher, Festplatte) und Systemstillstand. Solange ein angekreuzter Fall zutrifft, ruft das Panel die URL mit dem Zusatz auf statt mit dem einfachen Lebenszeichen; der erste angekreuzte Fall in fester Reihenfolge gilt; danach folgt das Lebenszeichen.
+- **Ausgegraut, wenn es nicht wirken kann:** ein Kästchen ist ausgegraut (mit Grund darunter), wenn die Meldung dafür aus ist oder keinen Grenzwert hat (Gerät ausgefallen: Ausfallmeldung; Backup: Backup-Meldung; hohe Auslastung: die Meldung und ein Sensor; Stillstand: Statusmeldung). Ein früher angekreuztes Kästchen bleibt angekreuzt, wirkt aber erst wieder, wenn die Meldung an ist.
+- **Ein Fehler-Test:** Liste und Protokoll haben "Fehler senden" (mit Zusatz) und "OK senden" statt eines Tests je Fall.
+- **Bestehende Dienste werden übernommen:** der erste Zusatz der alten Zeilen wird zum Fehler-Zusatz, ihre Arten werden angekreuzt; "Batterie schwach" entfällt.
+
+### Hinzugefügt
+
+- **Neue Fälle:** hohe Auslastung (CPU, Arbeitsspeicher, Festplatte) und Systemstillstand.
+- **Sicherung und Wiederherstellung:** Fehler-Zusatz und angekreuzte Fälle gehören zur Sicherung.
+
 ## [2.236.1] - 2026-11-21
+
+Nicht veröffentlicht; enthalten in 2.237.0.
 
 Das Kapitel "HealthCheck-Dienste" sieht aus wie die anderen Kapitel, und das Protokoll-Fenster gleitet und scrollt richtig.
 
@@ -6383,7 +6401,7 @@ Erste Vorabversion.
   GitHub Actions für die Prüfungen von HACS und hassfest sowie die Tests.
 
 [2.6.0]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v2.6.0
-[2.236.1]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v2.236.1
+[2.237.0]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v2.237.0
 [2.236.0]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v2.236.0
 [2.235.1]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v2.235.1
 [2.235.0]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v2.235.0

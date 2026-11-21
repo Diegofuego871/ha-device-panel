@@ -13,7 +13,7 @@ PANEL_HTML_FILE = "panel.html"
 STATIC_URL_PATH = f"/{DOMAIN}"
 PANEL_STATIC_URL_PATH = f"{STATIC_URL_PATH}/panel"
 # Cache-Buster: bei jeder Änderung unter panel/ von Hand erhöhen.
-PANEL_VERSION = "523"
+PANEL_VERSION = "534"
 PANEL_PAGE_URL = f"{PANEL_STATIC_URL_PATH}/{PANEL_HTML_FILE}?v={PANEL_VERSION}"
 # Dashboard-Karten (seit 2.216.0): ES-Modul im Ordner des Panels; ?v= ist der Cache-Buster
 CARD_URL = f"{PANEL_STATIC_URL_PATH}/card.js?v={PANEL_VERSION}"
@@ -593,10 +593,11 @@ LABEL_PREFIX = "label:"
 # HealthCheck-Dienste (seit 2.236.0, Wunsch des Nutzers, Vorbild Alarmageddon): Lebenszeichen an externe Dienste wie Healthchecks.io, Cronitor,
 # Better Stack oder Uptime Kuma. Fällt Home Assistant, das Netz oder der Strom aus, bleibt das Lebenszeichen aus, und der Dienst alarmiert; das kann
 # das Panel selbst nicht melden. Bis zu MAX_HEALTHCHECKS Dienste, je mit Namen, URL und einem Abstand. Generisch: kein Anbieter zur Auswahl, das Panel
-# schlägt den Zusatz für bekannte Dienste nur vor. Statt eines "Fehler" des Selbsttests (das Panel hat keinen) gibt es "Fälle" (HEALTHCHECK_CASES):
-# je Fall eine Zeile mit eigenem URL-Zusatz, die ruft den Dienst auf, solange der Fall zutrifft. Treffen mehrere zu, gilt die oberste Zeile.
+# schlägt den Zusatz für bekannte Dienste nur vor. Seit 2.237.0 gibt es einen einzigen Fehler-Zusatz je Dienst und dazu Fehlerfälle zum Ankreuzen
+# (HEALTHCHECK_CASES: Gerät ausgefallen, Backup fehlgeschlagen, hohe Auslastung von CPU, Arbeitsspeicher oder Festplatte, Stillstand eines Teils des Panels):
+# trifft ein angekreuzter Fall zu, geht die URL mit diesem Zusatz hinaus, sonst das Lebenszeichen.
 MAX_HEALTHCHECKS = 5
-HEALTHCHECK_CASES = ("offline", "battery", "backup")
+HEALTHCHECK_CASES = ("offline", "backup", "cpu", "ram", "disk", "stall")
 HEALTHCHECK_SUFFIX_MAX = 200
 HEALTHCHECK_INTERVAL_RANGE = (60, 86400)
 HEALTHCHECK_DEFAULT_INTERVAL = 300

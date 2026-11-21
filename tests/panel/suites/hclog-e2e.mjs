@@ -10,12 +10,12 @@ let ok = true;
 const check = (l, c, i = "") => { ok &&= !!c; console.log(`${c ? "PASS" : "FAIL"} ${l}${i ? " - " + i : ""}`); };
 const R = `document.querySelector("device-panel").shadowRoot`;
 const T = {
-  de: { tabs: ["Verlauf", "Antwortzeit", "Dienst"], ranges: ["3 Std.", "12 Std.", "24 Std.", "7 Tage", "30 Tage", "6 Monate", "1 Jahr"], events: "Ereignisse", calls: "Alle Aufrufe", noData: "Noch keine Aufrufe aufgezeichnet.", rate: "Erfolgsquote", tab_mean: "Ø Antwortzeit", testCase: "Fall senden: Gerät ausgefallen", copied: "Kopiert", callsDay: "Einzelne Aufrufe gibt es nur für die letzten 24 Stunden", report: "Fall gemeldet: Gerät ausgefallen", okSince: "In Ordnung seit" },
-  en: { tabs: ["History", "Response time", "Service"], ranges: ["3 h", "12 h", "24 h", "7 days", "30 days", "6 months", "1 year"], events: "Events", calls: "All calls", noData: "No calls recorded yet.", rate: "Success rate", tab_mean: "Avg. response", testCase: "Send case: Device offline", copied: "Copied", callsDay: "Single calls exist only for the last 24 hours", report: "Case reported: Device offline", okSince: "OK since" },
+  de: { tabs: ["Verlauf", "Antwortzeit", "Dienst"], ranges: ["3 Std.", "12 Std.", "24 Std.", "7 Tage", "30 Tage", "6 Monate", "1 Jahr"], events: "Ereignisse", calls: "Alle Aufrufe", noData: "Noch keine Aufrufe aufgezeichnet.", rate: "Erfolgsquote", tab_mean: "Ø Antwortzeit", testCase: "Fehler senden", copied: "Kopiert", callsDay: "Einzelne Aufrufe gibt es nur für die letzten 24 Stunden", report: "Fall gemeldet: Gerät ausgefallen", okSince: "In Ordnung seit" },
+  en: { tabs: ["History", "Response time", "Service"], ranges: ["3 h", "12 h", "24 h", "7 days", "30 days", "6 months", "1 year"], events: "Events", calls: "All calls", noData: "No calls recorded yet.", rate: "Success rate", tab_mean: "Avg. response", testCase: "Send error", copied: "Copied", callsDay: "Single calls exist only for the last 24 hours", report: "Case reported: Device offline", okSince: "OK since" },
 };
 const ITEMS = () => [
-  { id: "a1", name: "Haus", url: "https://cronitor.link/p/0123456789abcdef/haus?hc=sample", interval: 300, cases: [{ kind: "offline", suffix: "?state=fail&message=Device+offline" }, { kind: "battery", suffix: "?state=fail&message=Battery+low" }], status: { at: new Date().toISOString(), sent: "ok", result: "ok", code: 200, test: false }, log: { state: "ok", since: new Date(Date.now() - 3600000).toISOString() } },
-  { id: "b2", name: "Zweiter", url: "https://hc-ping.com/00000000-1111-2222-3333-444444444444", interval: 3600, cases: [], status: null, log: null },
+  { id: "a1", name: "Haus", url: "https://cronitor.link/p/0123456789abcdef/haus?hc=sample", interval: 300, fail_suffix: "?state=fail&message=Device+Panel+error", cases: ["offline", "stall"], status: { at: new Date().toISOString(), sent: "ok", result: "ok", code: 200, test: false }, log: { state: "ok", since: new Date(Date.now() - 3600000).toISOString() } },
+  { id: "b2", name: "Zweiter", url: "https://hc-ping.com/00000000-1111-2222-3333-444444444444", interval: 3600, cases: [], fail_suffix: "", status: null, log: null },
 ];
 
 for (const lang of ["de", "en"]) {
@@ -46,7 +46,8 @@ for (const lang of ["de", "en"]) {
     check(`[${tag}] drei Reiter ${L.tabs.join(", ")} als Reiterleiste mit Kapsel`, (await ev(`return [...r.querySelectorAll('${LOG} .hl-tabs .sub-tab')].map((x) => x.textContent).join("|")`)) === L.tabs.join("|") && await wait(`return !!r.querySelector('${LOG} .hl-tabs .seg-pill')`));
     check(`[${tag}] Zeitraum: sieben Stufen, 24 Std. gewählt`, (await ev(`return [...r.querySelectorAll('${LOG} .hl-range .sub-tab')].map((x) => x.textContent).join("|")`)) === L.ranges.join("|") && (await ev(`return r.querySelector('${LOG} .hl-range .sub-tab.on').dataset.hours`)) === "24");
     check(`[${tag}] Kennzahlen mit "${L.rate}", Grafik "Herzschlag" mit Balken`, await wait(`return !!r.querySelector('${LOG} .hl-kpi') && r.querySelectorAll('${LOG} .hl-b').length > 20`) && (await text(`${LOG} .hl-kpis`)).includes(L.rate));
-    check(`[${tag}] Kopf: Testknopf je Fall (zwei) und OK, dazu der Stift`, (await ev(`return r.querySelectorAll('${LOG} .hl-acts .hc-ib').length`)) === 4 && (await ev(`return r.querySelector('${LOG} .hl-acts .hc-ib.warn')?.getAttribute("title")`)) === L.testCase);
+    check(`[${tag}] Kopf: Testknopf "Fehler senden", OK und der Stift`, (await ev(`return r.querySelectorAll('${LOG} .hl-acts .hc-ib').length`)) === 3 && (await ev(`return r.querySelector('${LOG} .hl-acts .hc-ib.warn')?.getAttribute("title")`)) === L.testCase);
+    check(`[${tag}] Kopf: Testknöpfe und Stift gleich gross wie das Kreuz; ${mobile ? "rechts unter dem Kreuz" : "links neben dem Kreuz"}`, await ev(`const c = r.querySelector('${LOG} .hl-head .dlg-close').getBoundingClientRect(); return [...r.querySelectorAll('${LOG} .hl-acts .hc-ib')].every((b) => { const q = b.getBoundingClientRect(); const same = Math.abs(q.width - c.width) < 0.6 && Math.abs(q.height - c.height) < 0.6; return same && (${mobile} ? q.top >= c.bottom - 1 && q.right <= c.right + 1 : q.right <= c.left && Math.abs((q.top + q.height / 2) - (c.top + c.height / 2)) < 2); }) && (!${mobile} || Math.abs(r.querySelector('${LOG} .hl-acts .hc-ib:last-child').getBoundingClientRect().right - c.right) < 2)`));
     check(`[${tag}] Liste: Reiter "${L.events}" und "${L.calls}" mit Zahlen`, (await ev(`return [...r.querySelectorAll('${LOG} .hl-lbar .sub-tab')].map((x) => x.firstChild.textContent).join("|")`)) === [L.events, L.calls].join("|") && (await ev(`return Number(r.querySelector('${LOG} .hl-lbar .sub-tab.on .hl-n').textContent)`)) === 4);
     check(`[${tag}] Ereignisse: gescheitert, Fall gemeldet, Test, wieder in Ordnung`, (await ev(`return r.querySelectorAll('${LOG} .hl-table tbody tr[data-kind]').length`)) === 4 && (await text(`${LOG} .hl-rows`)).includes(L.report));
     await p.screenshot({ path: `${outDir}/hclog-24h-${tag.replace("/", "-")}.png` });
@@ -91,18 +92,25 @@ for (const lang of ["de", "en"]) {
     // Wechsel des Dienstes, Testknopf aus dem Kopf
     await tap(`${LOG} [data-hl="menu"]`);
     check(`[${tag}] Auswahl im Kopf: beide Dienste, der gewählte mit Haken`, await wait(`return !r.querySelector('${LOG} .hl-menu').hidden && r.querySelectorAll('${LOG} .hl-mi').length === 2 && r.querySelector('${LOG} .hl-mi.on')`));
+    check(`[${tag}] Auswahl im Kopf: die Einträge liegen sichtbar obenauf (Treffer-Test an echten Punkten, nicht verdeckt)`, await ev(`const ok = [...r.querySelectorAll('${LOG} .hl-mi')].every((m) => { const q = m.getBoundingClientRect(); const e = r.elementFromPoint(q.left + q.width / 2, q.top + q.height / 2); return q.height > 20 && e && m.contains(e); }); return ok`));
+    await p.screenshot({ path: `${outDir}/hclog-menu-${tag.replace("/", "-")}.png` });
     await tap(`${LOG} .hl-mi[data-id="b2"]`);
     check(`[${tag}] Wechsel zu "Zweiter": Kopf und Daten neu`, await wait(`return r.querySelector('${LOG} .hl-pick b')?.textContent === "Zweiter" && r.querySelectorAll('${LOG} .hl-b').length > 20`) && (await ev(`return r.querySelectorAll('${LOG} .hl-acts .hc-ib').length`)) === 2);
     await tap(`${LOG} [data-hl="menu"]`);
     await tap(`${LOG} .hl-mi[data-id="a1"]`);
     await wait(`return r.querySelector('${LOG} .hl-pick b')?.textContent === "Haus"`);
-    await tap(`${LOG} .hl-acts .hc-ib[data-kind="offline"]`);
-    check(`[${tag}] Testknopf im Kopf: der Server bekommt die Art "offline", das Protokoll lädt neu`, await wait(`return true`) && (await p.evaluate(() => window.__hcPing.map((x) => x.kind).join())) === "offline");
+    check(`[${tag}] Zwei Dienste: Name mit Pfeil und Auswahl`, await ev(`return !!r.querySelector('${LOG} button.hl-pick[data-hl="menu"]') && !!r.querySelector('${LOG} .hl-menu')`));
+    await tap(`${LOG} .hl-acts .hc-ib[data-kind="error"]`);
+    check(`[${tag}] Testknopf im Kopf: der Server bekommt "error", das Protokoll lädt neu`, await wait(`return true`) && (await p.evaluate(() => window.__hcPing.map((x) => x.kind).join())) === "error");
 
     // Reiter "Dienst"
     await tap(`${LOG} .hl-tabs [data-tab="service"]`);
-    check(`[${tag}] Reiter "${L.tabs[2]}": URL ganz, Fälle mit Aufruf, Kopierknöpfe`, await wait(`return r.querySelectorAll('${LOG} .hl-drow').length >= 8`) && (await text(`${LOG} .hl-device`)).includes("cronitor.link/p/0123456789abcdef/haus") && (await ev(`return r.querySelectorAll('${LOG} .hl-drow [data-hl="copy"]').length`)) >= 5);
+    check(`[${tag}] Reiter "${L.tabs[2]}": URL ganz, Fehler-Zusatz und Aufruf, Kopierknöpfe`, await wait(`return r.querySelectorAll('${LOG} .hl-drow').length >= 7`) && (await text(`${LOG} .hl-device`)).includes("cronitor.link/p/0123456789abcdef/haus") && (await ev(`return r.querySelectorAll('${LOG} .hl-drow [data-hl="copy"]').length`)) >= 4);
+    check(`[${tag}] Kopierknöpfe stehen immer ganz rechts in ihrer Zeile`, await ev(`const rows = [...r.querySelectorAll('${LOG} .hl-drow')].filter((x) => x.querySelector('[data-hl="copy"]')); const edge = rows.map((x) => x.querySelector('[data-hl="copy"]').getBoundingClientRect().right); return rows.length >= 3 && Math.max(...edge) - Math.min(...edge) < 1.5`));
     check(`[${tag}] Reiter "Dienst" ohne Zeitraum und ohne Grafik`, await ev(`return !r.querySelector('${LOG} .hl-range') && !r.querySelector('${LOG} .hl-svg')`));
+    const keep = await ev(`const h = r.host._hc; window.__keepItems = h.items; h.items = h.items.slice(0, 1); r.host._hl.render(); return true`);
+    check(`[${tag}] Nur ein Dienst: Name ohne Pfeil, keine Auswahl`, await ev(`return !r.querySelector('${LOG} button.hl-pick') && !r.querySelector('${LOG} .hl-menu') && r.querySelector('${LOG} b.hl-pick.one')?.textContent === "Haus"`));
+    await ev(`r.host._hc.items = window.__keepItems; r.host._hl.render()`);
     await p.screenshot({ path: `${outDir}/hclog-service-${tag.replace("/", "-")}.png` });
     await tap(`${LOG} .hl-tabs [data-tab="history"]`);
 

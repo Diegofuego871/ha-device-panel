@@ -11,6 +11,13 @@ Einstieg für jede neue Claude-Code-Session. Zuerst diese Datei lesen, dann
 
 - `charge.py` `known_rechargeable`: Lademeldung gilt (global + Gerät/Integration), oder am Gerät ausdrücklich "Ein", oder Live-Aktivität für das Gerät an; `rechargeable()` und `charging_of()` nutzen sie (vorher nur `enabled()` mit globalem Schalter). Test `test_rechargeable_by_device_charge_or_live`.
 
+## Stand (2.237.0, HealthCheck: ein Fehler-Zusatz, Kästchen für die Fälle)
+
+- Nutzerwunsch (2026-11-21): nur ein URL-Zusatz für einen generischen Fehler, darunter Kästchen für die Fälle: Gerät ausgefallen, Backup fehlgeschlagen, hohe Auslastung (CPU, RAM, Festplatte), Systemstillstand; ausgegraut, wenn die Meldung aus ist oder kein Grenzwert besteht. Ersetzt das Fall-Zeilen-Modell von 2.236.0 (2.236.1 ohne Tag, nun "Nicht veröffentlicht; enthalten in 2.237.0").
+- Modell: Dienst `{id,name,url,interval,fail_suffix,cases:[Arten]}`, `HEALTHCHECK_CASES = (offline, backup, cpu, ram, disk, stall)`; `case_available` (offline: `notify_outage`; backup: `status_backup_alert`; stall: `status_notify`; cpu/ram/disk: `status_*_alert` und Sensorwert), `case_active` (`outage.offline`, `BackupAlert.failing`, `StatusWatch.stalled`, `StatusWatch.overloaded(kind)`); `active_case` nur mit Zusatz, erster angekreuzter verfügbarer zutreffender Fall. Migration `_migrate` (erster Zusatz alter Zeilen wird `fail_suffix`, "battery" entfällt). Listenantwort enthält `available`. Testknöpfe `ok`/`error`.
+- Annahmen: "Systemstillstand" = gestoppter Teil des Panels (`StatusWatch._alerted`); angekreuzt, aber ausgegraut wirkt nicht; Batterie entfällt.
+- Tests: `test_healthcheck*.py`, Suiten `hc-e2e`, `hclog-e2e`.
+
 ## Stand (2.236.0, HealthCheck-Dienste)
 
 - Wunsch des Nutzers (2026-11-21): die externen HealthCheck-Dienste von Alarmageddon (Lebenszeichen an Healthchecks.io, Cronitor, Better Stack, Uptime Kuma) "1:1" im Stil des Device Panels; statt "Fehler" und "Alarm" gibt es **Fälle**. Entscheide des Nutzers: kein Standard-Fehler; Arten `offline` (`outage.offline` nicht leer), `battery` (`battery.low` nicht leer), `backup` (`BackupAlert.failing`, neu); mehrere zutreffende Fälle: die oberste Zeile gilt (ein Aufruf je Takt); alles in einer Version.

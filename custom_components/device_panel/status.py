@@ -127,6 +127,15 @@ class StatusWatch:
             self._unsub()
             self._unsub = None
 
+    @property
+    def stalled(self) -> bool:
+        """Steht gerade ein Teil des Panels (gemeldet und noch nicht wieder in Ordnung)? Für die HealthCheck-Dienste (seit 2.237.0)."""
+        return bool(self._alerted)
+
+    def overloaded(self, kind: str) -> bool:
+        """Liegt die Auslastung (cpu, ram, disk) gerade über der Grenze, so dass die Meldung hinausging und noch nicht entwarnt wurde? (seit 2.237.0)"""
+        return bool(self._load.get(kind, {}).get("alerted"))
+
     # -- Prüfen ---------------------------------------------------------------
 
     def _base(self, key: str) -> float:

@@ -336,6 +336,8 @@ export class HealthLogUi {
     const sub = (this.narrow ? [host, every] : [host, known?.name, every]).filter(Boolean).join(" · ");
     const d = this.data?.id === this.id ? this.data : null;
     const tabs = TABS.map((tab) => `<button type="button" class="sub-tab${tab === this.tab ? " on" : ""}" data-hl="tab" data-set="hl-tab" data-tab="${tab}" role="tab" aria-selected="${tab === this.tab}">${escape(t(`hlTab_${tab}`))}</button>`).join("");
+    // Das Auswahlmenü gibt es nur, wenn es mehr als einen Dienst gibt
+    const multi = this.items.length > 1;
     const menu = this.items.map((i) => {
       const s = this._state(i);
       const on = i.id === this.id;
@@ -344,25 +346,24 @@ export class HealthLogUi {
     }).join("");
     const body = this.tab === "service" ? this._serviceHtml(item, d, state) : this._chartHtml();
     dlg.innerHTML = `<div class="dlg-head hl-head"><span class="dlg-avatar app app-health">${mdi("heartPulse", 28)}</span>
-        <div class="dlg-title"><button type="button" class="hl-pick" data-hl="menu" aria-haspopup="listbox" aria-expanded="${this.menu}" title="${escape(t("hlSwitch"))}"><b>${escape(item.name || host)}</b>${mdi("chevronDown", 18)}</button>
+        <div class="dlg-title">${multi ? `<button type="button" class="hl-pick" data-hl="menu" aria-haspopup="listbox" aria-expanded="${this.menu}" title="${escape(t("hlSwitch"))}"><b>${escape(item.name || host)}</b>${mdi("chevronDown", 18)}</button>` : `<b class="hl-pick one">${escape(item.name || host)}</b>`}
           <div class="dlg-sub">${escape(sub)}</div><span class="hl-pill ${state.state || "none"}">${escape(this._stateText({ state: state.state }))}</span></div>
         ${this._actsHtml(item)}
         <button type="button" class="dlg-close" data-hl="close" title="${escape(t("close"))}" aria-label="${escape(t("close"))}">${mdi("close", 18)}</button>
-        <div class="hl-menu" role="listbox" aria-label="${escape(t("hlSwitch"))}" ${this.menu ? "" : "hidden"}>${menu}</div></div>
+        ${multi ? `<div class="hl-menu" role="listbox" aria-label="${escape(t("hlSwitch"))}" ${this.menu ? "" : "hidden"}>${menu}</div>` : ""}</div>
       <div class="dlg-body hl" data-tab="${this.tab}"><div class="sub-tabs hl-tabs" data-set="hl-tab" role="tablist">${tabs}</div>${body.fix}<div class="hl-list">${body.list}</div></div>
       <div class="dlg-actions"><button type="button" class="dlg-btn" data-hl="close">${mdi("close", 18)}${escape(t("close"))}</button></div>`;
     // Die Reiterleisten (.sub-tabs) beobachtet das Panel selbst (seg.js, auf der ganzen Wurzel): kein eigener Aufruf von _initSeg hier. Ein Aufruf je Zeichnen
     // setzte die gemerkte Lage der Kapsel zurück (sie sprang statt zu gleiten) und hängte jedes Mal neue Beobachter an (das Fenster hing sich auf).
   }
 
-  // Oben rechts: je Fall der runde Testknopf, "OK senden" und der Stift, dieselben runden Knöpfe wie in der Liste der Dienste
+  // Oben rechts: der runde Testknopf "Fehler senden" (nur mit Fehler-Zusatz), "OK senden" und der Stift, dieselben runden Knöpfe wie in der Liste der Dienste
   _actsHtml(item) {
     const { escape, mdi } = this.h;
     const hc = this.host._hc;
     const busy = (kind) => hc.busy.has(`${item.id}|${kind}`);
     const btn = (act, icon, label, extra = "", cls = "") => `<button type="button" class="hc-ib${cls ? ` ${cls}` : ""}" data-hl="${act}" ${extra} title="${escape(label)}" aria-label="${escape(label)}">${mdi(icon, 18)}</button>`;
-    const icons = { offline: "signalOff", battery: "battery", backup: "save" };
-    const tests = (item.cases || []).map((c) => btn("test", icons[c.kind], this._t("hcTestCase", this.host._hc.caseLabel(c.kind)), `data-kind="${escape(c.kind)}" ${busy(c.kind) ? "disabled" : ""}`, "warn")).join("");
+    const tests = item.fail_suffix ? btn("test", "alert", this._t("hcTestError"), `data-kind="error" ${busy("error") ? "disabled" : ""}`, "warn") : "";
     return `<div class="hl-acts">${tests}${btn("test", "check", this._t("hcTestOk"), `data-kind="ok" ${busy("ok") ? "disabled" : ""}`, "good")}${btn("edit", "pencil", this._t("hcEdit"))}</div>`;
   }
 
@@ -788,7 +789,7 @@ export class HealthLogUi {
   }
 
   _testWhat(sent) {
-    return sent === "ok" ? this._t("hlOkWord") : this._caseLabel(sent);
+    return sent === "ok" ? this._t("hlOkWord") : sent === "error" ? this._t("hlErrWord") : this._caseLabel(sent);
   }
 
   _eventText(e) {
@@ -913,17 +914,18 @@ export class HealthLogUi {
     const { escape, mdi } = this.h;
     const t = (k, v) => this._t(k, v);
     const known = suggest(item.url);
-    const copy = (value, label) => `<button type="button" class="hc-ib sm" data-hl="copy" data-value="${escape(value)}" title="${escape(t("hlCopy", { name: label }))}" aria-label="${escape(t("hlCopy", { name: label }))}">${mdi("copy", 16)}</button>`;
+    const copy = (value, label) => `<button type="button" class="hl-cp" data-hl="copy" data-value="${escape(value)}" title="${escape(t("hlCopy", { name: label }))}" aria-label="${escape(t("hlCopy", { name: label }))}">${mdi("copy", 16)}</button>`;
     const row = (label, value, mono = false, copyable = true) => (value ? `<div class="hl-drow${mono ? " mono" : ""}"><span class="hc-t2">${escape(label)}</span><b>${escape(value)}</b>${copyable ? copy(value, label) : ""}</div>` : "");
     const last = d?.last;
     const lastText = last ? [`${this._dayLabel(new Date(last.t))} ${this._clockSec(last.t)}`, this._result(last), last.ms !== null && last.ms !== undefined ? this._ms(last.ms) : null].filter(Boolean).join(" · ") : "";
-    const cases = (item.cases || []).flatMap((c) => [row(this._caseLabel(c.kind), c.suffix, true), row(`${this._caseLabel(c.kind)}: ${t("hcPreview")}`, applySuffix(item.url, c.suffix) || "", true)]).join("");
-    const facts = [row(t("hcName"), item.name), row(t("hlSvKnown"), known?.name, false, false), row(t("hcUrl"), item.url, true), row(t("hcInterval"), this.host._fmtSeconds(item.interval, true), false, false)].join("");
+    // Fehlerfälle gehören zum Dienst: Zusatz, der Aufruf bei Fehler und die angekreuzten Fälle stehen in derselben Karte (wie im Vorbild)
+    const cases = [row(t("hcSuffix"), item.fail_suffix || t("hlSvNone"), Boolean(item.fail_suffix), Boolean(item.fail_suffix)),
+      row(t("hlSvFailUrl"), item.fail_suffix ? applySuffix(item.url, item.fail_suffix) || "" : "", true), row(t("hlSvTicked"), (item.cases || []).map((k) => this._caseLabel(k)).join(", ") || t("hlSvNone"), false, false)].join("");
+    const facts = [row(t("hcName"), item.name), row(t("hlSvKnown"), known?.name, false, false), row(t("hcUrl"), item.url, true), cases, row(t("hcInterval"), this.host._fmtSeconds(item.interval, true), false, false)].join("");
     const log = [row(t("hlSvState"), this._stateText(state), false, false), row(t("hlSvLast"), lastText, false, false),
       row(t("hlSvSince"), d?.since ? new Date(d.since).toLocaleDateString(this._locale(), { day: "numeric", month: "long", year: "numeric" }) : "", false, false)].join("");
-    return { fix: "", list: `<div class="hl-device"><div class="set-title">${escape(t("hlTab_service"))}</div><div class="hl-card">${facts}</div>
-      <div class="set-title">${escape(t("hlSvCases"))}</div><div class="hl-card">${cases || `<p class="dlg-note">${escape(t("hlSvNone"))}</p>`}</div>
-      <div class="set-title">${escape(t("hlSvLog"))}</div><div class="hl-card">${log || `<p class="dlg-note">${escape(t("hlNoData"))}</p>`}</div>
+    return { fix: "", list: `<div class="hl-device"><div class="hl-sec">${escape(t("hlTab_service"))}</div><div class="hl-card">${facts}</div>
+      <div class="hl-sec">${escape(t("hlSvLog"))}</div><div class="hl-card">${log || `<p class="dlg-note">${escape(t("hlNoData"))}</p>`}</div>
       <p class="hl-note">${escape(t("hlSvKeep"))}</p></div>` };
   }
 }

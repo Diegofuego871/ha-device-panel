@@ -1,6 +1,6 @@
 // HealthCheck-Dienste (2.236.0): Kapitel "HealthCheck-Dienste" in den Einstellungen (Überwachung und Meldungen, oberhalb der Systemmeldungen) mit Zusammenfassung und
-// zwei Knöpfen, Formular (Erkennung bekannter Dienste, Fälle als Zeilen mit eigenem Zusatz, Reihenfolge, Prüfung der Eingaben, Abstand), Liste (Suche, Sortierung,
-// Testknöpfe je Fall und "OK", Protokoll-Knopf, Entfernen mit Rückfrage), höchstens fünf Dienste, Aufklappen "Was sind HealthCheck-Dienste?".
+// zwei Knöpfen, Formular (Erkennung bekannter Dienste, ein Fehler-Zusatz, sechs Kästchen für Fehlerfälle, davon ausgegraut, wenn die Meldung aus ist; Prüfung der Eingaben, Abstand),
+// Liste (Suche, Sortierung, Testknöpfe "Fehler senden" und "OK", Protokoll-Knopf, Entfernen mit Rückfrage), höchstens fünf Dienste, Aufklappen "Was sind HealthCheck-Dienste?".
 // Deutsch und Englisch, Desktop und Handy, echte Klicks und Tipps. Nur erfundene Adressen.
 import { chromium } from "playwright-core";
 import { launchOptions, outDir } from "../lib.mjs";
@@ -12,8 +12,8 @@ const R = `document.querySelector("device-panel").shadowRoot`;
 const CR = "https://cronitor.link/p/0123456789abcdef/haus?hc=sample";
 const HC = "https://hc-ping.com/00000000-1111-2222-3333-444444444444";
 const T = {
-  de: { grp: "HealthCheck-Dienste", sys: "Systemmeldungen", none: "Keine Dienste eingerichtet", add: "Dienst hinzufügen", show: "Dienste anzeigen", one: "1 von 5 Diensten", known: "Erkannt: Cronitor", case_off: "Gerät ausgefallen", case_bat: "Batterie schwach", case_bak: "Backup fehlgeschlagen", okAll: "Kein Lebenszeichen gescheitert", about: "Was sind HealthCheck-Dienste?", nameErr: "Ein Name ist nötig.", sufErr: "Zusatz eintragen oder die Zeile entfernen.", title: "HealthCheck-Dienste", addTitle: "Dienst hinzufügen", delTitle: "Dienst entfernen?" },
-  en: { grp: "HealthCheck services", sys: "System alerts", none: "No services set up", add: "Add service", show: "Show services", one: "1 of 5 services", known: "Recognised: Cronitor", case_off: "Device offline", case_bat: "Battery low", case_bak: "Backup failed", okAll: "No heartbeat failed", about: "What are HealthCheck services?", nameErr: "A name is required.", sufErr: "Enter a suffix or remove the row.", title: "HealthCheck services", addTitle: "Add service", delTitle: "Remove service?" },
+  de: { grp: "HealthCheck-Dienste", sys: "Systemmeldungen", none: "Keine Dienste eingerichtet", add: "Dienst hinzufügen", show: "Dienste anzeigen", one: "1 von 5 Diensten", known: "Erkannt: Cronitor", case_off: "Gerät ausgefallen", case_bak: "Backup fehlgeschlagen", case_cpu: "Hohe Auslastung: CPU", case_stall: "Systemstillstand", offTxt: "Die Meldung bei Ausfall ist aus.", okAll: "Kein Lebenszeichen gescheitert", about: "Was sind HealthCheck-Dienste?", nameErr: "Ein Name ist nötig.", sufErr: "Für die Fehlerfälle braucht es den Zusatz.", title: "HealthCheck-Dienste", addTitle: "Dienst hinzufügen", delTitle: "Dienst entfernen?" },
+  en: { grp: "HealthCheck services", sys: "System alerts", none: "No services set up", add: "Add service", show: "Show services", one: "1 of 5 services", known: "Recognised: Cronitor", case_off: "Device offline", case_bak: "Backup failed", case_cpu: "High load: CPU", case_stall: "System stall", offTxt: "The outage notification is off.", okAll: "No heartbeat failed", about: "What are HealthCheck services?", nameErr: "A name is required.", sufErr: "The error cases need the suffix.", title: "HealthCheck services", addTitle: "Add service", delTitle: "Remove service?" },
 };
 
 for (const lang of ["de", "en"]) {
@@ -47,41 +47,51 @@ for (const lang of ["de", "en"]) {
     await ev(`r.querySelector(".hc-sum").scrollIntoView({ block: "center" })`);
     await p.screenshot({ path: `${outDir}/hc-chapter-${tag.replace("/", "-")}.png` });
 
-    // --- Formular: Erkennung, Fälle
+    // --- Formular: Erkennung, Fehler-Zusatz, Fehlerfälle zum Ankreuzen
     await tap('[data-set="hc-add"]');
+    if (mobile) check(`[${tag}] Schliessen-Knopf des Formulars am selben Ort wie in den Einstellungen`, await ev(`const a = r.querySelector('dialog.settings .dlg-head .dlg-close').getBoundingClientRect(); const c = r.querySelector('${FORM} .dlg-head .dlg-close').getBoundingClientRect(); return Math.abs(a.top - c.top) < 1 && Math.abs(a.right - c.right) < 1 && Math.abs(a.width - c.width) < 0.6`));
     check(`[${tag}] Formular "${L.addTitle}" öffnet`, await wait(`return r.querySelector('${FORM}')?.open`) && (await text(`${FORM} h2`)) === L.addTitle);
-    await tap(`${FORM} [data-hc="f-addcase"]`);
-    check(`[${tag}] Fall hinzufügen: erste freie Art "${L.case_off}" als Zeile`, (await text(`${FORM} .hc-case b`)) === L.case_off && (await ev(`return r.querySelectorAll('${FORM} .hc-case').length`)) === 1);
+    check(`[${tag}] sechs Kästchen in fester Reihenfolge, keines angekreuzt`, (await ev(`return [...r.querySelectorAll('${FORM} .hc-chk input')].map((i) => i.dataset.kind + (i.checked ? "+" : "")).join(",")`)) === "offline,backup,cpu,ram,disk,stall");
+    check(`[${tag}] Beschriftungen "${L.case_off}", "${L.case_cpu}", "${L.case_stall}"`, (await text(`${FORM} .hc-chk:nth-child(1) b`)) === L.case_off && (await text(`${FORM} .hc-chk:nth-child(3) b`)) === L.case_cpu && (await text(`${FORM} .hc-chk:nth-child(6) b`)) === L.case_stall);
+    check(`[${tag}] nur ein Zusatzfeld (kein Feld je Fall), keine Zeilen zum Verschieben`, (await ev(`return r.querySelectorAll('${FORM} [data-hc="f-suffix"]').length`)) === 1 && !(await ev(`return !!r.querySelector('${FORM} [data-hc="f-up"], ${FORM} [data-hc="f-pick"]')`)));
     await type(`${FORM} [data-hc="f-name"]`, "Haus");
     await type(`${FORM} [data-hc="f-url"]`, CR);
     check(`[${tag}] Cronitor erkannt: "${L.known}"`, await wait(`return r.querySelector('${FORM} [data-hcp="known"]')?.textContent.includes(${JSON.stringify(L.known)})`));
-    check(`[${tag}] Zusatz des Falls vorgeschlagen (unberührt)`, await ev(`return r.querySelector('${FORM} [data-hc="f-case"]').value`) === "?state=fail&message=Device+offline");
-    check(`[${tag}] Vorschau des Aufrufs mit den Parametern`, (await text(`${FORM} .hc-prev`)).includes("state=fail"));
+    check(`[${tag}] Fehler-Zusatz vorgeschlagen (unberührt) und Vorschau des Aufrufs`, await wait(`return r.querySelector('${FORM} [data-hc="f-suffix"]').value === "?state=fail&message=Device+Panel+error" && r.querySelector('${FORM} .hc-prev')?.textContent.includes("state=fail")`));
     // eigener Zusatz: der Nutzer hat das letzte Wort, danach steht der Vorschlag mit "Übernehmen" daneben
-    await type(`${FORM} [data-hc="f-case"]`, "?state=down");
-    check(`[${tag}] eigener Zusatz bleibt, Vorschlag mit "Übernehmen"`, await wait(`return !!r.querySelector('${FORM} [data-hc="f-take"]')`) && await ev(`return r.querySelector('${FORM} [data-hc="f-case"]').value`) === "?state=down");
+    await type(`${FORM} [data-hc="f-suffix"]`, "?state=down");
+    check(`[${tag}] eigener Zusatz bleibt, Vorschlag mit "Übernehmen"`, await wait(`return !!r.querySelector('${FORM} [data-hc="f-take"]')`) && await ev(`return r.querySelector('${FORM} [data-hc="f-suffix"]').value`) === "?state=down");
     await tap(`${FORM} [data-hc="f-take"]`);
-    check(`[${tag}] "Übernehmen" setzt den Vorschlag`, await ev(`return r.querySelector('${FORM} [data-hc="f-case"]').value`) === "?state=fail&message=Device+offline");
-    // zweiter und dritter Fall, Reihenfolge
-    await ev(`const s = r.querySelector('${FORM} [data-hc="f-pick"]'); s.value = "backup"; s.dispatchEvent(new Event("change", { bubbles: true }))`);
-    await tap(`${FORM} [data-hc="f-addcase"]`);
-    await tap(`${FORM} [data-hc="f-addcase"]`);
-    check(`[${tag}] drei Fälle, keine Auswahl mehr zum Hinzufügen`, (await ev(`return r.querySelectorAll('${FORM} .hc-case').length`)) === 3 && !(await ev(`return !!r.querySelector('${FORM} [data-hc="f-addcase"]')`)));
-    check(`[${tag}] Reihenfolge: Gerät ausgefallen, Backup fehlgeschlagen, Batterie schwach`, (await ev(`return [...r.querySelectorAll('${FORM} .hc-case b')].map((x) => x.textContent).join("|")`)) === [L.case_off, L.case_bak, L.case_bat].join("|"));
-    await tap(`${FORM} [data-hc="f-down"][data-i="1"]`);
-    check(`[${tag}] "Nach unten" tauscht die Zeilen`, (await ev(`return [...r.querySelectorAll('${FORM} .hc-case b')].map((x) => x.textContent).join("|")`)) === [L.case_off, L.case_bat, L.case_bak].join("|"));
-    await tap(`${FORM} [data-hc="f-del"][data-i="2"]`);
-    check(`[${tag}] Zeile entfernen: zwei Fälle, die Auswahl bietet "${L.case_bak}" wieder an`, (await ev(`return r.querySelectorAll('${FORM} .hc-case').length`)) === 2 && (await ev(`return [...r.querySelectorAll('${FORM} [data-hc="f-pick"] option')].map((o) => o.textContent).join("|")`)) === L.case_bak);
+    check(`[${tag}] "Übernehmen" setzt den Vorschlag`, await ev(`return r.querySelector('${FORM} [data-hc="f-suffix"]').value`) === "?state=fail&message=Device+Panel+error");
+    // Kästchen
+    await tap(`${FORM} .hc-chk input[data-kind="offline"]`);
+    await tap(`${FORM} .hc-chk input[data-kind="stall"]`);
+    check(`[${tag}] zwei Kästchen angekreuzt: Gerät ausgefallen, Systemstillstand`, (await ev(`return [...r.querySelectorAll('${FORM} .hc-chk input:checked')].map((i) => i.dataset.kind).join(",")`)) === "offline,stall");
+
+    // --- Ausgegraut, wenn die Meldung dafür aus ist
+    await p.evaluate(() => { window.__hcAvail = { backup: false, cpu: false }; });
+    await ev(`r.host._hc.load()`);
+    await ev(`r.host._hc.renderForm(true)`);
+    check(`[${tag}] Meldung aus: "${L.case_bak}" und "${L.case_cpu}" ausgegraut (nicht wählbar) mit Grund darunter`, await wait(`const d = (k) => r.querySelector('${FORM} .hc-chk input[data-kind="' + k + '"]'); return d("backup")?.disabled && d("cpu")?.disabled && !d("offline").disabled && r.querySelector('${FORM} .hc-chk.off small')`) || false);
+    await ev(`r.host._hc.renderForm(true)`);
+    check(`[${tag}] Grund steht da ("${L.offTxt}" für Backup nicht, für Ausfall ist die Meldung an)`, (await ev(`return r.querySelectorAll('${FORM} .hc-chk.off').length`)) === 2 && (await ev(`return r.querySelector('${FORM} .hc-chk.off small').textContent.length > 10`)));
+    check(`[${tag}] ausgegraut: Klick ändert nichts`, await (async () => { await ev(`r.querySelector('${FORM} .hc-chk.off input').click()`); return (await ev(`return r.querySelector('${FORM} .hc-chk.off input').checked`)) === false; })());
+    await ev(`r.querySelector('${FORM} .hc-chk-head').scrollIntoView({ block: "start" })`);
+    await p.screenshot({ path: `${outDir}/hc-checks-${tag.replace("/", "-")}.png` });
+    await p.evaluate(() => { window.__hcAvail = {}; });
+    await ev(`r.host._hc.load()`);
+    await wait(`return !r.querySelector('${FORM} .hc-chk.off')`);
+    await ev(`r.host._hc.renderForm(true)`);
 
     // --- Prüfung der Eingaben
     await type(`${FORM} [data-hc="f-name"]`, "");
-    await type(`${FORM} [data-hc="f-case"][data-i="1"]`, "");
+    await type(`${FORM} [data-hc="f-suffix"]`, "");
     await tap(`${FORM} button[type="submit"]`);
-    check(`[${tag}] leerer Name und leerer Zusatz: Fehler, nichts gespeichert`, await wait(`return r.querySelector('${FORM} [data-hcp="err-name"]')?.textContent.includes(${JSON.stringify(L.nameErr)}) && r.querySelector('${FORM} [data-hcp="case1"]')?.textContent.includes(${JSON.stringify(L.sufErr)})`) && (await p.evaluate(() => window.__hc.length)) === 0);
+    check(`[${tag}] leerer Name und Fehlerfälle ohne Zusatz: Fehler, nichts gespeichert`, await wait(`return r.querySelector('${FORM} [data-hcp="err-name"]')?.textContent.includes(${JSON.stringify(L.nameErr)}) && r.querySelector('${FORM} [data-hcp="err-suffix"]')?.textContent.includes(${JSON.stringify(L.sufErr)})`) && (await p.evaluate(() => window.__hc.length)) === 0);
     await type(`${FORM} [data-hc="f-name"]`, "Haus");
-    await type(`${FORM} [data-hc="f-case"][data-i="1"]`, "falsch");
-    check(`[${tag}] Zusatz ohne "/", "?" oder "&": Fehler`, await wait(`return !!r.querySelector('${FORM} [data-hcp="case1"] .hc-err')`));
-    await type(`${FORM} [data-hc="f-case"][data-i="1"]`, "?state=fail&message=Battery+low");
+    await type(`${FORM} [data-hc="f-suffix"]`, "falsch");
+    check(`[${tag}] Zusatz ohne "/", "?" oder "&": Fehler`, await wait(`return !!r.querySelector('${FORM} [data-hcp="err-suffix"] .hc-err')`));
+    await type(`${FORM} [data-hc="f-suffix"]`, "?state=fail&message=Battery+low");
     await type(`${FORM} [data-hc="f-value"]`, "0");
     check(`[${tag}] Abstand 0: Fehler`, await wait(`return !!r.querySelector('${FORM} [data-hcp="err-interval"] .hc-err')`));
     await tap(`${FORM} [data-hc="f-preset"][data-sec="900"]`);
@@ -89,25 +99,30 @@ for (const lang of ["de", "en"]) {
     check(`[${tag}] Schnellwahl ist eine Reiterleiste mit gleitender Kapsel`, await wait(`return !!r.querySelector('${FORM} .hc-presets .seg-pill')`));
     await p.screenshot({ path: `${outDir}/hc-form-${tag.replace("/", "-")}.png` });
     await tap(`${FORM} button[type="submit"]`);
-    check(`[${tag}] Speichern: Formular zu, Dienst beim Server mit zwei Fällen und 900 s`, await wait(`return !r.querySelector('${FORM}')?.open`) && await p.evaluate(() => { const i = window.__hc[0]; return window.__hc.length === 1 && i.name === "Haus" && i.url.includes("cronitor.link") && i.interval === 900 && i.cases.length === 2 && i.cases[0].kind === "offline" && i.cases[1].kind === "battery"; }));
+    check(`[${tag}] Fussknöpfe des Formulars gleich breit`, await ev(`const w = [...r.querySelectorAll('${FORM} .dlg-actions .dlg-btn')].map((b) => b.getBoundingClientRect().width); return w.length === 2 && Math.abs(w[0] - w[1]) < 1`));
+    check(`[${tag}] Speichern: Formular zu, Dienst beim Server mit Zusatz, zwei Fehlerfällen und 900 s`, await wait(`return !r.querySelector('${FORM}')?.open`) && await p.evaluate(() => { const i = window.__hc[0]; return window.__hc.length === 1 && i.name === "Haus" && i.url.includes("cronitor.link") && i.interval === 900 && i.fail_suffix === "?state=fail&message=Battery+low" && i.cases.join() === "offline,stall"; }));
     check(`[${tag}] Kapitel zeigt "${L.one}"`, await wait(`return r.querySelector(".hc-sum")?.textContent.includes(${JSON.stringify(L.one)})`) && (await text(".hc-sum")).includes(L.okAll));
+    await ev(`r.host._hc.openList()`);
+    await wait(`return r.querySelectorAll('${LIST} .hc-row').length >= 1`);
+    check(`[${tag}] Fussknöpfe der Liste gleich breit`, await ev(`const w = [...r.querySelectorAll('${LIST} .dlg-actions .dlg-btn')].map((b) => b.getBoundingClientRect().width); return w.length === 2 && Math.abs(w[0] - w[1]) < 1`));
+    await ev(`r.host._hc.closeList?.()`);
 
     // --- Liste
     await tap('[data-set="hc-open"]');
     check(`[${tag}] Liste "${L.title}" mit einer Zeile, Name, URL und zwei Fall-Marken`, await wait(`return r.querySelector('${LIST}')?.open && r.querySelectorAll('${LIST} .hc-row').length === 1`) && (await text(`${LIST} .hc-name`)) === "Haus" && (await text(`${LIST} .hc-addr`)).includes("cronitor.link") && (await ev(`return r.querySelectorAll('${LIST} .hc-case-chip').length`)) === 2);
     check(`[${tag}] Zeile: Cronitor als Marke, Zustand "kein Lebenszeichen" (neutral)`, (await text(`${LIST} .hc-tag`)) === "Cronitor" && await ev(`return r.querySelector('${LIST} .hc-state').classList.contains("none")`));
-    check(`[${tag}] Knöpfe: Protokoll, zwei Fälle, OK, Bearbeiten, Entfernen (je rund)`, (await ev(`return r.querySelectorAll('${LIST} .hc-row .hc-ib').length`)) === 6);
-    await tap(`${LIST} .hc-ib[data-hc="test"][data-kind="battery"]`);
-    check(`[${tag}] Testknopf "${L.case_bat}": der Server bekommt genau diese Art`, await wait(`return r.querySelector('${LIST} .hc-state')?.classList.contains("warn")`) && (await p.evaluate(() => JSON.stringify(window.__hcPing))) === JSON.stringify([{ id: await p.evaluate(() => window.__hc[0].id), kind: "battery" }]));
+    check(`[${tag}] Knöpfe: Protokoll, Fehler senden, OK, Bearbeiten, Entfernen (je rund, ein Fehler-Test statt eines je Fall)`, (await ev(`return r.querySelectorAll('${LIST} .hc-row[data-hc-row="${"a1"}"] .hc-ib').length >= 0 && r.querySelector('${LIST} .hc-row .hc-btns').querySelectorAll(".hc-ib").length`)) === 5);
+    await tap(`${LIST} .hc-ib[data-hc="test"][data-kind="error"]`);
+    check(`[${tag}] Testknopf "Fehler senden": der Server bekommt "error", Zustand orange`, await wait(`return r.querySelector('${LIST} .hc-state')?.classList.contains("warn")`) && (await p.evaluate(() => JSON.stringify(window.__hcPing.map((x) => x.kind)))) === JSON.stringify(["error"]));
     await tap(`${LIST} .hc-ib[data-hc="test"][data-kind="ok"]`);
     check(`[${tag}] Testknopf OK: Zustand wieder grün`, await wait(`return r.querySelector('${LIST} .hc-state')?.classList.contains("ok")`));
     await p.evaluate(() => { window.__hcFail = { [window.__hc[0].id]: true }; });
-    await tap(`${LIST} .hc-ib[data-hc="test"][data-kind="offline"]`);
+    await tap(`${LIST} .hc-ib[data-hc="test"][data-kind="error"]`);
     check(`[${tag}] gescheiterter Test: Zustand rot mit HTTP 503`, await wait(`return r.querySelector('${LIST} .hc-state')?.classList.contains("err") && r.querySelector('${LIST} .hc-state').textContent.includes("503")`));
     check(`[${tag}] Kapitel dahinter nachgeführt: "1 Lebenszeichen gescheitert"`, (await text(".hc-sum")).includes(lang === "de" ? "1 Lebenszeichen gescheitert" : "1 heartbeat failed"));
     await p.evaluate(() => { window.__hcFail = {}; });
     // Suche und Sortierung
-    await p.evaluate(() => window.__hc.push({ id: "second", name: "Zweiter", url: "https://hc-ping.com/00000000-1111-2222-3333-444444444444", interval: 300, cases: [], status: null, log: null }));
+    await p.evaluate(() => window.__hc.push({ id: "second", name: "Zweiter", url: "https://hc-ping.com/00000000-1111-2222-3333-444444444444", interval: 300, cases: [], fail_suffix: "", status: null, log: null }));
     await ev(`r.host._hc.load()`);
     check(`[${tag}] zwei Dienste in der Liste, Zähler`, await wait(`return r.querySelectorAll('${LIST} .hc-row').length === 2`) && (await text(`${LIST} .hc-listhead`)).includes(lang === "de" ? "2 von 5 Diensten" : "2 of 5 services"));
     await type(`${LIST} input[data-hc="search"]`, "zweit");
@@ -134,12 +149,12 @@ for (const lang of ["de", "en"]) {
     check(`[${tag}] Entfernen: weg beim Server und in der Liste`, await wait(`return r.querySelectorAll('${LIST} .hc-row').length === 1`) && (await p.evaluate(() => window.__hc.length)) === 1);
     // Bearbeiten
     await tap(`${LIST} .hc-ib[data-hc="edit"]`);
-    check(`[${tag}] Bearbeiten: Formular mit den Werten (Name, zwei Fälle, 15 Minuten)`, await wait(`return r.querySelector('${FORM}')?.open && r.querySelector('${FORM} [data-hc="f-name"]').value === "Haus"`) && (await ev(`return r.querySelectorAll('${FORM} .hc-case').length`)) === 2 && (await ev(`return r.querySelector('${FORM} [data-hc="f-value"]').value`)) === "15");
+    check(`[${tag}] Bearbeiten: Formular mit den Werten (Name, Zusatz, zwei angekreuzte Fehlerfälle, 15 Minuten)`, await wait(`return r.querySelector('${FORM}')?.open && r.querySelector('${FORM} [data-hc="f-name"]').value === "Haus"`) && (await ev(`return r.querySelectorAll('${FORM} .hc-chk input:checked').length`)) === 2 && (await ev(`return r.querySelector('${FORM} [data-hc="f-value"]').value`)) === "15");
     await tap(`${FORM} [data-hc="f-cancel"]`);
     check(`[${tag}] Abbrechen schliesst das Formular ohne zu speichern`, await wait(`return !r.querySelector('${FORM}')?.open`));
 
     // --- Höchstens fünf
-    await p.evaluate(() => { for (let n = window.__hc.length; n < 5; n++) window.__hc.push({ id: `x${n}`, name: `Dienst ${n}`, url: "https://hc-ping.com/00000000-1111-2222-3333-44444444444" + n, interval: 300, cases: [], status: null, log: null }); });
+    await p.evaluate(() => { for (let n = window.__hc.length; n < 5; n++) window.__hc.push({ id: `x${n}`, name: `Dienst ${n}`, url: "https://hc-ping.com/00000000-1111-2222-3333-44444444444" + n, interval: 300, cases: [], fail_suffix: "", status: null, log: null }); });
     await ev(`r.host._hc.load()`);
     await wait(`return r.querySelectorAll('${LIST} .hc-row').length === 5`);
     check(`[${tag}] fünf Dienste: "${L.add}" gesperrt (Fuss und Kapitel)`, await ev(`return r.querySelector('${LIST} [data-hc-foot] [data-hc="add"]').disabled && r.querySelector('[data-set="hc-add"]').disabled`));

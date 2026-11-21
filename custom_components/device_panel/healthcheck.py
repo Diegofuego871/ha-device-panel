@@ -4,12 +4,13 @@ Healthchecks.io, Cronitor, Better Stack oder Uptime Kuma. Fällt Home Assistant,
 Dienst alarmiert; das kann das Panel selbst nicht melden.
 
 - Bis zu MAX_HEALTHCHECKS Dienste, je mit Namen, URL und einem Abstand (1 Minute bis 24 Stunden).
-- Inhalt: im Abstand die URL des Dienstes ("in Ordnung"). Dazu "Fälle" (Entscheid des Nutzers; das Panel hat keinen Selbsttest wie Alarmageddon):
-  je Dienst eine geordnete Liste von Zeilen, jede mit einer Art (`HEALTHCHECK_CASES`: ein Gerät ist ausgefallen, eine Batterie ist schwach, das
-  Backup ist fehlgeschlagen) und einem URL-Zusatz. Trifft ein Fall zu, geht statt des Lebenszeichens die URL mit dem Zusatz dieser Zeile hinaus;
-  treffen mehrere zu, gilt die oberste Zeile (ein Aufruf je Takt, wie bei Alarmageddon der Alarm vor dem Fehler). Beginnt oder endet ein Fall,
-  geht sofort ein Aufruf hinaus (das Ende als Lebenszeichen, höchstens alle HEALTHCHECK_MIN_GAP Sekunden).
-- Testknöpfe im Panel: je Fall der Zeile, dazu "OK senden" (nach einem Test bleibt der Dienst sonst bis zum nächsten Lebenszeichen rot).
+- Inhalt: im Abstand die URL des Dienstes ("in Ordnung"). Dazu ein einziger Fehler-Zusatz je Dienst (`fail_suffix`, "/fail", "?state=fail" …) und
+  Fehlerfälle zum Ankreuzen (`cases`, seit 2.237.0, Entscheid des Nutzers; vorher eine Zeile je Fall mit eigenem Zusatz): Gerät ausgefallen, Backup
+  fehlgeschlagen, hohe Auslastung von CPU, Arbeitsspeicher oder Festplatte, Stillstand eines Teils des Panels. Trifft ein angekreuzter Fall zu, geht statt
+  des Lebenszeichens die URL mit dem Fehler-Zusatz hinaus; beginnt oder endet ein Fall, sofort (das Ende als Lebenszeichen, höchstens alle
+  HEALTHCHECK_MIN_GAP Sekunden). Ein Fall zählt nur, solange die Meldung dafür eingeschaltet ist und einen Wert hat (`case_available`; das Panel
+  zeigt das Kästchen sonst ausgegraut).
+- Testknöpfe im Panel: "Fehler senden" (nur mit Fehler-Zusatz) und "OK senden" (nach einem Test bleibt der Dienst sonst bis zum nächsten Lebenszeichen rot).
 - Protokoll je Dienst (healthcheck_log.py): jeder Aufruf mit Art, Ergebnis, Antwortzeit und Auslöser; Mitschreiben ist Zusatz und hält nie
   ein Lebenszeichen auf (im `try`).
 
@@ -39,9 +40,9 @@ from homeassistant.util import dt as dt_util
 from . import activity
 from .const import (
     DATA_BACKUP_ALERT,
-    DATA_BATTERY,
     DATA_HEALTHCHECK,
     DATA_OUTAGE,
+    DATA_STATUS,
     HEALTHCHECK_CASES,
     HEALTHCHECK_DEFAULT_INTERVAL,
     HEALTHCHECK_INTERVAL_RANGE,
@@ -50,6 +51,12 @@ from .const import (
     HEALTHCHECK_START_DELAY,
     HEALTHCHECK_STORE_KEY,
     HEALTHCHECK_SUFFIX_MAX,
+    CONF_NOTIFY_OUTAGE,
+    CONF_STATUS_BACKUP_ALERT,
+    CONF_STATUS_CPU_ALERT,
+    CONF_STATUS_DISK_ALERT,
+    CONF_STATUS_NOTIFY,
+    CONF_STATUS_RAM_ALERT,
     HEALTHCHECK_TICK,
     HEALTHCHECK_TIMEOUT,
     HEALTHCHECK_URL_MAX,
@@ -62,6 +69,8 @@ _LOGGER = logging.getLogger(__name__)
 
 RESULTS = ("ok", "http", "timeout", "error")
 HEALTHCHECK_ID = re.compile(r"^[a-z0-9]{1,16}$")
+# Meldung bei hoher Auslastung je Art (die Schalter der Status-App)
+LOAD_ALERT = {"cpu": CONF_STATUS_CPU_ALERT, "ram": CONF_STATUS_RAM_ALERT, "disk": CONF_STATUS_DISK_ALERT}
 
 
 # -- Prüfen der Eingaben --------------------------------------------------------------------------------------------------------------------------
@@ -129,28 +138,36 @@ def valid_name(value: Any) -> str | None:
     return name if 0 < len(name) <= HEALTHCHECK_NAME_MAX and name.isprintable() else None
 
 
-def valid_cases(url: str, value: Any) -> list[dict[str, str]]:
-    """Zeilen der Fälle in der Reihenfolge der Eingabe: jede Art höchstens einmal, ein ungültiger Zusatz macht die Zeile ungültig (sie fällt weg)."""
-    out: list[dict[str, str]] = []
-    for item in value if isinstance(value, list) else []:
-        if not isinstance(item, dict) or item.get("kind") not in HEALTHCHECK_CASES or any(c["kind"] == item["kind"] for c in out):
-            continue
-        suffix = valid_suffix(url, item.get("suffix"))
-        if suffix:  # ohne Zusatz gibt es nichts zu senden: die Zeile wäre wirkungslos
-            out.append({"kind": item["kind"], "suffix": suffix})
-    return out
+def valid_cases(value: Any) -> list[str]:
+    """Angekreuzte Fehlerfälle: nur bekannte Arten, jede einmal, in der festen Reihenfolge von HEALTHCHECK_CASES."""
+    wanted = {str(k) for k in value} if isinstance(value, list) else set()
+    return [k for k in HEALTHCHECK_CASES if k in wanted]
+
+
+def _migrate(item: dict[str, Any]) -> dict[str, Any]:
+    """
+    Dienste aus 2.236.0 hatten je Fall eine Zeile {"kind", "suffix"}: der erste Zusatz wird der Fehler-Zusatz, die Arten werden angekreuzt (die
+    Art "battery" gibt es nicht mehr und fällt weg).
+    """
+    cases = item.get("cases")
+    if isinstance(cases, list) and any(isinstance(c, dict) for c in cases):
+        suffix = next((str(c.get("suffix") or "") for c in cases if isinstance(c, dict) and c.get("suffix")), "")
+        return {**item, "fail_suffix": item.get("fail_suffix") or suffix, "cases": [c.get("kind") for c in cases if isinstance(c, dict)]}
+    return item
 
 
 def valid_items(value: Any) -> list[dict[str, Any]]:
     """
     Dienste: höchstens MAX_HEALTHCHECKS, jeder Eintrag einzeln geprüft (ein beschädigter fällt weg, nie die Liste).
-    {"id", "name", "url", "interval" (Sekunden), "cases": [{"kind", "suffix"}]}. Ohne gültigen Namen heisst der Dienst wie der Rechner seiner URL.
+    {"id", "name", "url", "interval" (Sekunden), "fail_suffix" (leer erlaubt), "cases": [Arten]}. Ohne gültigen Namen heisst der Dienst wie der
+    Rechner seiner URL. Ein ungültiger Zusatz wird leer; ohne Zusatz gibt es keinen Fehler-Aufruf, die Fälle bleiben dann ohne Wirkung.
     """
     out: list[dict[str, Any]] = []
     seen: set[str] = set()
-    for item in value if isinstance(value, list) else []:
-        if not isinstance(item, dict) or len(out) >= MAX_HEALTHCHECKS:
+    for raw in value if isinstance(value, list) else []:
+        if not isinstance(raw, dict) or len(out) >= MAX_HEALTHCHECKS:
             continue
+        item = _migrate(raw)
         hid, url = item.get("id"), valid_url(item.get("url"))
         if not isinstance(hid, str) or not HEALTHCHECK_ID.match(hid) or hid in seen or url is None:
             continue
@@ -160,7 +177,7 @@ def valid_items(value: Any) -> list[dict[str, Any]]:
         interval = max(HEALTHCHECK_INTERVAL_RANGE[0], min(HEALTHCHECK_INTERVAL_RANGE[1], interval))
         seen.add(hid)
         name = valid_name(item.get("name")) or (urlsplit(url).hostname or "?")[:HEALTHCHECK_NAME_MAX]
-        out.append({"id": hid, "name": name, "url": url, "interval": interval, "cases": valid_cases(url, item.get("cases"))})
+        out.append({"id": hid, "name": name, "url": url, "interval": interval, "fail_suffix": valid_suffix(url, item.get("fail_suffix")) or "", "cases": valid_cases(item.get("cases"))})
     return out
 
 
@@ -172,49 +189,76 @@ def host_of(url: str) -> str:
         return "?"
 
 
-def case_url(item: dict[str, Any], kind: str) -> str | None:
-    """Adresse für einen Fall: URL mit dem Zusatz der Zeile dieser Art; ohne diese Zeile None."""
-    for row in item.get("cases") or []:
-        if row["kind"] == kind:
-            try:
-                return apply_suffix(str(item.get("url") or ""), str(row.get("suffix") or ""))
-            except ValueError:
-                return None
-    return None
+def fail_url(item: dict[str, Any]) -> str | None:
+    """Adresse für den Fehler: URL mit dem Fehler-Zusatz des Dienstes; ohne Zusatz None."""
+    try:
+        return apply_suffix(str(item.get("url") or ""), str(item.get("fail_suffix") or ""))
+    except ValueError:
+        return None
 
 
-# -- Welche Fälle gerade zutreffen ----------------------------------------------------------------------------------------------------------------
+# -- Welche Fälle gerade gelten ----------------------------------------------------------------------------------------------------------------
+
+
+def case_available(hass: HomeAssistant, kind: str) -> bool:
+    """
+    Kann der Fall überhaupt eintreten (das Panel zeigt das Kästchen sonst ausgegraut)? Gerät ausgefallen: die Meldung bei Ausfall ist eingeschaltet;
+    Backup: die Backup-Meldung der Status-App; CPU, Arbeitsspeicher, Festplatte: die Meldung bei hoher Auslastung ist an und es gibt einen Wert in Prozent;
+    Stillstand: die Meldung der Status-App bei Stillstand eines Teils.
+    """
+    from .options_api import effective  # noqa: PLC0415 (options_api importiert die Update-Prüfung, die dieses Paket früh lädt)
+    from .system_stats import current_percent  # noqa: PLC0415 (zieht Recorder-Hilfen, erst bei Bedarf)
+
+    try:
+        opts = effective(hass)
+        if kind == "offline":
+            return bool(opts[CONF_NOTIFY_OUTAGE])
+        if kind == "backup":
+            return bool(opts[CONF_STATUS_BACKUP_ALERT])
+        if kind == "stall":
+            return bool(opts[CONF_STATUS_NOTIFY])
+        if kind in LOAD_ALERT:
+            return bool(opts[LOAD_ALERT[kind]]) and current_percent(hass, kind) is not None
+    except Exception:  # noqa: BLE001 - im Zweifel nicht verfügbar
+        _LOGGER.exception("The health check could not read the availability of the case %s", kind)
+    return False
 
 
 def case_active(hass: HomeAssistant, kind: str) -> bool:
-    """Trifft der Fall jetzt zu? Liest nur, was das Panel ohnehin führt (Ausfälle, Batterien, Backup); jeder Fehler beim Lesen heisst "trifft nicht zu"."""
+    """Trifft der Fall jetzt zu? Liest nur, was das Panel ohnehin führt (Ausfälle, Backup, Auslastung, Teile); jeder Fehler beim Lesen heisst "trifft nicht zu"."""
     try:
         if kind == "offline":
             outage = hass.data.get(DATA_OUTAGE)
             return bool(outage is not None and outage.offline)
-        if kind == "battery":
-            battery = hass.data.get(DATA_BATTERY)
-            return bool(battery is not None and battery.low)
         if kind == "backup":
             alert = hass.data.get(DATA_BACKUP_ALERT)
             return bool(alert is not None and alert.failing)
+        status = hass.data.get(DATA_STATUS)
+        if status is None:
+            return False
+        if kind == "stall":
+            return bool(status.stalled)
+        if kind in LOAD_ALERT:
+            return bool(status.overloaded(kind))
     except Exception:  # noqa: BLE001 - im Zweifel ein Lebenszeichen "in Ordnung", nie keines
         _LOGGER.exception("The health check could not read the case %s", kind)
     return False
 
 
 def active_case(hass: HomeAssistant, item: dict[str, Any]) -> str | None:
-    """Der Fall, der für diesen Dienst gilt: die oberste Zeile, deren Fall zutrifft; sonst None."""
-    for row in item.get("cases") or []:
-        if case_active(hass, row["kind"]):
-            return row["kind"]
+    """Der Fall, der für diesen Dienst gilt: der erste angekreuzte, der verfügbar ist und zutrifft; ohne Fehler-Zusatz nie einer."""
+    if fail_url(item) is None:
+        return None
+    for kind in item.get("cases") or []:
+        if case_available(hass, kind) and case_active(hass, kind):
+            return kind
     return None
 
 
 def _clean_status(value: Any) -> dict[str, Any] | None:
     if not isinstance(value, dict) or not isinstance(value.get("at"), str) or dt_util.parse_datetime(value["at"]) is None:
         return None
-    if value.get("sent") not in ("ok", *HEALTHCHECK_CASES) or value.get("result") not in RESULTS:
+    if value.get("sent") not in ("ok", *HEALTHCHECK_CASES, "error") or value.get("result") not in RESULTS:
         return None
     code = value.get("code")
     return {"at": value["at"], "sent": value["sent"], "result": value["result"], "code": code if isinstance(code, int) and not isinstance(code, bool) else None,
@@ -285,6 +329,10 @@ class HealthCheck:
         """Dienste für das Panel: die gespeicherten Werte (mit der URL, Entscheid des Nutzers), der letzte Aufruf und seit wann der Zustand gilt."""
         return [{**item, "status": self.status.get(item["id"]), "log": self.log.brief(item["id"])} for item in self._items]
 
+    def availability(self) -> dict[str, bool]:
+        """Für das Panel: welche Fehlerfälle sich ankreuzen lassen (die Meldung dafür ist an und hat einen Wert)."""
+        return {kind: case_available(self.hass, kind) for kind in HEALTHCHECK_CASES}
+
     async def async_set_items(self, items: list[dict[str, Any]]) -> None:
         """Dienste speichern (sofort, nicht gesammelt: sie gehören zur Einrichtung) und abgleichen."""
         self._items = valid_items(items)
@@ -338,11 +386,11 @@ class HealthCheck:
     def async_ping(self, hid: str, respect_gap: bool = False, test: str | None = None, by: str = "tick") -> asyncio.Task | None:
         """
         Ein Aufruf als eigene Aufgabe (nie abwarten). `respect_gap`: höchstens alle HEALTHCHECK_MIN_GAP Sekunden, sonst danach. `test`: Knopf im Panel,
-        "ok" oder die Art eines Falls sendet genau das (ohne den Zustand des Panels zu fragen); einen Fall ohne Zeile gibt es nicht (None). `by`: der
+        "ok" oder "error" (der Fehler-Aufruf) sendet genau das (ohne den Zustand des Panels zu fragen); "error" ohne Fehler-Zusatz gibt es nicht (None). `by`: der
         Auslöser für das Protokoll ("tick", "case", "start", "save"; mit `test` immer "test").
         """
         item = self.item(hid)
-        if item is None or (test not in (None, "ok") and case_url(item, str(test)) is None):
+        if item is None or (test == "error" and fail_url(item) is None) or test not in (None, "ok", "error"):
             return None
         if test:
             self._last_try[hid] = dt_util.utcnow().timestamp()
@@ -370,11 +418,11 @@ class HealthCheck:
 
     async def _send(self, item: dict[str, Any], test: str | None = None, by: str = "tick") -> dict[str, Any]:
         hid = item["id"]
-        # Was geht hinaus: beim Testknopf genau das Gewählte, sonst der Fall, der jetzt gilt (die oberste Zeile), sonst das Lebenszeichen
+        # Was geht hinaus: beim Testknopf genau das Gewählte, sonst der Fall, der jetzt gilt, sonst das Lebenszeichen
         sent = test if test else (active_case(self.hass, item) or "ok")
-        bad = case_url(item, sent) if sent != "ok" else None
+        bad = fail_url(item) if sent != "ok" else None
         if sent != "ok" and bad is None:
-            sent = "ok"  # die Zeile wurde inzwischen entfernt
+            sent = "ok"  # der Zusatz wurde inzwischen entfernt
         url = bad or item["url"]
         code: int | None = None
         ms: int | None = None

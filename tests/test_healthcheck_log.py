@@ -38,7 +38,7 @@ def test_kind_of_a_call() -> None:
     """Nicht angekommen ist immer "gescheitert", auch beim Testknopf; die URL eines Falls ist "Fall gemeldet"."""
     assert call_kind("ok", "ok", False) == "ok"
     assert call_kind("offline", "ok", False) == "report" and call_kind("battery", "ok", False) == "report"
-    assert call_kind("ok", "ok", True) == "test" and call_kind("backup", "ok", True) == "test"
+    assert call_kind("ok", "ok", True) == "test" and call_kind("error", "ok", True) == "test"
     for result in ("http", "timeout", "error"):
         assert call_kind("ok", result, False) == "fail" and call_kind("offline", result, True) == "fail"
 
@@ -99,14 +99,14 @@ async def test_counts_and_lists_follow_the_chosen_period(hass: HomeAssistant) ->
 async def test_each_case_is_its_own_event_and_never_merges_with_another(hass: HomeAssistant) -> None:
     """Der Aufruf eines Falls ist "Fall gemeldet" mit `sent` = Art; aufeinanderfolgende gleiche Fälle sind ein Ereignis, ein anderer Fall ein neues."""
     log = log_with(hass)
-    for kind in ("offline", "battery", "backup"):
+    for kind in ("offline", "backup", "cpu", "ram", "disk", "stall"):
         assert call_kind(kind, "ok", False) == "report" and call_kind(kind, "error", False) == "fail"
     rec(log, 0, sent="offline", by="case")
-    rec(log, 1, sent="battery", by="case")
-    rec(log, 2, sent="battery", by="tick")
+    rec(log, 1, sent="backup", by="case")
+    rec(log, 2, sent="backup", by="tick")
     rec(log, 3, sent="offline", by="tick")
     events = [(e["k"], e.get("sent"), e.get("n")) for e in log.events["a"]]
-    assert events == [("report", "offline", 1), ("report", "battery", 2), ("report", "offline", 1)]
+    assert events == [("report", "offline", 1), ("report", "backup", 2), ("report", "offline", 1)]
 
 
 async def test_old_data_runs_out(hass: HomeAssistant) -> None:
@@ -215,10 +215,11 @@ async def test_recorded_from_the_real_service_with_trigger_and_time(hass: HomeAs
     hid = (await add(client, interval=120))["result"]["id"]
     await advance(hass, freezer, 31)
     await advance(hass, freezer, 121)
+    flags.options(notify_outage=True)
     flags.offline = {"d1": 1.0}
     await advance(hass, freezer, 31)
     client = await hass_ws_client(hass)  # nach dem Verstellen der Uhr neu verbinden (die alte Verbindung schliesst der Herzschlag des Websockets)
-    assert (await ws(client, type=f"{DOMAIN}/healthcheck_ping", check_id=hid, kind="offline"))["success"]
+    assert (await ws(client, type=f"{DOMAIN}/healthcheck_ping", check_id=hid, kind="error"))["success"]
     out = (await ws(client, type=f"{DOMAIN}/healthcheck_history", check_id=hid, hours=3))["result"]
     kinds = [(c["kind"], c["by"]) for c in reversed(out["calls"])]
     assert kinds[:2] == [("ok", "save"), ("ok", "tick")] and ("report", "case") in kinds and kinds[-1] == ("test", "test")
