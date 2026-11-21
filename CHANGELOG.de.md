@@ -7,6 +7,14 @@ Alle nennenswerten Änderungen an dieser Integration stehen in dieser Datei.
 Das Format folgt [Keep a Changelog](https://keepachangelog.com/de/1.1.0/),
 die Versionsnummern folgen [Semantic Versioning](https://semver.org/lang/de/).
 
+## [2.236.1] - 2026-11-21
+
+Das Kapitel "HealthCheck-Dienste" sieht aus wie die anderen Kapitel.
+
+### Geändert
+
+- **Kapitel "HealthCheck-Dienste" in den Einstellungen:** kein Kasten mehr darum, und die beiden Knöpfe "Dienst hinzufügen" und "Dienste anzeigen" stehen nebeneinander in einer Zeile; "Dienste anzeigen" hat keinen Pfeil-Knopf.
+
 ## [2.236.0] - 2026-11-21
 
 HealthCheck-Dienste: Lebenszeichen an externe Dienste wie Healthchecks.io oder Cronitor.
@@ -6371,6 +6379,7 @@ Erste Vorabversion.
   GitHub Actions für die Prüfungen von HACS und hassfest sowie die Tests.
 
 [2.6.0]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v2.6.0
+[2.236.1]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v2.236.1
 [2.236.0]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v2.236.0
 [2.235.1]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v2.235.1
 [2.235.0]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v2.235.0

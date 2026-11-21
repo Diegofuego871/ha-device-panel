@@ -7,6 +7,14 @@ All notable changes to this integration are documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/).
 
+## [2.236.1] - 2026-11-21
+
+The chapter "HealthCheck services" looks like the other chapters.
+
+### Changed
+
+- **Chapter "HealthCheck services" in the settings:** no box around it any more, and the two buttons "Add service" and "Show services" stand side by side in one row; "Show services" has no arrow button.
+
 ## [2.236.0] - 2026-11-21
 
 HealthCheck services: heartbeats to external services such as Healthchecks.io or Cronitor.
@@ -6270,6 +6278,7 @@ First pre-release.
   GitHub Actions for HACS/hassfest validation and tests.
 
 [2.6.0]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v2.6.0
+[2.236.1]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v2.236.1
 [2.236.0]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v2.236.0
 [2.235.1]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v2.235.1
 [2.235.0]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v2.235.0

@@ -159,7 +159,7 @@ export class HealthCheckUi {
     return `<div class="opt hc-sum"><span class="hc-ico${n ? " on" : ""}">${mdi("heartPulse", 22)}</span>
       <div class="hc-sum-tx"><b>${escape(text)}</b><small class="${failed ? "hc-bad" : ""}">${escape(sub)}</small></div>
       <div class="hc-sum-btns"><button type="button" class="dlg-btn" data-set="hc-add" ${n >= this.max ? "disabled" : ""}>${mdi("plus", 18)}<span>${escape(this.t("hcAdd"))}</span></button>
-        <button type="button" class="dlg-btn" data-set="hc-open">${mdi("heartPulse", 18)}<span>${escape(this.t("hcShow"))}</span><span class="cbtn">${mdi("chevronRight", 16)}</span></button></div></div>`;
+        <button type="button" class="dlg-btn" data-set="hc-open">${mdi("heartPulse", 18)}<span>${escape(this.t("hcShow"))}</span></button></div></div>`;
   }
 
   // ----- Texte -----
