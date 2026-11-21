@@ -290,6 +290,15 @@ The app "Updates" (administrators) lists every open update Home Assistant knows 
 
 If a new version is available for a device, its tile "Software" in the pop-up gets an outline in the main color; a tap opens the update window of this device, and a running update shows its progress in the tile too.
 
+## HealthCheck services
+
+An external service such as [Healthchecks.io](https://healthchecks.io), [Cronitor](https://cronitor.io), [Better Stack](https://betterstack.com) or Uptime Kuma expects a heartbeat from Home Assistant at regular intervals. If Home Assistant, the network or the power is down, the heartbeat stays away and the service alerts you, which the panel cannot report itself.
+
+- **Where:** Settings › Monitoring and notifications, the chapter "HealthCheck services" above "System alerts": "Add service" and "Show services". Up to five services, administrators only.
+- **A service:** a name, the ping URL and an interval (1 minute to 24 hours). Known services (Healthchecks.io, Better Stack, Cronitor, Uptime Kuma) are recognised by the URL.
+- **Cases:** per service rows with a kind (device offline, battery low, backup failed) and a URL suffix (for example "/fail" or "?state=fail"). While a case applies, the panel calls the URL with the suffix of the top matching row instead of the plain heartbeat; the end follows as a heartbeat. The suffix is suggested for known services and stays yours to change.
+- **Test and log:** every service has a test button per case and "Send OK", and a log with chart (heartbeat, timeline, grids up to a year), key figures, response times and the list of events and calls. The URL is shown in full to administrators and is part of the backup file (keep it private); it is never in the log.
+
 ## App launcher and history
 
 A button in the header opens a launcher with useful pages, in the symbols and colors of the settings of Home Assistant. Administrators also find a power button there that restarts Home Assistant, always after a confirmation.
@@ -355,7 +364,7 @@ Under "Panel" › "General" (below "Start page", administrators only) all settin
 
 <p align="center"><img src="https://raw.githubusercontent.com/Diegofuego871/ha-device-panel/main/docs/screenshots/en/backup-restore.png" alt="Preview: what changes, what stays, what is skipped, with notes for missing push targets and devices" width="480"></p>
 
-- **What goes in:** you choose the parts: notifications and monitoring, panel and display, settings per device, AI assessment and, off by default, routines, Magic Push and the personal settings of the users (view, app launcher, favourites, routine stars of every user; restored by user ID, unknown users are skipped, so the file then holds data of all users). The two update settings of the panel (pre-releases, automatic install) are part of "notifications and monitoring". No credentials and no tokens. "Copy" and "Paste text" are the way for the phone app, where saving a file does not always work.
+- **What goes in:** you choose the parts: notifications and monitoring, panel and display, settings per device, AI assessment and, off by default, routines, Magic Push and the personal settings of the users (view, app launcher, favourites, routine stars of every user; restored by user ID, unknown users are skipped, so the file then holds data of all users). The two update settings of the panel (pre-releases, automatic install) are part of "notifications and monitoring". No credentials and no tokens, with one exception: the ping URLs of the HealthCheck services are part of the part "Monitoring and notifications" (the URL of such a service is its key; keep the file private). "Copy" and "Paste text" are the way for the phone app, where saving a file does not always work.
 - **Preview first:** nothing is written before "Apply". The preview counts what changes, stays the same or is not applied, per part, with examples.
 - **What is missing is named:** unknown settings, values out of range, devices that do not exist here and routines or messages with a missing entity are skipped with the reason; a push target or integration that is gone is applied with a note.
 - **Details:** the three tiles of the preview (will change, unchanged, not applied) and the section rows open a window with the full list: every change old → new (devices with their name), the unchanged values, and every skipped entry with its reason; unknown devices with name, ID and what they affect. "Copy report" puts the list on the clipboard. Routines and Magic Push messages show what they do (entity and action, or condition and push target), not only the name from the file.
@@ -437,7 +446,7 @@ The same panel as cards, with the same pop-ups, windows and assistants in full s
 - Signal history comes from the recorder or, for ZHA, Bluetooth, Thread and unrecorded sensors, from the panel itself.
 - Bluetooth devices show the live signal of Bluetooth (best receiver), not the value of their own signal sensor. The path "Connected via" is recorded by the panel from the update on; earlier paths cannot be reconstructed.
 - Every setting shows where it comes from: default, integration, label or device.
-- Nothing security-relevant (tokens, keys) is ever shown in the panel.
+- Nothing security-relevant (tokens, keys) is ever shown in the panel. The one exception are the ping URLs of the HealthCheck services, which only administrators get to see.
 - All screenshots in this file show invented data.
 
 </details>

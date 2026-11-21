@@ -7,6 +7,21 @@ Alle nennenswerten Änderungen an dieser Integration stehen in dieser Datei.
 Das Format folgt [Keep a Changelog](https://keepachangelog.com/de/1.1.0/),
 die Versionsnummern folgen [Semantic Versioning](https://semver.org/lang/de/).
 
+## [2.236.0] - 2026-11-21
+
+HealthCheck-Dienste: Lebenszeichen an externe Dienste wie Healthchecks.io oder Cronitor.
+
+### Hinzugefügt
+
+- **HealthCheck-Dienste (Einstellungen › Überwachung und Meldungen, oberhalb der "Systemmeldungen"):** bis zu fünf externe Dienste bekommen im eingestellten Abstand (1 Minute bis 24 Stunden) ein Lebenszeichen vom Panel. Fällt Home Assistant, das Netz oder der Strom aus, bleibt das Lebenszeichen aus, und der Dienst alarmiert dich; das kann das Panel selbst nicht melden. Das Kapitel zeigt "N von 5 Diensten" und ob ein Lebenszeichen gescheitert ist, mit den Knöpfen "Dienst hinzufügen" und "Dienste anzeigen".
+- **Fälle statt eines Fehlers:** je Dienst eine geordnete Liste von Zeilen, jede mit einer Art (Gerät ausgefallen, Batterie schwach, Backup fehlgeschlagen) und eigenem URL-Zusatz ("/…" hängt an den Pfad, "?…" oder "&…" setzt Parameter). Solange ein Fall zutrifft, ruft das Panel die URL mit dem Zusatz dieser Zeile auf statt des einfachen Lebenszeichens; treffen mehrere zu, gilt die oberste Zeile; endet der Fall, folgt das Lebenszeichen (frühestens eine Minute nach dem letzten Aufruf). Ein neuer Fall geht sofort hinaus, ohne den Abstand abzuwarten. Die Zeilen kommen aus einem Dropdown (je Art eine) und lassen sich nach oben und unten schieben.
+- **Dienste werden erkannt:** Healthchecks.io, Healthchecks (selbst betrieben), Better Stack, Cronitor und Uptime Kuma erkennt das Panel an der URL und schlägt für jeden Fall den Zusatz vor (bei Cronitor und Uptime Kuma mit einer Nachricht wie "Device offline"). Ein Vorschlag füllt eine Zeile nur, solange du sie nicht berührt hast; sonst steht "Übernehmen" daneben. Du hast immer das letzte Wort.
+- **Liste mit Tests:** eine Zeile je Dienst mit Name, URL, erkanntem Anbieter, Fällen, letztem Lebenszeichen und Zustand (grün, orange solange ein Fall gemeldet ist, rot bei gescheitertem Aufruf); Suche, Sortierung, runde Knöpfe für das Protokoll, je Fall ein Test, "OK senden", Bearbeiten und Entfernen (mit Rückfrage). Zum Aufklappen erklärt ein Abschnitt, was die Dienste sind, mit Beispielen.
+- **Protokoll je Dienst:** ein Fenster wie das Gerätefenster: der Name als Auswahl, Zustand, die Testknöpfe im Kopf, drei Reiter (Verlauf, Antwortzeit, Dienst), sieben Zeiträume (3 Std. bis 1 Jahr) mit je einer Grafik (Herzschlag bis zu einem Tag, Zeitleiste je Tag bei 7 Tagen, Stundenraster bei 30 Tagen, Raster Monat × Tag bei 6 Monaten und einem Jahr), Kennzahlen, Legende und einer Liste "Ereignisse" / "Alle Aufrufe" mit Suche und Sortierung. Die Antwortzeit zeigt die Linie mit Zonen (schnell, langsam, sehr langsam) und eine gestrichelte Marke bei jedem gescheiterten Aufruf. Einzelne Aufrufe bleiben 24 Stunden, Stundenwerte 30 Tage, Tageswerte und Ereignisse ein Jahr; Lücken ohne Daten (Home Assistant aus) sind sichtbar. Die URL steht nie im Protokoll.
+- **Sicherung und Wiederherstellung:** die Dienste gehören zur Sicherung (Bereich "Überwachung und Meldungen") mit URL, Fällen und Abstand, nie mit Zustand und Protokoll. Die Vorschau nennt Dienste und Fälle, nie die URL.
+- **Nur für Administratoren:** die Liste, das Protokoll und die Tests bekommen nur Administratoren. Die URL steht ganz im Panel (Ausnahme von der Regel, nichts Geheimes zu zeigen, wie bei Alarmageddon) und in der Sicherungsdatei; halte diese Datei darum privat.
+- **Tests:** `tests/test_healthcheck.py`, `tests/test_healthcheck_log.py`, Suiten `hc-e2e` und `hclog-e2e`.
+
 ## [2.235.1] - 2026-11-16
 
 Das automatische Update installiert jetzt auch Vorabversionen.
@@ -6356,6 +6371,7 @@ Erste Vorabversion.
   GitHub Actions für die Prüfungen von HACS und hassfest sowie die Tests.
 
 [2.6.0]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v2.6.0
+[2.236.0]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v2.236.0
 [2.235.1]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v2.235.1
 [2.235.0]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v2.235.0
 [2.234.0]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v2.234.0

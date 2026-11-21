@@ -355,7 +355,7 @@ export class HealthCheckUi {
       "err-name": shown("name", f.name),
       "err-url": shown("url", f.url),
       "err-interval": "",
-      presets: PRESETS.map((sec) => `<button type="button" class="sub-tab${this.seconds() === sec ? " on" : ""}" data-hc="f-preset" data-sec="${sec}" aria-pressed="${this.seconds() === sec}">${escape(this.host._fmtSeconds(sec, true))}</button>`).join(""),
+      presets: PRESETS.map((sec) => `<button type="button" class="sub-tab${this.seconds() === sec ? " on" : ""}" data-hc="f-preset" data-set="hc-preset" data-sec="${sec}" aria-pressed="${this.seconds() === sec}">${escape(this.host._fmtSeconds(sec, true))}</button>`).join(""),
     };
     out["err-interval"] = bad.interval ? `<small class="hc-err">${escape(bad.interval)}</small>` : "";
     f.cases.forEach((c, i) => {

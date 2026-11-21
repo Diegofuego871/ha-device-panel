@@ -290,6 +290,15 @@ Die App "Updates" (Administratoren) listet jedes offene Update, das Home Assista
 
 Ist für ein Gerät eine neue Version verfügbar, ist seine Kachel "Software" im Pop-up in der Hauptfarbe umrandet; ein Tipp öffnet das Update-Fenster dieses Geräts, und ein laufendes Update zeigt seinen Fortschritt auch in der Kachel.
 
+## HealthCheck-Dienste
+
+Ein externer Dienst wie [Healthchecks.io](https://healthchecks.io), [Cronitor](https://cronitor.io), [Better Stack](https://betterstack.com) oder Uptime Kuma erwartet regelmässig ein Lebenszeichen von Home Assistant. Fällt Home Assistant, das Netz oder der Strom aus, bleibt das Lebenszeichen aus, und der Dienst alarmiert dich; das kann das Panel selbst nicht melden.
+
+- **Wo:** Einstellungen › Überwachung und Meldungen, das Kapitel "HealthCheck-Dienste" oberhalb der "Systemmeldungen": "Dienst hinzufügen" und "Dienste anzeigen". Bis zu fünf Dienste, nur für Administratoren.
+- **Ein Dienst:** ein Name, die Ping-URL und ein Abstand (1 Minute bis 24 Stunden). Bekannte Dienste (Healthchecks.io, Better Stack, Cronitor, Uptime Kuma) erkennt das Panel an der URL.
+- **Fälle:** je Dienst Zeilen mit einer Art (Gerät ausgefallen, Batterie schwach, Backup fehlgeschlagen) und einem URL-Zusatz (zum Beispiel "/fail" oder "?state=fail"). Solange ein Fall zutrifft, ruft das Panel die URL mit dem Zusatz der obersten zutreffenden Zeile auf statt des einfachen Lebenszeichens; das Ende folgt als Lebenszeichen. Der Zusatz wird für bekannte Dienste vorgeschlagen und bleibt deine Sache.
+- **Test und Protokoll:** jeder Dienst hat je Fall einen Testknopf und "OK senden" sowie ein Protokoll mit Grafik (Herzschlag, Zeitleiste, Raster bis zu einem Jahr), Kennzahlen, Antwortzeiten und der Liste der Ereignisse und Aufrufe. Die URL steht Administratoren ganz im Panel und in der Sicherungsdatei (privat halten); im Protokoll steht sie nie.
+
 ## App-Launcher und Protokoll
 
 Ein Knopf in der Kopfzeile öffnet einen Launcher mit nützlichen Seiten, in den Symbolen und Farben der Einstellungen von Home Assistant. Administratoren finden dort auch einen Ein/Aus-Knopf, der Home Assistant neu startet, immer nach einer Rückfrage.
@@ -355,7 +364,7 @@ Unter "Panel" › "Allgemein" (unter "Startseite", nur Administratoren) lassen s
 
 <p align="center"><img src="https://raw.githubusercontent.com/Diegofuego871/ha-device-panel/main/docs/screenshots/de/backup-restore.png" alt="Vorschau: was sich ändert, was bleibt, was übersprungen wird, mit Hinweisen zu fehlenden Push-Zielen und Geräten" width="480"></p>
 
-- **Was hineinkommt:** du wählst die Teile: Meldungen und Überwachung, Panel und Anzeige, Einstellungen pro Gerät, KI-Einschätzung und, standardmässig aus, Routinen, Magic Push und die persönlichen Einstellungen der Benutzer (Ansicht, App-Launcher, Favoriten, Routinen-Sterne jedes Benutzers; Zuordnung über die Benutzer-ID, unbekannte Benutzer werden übersprungen, die Datei enthält dann Daten aller Benutzer). Die beiden Update-Einstellungen des Panels (Vorabversionen, automatisch installieren) gehören zu "Meldungen und Überwachung". Keine Zugangsdaten und keine Tokens. "Kopieren" und "Text einfügen" sind der Weg für die App auf dem Handy, wo das Speichern einer Datei nicht immer geht.
+- **Was hineinkommt:** du wählst die Teile: Meldungen und Überwachung, Panel und Anzeige, Einstellungen pro Gerät, KI-Einschätzung und, standardmässig aus, Routinen, Magic Push und die persönlichen Einstellungen der Benutzer (Ansicht, App-Launcher, Favoriten, Routinen-Sterne jedes Benutzers; Zuordnung über die Benutzer-ID, unbekannte Benutzer werden übersprungen, die Datei enthält dann Daten aller Benutzer). Die beiden Update-Einstellungen des Panels (Vorabversionen, automatisch installieren) gehören zu "Meldungen und Überwachung". Keine Zugangsdaten und keine Tokens, mit einer Ausnahme: die Ping-URLs der HealthCheck-Dienste gehören zum Teil "Meldungen und Überwachung" (die URL eines solchen Dienstes ist sein Schlüssel; halte die Datei privat). "Kopieren" und "Text einfügen" sind der Weg für die App auf dem Handy, wo das Speichern einer Datei nicht immer geht.
 - **Zuerst die Vorschau:** vor "Übernehmen" wird nichts geschrieben. Die Vorschau zählt, was sich ändert, gleich bleibt oder nicht übernommen wird, je Teil, mit Beispielen.
 - **Was fehlt, wird genannt:** unbekannte Einstellungen, Werte ausserhalb des Bereichs, Geräte, die es hier nicht gibt, und Routinen oder Meldungen mit fehlender Entität werden mit Grund übersprungen; ein Push-Ziel oder eine Integration, die es nicht mehr gibt, werden mit Hinweis übernommen.
 - **Details:** die drei Kacheln der Vorschau (werden geändert, unverändert, nicht übernommen) und die Bereichszeilen öffnen ein Fenster mit der vollen Liste: jede Änderung alt → neu (Geräte mit Namen), die unveränderten Werte und jeder übersprungene Eintrag mit Grund; unbekannte Geräte mit Name, ID und Betroffenem. "Bericht kopieren" legt die Liste in die Zwischenablage. Routinen und Magic-Push-Meldungen zeigen dort, was sie tun (Entität und Aktion bzw. Bedingung und Push-Ziel), nicht nur den Namen aus der Datei.
@@ -437,7 +446,7 @@ Dasselbe Panel als Karten, mit denselben Pop-ups, Fenstern und Assistenten im Vo
 - Der Empfangsverlauf kommt aus dem Recorder oder, bei ZHA, Bluetooth, Thread und nicht aufgezeichneten Sensoren, vom Panel selbst.
 - Bluetooth-Geräte zeigen den Live-Empfang von Bluetooth (bester Empfänger), nicht den Wert ihres eigenen Empfangs-Sensors. Den Weg "Verbunden über" zeichnet das Panel ab dem Update auf; frühere Wege lassen sich nicht nachträglich herstellen.
 - Jede Einstellung zeigt, woher sie stammt: Standard, Integration, Label oder Gerät.
-- Nichts Sicherheitsrelevantes (Tokens, Schlüssel) wird je im Panel angezeigt.
+- Nichts Sicherheitsrelevantes (Tokens, Schlüssel) wird je im Panel angezeigt. Die einzige Ausnahme sind die Ping-URLs der HealthCheck-Dienste, die nur Administratoren zu sehen bekommen.
 - Alle Printscreens in dieser Datei zeigen erfundene Daten.
 
 </details>

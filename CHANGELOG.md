@@ -7,6 +7,21 @@ All notable changes to this integration are documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/).
 
+## [2.236.0] - 2026-11-21
+
+HealthCheck services: heartbeats to external services such as Healthchecks.io or Cronitor.
+
+### Added
+
+- **HealthCheck services (Settings › Monitoring and notifications, above "System alerts"):** up to five external services get a heartbeat from the panel at a set interval (1 minute to 24 hours). If Home Assistant, the network or the power goes down, the heartbeat stays away and the service alerts you, which the panel cannot report itself. The chapter shows "N of 5 services" and whether a heartbeat failed, with the buttons "Add service" and "Show services".
+- **Cases instead of one error:** per service an ordered list of rows, each with a kind (device offline, battery low, backup failed) and its own URL suffix ("/…" is added to the path, "?…" or "&…" sets parameters). While a case applies, the panel calls the URL with the suffix of that row instead of the plain heartbeat; if several apply, the top row wins; when the case ends, the heartbeat follows (at least a minute after the last call). A new case goes out at once, without waiting for the interval. Rows are added from a drop-down, one per kind, and can be moved up and down.
+- **Services are recognised:** Healthchecks.io, Healthchecks (self-hosted), Better Stack, Cronitor and Uptime Kuma are recognised by their URL and the suffix is suggested for each case (for Cronitor and Uptime Kuma with a message such as "Device offline"). A suggestion fills a row only while you have not touched it; otherwise "Use it" stands next to it. You always have the last word.
+- **List with tests:** one row per service with name, URL, recognised provider, cases, last heartbeat and state (green, orange while a case is reported, red when a call failed); search, sorting, round buttons for the log, one test per case, "Send OK", edit and remove (with a confirmation). A fold-out explains what the services are, with examples.
+- **Log per service:** a window like the device window: name as a switcher, state, the test buttons in the header, three tabs (History, Response time, Service), seven periods (3 h to 1 year) with a chart for each (heartbeat bars up to a day, timeline per day for 7 days, hour grid for 30 days, month × day grid for 6 months and a year), key figures, a legend and a list "Events" / "All calls" with search and sorting. The response time shows the line with zones (fast, slow, very slow) and a dashed mark at every failed call. Single calls are kept for 24 hours, hourly values for 30 days, daily values and events for a year; gaps without data (Home Assistant off) are shown. The URL is never in the log.
+- **Backup and restore:** the services are part of the backup (part "Monitoring and notifications") with their URL, cases and interval, never with state or log. The preview names services and cases, never the URL.
+- **Only for administrators:** the list, the log and the tests come only to administrators. The URL is shown in full (exception to the rule of showing nothing secret, as in Alarmageddon) and stands in the backup file, so keep that file private.
+- **Tests:** `tests/test_healthcheck.py`, `tests/test_healthcheck_log.py`, suites `hc-e2e` and `hclog-e2e`.
+
 ## [2.235.1] - 2026-11-16
 
 Automatic update now also installs pre-releases.
@@ -6255,6 +6270,7 @@ First pre-release.
   GitHub Actions for HACS/hassfest validation and tests.
 
 [2.6.0]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v2.6.0
+[2.236.0]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v2.236.0
 [2.235.1]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v2.235.1
 [2.235.0]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v2.235.0
 [2.234.0]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v2.234.0

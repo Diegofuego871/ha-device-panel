@@ -2217,6 +2217,62 @@
         if (window.__listDelay) await new Promise((r) => setTimeout(r, window.__listDelay));
         return res;
       }
+      if (!window.__hcHistory) {
+      // Protokoll eines HealthCheck-Dienstes (2.236.0): erfundene Aufrufe im Format des Servers (healthcheck_log.history). window.__hcLog = { since: Stunden seit Beginn, empty: true }
+      window.__hcHistory = (item, hours) => {
+        const now = Date.now();
+        const iso = (t) => new Date(t).toISOString();
+        const HOUR = 3600000;
+        const interval = (item.interval || 300) * 1000;
+        const opts = window.__hcLog || {};
+        if (opts.empty) {
+          return { id: item.id, hours, now: iso(now), start: iso(now - hours * HOUR), interval: item.interval, gap_day: 30, since: null, state: { state: null, since: null }, last: null, points: [], hourly: [], daily: [], gaps: [], marks: [], events: [], events_total: 0, calls: [], calls_total: 0, calls_from: null, summary: { ok: 0, report: 0, fail: 0, test: 0, total: 0, rate: null, ms_mean: null, ms_max: null, no_answer: 0 } };
+        }
+        const daily = hours > 720;
+        const todayStart = new Date(now); todayStart.setHours(0, 0, 0, 0);
+        const start = daily ? new Date(todayStart.getFullYear(), todayStart.getMonth(), todayStart.getDate() - (hours / 24 - 1)).getTime() : now - hours * HOUR;
+        const sinceT = now - (opts.sinceHours ?? 24 * 400) * HOUR;
+        const kindAt = (t) => (Math.abs(t - (now - 5 * HOUR)) < interval ? "fail" : Math.abs(t - (now - 2 * HOUR)) < 3 * interval ? "report" : "ok");
+        const callsFrom = now - 24 * HOUR;
+        const calls = [];
+        for (let t = Math.floor(callsFrom / interval) * interval + interval; t <= now; t += interval) {
+          if (t > now - 9 * HOUR && t < now - 8 * HOUR) continue; // eine Lücke ohne Daten
+          const kind = kindAt(t);
+          calls.push({ t: iso(t), kind, result: kind === "fail" ? "timeout" : "ok", code: kind === "fail" ? null : 200, ms: kind === "fail" ? null : 90 + (t / 1000 % 70), by: kind === "report" ? "case" : "tick", sent: kind === "report" ? (item.cases?.[0]?.kind || "offline") : "ok" });
+        }
+        calls.push({ t: iso(now - 600000), kind: "test", result: "ok", code: 200, ms: 140, by: "test", sent: "ok" });
+        const inRange = calls.filter((c) => new Date(c.t).getTime() > start);
+        const sum = { ok: 0, report: 0, fail: 0, test: 0 };
+        for (const c of inRange) sum[c.kind]++;
+        const times = inRange.filter((c) => c.result === "ok").map((c) => c.ms);
+        const out = {
+          id: item.id, hours, now: iso(now), start: iso(start), interval: item.interval, gap_day: 30, since: iso(Math.max(sinceT, start - 1000)),
+          state: { state: "ok", since: iso(now - HOUR) }, last: { t: iso(now - 60000), kind: "ok", result: "ok", code: 200, ms: 120 },
+          points: [], hourly: [], daily: [], gaps: [[iso(now - 9 * HOUR + interval), iso(now - 8 * HOUR)]], marks: [],
+          events: [
+            { kind: "back", t: iso(now - 4.9 * HOUR), result: "ok", by: "tick", from: "fail", code: 200, ms: 110 },
+            { kind: "fail", t: iso(now - 5 * HOUR), result: "timeout", by: "tick", n: 3, end: iso(now - 4.95 * HOUR) },
+            { kind: "report", t: iso(now - 2 * HOUR), result: "ok", by: "case", sent: item.cases?.[0]?.kind || "offline", n: 3, end: iso(now - 1.95 * HOUR), code: 200, ms: 100 },
+            { kind: "test", t: iso(now - 600000), result: "ok", by: "test", sent: "ok", code: 200, ms: 140 },
+          ],
+          events_total: 4, calls: [...inRange].reverse(), calls_total: inRange.length, calls_from: iso(callsFrom),
+          summary: { ...sum, total: inRange.length, rate: Math.round(1000 * (inRange.length - sum.fail) / inRange.length) / 10, ms_mean: Math.round(times.reduce((a, b) => a + b, 0) / (times.length || 1)), ms_max: Math.round(Math.max(...times)), no_answer: sum.fail },
+        };
+        if (hours <= 24) out.points = inRange.map((c) => [c.t, c.kind, c.ms]);
+        else if (!daily) {
+          for (let h = Math.floor(start / HOUR) * HOUR; h <= now; h += HOUR) out.hourly.push([iso(h), 11, h === Math.floor((now - 2 * HOUR) / HOUR) * HOUR ? 3 : 0, h === Math.floor((now - 5 * HOUR) / HOUR) * HOUR ? 1 : 0, 0, 110, 190]);
+          out.marks = [[iso(now - 5 * HOUR), null, "fail"], [iso(now - 2 * HOUR), iso(now - 1.95 * HOUR), "report"], [iso(now - 600000), null, "test"]];
+        } else {
+          for (let d = new Date(start); d <= todayStart; d = new Date(d.getFullYear(), d.getMonth(), d.getDate() + 1)) {
+            const key = `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}-${String(d.getDate()).padStart(2, "0")}`;
+            const n = Math.round((d - start) / 86400000);
+            out.daily.push([key, 280, n % 17 === 0 ? 3 : 0, n % 29 === 0 ? 2 : 0, n % 11 === 0 ? 1 : 0, 115, 240, 0, n % 41 === 0 ? 120 : 0]);
+          }
+          out.marks = [[iso(now - 5 * HOUR), null, "fail"]];
+        }
+        return out;
+      };
+      }
       // HealthCheck-Dienste (2.236.0): window.__hc = Liste der Dienste { id, name, url, interval, cases: [{ kind, suffix }], status, log }; window.__hcPing = [Aufrufe]
       if (String(msg.type).startsWith("device_panel/healthcheck_")) {
         const hc = (window.__hc ||= []);
