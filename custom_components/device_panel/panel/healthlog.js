@@ -351,7 +351,8 @@ export class HealthLogUi {
         <div class="hl-menu" role="listbox" aria-label="${escape(t("hlSwitch"))}" ${this.menu ? "" : "hidden"}>${menu}</div></div>
       <div class="dlg-body hl" data-tab="${this.tab}"><div class="sub-tabs hl-tabs" data-set="hl-tab" role="tablist">${tabs}</div>${body.fix}<div class="hl-list">${body.list}</div></div>
       <div class="dlg-actions"><button type="button" class="dlg-btn" data-hl="close">${mdi("close", 18)}${escape(t("close"))}</button></div>`;
-    this.host._initSeg(dlg);
+    // Die Reiterleisten (.sub-tabs) beobachtet das Panel selbst (seg.js, auf der ganzen Wurzel): kein eigener Aufruf von _initSeg hier. Ein Aufruf je Zeichnen
+    // setzte die gemerkte Lage der Kapsel zurück (sie sprang statt zu gleiten) und hängte jedes Mal neue Beobachter an (das Fenster hing sich auf).
   }
 
   // Oben rechts: je Fall der runde Testknopf, "OK senden" und der Stift, dieselben runden Knöpfe wie in der Liste der Dienste
@@ -888,8 +889,9 @@ export class HealthLogUi {
     const { escape } = this.h;
     const d = this.data;
     const pane = this.pane;
-    const events = pane === "events" ? spec : this._eventsSpec(d);
-    const calls = pane === "calls" ? spec : this._callsSpec(d);
+    // Die Zahlen der Reiter kommen direkt aus der Antwort: die Zeilen des anderen Reiters werden nicht gebaut (bei vielen Aufrufen kostet das jedes Zeichnen Zeit)
+    const events = { total: Number.isInteger(d.events_total) ? d.events_total : d.events.length };
+    const calls = { total: Number.isInteger(d.calls_total) ? d.calls_total : d.calls.length };
     const btn = (key, label, n) => `<button type="button" role="tab" data-hl="pane" data-set="hl-pane" data-pane="${key}" class="sub-tab${pane === key ? " on" : ""}" aria-selected="${pane === key}">${escape(this._t(label))}<span class="hl-n">${n}</span></button>`;
     const note = (n) => `<p class="hl-note">${escape(n)}</p>`;
     const ph = this._t(pane === "calls" ? "hlSearchCalls" : "hlSearchEvents");

@@ -3014,7 +3014,7 @@ dialog.hc-dlg::backdrop, dialog.hc-form-dlg::backdrop, dialog.hl-dlg::backdrop {
 .hc-dlg .dlg-head, .hc-form-dlg .dlg-head, .hl-dlg .dlg-head { flex: none; position: static; }
 .hc-dlg .dlg-title, .hc-form-dlg .dlg-title { align-self: center; }
 .hc-dlg .dlg-title h2, .hc-form-dlg .dlg-title h2 { margin: 0; }
-.hc-dlg .dlg-body, .hc-form-dlg .dlg-body { flex: 1 1 auto; min-height: 0; overflow: auto; padding: 0 22px 24px; }
+.hc-dlg .dlg-body, .hc-form-dlg .dlg-body, .hl-dlg .dlg-body { flex: 1 1 auto; min-height: 0; overflow: auto; padding: 0 22px 24px; }
 .hc-form { display: flex; flex-direction: column; flex: 1 1 auto; min-height: 0; }
 .hc-tools[hidden] { display: none; }
 .hc-listhead { display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 6px 12px; margin: 10px 2px 8px; }
@@ -3070,7 +3070,7 @@ dialog.hc-dlg::backdrop, dialog.hc-form-dlg::backdrop, dialog.hl-dlg::backdrop {
 .hc-presets { margin: 4px 0 6px; }
 @media (max-width: 700px) {
   dialog.hc-dlg, dialog.hc-form-dlg, dialog.hl-dlg { width: 100%; max-width: 100%; height: 100%; max-height: 100%; margin: 0; border-radius: 0; }
-  .hc-dlg .dlg-body, .hc-form-dlg .dlg-body { padding: 0 16px 20px; }
+  .hc-dlg .dlg-body, .hc-form-dlg .dlg-body, .hl-dlg .dlg-body { padding: 0 16px 20px; }
   .hc-btns { flex: 1 1 100%; justify-content: flex-start; margin-left: 0; }
 }
 /* Protokoll der HealthCheck-Dienste (seit 2.236.0, healthlog.js): Kopf mit Auswahl, Reiter, Zeitraum, Kennzahlen, Grafiken (SVG, Farben über Klassen), Liste */

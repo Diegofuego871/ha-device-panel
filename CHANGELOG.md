@@ -9,11 +9,15 @@ and this project adheres to [Semantic Versioning](https://semver.org/).
 
 ## [2.236.1] - 2026-11-21
 
-The chapter "HealthCheck services" looks like the other chapters.
+The chapter "HealthCheck services" looks like the other chapters, and the log window slides and scrolls properly.
 
 ### Changed
 
 - **Chapter "HealthCheck services" in the settings:** no box around it any more, and the two buttons "Add service" and "Show services" stand side by side in one row; "Show services" has no arrow button.
+
+### Fixed
+
+- **Log window of the HealthCheck services:** the tab switchers (tab, period, list) jumped instead of sliding, and the window hung again and again. Cause: every redraw set up the sliding capsule anew, which reset its remembered position and added more observers each time. The panel already watches these bars itself, so the extra call is gone. The window also did not scroll (its content area was missing the rule); it scrolls now. The list only builds the rows of the open pane.
 
 ## [2.236.0] - 2026-11-21
 

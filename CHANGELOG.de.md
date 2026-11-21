@@ -9,11 +9,15 @@ die Versionsnummern folgen [Semantic Versioning](https://semver.org/lang/de/).
 
 ## [2.236.1] - 2026-11-21
 
-Das Kapitel "HealthCheck-Dienste" sieht aus wie die anderen Kapitel.
+Das Kapitel "HealthCheck-Dienste" sieht aus wie die anderen Kapitel, und das Protokoll-Fenster gleitet und scrollt richtig.
 
 ### Geändert
 
 - **Kapitel "HealthCheck-Dienste" in den Einstellungen:** kein Kasten mehr darum, und die beiden Knöpfe "Dienst hinzufügen" und "Dienste anzeigen" stehen nebeneinander in einer Zeile; "Dienste anzeigen" hat keinen Pfeil-Knopf.
+
+### Behoben
+
+- **Protokoll-Fenster der HealthCheck-Dienste:** die Reiterleisten (Reiter, Zeitraum, Liste) sprangen statt zu gleiten, und das Fenster hing sich immer wieder auf. Ursache: jedes Neuzeichnen richtete die gleitende Kapsel neu ein, was ihre gemerkte Lage zurücksetzte und jedes Mal weitere Beobachter anhängte. Das Panel beobachtet diese Leisten schon selbst, der zusätzliche Aufruf entfällt. Das Fenster scrollte ausserdem nicht (dem Inhaltsbereich fehlte die Regel); jetzt scrollt es. Die Liste baut nur noch die Zeilen des offenen Reiters.
 
 ## [2.236.0] - 2026-11-21
 

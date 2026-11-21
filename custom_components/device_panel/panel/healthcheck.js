@@ -405,7 +405,7 @@ export class HealthCheckUi {
           <small class="hc-t2">${escape(this.t("hcIntervalHint"))}</small><span data-hcp="err-interval">${p["err-interval"]}</span></div>
         <div class="dlg-error" data-hc-err ${f.error ? "" : "hidden"} aria-live="polite">${escape(f.error || "")}</div></div>
       <div class="dlg-actions"><button type="button" class="dlg-btn" data-hc="f-cancel">${mdi("close", 18)}${escape(this.t("hcCancel"))}</button><button type="submit" class="dlg-btn primary" ${f.saving ? "disabled" : ""}>${mdi("check", 18)}${escape(this.t("hcSave"))}</button></div></form>`;
-    this.host._initSeg(dlg);
+    // Reiterleisten beobachtet das Panel selbst (seg.js): kein eigener Aufruf von _initSeg (er setzte die Lage der Kapsel zurück und hängte Beobachter an)
   }
 
   // Nur Hinweise, Vorschau und Fehler neu zeichnen, nie das Feld, in dem getippt wird (Cursor und Fokus bleiben)
@@ -418,7 +418,6 @@ export class HealthCheckUi {
       const el = dlg.querySelector(`[data-hcp="${key}"]`);
       if (el && el.innerHTML !== html) el.innerHTML = html;
     }
-    if (dlg.querySelector('[data-hcp="presets"]')) this.host._initSeg(dlg);
     const active = this.host.shadowRoot.activeElement;
     f.cases.forEach((c, i) => {
       const input = dlg.querySelector(`[data-hc="f-case"][data-i="${i}"]`);

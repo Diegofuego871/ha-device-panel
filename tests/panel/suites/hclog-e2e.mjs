@@ -60,11 +60,16 @@ for (const lang of ["de", "en"]) {
     check(`[${tag}] Jahr: Monatsraster mit Tageszelle und Zusammenfassung der Tage`, await ev(`return !!r.querySelector('${LOG} .hl-sum') && r.querySelectorAll('${LOG} [data-kind="fail"]').length > 0`));
     check(`[${tag}] Liste folgt dem Zeitraum: Hinweis zu den einzelnen Aufrufen`, (await ev(`return r.querySelector('${LOG} .hl-lbar .sub-tab[data-pane="calls"]')?.click(), 1`)) && (await wait(`return r.querySelector('${LOG} .hl-note')?.textContent.includes(${JSON.stringify(L.callsDay)})`)));
     await p.screenshot({ path: `${outDir}/hclog-year-${tag.replace("/", "-")}.png` });
+    // Das Fenster scrollt (Inhalt höher als das Fenster) und das Neuzeichnen hängt sich nie auf (kein Beobachter je Zeichnen dazu)
+    check(`[${tag}] Fenster scrollt: Inhalt höher als der sichtbare Teil, scrollTop lässt sich setzen`, await ev(`const b = r.querySelector('${LOG} .dlg-body'); b.scrollTop = 150; return b.scrollHeight > b.clientHeight && b.scrollTop > 0 && getComputedStyle(b).overflowY === "auto"`));
+    check(`[${tag}] 40 Mal neu zeichnen bleibt schnell (kein Hängen durch angehäufte Beobachter)`, await ev(`r.host._hl.pane = "events"; r.host._hl.render(); const t = performance.now(); for (let i = 0; i < 40; i++) r.host._hl.render(); return performance.now() - t < 2500`));
+    await ev(`r.querySelector('${LOG} .dlg-body').scrollTop = 0`);
     await tap(`${LOG} .hl-range [data-hours="24"]`);
     await wait(`return r.querySelector('${LOG} .hl-range .sub-tab.on')?.dataset.hours === "24"`);
 
     // Antwortzeit
     await tap(`${LOG} .hl-tabs [data-tab="latency"]`);
+    check(`[${tag}] Reiterwechsel: die Kapsel gleitet (Klasse go), sie springt nicht`, await wait(`return !!r.querySelector('${LOG} .hl-tabs .seg-pill.go')`, 500));
     check(`[${tag}] Reiter "${L.tabs[1]}": Linie, Fläche, Zonen und Kennzahl "${L.tab_mean}"`, await wait(`return !!r.querySelector('${LOG} .hl-line') && !!r.querySelector('${LOG} .hl-area') && r.querySelectorAll('${LOG} .hl-zone').length === 3 && !!r.querySelector('${LOG} .hl-failmark')`) && (await text(`${LOG} .hl-kpis`)).includes(L.tab_mean));
     await p.screenshot({ path: `${outDir}/hclog-latency-${tag.replace("/", "-")}.png` });
     await tap(`${LOG} .hl-tabs [data-tab="history"]`);
