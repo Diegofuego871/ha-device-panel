@@ -3085,7 +3085,7 @@ dialog.hc-dlg::backdrop, dialog.hc-form-dlg::backdrop, dialog.hl-dlg::backdrop {
 @media (max-width: 700px) {
   dialog.hc-dlg, dialog.hc-form-dlg, dialog.hl-dlg { width: 100%; max-width: 100%; height: 100%; max-height: 100%; margin: 0; border-radius: 0; }
   .hc-dlg .dlg-body, .hc-form-dlg .dlg-body, .hl-dlg .dlg-body { padding: 0 16px 20px; }
-  .hc-btns { flex: 1 1 100%; justify-content: flex-start; margin-left: 0; }
+  .hc-btns { flex: 1 1 100%; justify-content: flex-end; margin-left: 0; }
 }
 /* Protokoll der HealthCheck-Dienste (seit 2.236.0, healthlog.js): Kopf mit Auswahl, Reiter, Zeitraum, Kennzahlen, Grafiken (SVG, Farben über Klassen), Liste */
 /* Spezifität wie die Regel oben (.hl-dlg .dlg-head ist static): sonst hängt das Auswahlmenü am Fenster statt am Kopf und liegt ausserhalb des Sichtbereichs */
