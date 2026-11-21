@@ -3176,6 +3176,8 @@ b.hl-pick.one { display: block; }
 .hl-drow > b { flex: 1 1 0; min-width: 0; text-align: right; font-weight: 500; overflow-wrap: anywhere; }
 .hl-drow.mono > b { font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace; font-size: 13px; }
 /* Handy: die Knöpfe stehen rechts in einer eigenen Zeile unter dem Schliessen-Knopf (der Knopf sitzt wie in den Einstellungen) */
+/* Handy: alle runden Knöpfe der HealthCheck-Fenster sind so gross wie das Schliessen-Kreuz (38 px) */
+@media (max-width: 600px) { .hc-ib { width: 38px; height: 38px; } }
 @media (max-width: 600px) {
   .hl-dlg .hl-head { flex-wrap: wrap; }
   .hl-head .hl-acts .hc-ib { width: 38px; height: 38px; }

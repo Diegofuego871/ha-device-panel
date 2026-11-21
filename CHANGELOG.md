@@ -9,11 +9,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/).
 
 ## [2.237.1] - 2026-11-22
 
-The two buttons of the chapter "HealthCheck services" show their icons again on the phone.
+The two buttons of the chapter "HealthCheck services" show their icons again on the phone, and the round buttons are as big as the close button.
 
 ### Fixed
 
 - **Chapter buttons on the phone:** "Add service" and "Show services" show their icons again.
+- **Round buttons on the phone:** all round buttons of the HealthCheck windows (log, check, edit, remove, test) are as big as the close button (38 px), not larger.
 
 ## [2.237.0] - 2026-11-21
 

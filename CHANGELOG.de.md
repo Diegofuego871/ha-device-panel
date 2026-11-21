@@ -9,11 +9,12 @@ die Versionsnummern folgen [Semantic Versioning](https://semver.org/lang/de/).
 
 ## [2.237.1] - 2026-11-22
 
-Die zwei Knöpfe des Kapitels "HealthCheck-Dienste" zeigen auf dem Handy wieder ihre Symbole.
+Die zwei Knöpfe des Kapitels "HealthCheck-Dienste" zeigen auf dem Handy wieder ihre Symbole, und die runden Knöpfe sind so gross wie das Schliessen-Kreuz.
 
 ### Behoben
 
 - **Kapitel-Knöpfe auf dem Handy:** "Dienst hinzufügen" und "Dienste anzeigen" zeigen ihre Symbole wieder.
+- **Runde Knöpfe auf dem Handy:** alle runden Knöpfe der HealthCheck-Fenster (Protokoll, Test, Bearbeiten, Entfernen) sind so gross wie das Schliessen-Kreuz (38 px), nicht grösser.
 
 ## [2.237.0] - 2026-11-21
 
