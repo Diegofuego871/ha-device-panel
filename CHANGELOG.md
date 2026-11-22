@@ -7,6 +7,15 @@ All notable changes to this integration are documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/).
 
+## [2.239.0] - 2026-11-22
+
+Routines can press buttons.
+
+### Added
+
+- **Buttons in routines:** a routine can now press a button (`button` and `input_button`), once, at a time, daily, weekly, monthly or by a trigger, like every other routine. The action is "Press"; as with a scene there is nothing to switch back: the page "Switch back" is skipped, the note "A button can only be pressed, not switched back." stands instead, and a chosen "Switch back" or switch options are rejected. Buttons stand with their device like a switch (the own buttons of this integration are left out, as before). A routine reports "Button X pressed" and the log says "button pressed"; "Run now" and "Test" press the button for real.
+- **Tests:** the Python tests for pressing, notification, log and the rules, and the new suite `routinebutton-e2e` (both languages, desktop and phone).
+
 ## [2.238.0] - 2026-11-22
 
 HealthCheck services: a link to the dashboard of the service.
@@ -6371,6 +6380,7 @@ First pre-release.
   GitHub Actions for HACS/hassfest validation and tests.
 
 [2.6.0]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v2.6.0
+[2.239.0]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v2.239.0
 [2.238.0]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v2.238.0
 [2.237.4]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v2.237.4
 [2.237.3]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v2.237.3

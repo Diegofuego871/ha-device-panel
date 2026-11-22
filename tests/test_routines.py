@@ -795,6 +795,53 @@ async def test_scene_rules(hass: HomeAssistant, setup) -> None:  # noqa: F811
     assert listing[device.id]["names"] == ["scene"] and len(listing[routines.HOLDER_SCENES]["names"]) == 2
 
 
+async def test_button_is_pressed_once_and_notifies(hass: HomeAssistant, setup, freezer) -> None:  # noqa: F811
+    """Button (2.239.0): Aktion "Drücken" ruft button.press, Meldung und Protokoll sagen "Button gedrückt", es gibt kein Zurückschalten."""
+    from custom_components.device_panel import activity
+
+    press = async_mock_service(hass, "button", "press")
+    press_input = async_mock_service(hass, "input_button", "press")
+    handy = async_mock_service(hass, "notify", "handy")
+    await _options(hass, notify_service="notify.handy")
+    device = _device(hass, "Klingel")
+    button = _switch(hass, device, "klingel", "unknown", "button")
+    input_button = _switch(hass, device, "taste", "unknown", "input_button")
+    manager = hass.data[DATA_ROUTINES]
+    assert routines.actions_for("button") == ["press"] and routines.actions_for("input_button") == ["press"]
+    saved = await manager.async_save_routine({**_raw(device, button), "action": "press", "delay_s": 60, "push": True})
+    await manager.async_save_routine({**_raw(device, input_button), "action": "press", "delay_s": 60})
+    await _tick(hass, freezer, 61)
+    assert len(press) == 1 and press[0].data["entity_id"] == button
+    assert len(press_input) == 1 and press_input[0].data["entity_id"] == input_button
+    assert handy[0].data["message"].startswith("Button ") and " gedrückt · " in handy[0].data["message"]
+    assert [e for e in activity.get(hass).entries if e["text"].startswith("Button gedrückt")]
+    payload = routines.routine_payload(hass, manager, manager.get(saved["id"]))
+    assert payload["actions"] == ["press"] and payload["domain"] == "button"
+    # der Button steht bei den schaltbaren Entitäten seines Geräts und im Verzeichnis der Geräte
+    assert sorted(e["entity_id"] for e in routines.switchable_entities(hass, device.id)) == sorted([button, input_button])
+    assert device.id in [d["id"] for d in routines.switchable_devices(hass)]
+
+
+async def test_button_rules(hass: HomeAssistant, setup) -> None:  # noqa: F811
+    """Ein Button kennt nur "Drücken": weder ein/aus noch Zurückschalten noch Schaltoptionen."""
+    manager = hass.data[DATA_ROUTINES]
+    device = _device(hass, "Klingel")
+    button = _switch(hass, device, "klingel", "unknown", "button")
+    for raw, message in (
+        ({**_raw(device, button), "action": "on"}, "gibt es für diese Entität nicht"),
+        ({**_raw(device, button), "action": "press", "back_s": 60}, "nicht zurückschalten"),
+        ({**_raw(device, button), "action": "press", "options": {"brightness_pct": 5}}, "keine Schaltoptionen"),
+    ):
+        with pytest.raises(vol.Invalid) as err:
+            await manager.async_save_routine(raw)
+        assert message in str(err.value), (raw, str(err.value))
+    saved = await manager.async_save_routine({**_raw(device, button), "action": "press"})
+    assert saved["action"] == "press" and saved["back_kind"] == "none"
+    # planbar wie jede Routine: täglich um eine Uhrzeit
+    daily = await manager.async_save_routine({**_raw(device, button), "action": "press", "kind": "repeat", "repeat": "daily", "time": "07:30"})
+    assert daily["kind"] == "repeat" and daily["action"] == "press"
+
+
 async def test_group_without_device_behaves_like_a_lamp(hass: HomeAssistant, setup, freezer) -> None:  # noqa: F811
     """Gruppe (Licht mit Mitgliedern, ohne Gerät): ein, aus, Helligkeit und Zurückschalten wie bei einer einzelnen Lampe."""
     on = async_mock_service(hass, "light", "turn_on")

@@ -126,11 +126,14 @@ SERVICES: dict[str, dict[str, tuple[str, str]]] = {
     "media_player": {"on": ("media_player", "turn_on"), "off": ("media_player", "turn_off"), "toggle": ("media_player", "toggle")},
     # Szene (seit 2.61.0): nur auslösen, es gibt weder Aus noch Zurückschalten
     "scene": {"activate": ("scene", "turn_on")},
+    # Button (seit 2.239.0): nur drücken, wie bei der Szene gibt es weder Aus noch Zurückschalten; ein Button hat keinen Zustand zum Wiederherstellen
+    "button": {"press": ("button", "press")},
+    "input_button": {"press": ("input_button", "press")},
     # Zahl und Auswahl (seit 2.80.0): nur setzen (Wert in den Schaltoptionen), zurück geht über "wie vorher"
     "number": {"set": ("number", "set_value")},
     "select": {"set": ("select", "select_option")},
 }
-ACTIONS = ("on", "off", "toggle", "activate", "set")
+ACTIONS = ("on", "off", "toggle", "activate", "press", "set")
 # Sammelstellen für Szenen und Gruppen ohne Gerät (seit 2.61.0): stehen dort, wo sonst die Geräte-ID steht, und beginnen mit "@",
 # damit sie nie mit einer echten Geräte-ID zusammenfallen.
 HOLDER_SCENES = "@scenes"
@@ -147,6 +150,7 @@ CALL_TIMEOUT_S = 45
 RESULT = {
     ("cover", "on"): "open", ("cover", "off"): "closed", ("valve", "on"): "open", ("valve", "off"): "closed",
     ("lock", "on"): "locked", ("lock", "off"): "unlocked", ("scene", "activate"): "activated",
+    ("button", "press"): "pressed", ("input_button", "press"): "pressed",
 }
 
 _ID_RE = re.compile(r"^[0-9a-f]{12}$")
@@ -231,6 +235,12 @@ def opposite(action: str) -> str | None:
 def can_back(action: str) -> bool:
     """Lässt sich nach dieser Aktion zurückschalten? Ein/Aus mit dem Gegenstück, "setzen" nur mit "wie vorher"."""
     return opposite(action) is not None or action == "set"
+
+
+def _run_key(action: str, *, manual: bool = False) -> str:
+    """Schlüssel des Protokolltexts beim Ausführen: Szene aktivieren und Button drücken haben eigene Sätze, alles andere "geschaltet"."""
+    base = {"activate": "routine_run_scene", "press": "routine_run_press"}.get(action, "routine_run")
+    return f"{base}_manual" if manual else base
 
 
 def result_word(domain: str, action: str) -> str:
@@ -1642,7 +1652,7 @@ class RoutineManager:
         rt["ran"] += len(oks)
         for i in oks:
             view = target_view(routine, i)
-            activity.record(hass, "info", "routine", "routine_run_scene" if view["action"] == "activate" else "routine_run", name, device, entity=self._entity_name(view), action=self._action_text(view, view["action"]))
+            activity.record(hass, "info", "routine", _run_key(view["action"]), name, device, entity=self._entity_name(view), action=self._action_text(view, view["action"]))
         if not fails:
             rt.update(retry=0, retry_ids=[], ran=0)
             rt["last"] = {"at": now, "ok": True, "what": "run", "reason": None}
@@ -1841,7 +1851,7 @@ class RoutineManager:
             oks, fails = await self._async_switch(routine, rt, now, trace)
             for i in oks:
                 view = target_view(routine, i)
-                activity.record(self.hass, "info", "routine", "routine_run_scene_manual" if view["action"] == "activate" else "routine_run_manual", routine["name"], log_device(routine), entity=self._entity_name(view), action=self._action_text(view, view["action"]))
+                activity.record(self.hass, "info", "routine", _run_key(view["action"], manual=True), routine["name"], log_device(routine), entity=self._entity_name(view), action=self._action_text(view, view["action"]))
             ok, reason = not fails, fails[0][1] if fails else None
             if ok:
                 rt["last"] = {"at": now, "ok": True, "what": "run", "reason": None}
@@ -2104,7 +2114,7 @@ class RoutineManager:
         word = result_word(domain, action)
         if word == "set":
             return push.text(hass, "routine_title", name=routine["name"]), push.text(hass, "routine_text_set", entity=entity, value=self.set_value_text(routine), time=clock)
-        key = {"toggled": "routine_text_toggled", "activated": "routine_text_activated"}.get(word, "routine_text")
+        key = {"toggled": "routine_text_toggled", "activated": "routine_text_activated", "pressed": "routine_text_pressed"}.get(word, "routine_text")
         return push.text(hass, "routine_title", name=routine["name"]), push.text(hass, key, entity=entity, result=push.text(hass, f"routine_res_{word}") if word != "toggled" else "", time=clock)
 
     async def _async_notify(

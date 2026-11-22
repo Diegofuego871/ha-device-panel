@@ -107,7 +107,8 @@ const toHex = (rgb) => `#${rgb.map((v) => pad(Math.round(v).toString(16))).join(
 const fromHex = (hex) => [1, 3, 5].map((i) => parseInt(hex.slice(i, i + 2), 16));
 
 // Szenen (seit 2.61.0) stehen nicht in DOMAIN_EMOJI: der Reiter "Schalter" im Geräte-Popup zeigt nur, was sich bedienen lässt
-export const routineEmoji = (domain) => (domain === "scene" ? "🎬" : DOMAIN_EMOJI[domain] || "⚡");
+// Buttons (seit 2.239.0) ebenfalls nicht: ein Button hat keinen Zustand, den das Popup zeigen könnte
+export const routineEmoji = (domain) => (domain === "scene" ? "🎬" : domain === "button" || domain === "input_button" ? "👆" : DOMAIN_EMOJI[domain] || "⚡");
 // Sammelstellen für Szenen und Gruppen ohne Gerät (seit 2.61.0)
 const HOLDERS = { "@scenes": { emoji: "🎬", key: "rtHolderScenes", count: "rtScenesCount", kind: "rtKindScene" }, "@groups": { emoji: "💡", key: "rtHolderGroups", count: "rtGroupsCount", kind: "rtKindGroup" } };
 // Art der Einträge auf der ersten Seite des Assistenten: Filter oben und Pille an Szenen und Gruppen (seit 2.66.0)
@@ -360,7 +361,7 @@ export class RoutineUi {
   stateWord(e) {
     if (!e) return "";
     if (!e.available) return this.t("rtUnreachable");
-    if (e.domain === "scene") return ""; // Zustand einer Szene ist der Zeitpunkt der letzten Auslösung, keine Angabe für die Wahl
+    if (e.domain === "scene" || e.domain === "button" || e.domain === "input_button") return ""; // Zustand von Szene und Button ist der Zeitpunkt der letzten Auslösung, keine Angabe für die Wahl
     const key = `rtState_${e.state}`;
     const word = this.t(key);
     return word == null ? String(e.state ?? "") : word;
@@ -1776,7 +1777,7 @@ export class RoutineUi {
     }
     html += `<div class="mg-k">${esc(t("rtAction"))}</div>${this.tabsHtml(e.actions.map((a) => ({ on: d.action === a, attrs: `data-rt="action" data-v="${a}"`, label: t(`rtAct_${actKey(e.domain, a)}`) })))}`;
     if (d.action === "set") html += this.setValueHtml(e);
-    else if (!opposite(d.action)) html += `<p class="mg-hint">${esc(t(e.domain === "scene" ? "rtSceneNoBack" : "rtToggleNoBack"))}</p>`;
+    else if (!opposite(d.action)) html += `<p class="mg-hint">${esc(t(e.domain === "scene" ? "rtSceneNoBack" : e.domain === "button" || e.domain === "input_button" ? "rtButtonNoBack" : "rtToggleNoBack"))}</p>`;
     // Ohne Seite "Optionen" ist dies die letzte Seite des Ziels: hier steht "+ Gerät hinzufügen"
     // Sind alle Karten zugeklappt, steht der Knopf auch hier (sonst wäre er hinter der Seite "Optionen" nicht zu erreichen)
     return this.targetPage(`${html}<div data-rt-zone="result">${this.resultHtml()}</div>`, !this.hasOptions() || Boolean(this.wiz.tgFold));

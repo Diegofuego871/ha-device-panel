@@ -7,6 +7,15 @@ Alle nennenswerten Änderungen an dieser Integration stehen in dieser Datei.
 Das Format folgt [Keep a Changelog](https://keepachangelog.com/de/1.1.0/),
 die Versionsnummern folgen [Semantic Versioning](https://semver.org/lang/de/).
 
+## [2.239.0] - 2026-11-22
+
+Routinen können Buttons drücken.
+
+### Hinzugefügt
+
+- **Buttons in Routinen:** Eine Routine kann jetzt einen Button drücken (`button` und `input_button`), einmal, zu einer Zeit, täglich, wöchentlich, monatlich oder durch einen Auslöser, wie jede andere Routine. Die Aktion heisst "Drücken"; wie bei einer Szene gibt es nichts zurückzuschalten: Die Seite "Zurückschalten" entfällt, stattdessen steht der Hinweis "Ein Button lässt sich nur drücken, nicht zurückschalten.", und ein gewähltes "Zurückschalten" oder Schaltoptionen werden abgelehnt. Buttons stehen wie ein Schalter bei ihrem Gerät (die eigenen Buttons dieser Integration bleiben wie bisher draussen). Die Routine meldet "Button X gedrückt", das Protokoll sagt "Button gedrückt"; "Jetzt ausführen" und "Testen" drücken den Button wirklich.
+- **Tests:** die Python-Tests für Drücken, Meldung, Protokoll und die Regeln sowie die neue Suite `routinebutton-e2e` (beide Sprachen, Desktop und Handy).
+
 ## [2.238.0] - 2026-11-22
 
 HealthCheck-Dienste: ein Link zum Dashboard des Dienstes.
@@ -6472,6 +6481,7 @@ Erste Vorabversion.
   GitHub Actions für die Prüfungen von HACS und hassfest sowie die Tests.
 
 [2.6.0]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v2.6.0
+[2.239.0]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v2.239.0
 [2.238.0]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v2.238.0
 [2.237.4]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v2.237.4
 [2.237.3]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v2.237.3

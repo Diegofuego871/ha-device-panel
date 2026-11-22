@@ -11,6 +11,12 @@ Einstieg für jede neue Claude-Code-Session. Zuerst diese Datei lesen, dann
 
 - `charge.py` `known_rechargeable`: Lademeldung gilt (global + Gerät/Integration), oder am Gerät ausdrücklich "Ein", oder Live-Aktivität für das Gerät an; `rechargeable()` und `charging_of()` nutzen sie (vorher nur `enabled()` mit globalem Schalter). Test `test_rechargeable_by_device_charge_or_live`.
 
+## Stand (2.239.0, Routinen: Buttons)
+
+- Nutzerwunsch (2026-11-22): Routinen sollen einen Button einmalig drücken können, ohne Rücksetzaktion; Einordnung bei ihrem Gerät (nicht in einer Sammelstelle), nur Buttons (keine Skripte), planbar wie jede Routine.
+- Backend: `SERVICES["button"|"input_button"] = {"press": …}`, Aktion `press` in `ACTIONS`, `RESULT` "pressed", `_run_key` für den Protokolltext; Texte `routine_text_pressed`/`routine_res_pressed` (`push.py`), `routine_run_press(_manual)` (`activity.py`). Kein Zurückschalten, weil `can_back("press")` falsch ist (wie bei der Szene); Tests in `test_routines.py` (`test_button_*`, nicht lokal gelaufen: HA-Umgebung fehlte in der Session).
+- Panel: `rtAct_press`, `rtVerb_press`, `rtButtonNoBack`, Emoji 👆 in `routineEmoji` (nicht in `DOMAIN_EMOJI`, sonst erschienen Buttons im Reiter "Schalter" des Popups), Zustandswort leer; Suite `routinebutton-e2e.mjs`.
+
 ## Stand (2.238.0, HealthCheck: Link zum Dashboard)
 
 - Nutzerwunsch (2026-11-22, nach dem Vorbild in Alarmageddon): je Dienst ein freiwilliger Link zum externen Dashboard; erkannte Dienste bekommen die Startseite vorgeschlagen (`KNOWN[].dash` in `healthcheck.js`, `suggestDash`), sonst leer; im Reiter "Dienst" des Protokolls als Link mit Kopierknopf.
