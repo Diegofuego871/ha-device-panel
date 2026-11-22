@@ -7,6 +7,14 @@ All notable changes to this integration are documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/).
 
+## [2.237.2] - 2026-11-22
+
+The icons in the round buttons of the HealthCheck windows are as big as the close icon.
+
+### Fixed
+
+- **Icons in the round buttons:** all icons (log, error test, OK test, edit, remove) are as big as the close icon: the longest edge of each icon is 10.5 px, as visible with the close icon. Each icon has its own drawing size because the shapes fill their area differently.
+
 ## [2.237.1] - 2026-11-22
 
 The two buttons of the chapter "HealthCheck services" show their icons again on the phone, and the round buttons are as big as the close button.
@@ -6317,6 +6325,7 @@ First pre-release.
   GitHub Actions for HACS/hassfest validation and tests.
 
 [2.6.0]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v2.6.0
+[2.237.2]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v2.237.2
 [2.237.1]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v2.237.1
 [2.237.0]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v2.237.0
 [2.236.0]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v2.236.0

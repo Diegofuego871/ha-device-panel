@@ -13,10 +13,11 @@ const MIN = 60;
 const MAX = 86400;
 // Schnellwahl des Abstands: Zahl und Einheit gehen für jeden anderen Wert von 1 Minute bis 24 Stunden
 const PRESETS = [60, 300, 900, 3600, 21600, 86400];
-// Symbolgrösse in den runden Knöpfen: die Pfade füllen ihre 24er-Fläche verschieden aus (Warndreieck 22, Stift 18, Haken 17, Kreuz 14);
-// damit alle Symbole optisch gleich gross wirken (etwa 12 px), bekommt jedes seine eigene Grösse
-const IB_PX = { alert: 13, check: 16, history: 16, pencil: 16, trash: 16 };
-export const ibSize = (icon) => IB_PX[icon] || 18;
+// Massstab ist das Schliessen-Kreuz: sein Pfad füllt 14 von 24 Einheiten bei 18 px, also sichtbar 10,5 px.
+// Die anderen Pfade füllen ihre 24er-Fläche verschieden aus (Warndreieck 22, Stift 18, Papierkorb 18, Protokoll 18, Haken 17,5);
+// jedes Symbol bekommt die Grösse, bei der sein längster Pfadrand ebenfalls 10,5 px misst (252 / Pfadlänge).
+const IB_PX = { alert: 252 / 22, check: 252 / 17.5, history: 14, pencil: 14, trash: 14 };
+export const ibSize = (icon) => Math.round((IB_PX[icon] || 18) * 100) / 100;
 export const CASES = ["offline", "backup", "cpu", "ram", "disk", "stall"];
 
 // Bekannte Dienste: erkannt an der URL. `suffix` ist der Fehler-Zusatz, den das Panel vorschlägt (Healthchecks.io und Better Stack kennen nur "/fail"; die Nachricht

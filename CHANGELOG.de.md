@@ -7,6 +7,14 @@ Alle nennenswerten Änderungen an dieser Integration stehen in dieser Datei.
 Das Format folgt [Keep a Changelog](https://keepachangelog.com/de/1.1.0/),
 die Versionsnummern folgen [Semantic Versioning](https://semver.org/lang/de/).
 
+## [2.237.2] - 2026-11-22
+
+Die Symbole in den runden Knöpfen der HealthCheck-Fenster sind so gross wie das Schliessen-Kreuz.
+
+### Behoben
+
+- **Symbole in den runden Knöpfen:** alle Symbole (Protokoll, Fehler-Test, OK-Test, Bearbeiten, Entfernen) sind so gross wie das Schliessen-Symbol: der längste Rand jedes Symbols misst 10,5 px, wie beim Kreuz sichtbar. Jedes Symbol hat seine eigene Zeichengrösse, weil die Formen ihre Fläche verschieden füllen.
+
 ## [2.237.1] - 2026-11-22
 
 Die zwei Knöpfe des Kapitels "HealthCheck-Dienste" zeigen auf dem Handy wieder ihre Symbole, und die runden Knöpfe sind so gross wie das Schliessen-Kreuz.
@@ -6418,6 +6426,7 @@ Erste Vorabversion.
   GitHub Actions für die Prüfungen von HACS und hassfest sowie die Tests.
 
 [2.6.0]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v2.6.0
+[2.237.2]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v2.237.2
 [2.237.1]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v2.237.1
 [2.237.0]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v2.237.0
 [2.236.0]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v2.236.0
