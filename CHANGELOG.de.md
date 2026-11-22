@@ -7,6 +7,14 @@ Alle nennenswerten Änderungen an dieser Integration stehen in dieser Datei.
 Das Format folgt [Keep a Changelog](https://keepachangelog.com/de/1.1.0/),
 die Versionsnummern folgen [Semantic Versioning](https://semver.org/lang/de/).
 
+## [2.237.3] - 2026-11-22
+
+Das Kapitel "HealthCheck-Dienste" in den Einstellungen sieht aus wie die anderen Kapitel.
+
+### Behoben
+
+- **Kapitel "HealthCheck-Dienste":** die Herz-Kachel vor dem Text entfällt. Das Kapitel zeigt eine Beschreibungszeile wie die anderen ("N von 5 Diensten · …"), darunter die zwei Knöpfe.
+
 ## [2.237.2] - 2026-11-22
 
 Die Symbole in den runden Knöpfen der HealthCheck-Fenster sind genau so gross wie das Schliessen-Kreuz.
@@ -6426,6 +6434,7 @@ Erste Vorabversion.
   GitHub Actions für die Prüfungen von HACS und hassfest sowie die Tests.
 
 [2.6.0]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v2.6.0
+[2.237.3]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v2.237.3
 [2.237.2]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v2.237.2
 [2.237.1]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v2.237.1
 [2.237.0]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v2.237.0

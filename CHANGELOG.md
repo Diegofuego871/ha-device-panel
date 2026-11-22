@@ -7,6 +7,14 @@ All notable changes to this integration are documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/).
 
+## [2.237.3] - 2026-11-22
+
+The chapter "HealthCheck services" in the settings looks like the other chapters.
+
+### Fixed
+
+- **Chapter "HealthCheck services":** the heart tile in front of the text is gone. The chapter shows a description line like the others ("N of 5 services · …"), with the two buttons below.
+
 ## [2.237.2] - 2026-11-22
 
 The icons in the round buttons of the HealthCheck windows have the same size as the close icon.
@@ -6325,6 +6333,7 @@ First pre-release.
   GitHub Actions for HACS/hassfest validation and tests.
 
 [2.6.0]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v2.6.0
+[2.237.3]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v2.237.3
 [2.237.2]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v2.237.2
 [2.237.1]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v2.237.1
 [2.237.0]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v2.237.0

@@ -157,8 +157,8 @@ export class HealthCheckUi {
     const failed = this.items.filter((i) => i.status && i.status.result !== "ok").length;
     const text = n ? this.t("hcSummary", n, this.max) : this.t("hcNone");
     const sub = !n ? this.t("hcNoneHint") : failed ? this.t(failed === 1 ? "hcFailedOne" : "hcFailed", failed) : this.t("hcAllOk");
-    return `<div class="opt hc-sum"><span class="hc-ico${n ? " on" : ""}">${mdi("heartPulse", 22)}</span>
-      <div class="hc-sum-tx"><b>${escape(text)}</b><small class="${failed ? "hc-bad" : ""}">${escape(sub)}</small></div>
+    // Wie die anderen Kapitel der Einstellungen: ein Beschreibungstext (kein Symbol, keine Kachel), darunter die Knöpfe
+    return `<div class="opt hc-sum"><div class="opt-short hc-sum-tx">${escape(text)} · <span class="${failed ? "hc-bad" : ""}">${escape(sub)}</span></div>
       <div class="hc-sum-btns"><button type="button" class="dlg-btn" data-set="hc-add" ${n >= this.max ? "disabled" : ""}>${mdi("plus", 18)}<span>${escape(this.t("hcAdd"))}</span></button>
         <button type="button" class="dlg-btn" data-set="hc-open">${mdi("heartPulse", 18)}<span>${escape(this.t("hcShow"))}</span></button></div></div>`;
   }
