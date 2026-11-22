@@ -11,6 +11,11 @@ Einstieg für jede neue Claude-Code-Session. Zuerst diese Datei lesen, dann
 
 - `charge.py` `known_rechargeable`: Lademeldung gilt (global + Gerät/Integration), oder am Gerät ausdrücklich "Ein", oder Live-Aktivität für das Gerät an; `rechargeable()` und `charging_of()` nutzen sie (vorher nur `enabled()` mit globalem Schalter). Test `test_rechargeable_by_device_charge_or_live`.
 
+## Stand (2.240.0, HealthCheck: Ampel in der Zusammenfassung)
+
+- Nutzerwunsch (2026-11-22, nach dem Vorbild Alarmageddon): Zusammenfassung der Dienste in den Einstellungen mit Kachel, grünem Punkt und positivem Satz "Alles in Ordnung"; bei Fehler roter Punkt und die Meldung gleich dort. Das ersetzt die frühere Vorgabe "Kapitel ohne Symbol und Kachel" (der Strich unten und die zwei Knöpfe bleiben).
+- Panel: `healthcheck.js` `summaryHtml` (`.hc-sum-head`, `.hc-tile`, `.hc-sum-st` mit `.hc-sdot`, Ton `ok`/`bad`/`none`); Texte `hcAllOk`, `hcFailedOne(name, grund)`, `hcFailed(n, namen)`; Test in `hc-e2e.mjs`.
+
 ## Stand (2.239.0, Routinen: Buttons)
 
 - Nutzerwunsch (2026-11-22): Routinen sollen einen Button einmalig drücken können, ohne Rücksetzaktion; Einordnung bei ihrem Gerät (nicht in einer Sammelstelle), nur Buttons (keine Skripte), planbar wie jede Routine.

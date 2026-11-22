@@ -7,6 +7,15 @@ Alle nennenswerten Änderungen an dieser Integration stehen in dieser Datei.
 Das Format folgt [Keep a Changelog](https://keepachangelog.com/de/1.1.0/),
 die Versionsnummern folgen [Semantic Versioning](https://semver.org/lang/de/).
 
+## [2.240.0] - 2026-11-22
+
+HealthCheck-Dienste: Die Zusammenfassung in den Einstellungen ist eine Ampel wie in Alarmageddon.
+
+### Geändert
+
+- **Zusammenfassung der HealthCheck-Dienste in den Einstellungen:** eine Kachel mit dem Herz, "1 von 5 Diensten" und darunter eine Statuszeile mit Ampelpunkt. Alles in Ordnung: grüner Punkt und der positive Satz "Alles in Ordnung" (vorher: "Kein Lebenszeichen gescheitert"). Ist etwas gescheitert: roter Punkt und die Meldung gleich dort, bei einem Dienst mit Name und Grund (zum Beispiel "Haus: gescheitert · HTTP 503"), bei mehreren die Anzahl und die Namen. Ohne Dienste nur der Hinweis, ohne Punkt.
+- **Tests:** die Suite `hc-e2e` prüft die Kachel, den grünen und den roten Punkt und die Meldung.
+
 ## [2.239.0] - 2026-11-22
 
 Routinen können Buttons drücken.
@@ -6481,6 +6490,7 @@ Erste Vorabversion.
   GitHub Actions für die Prüfungen von HACS und hassfest sowie die Tests.
 
 [2.6.0]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v2.6.0
+[2.240.0]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v2.240.0
 [2.239.0]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v2.239.0
 [2.238.0]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v2.238.0
 [2.237.4]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v2.237.4

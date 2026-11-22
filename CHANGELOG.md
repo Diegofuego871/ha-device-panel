@@ -7,6 +7,15 @@ All notable changes to this integration are documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/).
 
+## [2.240.0] - 2026-11-22
+
+HealthCheck services: the summary in the settings is a traffic light like in Alarmageddon.
+
+### Changed
+
+- **Summary of the HealthCheck services in the settings:** a tile with the heart, "1 of 5 services" and below a status line with a traffic-light dot. All good: green dot and the positive sentence "All good" (before: "No heartbeat failed"). Something failed: red dot and the message right there, with one service its name and the reason (for example "Home: failed · HTTP 503"), with several the number and the names. Without services only the hint, no dot.
+- **Tests:** the suite `hc-e2e` checks the tile, the green and the red dot and the message.
+
 ## [2.239.0] - 2026-11-22
 
 Routines can press buttons.
@@ -6380,6 +6389,7 @@ First pre-release.
   GitHub Actions for HACS/hassfest validation and tests.
 
 [2.6.0]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v2.6.0
+[2.240.0]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v2.240.0
 [2.239.0]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v2.239.0
 [2.238.0]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v2.238.0
 [2.237.4]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v2.237.4

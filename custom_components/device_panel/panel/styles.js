@@ -2994,7 +2994,14 @@ dialog.learn-dlg.lrn-embed { position: relative; inset: auto; margin: 0; width: 
 /* HealthCheck-Dienste (seit 2.236.0, healthcheck.js): Kapitel in den Einstellungen, Fenster mit der Liste und das Formular. Farben und Rundungen wie die übrigen Fenster. */
 .dlg-avatar.app-health { background: #D81B60; }
 .hc-sum { display: flex; flex-wrap: wrap; align-items: center; gap: 12px 14px; padding: 4px 0 14px; border: 0; border-bottom: 1px solid var(--dp-divider); background: none; }
-.hc-sum-tx { flex: 1 1 100%; min-width: 0; margin: 0; }
+.hc-sum-head { flex: 1 1 100%; display: flex; align-items: center; gap: 16px; min-width: 0; }
+.hc-tile { flex: none; display: grid; place-items: center; width: 52px; height: 52px; border-radius: 15px; background: color-mix(in srgb, #D81B60 16%, var(--dp-card)); color: #F06292; }
+.hc-sum-tx { flex: 1 1 auto; min-width: 0; display: flex; flex-direction: column; gap: 3px; margin: 0; }
+.hc-sum-tx b { font-size: 16px; font-weight: 500; }
+.hc-sum-st { display: flex; align-items: baseline; gap: 8px; color: var(--dp-text2); font-size: 15px; overflow-wrap: anywhere; }
+.hc-sum-st .hc-sdot { flex: none; width: 10px; height: 10px; border-radius: 50%; background: var(--dp-success); transform: translateY(0); align-self: center; }
+.hc-sum-st.bad { color: var(--dp-error); }
+.hc-sum-st.bad .hc-sdot { background: var(--dp-error); }
 .hc-bad, .hc-err { color: var(--dp-error); }
 .hc-sum-btns { flex: 1 1 100%; display: flex; flex-wrap: nowrap; gap: 8px; }
 .hc-sum-btns .dlg-btn { flex: 1 1 0; min-width: 0; justify-content: center; }
