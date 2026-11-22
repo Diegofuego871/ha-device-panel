@@ -1,0 +1,36 @@
+<!doctype html><html lang="de"><meta charset="utf-8"><title>Protokoll 7 Tage: Vorschläge</title>
+<style>
+:root{--bg:#1c1c1c;--card:#262626;--tx:#e6e6e6;--tx2:#9a9a9a;--pri:#03a9f4;--ok:#4caf50;--warn:#ff9800;--err:#ef5350;--off:#333;--line:#3a3a3a}
+*{box-sizing:border-box}body{margin:0;background:#0d0d0d;font:15px/1.35 Roboto,Arial,sans-serif;color:var(--tx);padding:24px;display:flex;gap:24px;align-items:flex-start}
+.ph{width:390px;background:var(--bg);border-radius:28px;padding:18px 16px 22px;border:1px solid #333;flex:none}
+h2{margin:0 0 4px;font-size:13px;color:var(--tx2);font-weight:500;letter-spacing:.04em}
+.cap{font-size:12px;color:#8a8a8a;margin:0 0 14px;min-height:34px}
+.rng{display:grid;grid-template-columns:repeat(7,1fr);background:#2a2a2a;border-radius:13px;padding:3px;margin-bottom:12px;font-size:11.5px;color:#aaa;text-align:center}
+.rng span{padding:11px 0;border-radius:10px}.rng .on{background:#161616;color:var(--ok)}
+.kp{display:flex;gap:18px;margin-bottom:10px}.kp b{display:block;font-size:17px;font-weight:600}.kp span{font-size:12.5px;color:var(--tx2)}
+svg{display:block;width:100%;height:auto}svg text{fill:#aaa;font:11.5px Roboto,Arial,sans-serif}svg text.now{fill:#fff;font-weight:600}
+.lg{display:flex;flex-wrap:wrap;gap:6px 14px;font-size:12px;color:#aaa;margin-top:8px}.lg i{display:inline-block;width:11px;height:11px;border-radius:3px;margin-right:5px;vertical-align:-1px}
+</style>
+<body>
+<section class="ph"><h2>HEUTE (7 TAGE)</h2><p class="cap">Balken je Tag, steht allein da: die anderen Zeiträume sind Balken oder Quadrate.</p><div class="rng"><span>3 Std.</span><span>12 Std.</span><span>1 Tag</span><span class="on">7 Tage</span><span>30 Tage</span><span>6 Monate</span><span>1 Jahr</span></div><div class="kp"><div><b>100 %</b><span>erfolgreich</span></div><div><b>754</b><span>Lebenszeichen</span></div><div><b>0</b><span>gescheitert</span></div></div><div id="cur"></div><div class="lg" id="lg0"></div></section>
+<section class="ph"><h2>VORSCHLAG A (EMPFOHLEN)</h2><p class="cap">Stundenraster wie bei 30 Tagen: eine Zeile je Tag, 24 Quadrate je Zeile (eine Stunde pro Quadrat), nur grösser.</p><div class="rng"><span>3 Std.</span><span>12 Std.</span><span>1 Tag</span><span class="on">7 Tage</span><span>30 Tage</span><span>6 Monate</span><span>1 Jahr</span></div><div class="kp"><div><b>100 %</b><span>erfolgreich</span></div><div><b>754</b><span>Lebenszeichen</span></div><div><b>0</b><span>gescheitert</span></div></div><div id="a"></div><div class="lg" id="lg1"></div></section>
+<section class="ph"><h2>VORSCHLAG B</h2><p class="cap">Wochenkalender: ein Tag je Spalte (Mo bis So), 24 Quadrate je Spalte, die Stunden laufen von oben nach unten.</p><div class="rng"><span>3 Std.</span><span>12 Std.</span><span>1 Tag</span><span class="on">7 Tage</span><span>30 Tage</span><span>6 Monate</span><span>1 Jahr</span></div><div class="kp"><div><b>100 %</b><span>erfolgreich</span></div><div><b>754</b><span>Lebenszeichen</span></div><div><b>0</b><span>gescheitert</span></div></div><div id="b"></div><div class="lg" id="lg2"></div></section>
+<script>
+// erfundene Daten: Do. 19. ab 18 Uhr bis jetzt, So. 22. bis 10 Uhr; Lücke Sa. 21. 03-05 Uhr; ein Ausfall Fr. 20. 07 Uhr, Fall gemeldet Sa. 21. 14 Uhr, Test Sa. 21. 21 Uhr
+const days=["Mo. 16.","Di. 17.","Mi. 18.","Do. 19.","Fr. 20.","Sa. 21.","So. 22."];
+function kind(d,h){ if(d<3) return "none"; if(d===3) return h>=18?"ok":"none"; if(d===6) return h<=9?"ok":"none";
+ if(d===4&&h===7) return "fail"; if(d===5&&h>=3&&h<5) return "gap"; if(d===5&&h===14) return "report"; if(d===5&&h===21) return "test"; return "ok"; }
+const col={none:"#333",ok:"rgba(76,175,80,.55)",gap:"#555",fail:"#ef5350",report:"#ff9800",test:"#03a9f4"};
+const lg='<span><i style="background:#4caf50"></i>OK</span><span><i style="background:#ff9800"></i>Fehler gemeldet</span><span><i style="background:#ef5350"></i>gescheitert</span><span><i style="background:#03a9f4"></i>Test</span><span><i style="background:#555"></i>Lücke</span>';
+for(const i of [0,1,2]) document.getElementById("lg"+i).innerHTML=lg;
+// aktuell: Balken
+{const W=358,L=52,R=W-6,rh=16,g=9,top=6;let s="";days.forEach((n,d)=>{const y=top+d*(rh+g);s+=`<text x="${L-8}" y="${y+12}" text-anchor="end" class="${d===6?"now":""}">${n}</text><rect x="${L}" y="${y}" width="${R-L}" height="${rh}" rx="4" fill="#333"/>`;let a=null;for(let h=0;h<=24;h++){const k=h<24?kind(d,h):"none";if(k==="ok"||k==="fail"||k==="report"||k==="test"){if(a===null)a=h}else{if(a!==null){s+=`<rect x="${L+a/24*(R-L)}" y="${y}" width="${(h-a)/24*(R-L)}" height="${rh}" rx="3" fill="#4caf50"/>`;a=null}}}
+ for(let h=0;h<24;h++){const k=kind(d,h);if(k==="fail"||k==="report"||k==="test")s+=`<rect x="${L+h/24*(R-L)}" y="${y}" width="${(R-L)/24}" height="${rh}" fill="${col[k]}"/>`}});
+ s+=[0,6,12,18,24].map(h=>`<text x="${L+h/24*(R-L)}" y="${top+7*(rh+g)+10}" text-anchor="${h===24?"end":h===0?"start":"middle"}">${String(h).padStart(2,"0")}:00</text>`).join("");document.getElementById("cur").innerHTML=`<svg viewBox="0 0 ${W} ${top+7*(rh+g)+18}">${s}</svg>`}
+// A: Stundenraster
+{const W=358,L=52,R=W-4,cw=(R-L)/24,ch=cw-2,gap=7,top=4;let s="";days.forEach((n,d)=>{const y=top+d*(ch+gap);s+=`<text x="${L-8}" y="${y+ch/2+4}" text-anchor="end" class="${d===6?"now":""}">${n}</text>`;for(let h=0;h<24;h++){const k=kind(d,h);s+=`<rect x="${(L+h*cw+.8).toFixed(1)}" y="${y}" width="${(cw-1.6).toFixed(1)}" height="${ch}" rx="2" fill="${col[k]}"/>`}});
+ const base=top+7*(ch+gap);s+=[0,6,12,18,24].map(h=>`<text x="${L+h*cw}" y="${base+10}" text-anchor="${h===24?"end":h===0?"start":"middle"}">${String(h).padStart(2,"0")}:00</text>`).join("");document.getElementById("a").innerHTML=`<svg viewBox="0 0 ${W} ${base+16}">${s}</svg>`}
+// B: Wochenkalender
+{const W=358,L=34,R=W-4,cw=(R-L)/7,ch=11,gap=2,top=22;let s="";days.forEach((n,d)=>{s+=`<text x="${L+d*cw+cw/2}" y="12" text-anchor="middle" class="${d===6?"now":""}">${n.slice(0,2)}</text>`;for(let h=0;h<24;h++){const k=kind(d,h);s+=`<rect x="${(L+d*cw+1.5).toFixed(1)}" y="${top+h*(ch+gap)}" width="${(cw-3).toFixed(1)}" height="${ch}" rx="2.5" fill="${col[k]}"/>`}});
+ [0,6,12,18,24].forEach(h=>{s+=`<text x="${L-6}" y="${top+Math.min(h,23)*(ch+gap)+(h===24?ch+8:9)}" text-anchor="end">${String(h).padStart(2,"0")}</text>`});document.getElementById("b").innerHTML=`<svg viewBox="0 0 ${W} ${top+24*(ch+gap)+14}">${s}</svg>`}
+</script>
