@@ -61,6 +61,7 @@ Settings → Devices & services → "Device Panel" → ⋮ → Delete. This also
 - **Notifications on four levels:** set a default once, change it per integration or label, override it on a single device; every setting names where its value comes from
 - **Quiet time and group messages:** notifications wait during the night, and several devices of one integration go out as one message
 - **Magic Push and routines:** your own messages and your own switching times, without an automation
+- **HealthCheck services:** a heartbeat to external services such as Healthchecks.io or Cronitor, so you hear about it even when Home Assistant, the network or the power is down
 - **Charging, updates and new devices:** push when a device is full, an update reminder, all updates in one window, a mark for new devices
 - **Everything in the panel:** all settings, a setup wizard with a learn page on the features, back up and restore, German and English, and an optional AI assessment
 
@@ -297,7 +298,9 @@ An external service such as [Healthchecks.io](https://healthchecks.io), [Cronito
 - **Where:** Settings › Monitoring and notifications, the chapter "HealthCheck services" above "System alerts": "Add service" and "Show services". Up to five services, administrators only.
 - **A service:** a name, the ping URL and an interval (1 minute to 24 hours). Known services (Healthchecks.io, Better Stack, Cronitor, Uptime Kuma) are recognised by the URL.
 - **Errors:** one URL suffix per service (for example "/fail" or "?state=fail"; suggested for known services, yours to change) and tick boxes for the cases that trigger it: device offline, backup failed, high load (CPU, memory, disk) and system stall. While a ticked case applies, the panel calls the URL with the suffix instead of the plain heartbeat; the end follows as a heartbeat. A box is greyed out when the notification for it is off or has no limit.
-- **Test and log:** every service has "Send error" and "Send OK", and a log with chart (heartbeat, timeline, grids up to a year), key figures, response times and the list of events and calls. The URL is shown in full to administrators and is part of the backup file (keep it private); it is never in the log.
+- **List:** "Show services" opens the list with search and sorting: one row per service with name, URL, recognised provider, ticked cases, last heartbeat and state, and round buttons for the log, "Send error", "Send OK", edit and remove (with a confirmation). A fold-out explains what the services are, with examples.
+- **Test and log:** "Send error" and "Send OK" test the service. The log opens in a window like the device window (a drop-down to switch the service, shown only when there is more than one): tabs History, Response time and Service, seven periods from 3 hours to 1 year with a chart each (heartbeat, timeline, grids), key figures, response times and the list of events and all calls. The URL is shown in full to administrators and is part of the backup file (keep it private); it is never in the log.
+- **Backup:** the services are part of the backup (part "Monitoring and notifications") with URL, error suffix, ticked cases and interval, never with state or log.
 
 ## App launcher and history
 

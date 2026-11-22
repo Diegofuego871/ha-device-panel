@@ -61,6 +61,7 @@ Einstellungen → Geräte & Dienste → "Device Panel" → ⋮ → Löschen. Das
 - **Meldungen auf vier Ebenen:** einmal eine Vorgabe setzen, pro Integration oder Label ändern, an einem einzelnen Gerät überschreiben; jede Einstellung nennt, woher ihr Wert kommt
 - **Ruhezeit und Sammelmeldung:** Meldungen warten in der Nacht, und mehrere Geräte einer Integration gehen als eine Meldung hinaus
 - **Magic Push und Routinen:** eigene Meldungen und eigene Schaltzeiten, ohne Automation
+- **HealthCheck-Dienste:** ein Lebenszeichen an externe Dienste wie Healthchecks.io oder Cronitor, damit du es auch merkst, wenn Home Assistant, das Netz oder der Strom ausfällt
 - **Laden, Updates und neue Geräte:** Push, wenn ein Gerät voll ist, eine Update-Erinnerung, alle Updates in einem Fenster, eine Markierung für neue Geräte
 - **Alles im Panel:** alle Einstellungen, ein Einrichtungsassistent mit einer Lernseite zu den Funktionen, Sichern und Wiederherstellen, Deutsch und Englisch und eine optionale KI-Einschätzung
 
@@ -297,7 +298,9 @@ Ein externer Dienst wie [Healthchecks.io](https://healthchecks.io), [Cronitor](h
 - **Wo:** Einstellungen › Überwachung und Meldungen, das Kapitel "HealthCheck-Dienste" oberhalb der "Systemmeldungen": "Dienst hinzufügen" und "Dienste anzeigen". Bis zu fünf Dienste, nur für Administratoren.
 - **Ein Dienst:** ein Name, die Ping-URL und ein Abstand (1 Minute bis 24 Stunden). Bekannte Dienste (Healthchecks.io, Better Stack, Cronitor, Uptime Kuma) erkennt das Panel an der URL.
 - **Fehler:** ein URL-Zusatz je Dienst (zum Beispiel "/fail" oder "?state=fail"; für bekannte Dienste vorgeschlagen und deine Sache) und Kästchen für die Fälle, die ihn auslösen: Gerät ausgefallen, Backup fehlgeschlagen, hohe Auslastung (CPU, Arbeitsspeicher, Festplatte) und Systemstillstand. Solange ein angekreuzter Fall zutrifft, ruft das Panel die URL mit dem Zusatz auf statt des einfachen Lebenszeichens; das Ende folgt als Lebenszeichen. Ein Kästchen ist ausgegraut, wenn die Meldung dafür aus ist oder keinen Grenzwert hat.
-- **Test und Protokoll:** jeder Dienst hat "Fehler senden" und "OK senden" sowie ein Protokoll mit Grafik (Herzschlag, Zeitleiste, Raster bis zu einem Jahr), Kennzahlen, Antwortzeiten und der Liste der Ereignisse und Aufrufe. Die URL steht Administratoren ganz im Panel und in der Sicherungsdatei (privat halten); im Protokoll steht sie nie.
+- **Liste:** "Dienste anzeigen" öffnet die Liste mit Suche und Sortierung: eine Zeile je Dienst mit Name, URL, erkanntem Anbieter, angekreuzten Fällen, letztem Lebenszeichen und Zustand, dazu runde Knöpfe für das Protokoll, "Fehler senden", "OK senden", Bearbeiten und Entfernen (mit Rückfrage). Ein Aufklapptext erklärt, was die Dienste sind, mit Beispielen.
+- **Test und Protokoll:** "Fehler senden" und "OK senden" testen den Dienst. Das Protokoll öffnet in einem Fenster wie das Gerätefenster (ein Dropdown zum Wechseln des Dienstes, nur bei mehr als einem Dienst): Reiter Verlauf, Antwortzeit und Dienst, sieben Zeiträume von 3 Stunden bis 1 Jahr mit je einer Grafik (Herzschlag, Zeitleiste, Raster), Kennzahlen, Antwortzeiten und die Liste der Ereignisse und aller Aufrufe. Die URL steht Administratoren ganz im Panel und in der Sicherungsdatei (privat halten); im Protokoll steht sie nie.
+- **Sicherung:** die Dienste gehören zur Sicherung (Teil "Meldungen und Überwachung") mit URL, Fehler-Zusatz, angekreuzten Fällen und Abstand, nie mit Zustand oder Protokoll.
 
 ## App-Launcher und Protokoll
 
