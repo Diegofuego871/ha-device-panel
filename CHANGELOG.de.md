@@ -20,6 +20,7 @@ HealthCheck-Dienste: ein Link zum Dashboard des Dienstes.
 
 ### Behoben
 
+- **Lange Dashboard-Adresse in den Details:** Eine lange Adresse schiebt die Zeile nicht mehr über den Rand des Fensters (gesehen in Safari auf dem iPhone); sie bricht wie die Ping-URL auf mehrere Zeilen um, der Kopierknopf bleibt im Rahmen.
 - **Logo von HACS-Einträgen in der Updates-App:** Ein Update über HACS zeigt das Logo der Integration dahinter, auch wenn sie nicht im öffentlichen Logo-Katalog steht (eigenes Repository). Das Panel nimmt die Domain aus dem Bild der Update-Entität, sonst aus dem Namen des GitHub-Projekts, sonst aus dem Titel, aber nur, wenn die Integration geladen ist; das Logo kommt vom Brand-Dienst der Instanz (lokales `brand/icon.png`). Ohne Logo bleibt das von HACS.
 
 

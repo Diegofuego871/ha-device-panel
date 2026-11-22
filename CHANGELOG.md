@@ -20,6 +20,7 @@ HealthCheck services: a link to the dashboard of the service.
 
 ### Fixed
 
+- **Long dashboard link in the details:** a long address no longer pushes the row over the edge of the window (seen in Safari on the iPhone); like the ping URL it now breaks into several lines, the copy button stays in the frame.
 - **Logo of HACS entries in the Updates app:** an update delivered by HACS shows the logo of the integration behind it, also when it is not in the public brand catalogue (custom repository). The panel takes the domain from the picture of the update entity, else from the name of the GitHub project, else from the title, but only if that integration is loaded; the logo comes from the brand service of the instance (local `brand/icon.png`). Without a logo the HACS logo stays.
 
 

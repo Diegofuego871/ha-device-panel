@@ -3186,7 +3186,8 @@ b.hl-pick.one { display: block; }
 .hl-tag { padding: 2px 8px; border-radius: 999px; background: var(--dp-hover); border: 1px solid var(--dp-divider); font-size: 12px; white-space: nowrap; }
 .hl-sec { margin: 14px 2px 8px; font-size: 13px; letter-spacing: .06em; text-transform: uppercase; color: var(--dp-text2); }
 .hl-sec:first-child { margin-top: 6px; }
-.hl-lnk { color: var(--dp-primary); text-decoration: none; }
+/* Block mit eigenem Umbruch: Safari auf dem iPhone bricht eine lange Adresse im Inline-Link sonst nicht und schiebt die Zeile über den Rand */
+.hl-lnk { display: block; min-width: 0; color: var(--dp-primary); text-decoration: none; overflow-wrap: anywhere; word-break: break-all; }
 .hl-lnk:hover { text-decoration: underline; }
 .hl-cp { flex: none; display: inline-grid; place-items: center; width: 32px; height: 32px; padding: 0; border: 0; border-radius: 8px; background: none; color: var(--dp-text2); cursor: pointer; }
 .hl-cp:hover { background: var(--dp-hover); color: var(--dp-text); }
@@ -3194,8 +3195,8 @@ b.hl-pick.one { display: block; }
 .hl-drow { display: flex; align-items: center; gap: 10px; padding: 10px 0; border-bottom: 1px solid var(--dp-divider); }
 .hl-drow:last-child { border-bottom: 0; }
 .hl-drow > span { flex: 0 0 auto; max-width: 42%; }
-.hl-drow > b { flex: 1 1 0; min-width: 0; text-align: right; font-weight: 500; overflow-wrap: anywhere; }
-.hl-drow.mono > b { font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace; font-size: 13px; }
+.hl-drow > b { flex: 1 1 0; min-width: 0; max-width: 100%; text-align: right; font-weight: 500; overflow-wrap: anywhere; }
+.hl-drow.mono > b { font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace; font-size: 13px; word-break: break-all; }
 /* Handy: die Knöpfe stehen rechts in einer eigenen Zeile unter dem Schliessen-Knopf (der Knopf sitzt wie in den Einstellungen) */
 @media (max-width: 600px) {
   .hl-dlg .hl-head { flex-wrap: wrap; }
