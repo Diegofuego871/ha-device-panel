@@ -3042,11 +3042,12 @@ dialog.hc-dlg::backdrop, dialog.hc-form-dlg::backdrop, dialog.hl-dlg::backdrop {
 .hc-state.warn::before { background: var(--dp-warning); }
 .hc-state.err::before { background: var(--dp-error); }
 .hc-btns { flex: 0 1 auto; display: flex; flex-wrap: wrap; justify-content: flex-end; gap: 8px; margin-left: auto; }
-.hc-ib { flex: none; display: inline-grid; place-items: center; width: 42px; height: 42px; padding: 0; border-radius: 50%; border: 1px solid var(--dp-divider); background: var(--dp-card); color: var(--dp-text); cursor: pointer; }
+/* Masse und Ring wie die runden Knöpfe in Alarmageddon (.ag-wf-btns .ag-iconbtn): 44 px, Ring 1 px in Textfarbe (40 %), Symbole 18 px; das Schliessen-Kreuz bleibt etwas kleiner (42 px) */
+.hc-ib { flex: none; display: inline-grid; place-items: center; width: 44px; height: 44px; padding: 0; border-radius: 50%; border: 1px solid color-mix(in srgb, var(--dp-text2) 40%, transparent); background: var(--dp-card); color: var(--dp-text); cursor: pointer; }
 .hc-ib:hover:not(:disabled) { background: var(--dp-hover); }
 .hc-ib:disabled { opacity: .45; cursor: default; }
-.hc-ib.warn { border-color: color-mix(in srgb, var(--dp-warning) 55%, transparent); background: var(--dp-warning-soft); color: var(--dp-warning); }
-.hc-ib.good { border-color: color-mix(in srgb, var(--dp-success) 55%, transparent); background: var(--dp-success-soft); color: var(--dp-success); }
+.hc-ib.warn { border-color: color-mix(in srgb, var(--dp-warning) 50%, transparent); background: var(--dp-warning-soft); color: var(--dp-warning); }
+.hc-ib.good { border-color: color-mix(in srgb, var(--dp-success) 45%, transparent); background: var(--dp-success-soft); color: var(--dp-success); }
 .hc-ib.bad { border-color: var(--dp-error-line); background: var(--dp-error-soft); color: var(--dp-error); }
 .hc-ib.sm { width: 34px; height: 34px; }
 .hc-empty { display: flex; flex-direction: column; align-items: flex-start; gap: 12px; margin: 14px 0; padding: 16px; border: 1px solid var(--dp-divider); border-radius: 16px; color: var(--dp-text2); }
@@ -3092,7 +3093,6 @@ dialog.hc-dlg::backdrop, dialog.hc-form-dlg::backdrop, dialog.hl-dlg::backdrop {
 .hl-dlg .hl-head { position: relative; z-index: 5; flex-wrap: nowrap; }
 .hl-head .dlg-title { flex: 1 1 0; min-width: 0; align-self: center; }
 /* Testknöpfe und Stift stehen in einer Reihe mit dem Schliessen-Knopf und sind genau so gross */
-.hl-head .hl-acts .hc-ib { width: 42px; height: 42px; }
 .hl-pick { display: inline-flex; align-items: center; gap: 6px; max-width: 100%; padding: 0; border: 0; background: none; color: var(--dp-text); font: inherit; cursor: pointer; }
 .hl-pick b, b.hl-pick.one { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; font-size: 21px; font-weight: 700; }
 b.hl-pick.one { display: block; }
@@ -3176,11 +3176,8 @@ b.hl-pick.one { display: block; }
 .hl-drow > b { flex: 1 1 0; min-width: 0; text-align: right; font-weight: 500; overflow-wrap: anywhere; }
 .hl-drow.mono > b { font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace; font-size: 13px; }
 /* Handy: die Knöpfe stehen rechts in einer eigenen Zeile unter dem Schliessen-Knopf (der Knopf sitzt wie in den Einstellungen) */
-/* Handy: alle runden Knöpfe der HealthCheck-Fenster sind so gross wie das Schliessen-Kreuz (38 px) */
-@media (max-width: 600px) { .hc-ib { width: 38px; height: 38px; } }
 @media (max-width: 600px) {
   .hl-dlg .hl-head { flex-wrap: wrap; }
-  .hl-head .hl-acts .hc-ib { width: 38px; height: 38px; }
   .hl-acts { flex: 1 1 100%; justify-content: flex-end; margin-left: 0; order: 5; gap: 8px; }
 }
 @media (max-width: 700px) {

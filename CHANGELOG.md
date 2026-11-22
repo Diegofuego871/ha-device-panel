@@ -13,7 +13,7 @@ The icons in the round buttons of the HealthCheck windows have the same size as 
 
 ### Fixed
 
-- **Icons in the round buttons:** all icons (log, error test, OK test, edit, remove) have exactly the same size of 18 px, like the close icon and like in Alarmageddon.
+- **Icons in the round buttons:** all icons (log, error test, OK test, edit, remove) have exactly the same size of 18 px, like the close icon and like in Alarmageddon. The round buttons themselves look like in Alarmageddon: 44 px, a 1 px ring in the text colour (the close button stays a little smaller, 42 px).
 
 ## [2.237.1] - 2026-11-22
 

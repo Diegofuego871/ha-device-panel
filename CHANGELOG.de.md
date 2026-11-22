@@ -13,7 +13,7 @@ Die Symbole in den runden Knöpfen der HealthCheck-Fenster sind genau so gross w
 
 ### Behoben
 
-- **Symbole in den runden Knöpfen:** alle Symbole (Protokoll, Fehler-Test, OK-Test, Bearbeiten, Entfernen) haben genau dieselbe Grösse von 18 px, wie das Schliessen-Symbol und wie bei Alarmageddon.
+- **Symbole in den runden Knöpfen:** alle Symbole (Protokoll, Fehler-Test, OK-Test, Bearbeiten, Entfernen) haben genau dieselbe Grösse von 18 px, wie das Schliessen-Symbol und wie bei Alarmageddon. Die runden Knöpfe selbst sehen aus wie bei Alarmageddon: 44 px, Ring 1 px in Textfarbe (das Schliessen-Kreuz bleibt etwas kleiner, 42 px).
 
 ## [2.237.1] - 2026-11-22
 
