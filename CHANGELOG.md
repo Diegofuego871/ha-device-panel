@@ -9,12 +9,13 @@ and this project adheres to [Semantic Versioning](https://semver.org/).
 
 ## [2.237.5] - 2026-11-22
 
-The top of the log window of the HealthCheck services looks like in Alarmageddon.
+The log window of the HealthCheck services looks like in Alarmageddon at the top, and the 7 days chart is an hour grid like the 30 days.
 
 ### Changed
 
 - **Tabs with icon and value:** the three tabs (History, Response time, Service) have an icon above and below it the name, the response time tab shows its current value (on the desktop name and value). The selected tab has an accent icon.
 - **Periods small, in one row:** the seven periods stand side by side in one small row, also on the phone, instead of two rows.
+- **7 days as an hour grid:** the 7 days chart is the same grid as the 30 days: one row per day with 24 squares (one per hour) in the colour of the worst result of that hour, only larger. The bars per day are gone, so the periods go from bars to squares without a break.
 - **Key figures without a tile:** the key figures (success rate, calls, failed and so on) stand side by side as plain figures with a small caption, no box around each.
 
 ## [2.237.4] - 2026-11-22

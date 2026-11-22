@@ -1,5 +1,5 @@
 // Protokoll der HealthCheck-Dienste (2.236.0): Fenster über den Knopf "Protokoll" der Liste; Kopf mit Name als Auswahl, Zustand, runden Testknöpfen je Fall und OK;
-// drei Reiter (Verlauf, Antwortzeit, Dienst); Zeitraum (sieben Stufen) mit Grafik je Stufe (Herzschlag, Zeitleiste, Raster, Monatsraster), Kennzahlen, Legende;
+// drei Reiter (Verlauf, Antwortzeit, Dienst); Zeitraum (sieben Stufen) mit Grafik je Stufe (Herzschlag, Stundenraster (7 und 30 Tage), Monatsraster), Kennzahlen, Legende;
 // Liste mit "Ereignisse" und "Alle Aufrufe" (Zahl am Reiter, Suche, Sortierung); Ladeanzeige nach der Regel für Grafiken; leerer Zustand; Reiter "Dienst" mit
 // Kopierknöpfen. Deutsch und Englisch, Desktop und Handy, echte Klicks und Tipps. Nur erfundene Adressen.
 import { chromium } from "playwright-core";
@@ -59,10 +59,13 @@ for (const lang of ["de", "en"]) {
     await p.screenshot({ path: `${outDir}/hclog-24h-${tag.replace("/", "-")}.png` });
 
     // Zeiträume: je Stufe die passende Grafik
-    const charts = { 3: ".hl-b", 12: ".hl-b", 168: ".hl-band, .hl-track", 720: ".hl-cell", 4320: "[data-day]", 8760: "[data-day]" };
+    const charts = { 3: ".hl-b", 12: ".hl-b", 168: ".hl-cell", 720: ".hl-cell", 4320: "[data-day]", 8760: "[data-day]" };
     for (const [hours, sel] of Object.entries(charts)) {
       await tap(`${LOG} .hl-range [data-hours="${hours}"]`);
       check(`[${tag}] ${hours} Std.: Grafik passt zum Zeitraum (${sel})`, await wait(`return r.querySelector('${LOG} .hl-range .sub-tab.on')?.dataset.hours === "${hours}" && r.querySelectorAll('${LOG} .hl-chart ${sel}').length > 3 && !r.querySelector('${LOG} .pl-ld')`));
+      if (hours === "168") await p.screenshot({ path: `${outDir}/hclog-7d-${tag.replace("/", "-")}.png` });
+      if (hours === "168")
+      check(`[${tag}] 7 Tage: Stundenraster wie bei 30 Tagen, sieben Zeilen mit je 24 quadratischen Zellen und Beschriftung jedes Tages`, await wait(`const c = [...r.querySelectorAll('${LOG} .hl-svg rect.hl-cell, ${LOG} .hl-svg rect.hl-track, ${LOG} .hl-svg rect.hl-b')]; const w = c.filter((x) => Math.abs(Number(x.getAttribute("width")) - Number(x.getAttribute("height"))) < 1.5); return c.length === 7 * 24 && w.length === c.length && r.querySelectorAll('${LOG} .hl-svg text').length >= 7 + 3`, 3000));
     }
     check(`[${tag}] Jahr: Monatsraster mit Tageszelle und Zusammenfassung der Tage`, await ev(`return !!r.querySelector('${LOG} .hl-sum') && r.querySelectorAll('${LOG} [data-kind="fail"]').length > 0`));
     check(`[${tag}] Liste folgt dem Zeitraum: Hinweis zu den einzelnen Aufrufen`, (await ev(`return r.querySelector('${LOG} .hl-lbar .sub-tab[data-pane="calls"]')?.click(), 1`)) && (await wait(`return r.querySelector('${LOG} .hl-note')?.textContent.includes(${JSON.stringify(L.callsDay)})`)));

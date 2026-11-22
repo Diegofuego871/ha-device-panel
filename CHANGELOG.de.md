@@ -9,12 +9,13 @@ die Versionsnummern folgen [Semantic Versioning](https://semver.org/lang/de/).
 
 ## [2.237.5] - 2026-11-22
 
-Der obere Bereich des Protokoll-Fensters der HealthCheck-Dienste sieht aus wie in Alarmageddon.
+Das Protokoll-Fenster der HealthCheck-Dienste sieht oben aus wie in Alarmageddon, und die Grafik der 7 Tage ist ein Stundenraster wie bei den 30 Tagen.
 
 ### Geändert
 
 - **Reiter mit Symbol und Wert:** die drei Reiter (Verlauf, Antwortzeit, Dienst) haben oben ein Symbol und darunter den Namen, der Reiter Antwortzeit zeigt seinen aktuellen Wert (auf dem Desktop Name und Wert). Das Symbol des gewählten Reiters hat die Akzentfarbe.
 - **Zeiträume klein in einer Zeile:** die sieben Zeiträume stehen nebeneinander in einer kleinen Zeile, auch auf dem Handy, statt in zwei Zeilen.
+- **7 Tage als Stundenraster:** die Grafik der 7 Tage ist dasselbe Raster wie bei 30 Tagen: eine Zeile je Tag mit 24 Quadraten (eines je Stunde) in der Farbe des schlechtesten Ergebnisses dieser Stunde, nur grösser. Die Balken je Tag entfallen, so gehen die Zeiträume ohne Bruch von Balken zu Quadraten über.
 - **Kennzahlen ohne Kachel:** die Kennzahlen (Erfolgsquote, Aufrufe, Gescheitert und weitere) stehen als schlichte Zahlen mit kleiner Beschriftung nebeneinander, ohne Kasten um jede.
 
 ## [2.237.4] - 2026-11-22

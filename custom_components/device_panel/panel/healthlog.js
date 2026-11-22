@@ -401,7 +401,7 @@ export class HealthLogUi {
       const daily = d.hours > 720;
       kpis = [[s.rate === null || s.rate === undefined ? "–" : `${s.rate.toLocaleString(this._locale(), { maximumFractionDigits: daily ? 2 : 1 })} %`, t("hlKRate")], [this._num(s.total), t("hlKCalls")],
         [this._num(s.fail), t("hlKFail")], wide && [this._num(s.report), t("hlKReport")], wide && [this._ms(s.ms_mean), t("hlKMean")]];
-      chart = d.hours <= 24 ? this._heartbeat(d, W) : d.hours <= 168 ? this._timeline(d, W) : daily ? this._monthRaster(d, W) : this._raster(d, W);
+      chart = d.hours <= 24 ? this._heartbeat(d, W) : daily ? this._monthRaster(d, W) : this._raster(d, W);
       legend = daily
         ? this._legend([["hl-i ok", t(wide ? "hlLegDayOk" : "hlLegOkShort")], ["hl-i report", t("hlLegReport")], ["hl-i fail", t("hlLegFail")], ["hl-i gap", wide ? t("hlLegGapDay", { n: d.gap_day ?? 30 }) : t("hlLegGapShort")], ["hl-i test dot", t("hlLegTest")]])
         : this._legend([["hl-i ok", t(wide ? "hlLegOk" : "hlLegOkShort")], ["hl-i report", t("hlLegReport")], ["hl-i fail", t("hlLegFail")], ["hl-i test", t("hlLegTest")], ["hl-i gap", t(wide ? "hlLegGap" : "hlLegGapShort")]]);
@@ -506,67 +506,13 @@ export class HealthLogUi {
     return this._svg(W, H, s, this._t("hlChartBeat"));
   }
 
-  // Grüne Strecken eines Abschnitts: vom Beginn des Protokolls bis jetzt, ohne die Lücken
-  _okSpans(d, a, b) {
-    const from = Math.max(a, ms(d.since));
-    const to = Math.min(b, ms(d.now));
-    if (to <= from) return [];
-    const out = [];
-    let cur = from;
-    for (const [ga, gb] of this._gaps(d).filter(([ga, gb]) => gb > from && ga < to).sort((p, q) => p[0] - q[0])) {
-      if (ga > cur) out.push([cur, ga]);
-      cur = Math.max(cur, gb);
-    }
-    if (to > cur) out.push([cur, to]);
-    return out;
-  }
-
   // Der Tag eines Zeitpunkts als Zeile (Tage über den Kalender, nicht über 24 Stunden: ein Tag der Zeitumstellung hat 23 oder 25)
   _dayIndex(days) {
     const index = new Map(days.map((day, i) => [day.toDateString(), i]));
     return (time) => index.get(new Date(time).toDateString());
   }
 
-  // 7 Tage: Zeitleiste je Tag wie Türen und Fenster. Grün, solange Lebenszeichen ankommen, grau eine Lücke ohne Daten, Marken für gescheitert, Fehler
-  // gemeldet und Test (aus den Ereignissen, auf die Minute genau; einzelne Aufrufe gibt es nach 24 Stunden nicht mehr)
-  _timeline(d, W) {
-    const narrow = W < 500;
-    const days = this._days(d);
-    const L = narrow ? 52 : 70;
-    const R = W - 6;
-    const rowH = 16;
-    const gap = 9;
-    const top = 6;
-    const H = top + days.length * (rowH + gap) + 18;
-    const gaps = this._gaps(d);
-    let s = "";
-    days.forEach((day, r) => {
-      const a = day.getTime();
-      const b = new Date(day.getFullYear(), day.getMonth(), day.getDate() + 1).getTime();
-      const y = top + r * (rowH + gap);
-      // Die Zeile zeigt 0 bis 24 Uhr; an einem Tag mit 25 Stunden endet ein Balken am rechten Rand
-      const x = (tt) => Math.min(R, L + ((tt - a) / (24 * HOUR)) * (R - L));
-      s += this._txt(L - 8, y + 12, this._shortDay(day), "end", r === days.length - 1 ? "now" : "");
-      s += `<rect class="hl-track" x="${L}" y="${y}" width="${R - L}" height="${rowH}" rx="4"/>`;
-      for (const [sa, sb] of this._okSpans(d, a, b)) s += `<rect class="hl-band ok" x="${x(sa).toFixed(1)}" y="${y}" width="${Math.max(0.5, x(sb) - x(sa)).toFixed(1)}" height="${rowH}" rx="3"/>`;
-      for (const [ga, gb] of gaps) {
-        const ca = Math.max(a, ga);
-        const cb = Math.min(b, gb);
-        if (cb > ca) s += `<rect class="hl-band gap" x="${x(ca).toFixed(1)}" y="${y}" width="${Math.max(2, x(cb) - x(ca)).toFixed(1)}" height="${rowH}" rx="3"/>`;
-      }
-      for (const [ta, tb, kind] of d.marks || []) {
-        const ma = Math.max(a, ms(ta));
-        const mb = Math.min(b, tb ? ms(tb) : ms(ta));
-        if (ms(ta) >= b || (tb ? ms(tb) : ms(ta)) < a) continue;
-        s += `<rect class="hl-b ${kind}" data-kind="${kind}" x="${x(ma).toFixed(1)}" y="${y - 2}" width="${Math.max(3, x(mb) - x(ma)).toFixed(1)}" height="${rowH + 4}" rx="1.5"/>`;
-      }
-    });
-    const xh = (h) => L + (h / 24) * (R - L);
-    for (const h of narrow ? [0, 6, 12, 18, 24] : [0, 3, 6, 9, 12, 15, 18, 21, 24]) s += this._txt(xh(h), H - 4, `${String(h).padStart(2, "0")}:00`, h === 0 ? "start" : h === 24 ? "end" : "middle");
-    return this._svg(W, H, s, this._t("hlChartDays"));
-  }
-
-  // 30 Tage: Raster wie bei Bewegung (Entscheid des Nutzers, "Vorschlag 1"). Eine Zeile je Tag, eine Zelle je Stunde in der Farbe des schlechtesten
+  // 7 und 30 Tage: Raster wie bei Bewegung (Entscheid des Nutzers, "Vorschlag 1"). Eine Zeile je Tag, eine Zelle je Stunde in der Farbe des schlechtesten
   // Ergebnisses dieser Stunde; ruhige Stunden blass grün, eine Stunde mit mehr als einer halben Stunde Lücke grau, vor dem Protokoll und die Zukunft leer
   _raster(d, W) {
     const days = this._days(d);
@@ -574,8 +520,10 @@ export class HealthLogUi {
     const R = W - 4;
     const top = 4;
     const cw = (R - L) / 24;
-    const ch = W > 500 ? 6.2 : 5.6;
-    const gap = 1.3;
+    // 7 Tage (Entscheid des Nutzers 2026-11-22, Mockup hl-week-v1 "A"): dasselbe Raster, nur mit quadratischen Zellen und einer Beschriftung je Tag
+    const week = d.hours <= 168;
+    const ch = week ? cw - 2 : W > 500 ? 6.2 : 5.6;
+    const gap = week ? 7 : 1.3;
     const now = ms(d.now);
     const since = ms(d.since);
     const gaps = this._gaps(d);
@@ -607,7 +555,7 @@ export class HealthLogUi {
         else cls = "hl-cell ok";
         s += `<rect class="${cls}" ${worst ? `data-kind="${worst}"` : ""} x="${x}" y="${y.toFixed(1)}" width="${w}" height="${ch}" rx="1.5"/>`;
       }
-      if (i === 0 || i === days.length - 1 || i % 5 === 4) s += this._txt(L - 8, y + ch / 2 + 4, this._shortDay(day), "end", i === days.length - 1 ? "now" : "");
+      if (week || i === 0 || i === days.length - 1 || i % 5 === 4) s += this._txt(L - 8, y + ch / 2 + 4, this._shortDay(day), "end", i === days.length - 1 ? "now" : "");
     });
     const base = top + days.length * (ch + gap);
     for (const h of W < 500 ? [0, 6, 12, 18, 24] : [0, 3, 6, 9, 12, 15, 18, 21, 24]) s += this._txt(L + h * cw, base + 12, `${String(h).padStart(2, "0")}:00`, h === 24 ? "end" : h === 0 ? "start" : "middle");
