@@ -7,6 +7,16 @@ Alle nennenswerten Änderungen an dieser Integration stehen in dieser Datei.
 Das Format folgt [Keep a Changelog](https://keepachangelog.com/de/1.1.0/),
 die Versionsnummern folgen [Semantic Versioning](https://semver.org/lang/de/).
 
+## [2.237.5] - 2026-11-22
+
+Der obere Bereich des Protokoll-Fensters der HealthCheck-Dienste sieht aus wie in Alarmageddon.
+
+### Geändert
+
+- **Reiter mit Symbol und Wert:** die drei Reiter (Verlauf, Antwortzeit, Dienst) haben oben ein Symbol und darunter den Namen, der Reiter Antwortzeit zeigt seinen aktuellen Wert (auf dem Desktop Name und Wert). Das Symbol des gewählten Reiters hat die Akzentfarbe.
+- **Zeiträume klein in einer Zeile:** die sieben Zeiträume stehen nebeneinander in einer kleinen Zeile, auch auf dem Handy, statt in zwei Zeilen.
+- **Kennzahlen ohne Kachel:** die Kennzahlen (Erfolgsquote, Aufrufe, Gescheitert und weitere) stehen als schlichte Zahlen mit kleiner Beschriftung nebeneinander, ohne Kasten um jede.
+
 ## [2.237.4] - 2026-11-22
 
 Das README beschreibt die HealthCheck-Dienste vollständig.
@@ -6442,6 +6452,7 @@ Erste Vorabversion.
   GitHub Actions für die Prüfungen von HACS und hassfest sowie die Tests.
 
 [2.6.0]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v2.6.0
+[2.237.5]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v2.237.5
 [2.237.4]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v2.237.4
 [2.237.3]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v2.237.3
 [2.237.2]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v2.237.2

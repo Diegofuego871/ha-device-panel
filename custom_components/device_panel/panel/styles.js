@@ -3109,11 +3109,34 @@ b.hl-pick.one { display: block; }
 .hl-dot-s.test { background: var(--dp-primary); }
 .hl-dot-s.fail, .hl-dot-s.back { background: var(--dp-error); }
 .hl-dot-s.back { background: var(--dp-success); }
-.hl-tabs, .hl-range { margin: 6px 0 10px; }
-.hl-kpis { display: grid; grid-template-columns: repeat(auto-fit, minmax(110px, 1fr)); gap: 8px; margin: 6px 0 10px; }
-.hl-kpi { display: flex; flex-direction: column; gap: 2px; padding: 10px 12px; border: 1px solid var(--dp-divider); border-radius: 14px; background: var(--dp-subtle); }
-.hl-kpi b { font-size: 19px; font-weight: 700; }
-.hl-kpi span { color: var(--dp-text2); font-size: 12.5px; }
+/* Oberer Bereich wie in Alarmageddon: Reiter mit Symbol und Name oder Wert, die Zeiträume klein in einer Zeile, die Kennzahlen ohne Kachel */
+.hl-tabs { margin: 12px 0 0; }
+.hl-tabs .sub-tab.hl-tab { flex-direction: column; justify-content: center; align-items: center; gap: 5px; min-height: 68px; padding: 10px 8px; white-space: normal; color: var(--dp-text); font-weight: 400; }
+.hl-ti { display: grid; flex: none; color: var(--dp-text2); }
+.hl-tab.on .hl-ti { color: var(--dp-primary); }
+.hl-ti svg { width: 24px; height: 24px; }
+.hl-tx { min-width: 0; max-width: 100%; text-align: center; }
+.hl-tx small { display: block; font-size: 12px; color: var(--dp-text2); line-height: 1.2; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.hl-tx b { display: block; font-size: 14.5px; font-weight: 600; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.hl-range { margin: 14px 0 0; border-radius: 13px; }
+.sub-tabs.hl-range > .sub-tab { min-height: 34px; padding: 0 18px; font-size: 13.5px; }
+.sub-tabs.hl-range > .seg-pill { border-radius: 10px; }
+.hl-kpis { display: flex; gap: 22px; margin: 14px 0 0; overflow: hidden; }
+.hl-kpi b { display: block; font-size: 20px; font-weight: 600; line-height: 1.15; font-variant-numeric: tabular-nums; white-space: nowrap; }
+.hl-kpi span { font-size: 12.5px; color: var(--dp-text2); white-space: nowrap; }
+@media (max-width: 700px) {
+  .hl-tabs .sub-tab.hl-tab { min-height: 62px; padding: 8px 4px; gap: 4px; }
+  .hl-ti svg { width: 22px; height: 22px; }
+  .hl-tx b, .hl-tx small { font-size: 13px; }
+  .hl-tab[data-tab="history"] .hl-tx b, .hl-tab[data-tab="service"] .hl-tx b { display: none; }
+  .hl-tab[data-tab="latency"] .hl-tx small { display: none; }
+  .hl-tab[data-tab="history"] .hl-tx small, .hl-tab[data-tab="service"] .hl-tx small { font-weight: 600; color: inherit; }
+  .sub-tabs.hl-range, .sub-tabs.hl-range:has(> .sub-tab:nth-child(5)) { grid-auto-flow: column; grid-template-columns: none; grid-auto-columns: minmax(0, 1fr); }
+  .sub-tabs.hl-range { gap: 0; }
+  .sub-tabs.hl-range > .sub-tab { min-height: 40px; padding: 0 1px; font-size: 11.5px; letter-spacing: -.2px; }
+  .hl-kpis { gap: 18px; margin-top: 12px; }
+  .hl-kpi b { font-size: 17px; }
+}
 .hl-chart { position: relative; min-height: 60px; }
 .hl-svg { display: block; width: 100%; height: auto; }
 .hl-tx { fill: var(--dp-text2); font-size: 11px; }

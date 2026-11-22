@@ -7,6 +7,16 @@ All notable changes to this integration are documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/).
 
+## [2.237.5] - 2026-11-22
+
+The top of the log window of the HealthCheck services looks like in Alarmageddon.
+
+### Changed
+
+- **Tabs with icon and value:** the three tabs (History, Response time, Service) have an icon above and below it the name, the response time tab shows its current value (on the desktop name and value). The selected tab has an accent icon.
+- **Periods small, in one row:** the seven periods stand side by side in one small row, also on the phone, instead of two rows.
+- **Key figures without a tile:** the key figures (success rate, calls, failed and so on) stand side by side as plain figures with a small caption, no box around each.
+
 ## [2.237.4] - 2026-11-22
 
 The README describes the HealthCheck services completely.
@@ -6341,6 +6351,7 @@ First pre-release.
   GitHub Actions for HACS/hassfest validation and tests.
 
 [2.6.0]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v2.6.0
+[2.237.5]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v2.237.5
 [2.237.4]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v2.237.4
 [2.237.3]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v2.237.3
 [2.237.2]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v2.237.2

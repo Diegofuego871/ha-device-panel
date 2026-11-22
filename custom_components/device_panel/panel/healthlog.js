@@ -13,6 +13,8 @@ import { applySuffix, suggest } from "./healthcheck.js";
 const RANGES = [3, 12, 24, 168, 720, 4320, 8760];
 const RANGE_LABEL = { 3: "hlR3h", 12: "hlR12h", 24: "hlR1d", 168: "hlR7d", 720: "hlR30d", 4320: "hlR6m", 8760: "hlR1y" };
 const TABS = ["history", "latency", "service"];
+// Symbole der drei Reiter (wie in Alarmageddon: Symbol oben, darunter Name oder Wert)
+const TAB_ICON = { history: "clockHistory", latency: "timer", service: "heartPulse" };
 const RANK = { ok: 0, test: 1, report: 2, fail: 3 };
 const HOUR = 3600000;
 const SORT_DEFAULT = { events: { key: "time", dir: "desc" }, calls: { key: "time", dir: "desc" } };
@@ -335,7 +337,9 @@ export class HealthLogUi {
     const every = t("hlEvery", { time: this.host._fmtSeconds(item.interval, true) });
     const sub = (this.narrow ? [host, every] : [host, known?.name, every]).filter(Boolean).join(" · ");
     const d = this.data?.id === this.id ? this.data : null;
-    const tabs = TABS.map((tab) => `<button type="button" class="sub-tab${tab === this.tab ? " on" : ""}" data-hl="tab" data-set="hl-tab" data-tab="${tab}" role="tab" aria-selected="${tab === this.tab}">${escape(t(`hlTab_${tab}`))}</button>`).join("");
+    // Reiter mit Symbol und Text: Verlauf und Dienst zeigen ihren Namen, die Antwortzeit ihren Wert (auf dem Desktop beides)
+    const tabValue = { history: this._stateText(state), latency: this._ms(d?.last?.ms), service: known?.name || host };
+    const tabs = TABS.map((tab) => `<button type="button" class="sub-tab hl-tab${tab === this.tab ? " on" : ""}" data-hl="tab" data-set="hl-tab" data-tab="${tab}" role="tab" aria-selected="${tab === this.tab}"><span class="hl-ti">${mdi(TAB_ICON[tab], 22)}</span><span class="hl-tx"><small>${escape(t(`hlTab_${tab}`))}</small><b>${escape(tabValue[tab])}</b></span></button>`).join("");
     // Das Auswahlmenü gibt es nur, wenn es mehr als einen Dienst gibt
     const multi = this.items.length > 1;
     const menu = this.items.map((i) => {
