@@ -52,6 +52,7 @@ for (const lang of ["de", "en"]) {
     // --- Formular: Erkennung, Fehler-Zusatz, Fehlerfälle zum Ankreuzen
     await tap('[data-set="hc-add"]');
     if (mobile) check(`[${tag}] Schliessen-Knopf des Formulars am selben Ort wie in den Einstellungen`, await ev(`const a = r.querySelector('dialog.settings .dlg-head .dlg-close').getBoundingClientRect(); const c = r.querySelector('${FORM} .dlg-head .dlg-close').getBoundingClientRect(); return Math.abs(a.top - c.top) < 1 && Math.abs(a.right - c.right) < 1 && Math.abs(a.width - c.width) < 0.6`));
+    check(`[${tag}] Schliessen-Kreuz des Formulars wie in den Einstellungen: gleiche Grösse und gleicher Abstand zur oberen rechten Ecke des Fensters`, await ev(`const off = (sel) => { const d = r.querySelector(sel).getBoundingClientRect(); const c = r.querySelector(sel + ' .dlg-head .dlg-close').getBoundingClientRect(); return [c.width, c.height, c.top - d.top, d.right - c.right].map((n) => Math.round(n * 10) / 10).join(","); }; return off('dialog.settings') === off('${FORM}')`));
     check(`[${tag}] Formular "${L.addTitle}" öffnet`, await wait(`return r.querySelector('${FORM}')?.open`) && (await text(`${FORM} h2`)) === L.addTitle);
     check(`[${tag}] sechs Kästchen in fester Reihenfolge, keines angekreuzt`, (await ev(`return [...r.querySelectorAll('${FORM} .hc-chk input')].map((i) => i.dataset.kind + (i.checked ? "+" : "")).join(",")`)) === "offline,backup,cpu,ram,disk,stall");
     check(`[${tag}] Beschriftungen "${L.case_off}", "${L.case_cpu}", "${L.case_stall}"`, (await text(`${FORM} .hc-chk:nth-child(1) b`)) === L.case_off && (await text(`${FORM} .hc-chk:nth-child(3) b`)) === L.case_cpu && (await text(`${FORM} .hc-chk:nth-child(6) b`)) === L.case_stall);
@@ -106,6 +107,7 @@ for (const lang of ["de", "en"]) {
     check(`[${tag}] Kapitel zeigt "${L.one}"`, await wait(`return r.querySelector(".hc-sum")?.textContent.includes(${JSON.stringify(L.one)})`) && (await text(".hc-sum")).includes(L.okAll));
     await ev(`r.host._hc.openList()`);
     await wait(`return r.querySelectorAll('${LIST} .hc-row').length >= 1`);
+    check(`[${tag}] Schliessen-Kreuz der Liste wie in den Einstellungen: gleiche Grösse und gleicher Abstand zur oberen rechten Ecke des Fensters`, await ev(`const off = (sel) => { const d = r.querySelector(sel).getBoundingClientRect(); const c = r.querySelector(sel + ' .dlg-head .dlg-close').getBoundingClientRect(); return [c.width, c.height, c.top - d.top, d.right - c.right].map((n) => Math.round(n * 10) / 10).join(","); }; return off('dialog.settings') === off('${LIST}')`));
     check(`[${tag}] Fussknöpfe der Liste gleich breit`, await ev(`const w = [...r.querySelectorAll('${LIST} .dlg-actions .dlg-btn')].map((b) => b.getBoundingClientRect().width); return w.length === 2 && Math.abs(w[0] - w[1]) < 1`));
     await ev(`r.host._hc.closeList?.()`);
 
