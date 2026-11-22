@@ -13,11 +13,6 @@ const MIN = 60;
 const MAX = 86400;
 // Schnellwahl des Abstands: Zahl und Einheit gehen für jeden anderen Wert von 1 Minute bis 24 Stunden
 const PRESETS = [60, 300, 900, 3600, 21600, 86400];
-// Massstab ist das Schliessen-Kreuz: sein Pfad füllt 14 von 24 Einheiten bei 18 px, also sichtbar 10,5 px.
-// Die anderen Pfade füllen ihre 24er-Fläche verschieden aus (Warndreieck 22, Stift 18, Papierkorb 18, Protokoll 18, Haken 17,5);
-// jedes Symbol bekommt die Grösse, bei der sein längster Pfadrand ebenfalls 10,5 px misst (252 / Pfadlänge).
-const IB_PX = { alert: 252 / 22, check: 252 / 17.5, history: 14, pencil: 14, trash: 14 };
-export const ibSize = (icon) => Math.round((IB_PX[icon] || 18) * 100) / 100;
 export const CASES = ["offline", "backup", "cpu", "ram", "disk", "stall"];
 
 // Bekannte Dienste: erkannt an der URL. `suffix` ist der Fehler-Zusatz, den das Panel vorschlägt (Healthchecks.io und Better Stack kennen nur "/fail"; die Nachricht
@@ -278,7 +273,7 @@ export class HealthCheckUi {
     const val = { name: (i) => (i.name || i.url).toLowerCase(), last: (i) => i.status?.at || "", interval: (i) => i.interval, status: (i) => this.statusText(i.status) }[sort.key];
     const cmp = (a, b) => (typeof a === "number" ? a - b : String(a).localeCompare(String(b), this.host._lang || "en", { numeric: true }));
     const list = [...shown].sort((a, b) => cmp(val(a), val(b)) * (sort.dir === "desc" ? -1 : 1) || cmp(a.name || "", b.name || ""));
-    const btn = (act, icon, label, id, extra = "", cls = "") => `<button type="button" class="hc-ib${cls ? ` ${cls}` : ""}" data-hc="${act}" data-id="${escape(id)}" ${extra} title="${escape(label)}" aria-label="${escape(label)}">${mdi(icon, ibSize(icon))}</button>`;
+    const btn = (act, icon, label, id, extra = "", cls = "") => `<button type="button" class="hc-ib${cls ? ` ${cls}` : ""}" data-hc="${act}" data-id="${escape(id)}" ${extra} title="${escape(label)}" aria-label="${escape(label)}">${mdi(icon, 18)}</button>`;
     const rows = list.map((i) => {
       const known = suggest(i.url);
       // Angekreuzte Fehlerfälle als Marken; ausgegraut, wenn die Meldung dafür inzwischen aus ist (der Fall gilt dann nicht)

@@ -9,11 +9,11 @@ and this project adheres to [Semantic Versioning](https://semver.org/).
 
 ## [2.237.2] - 2026-11-22
 
-The icons in the round buttons of the HealthCheck windows are as big as the close icon.
+The icons in the round buttons of the HealthCheck windows have the same size as the close icon.
 
 ### Fixed
 
-- **Icons in the round buttons:** all icons (log, error test, OK test, edit, remove) are as big as the close icon: the longest edge of each icon is 10.5 px, as visible with the close icon. Each icon has its own drawing size because the shapes fill their area differently.
+- **Icons in the round buttons:** all icons (log, error test, OK test, edit, remove) have exactly the same size of 18 px, like the close icon and like in Alarmageddon.
 
 ## [2.237.1] - 2026-11-22
 

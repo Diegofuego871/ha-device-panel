@@ -9,15 +9,15 @@ die Versionsnummern folgen [Semantic Versioning](https://semver.org/lang/de/).
 
 ## [2.237.2] - 2026-11-22
 
-Die Symbole in den runden Knöpfen der HealthCheck-Fenster sind so gross wie das Schliessen-Kreuz.
+Die Symbole in den runden Knöpfen der HealthCheck-Fenster sind genau so gross wie das Schliessen-Kreuz.
 
 ### Behoben
 
-- **Symbole in den runden Knöpfen:** alle Symbole (Protokoll, Fehler-Test, OK-Test, Bearbeiten, Entfernen) sind so gross wie das Schliessen-Symbol: der längste Rand jedes Symbols misst 10,5 px, wie beim Kreuz sichtbar. Jedes Symbol hat seine eigene Zeichengrösse, weil die Formen ihre Fläche verschieden füllen.
+- **Symbole in den runden Knöpfen:** alle Symbole (Protokoll, Fehler-Test, OK-Test, Bearbeiten, Entfernen) haben genau dieselbe Grösse von 18 px, wie das Schliessen-Symbol und wie bei Alarmageddon.
 
 ## [2.237.1] - 2026-11-22
 
-Die zwei Knöpfe des Kapitels "HealthCheck-Dienste" zeigen auf dem Handy wieder ihre Symbole, und die runden Knöpfe sind so gross wie das Schliessen-Kreuz.
+Die zwei Knöpfe des Kapitels "HealthCheck-Dienste" zeigen auf dem Handy wieder ihre Symbole, und die runden Knöpfe sind genau so gross wie das Schliessen-Kreuz.
 
 ### Behoben
 
