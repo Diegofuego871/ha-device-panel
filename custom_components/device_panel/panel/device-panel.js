@@ -3669,6 +3669,8 @@ class DevicePanel extends HTMLElement {
     this._brandRender = window.setTimeout(() => {
       this._render();
       if (this._settings?.data && this.shadowRoot.querySelector("dialog.settings")?.open) this._renderSettings();
+      // Die Updates-App zeichnet ihre Zeilen neu, sobald ein Logo feststeht (HACS-Zeilen zeigen es erst nach der Abfrage)
+      if (this.shadowRoot.querySelector("dialog.updapp-dlg")?.open) this._updApp?.render?.();
     }, 60);
   }
 

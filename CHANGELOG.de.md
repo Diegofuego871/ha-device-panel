@@ -18,6 +18,11 @@ HealthCheck-Dienste: ein Link zum Dashboard des Dienstes.
 - **Sicherung und Wiederherstellung:** der Link zum Dashboard gehört mit dem Dienst zur Sicherung.
 - **Tests:** die Python-Tests zu Speichern, Prüfen und Sicherung, die Suiten `hc-e2e` und `hclog-e2e`.
 
+### Behoben
+
+- **Logo von HACS-Einträgen in der Updates-App:** Ein Update über HACS zeigt das Logo der Integration dahinter, auch wenn sie nicht im öffentlichen Logo-Katalog steht (eigenes Repository). Das Panel nimmt die Domain aus dem Bild der Update-Entität, sonst aus dem Namen des GitHub-Projekts, sonst aus dem Titel, aber nur, wenn die Integration geladen ist; das Logo kommt vom Brand-Dienst der Instanz (lokales `brand/icon.png`). Ohne Logo bleibt das von HACS.
+
+
 ## [2.237.5] - 2026-11-22
 
 Nicht veröffentlicht; enthalten in 2.238.0.

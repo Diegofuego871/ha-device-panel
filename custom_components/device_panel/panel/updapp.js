@@ -219,7 +219,30 @@ export class UpdApp {
         return `<span class="ibadge has-img"><img src="${this.h.escape(src)}" alt="" width="22" height="22" draggable="false"></span>`;
       }
     }
+    // HACS und Marketplace (seit 2.238.1): ist es eine Integration, die in dieser Instanz läuft, zeigt die Zeile ihr eigenes Logo vom Brand-Dienst der
+    // Instanz (auch das lokale brand/icon.png einer von Hand hinzugefügten Integration, die nicht im öffentlichen Katalog steht); ohne Logo bleibt das von HACS
+    if (kind === "hacs") {
+      const own = this.brandDomain(u);
+      if (own && this.host._brandSrc(own)) return this.host._ibadge(own, this.info(u).integ);
+    }
     return this.host._ibadge(domain, this.info(u).integ);
+  }
+
+  // Domain der Integration hinter einem HACS-Update: aus dem Bild der Update-Entität (HACS verweist auf brands.home-assistant.io/_/<domain>/…), sonst aus
+  // dem Namen des GitHub-Projekts (release_url, "ha-alarmageddon" gibt "alarmageddon") oder dem Titel; nur eine, die in dieser Instanz geladen ist
+  // (hass.config.components), nie ein geratener Name. Keine, wenn es keine Integration ist (Karte, Design).
+  brandDomain(u) {
+    const hass = this.host._hass;
+    const attrs = hass?.states?.[u.entity_id]?.attributes || {};
+    const loaded = new Set(hass?.config?.components || []);
+    const slug = (x) => String(x || "").toLowerCase().replace(/^(ha|hass|homeassistant)[-_]/, "").replace(/[^a-z0-9]+/g, "_").replace(/^_+|_+$/g, "");
+    const cand = [];
+    const pic = String(attrs.entity_picture || "").match(/\/(?:_|integration)\/([a-z0-9_]+)\/(?:dark_)?(?:icon|logo)/i);
+    if (pic) cand.push(pic[1].toLowerCase());
+    const repo = String(attrs.release_url || "").match(/github\.com\/[^/]+\/([^/?#]+)/i);
+    if (repo) cand.push(slug(repo[1]));
+    cand.push(slug(u.title || u.name));
+    return cand.find((c) => c && c !== "hacs" && loaded.has(c)) || null;
   }
 
   // Chip einer Zeile: Geräte nach Integration, alles andere nach Art
