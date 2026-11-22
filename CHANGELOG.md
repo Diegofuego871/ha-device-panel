@@ -7,7 +7,20 @@ All notable changes to this integration are documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/).
 
+## [2.238.0] - 2026-11-22
+
+HealthCheck services: a link to the dashboard of the service.
+
+### Added
+
+- **Link to the dashboard (optional) per service:** in the form of a service a new chapter "Dashboard" with the field "Link to the dashboard" (the sign-in page or the dashboard of the service, http or https). For a recognised service the panel fills in the homepage on its own (Healthchecks.io, Cronitor, Better Stack; for self-hosted Healthchecks and Uptime Kuma the host of the URL), for an unknown service the field stays empty; as with the error suffix a suggestion fills the field only while you have not touched it, otherwise "Use it" stands next to it. An invalid link is reported, an empty one removes it.
+- **Shown as a link in the details:** in the tab "Service" of the log window the dashboard stands as a row between "Recognised" and the ping URL, as a link that opens in a new browser tab, with a button to copy it. Only http and https links are shown as links.
+- **Backup and restore:** the dashboard link is part of the backup with the service.
+- **Tests:** the Python tests for saving, checking and the backup, the suites `hc-e2e` and `hclog-e2e`.
+
 ## [2.237.5] - 2026-11-22
+
+Not released; included in 2.238.0.
 
 The log window of the HealthCheck services looks like in Alarmageddon at the top, and the 7 days chart is an hour grid like the 30 days.
 
@@ -6352,7 +6365,7 @@ First pre-release.
   GitHub Actions for HACS/hassfest validation and tests.
 
 [2.6.0]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v2.6.0
-[2.237.5]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v2.237.5
+[2.238.0]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v2.238.0
 [2.237.4]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v2.237.4
 [2.237.3]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v2.237.3
 [2.237.2]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v2.237.2

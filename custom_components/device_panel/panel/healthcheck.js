@@ -16,13 +16,14 @@ const PRESETS = [60, 300, 900, 3600, 21600, 86400];
 export const CASES = ["offline", "backup", "cpu", "ram", "disk", "stall"];
 
 // Bekannte Dienste: erkannt an der URL. `suffix` ist der Fehler-Zusatz, den das Panel vorschlägt (Healthchecks.io und Better Stack kennen nur "/fail"; die Nachricht
-// bei Cronitor und Uptime Kuma bleibt Englisch: der Dienst zeigt sie in seinem Verlauf).
+// bei Cronitor und Uptime Kuma bleibt Englisch: der Dienst zeigt sie in seinem Verlauf). `dash` ist der Link zum Dashboard, den das Panel vorschlägt: bei den Diensten im Netz die
+// Startseite, bei den selbst betriebenen (Healthchecks, Uptime Kuma) der Rechner der URL selbst.
 const KNOWN = [
-  { name: "Healthchecks.io", suffix: "/fail", test: (u) => u.hostname === "hc-ping.com" },
-  { name: "Healthchecks", suffix: "/fail", test: (u) => /^\/ping\/[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}\/?$/i.test(u.pathname) },
-  { name: "Better Stack", suffix: "/fail", test: (u) => /(^|\.)(betterstack\.com|betteruptime\.com)$/.test(u.hostname) && u.pathname.includes("/heartbeat/") },
-  { name: "Cronitor", suffix: "?state=fail&message=Device+Panel+error", test: (u) => u.hostname === "cronitor.link" },
-  { name: "Uptime Kuma", suffix: "?status=down&msg=Device+Panel+error", test: (u) => u.pathname.includes("/api/push/") },
+  { name: "Healthchecks.io", suffix: "/fail", dash: () => "https://healthchecks.io/", test: (u) => u.hostname === "hc-ping.com" },
+  { name: "Healthchecks", suffix: "/fail", dash: (u) => `${u.origin}/`, test: (u) => /^\/ping\/[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}\/?$/i.test(u.pathname) },
+  { name: "Better Stack", suffix: "/fail", dash: () => "https://uptime.betterstack.com/", test: (u) => /(^|\.)(betterstack\.com|betteruptime\.com)$/.test(u.hostname) && u.pathname.includes("/heartbeat/") },
+  { name: "Cronitor", suffix: "?state=fail&message=Device+Panel+error", dash: () => "https://cronitor.io/app", test: (u) => u.hostname === "cronitor.link" },
+  { name: "Uptime Kuma", suffix: "?status=down&msg=Device+Panel+error", dash: (u) => `${u.origin}/`, test: (u) => u.pathname.includes("/api/push/") },
 ];
 
 // Beispiele unter der Liste (zum Aufklappen); dieselben Anbieter wie KNOWN. Uptime Kuma läuft meist beim Nutzer selbst: sinnvoll nur ausserhalb von Home Assistant.
@@ -36,6 +37,18 @@ export function suggest(url) {
     return null;
   }
   return KNOWN.find((k) => k.test(u)) || null;
+}
+
+// Link zum Dashboard, den das Panel für einen erkannten Dienst vorschlägt; für einen unbekannten Dienst leer
+export function suggestDash(url) {
+  let u;
+  try {
+    u = new URL(String(url || "").trim());
+  } catch {
+    return "";
+  }
+  const known = KNOWN.find((k) => k.test(u));
+  return known?.dash ? known.dash(u) : "";
 }
 
 // Wie der Server (healthcheck.apply_suffix): "/…" an den Pfad, "?…" oder "&…" setzt Parameter und ersetzt gleichnamige; sonst null
@@ -89,7 +102,7 @@ export class HealthCheckUi {
     this.error = "";
     this.q = "";
     this.sort = { key: "name", dir: "asc" };
-    this.form = null; // offenes Formular: { id, name, url, suffix, touched, cases: [Arten], value, unit, error, saving, shown }
+    this.form = null; // offenes Formular: { id, name, url, suffix, touched, dash, dashTouched, cases: [Arten], value, unit, error, saving, shown }
     this.busy = new Set(); // laufende Tests "id|ok" oder "id|<Fall>"
     this.aboutOpen = false;
   }
@@ -298,7 +311,7 @@ export class HealthCheckUi {
     if (!item && this.items.length >= this.max) return;
     const interval = item?.interval ?? 300;
     const hours = interval % 3600 === 0;
-    this.form = { id: item?.id || null, name: item?.name || "", url: item?.url || "", suffix: item?.fail_suffix || "", touched: Boolean(item), cases: [...(item?.cases || [])], value: hours ? interval / 3600 : Math.round(interval / 60), unit: hours ? "h" : "min", error: "", saving: false, shown: false };
+    this.form = { id: item?.id || null, name: item?.name || "", url: item?.url || "", suffix: item?.fail_suffix || "", touched: Boolean(item), dash: item?.dashboard || "", dashTouched: Boolean(item), cases: [...(item?.cases || [])], value: hours ? interval / 3600 : Math.round(interval / 60), unit: hours ? "h" : "min", error: "", saving: false, shown: false };
     this.renderForm(true);
     const dlg = this.formDlg;
     if (!dlg) return;
@@ -335,6 +348,7 @@ export class HealthCheckUi {
     const suffix = String(f.suffix || "").trim();
     if (suffix && validUrl(f.url) && !validSuffix(f.url, suffix)) out.suffix = this.t("hcErrSuffix");
     else if (!suffix && f.cases.length) out.suffix = this.t("hcErrSuffixNeeded");
+    if (String(f.dash || "").trim() && !validUrl(f.dash)) out.dash = this.t("hcErrDash");
     const sec = this.seconds(f);
     if (!Number.isFinite(sec) || sec < MIN || sec > MAX) out.interval = this.t("hcErrInterval");
     return out;
@@ -354,6 +368,7 @@ export class HealthCheckUi {
     const suffix = String(f.suffix || "").trim();
     const shown = (key, value) => (bad[key] && (f.shown || String(value ?? "").trim() || f.cases.length) ? `<small class="hc-err">${escape(bad[key])}</small>` : "");
     const preview = validUrl(f.url) && validSuffix(f.url, suffix) ? applySuffix(f.url, suffix) : null;
+    const sugDash = suggestDash(f.url);
     return {
       known: known ? `<span class="hc-tag">${escape(this.t("hcKnown", known.name))}</span>` : "",
       "err-name": shown("name", f.name),
@@ -361,6 +376,8 @@ export class HealthCheckUi {
       offer: known && known.suffix !== suffix ? `<div class="hc-offer"><span class="hc-t2">${escape(this.t("hcSuggest", known.name, known.suffix))}</span><button type="button" class="lnk" data-hc="f-take">${escape(this.t("hcTake"))}</button></div>` : "",
       prev: preview ? `${escape(this.t("hcPreview"))} <span class="hc-mono">${escape(preview)}</span>` : escape(this.t(suffix ? "hcPreviewNone" : "hcPreviewEmpty")),
       "err-suffix": shown("suffix", f.suffix),
+      "offer-dash": sugDash && sugDash !== String(f.dash || "").trim() ? `<div class="hc-offer"><span class="hc-t2">${escape(this.t("hcSuggest", known.name, sugDash))}</span><button type="button" class="lnk" data-hc="f-take-dash">${escape(this.t("hcTake"))}</button></div>` : "",
+      "err-dash": shown("dash", f.dash),
       "err-interval": bad.interval ? `<small class="hc-err">${escape(bad.interval)}</small>` : "",
       presets: PRESETS.map((sec) => `<button type="button" class="sub-tab${this.seconds() === sec ? " on" : ""}" data-hc="f-preset" data-set="hc-preset" data-sec="${sec}" aria-pressed="${this.seconds() === sec}">${escape(this.host._fmtSeconds(sec, true))}</button>`).join(""),
     };
@@ -393,6 +410,9 @@ export class HealthCheckUi {
           <small class="hc-t2">${escape(this.t("hcSuffixHint"))}</small><div data-hcp="offer">${p.offer}</div><small class="hc-t2 hc-prev" data-hcp="prev">${p.prev}</small><span data-hcp="err-suffix">${p["err-suffix"]}</span>`)}
         <div class="hc-label hc-chk-head">${escape(this.t("hcCasesTitle"))}</div>
         <div class="hc-checks">${checks}</div>
+        <div class="set-title">${escape(this.t("hcChapDash"))}</div>
+        ${field("hcDash", `<input class="hc-in" type="url" inputmode="url" data-hc="f-dash" value="${escape(f.dash)}" placeholder="https://…" autocomplete="off" spellcheck="false" maxlength="500">
+          <small class="hc-t2">${escape(this.t("hcDashHint"))}</small><div data-hcp="offer-dash">${p["offer-dash"]}</div><span data-hcp="err-dash">${p["err-dash"]}</span>`)}
         <div class="set-title">${escape(this.t("hcChapInterval"))}</div>
         <div class="hc-field"><div class="hc-int"><span class="opt-input${bad.interval ? " bad" : ""}"><input type="number" min="1" max="${f.unit === "h" ? 24 : 1440}" step="1" inputmode="numeric" data-hc="f-value" value="${escape(f.value)}" aria-label="${escape(this.t("hcInterval"))}"></span>
           <select class="hc-in" data-hc="f-unit" aria-label="${escape(this.t("hcUnit"))}"><option value="min" ${f.unit === "min" ? "selected" : ""}>${escape(this.t("hcMinutes"))}</option><option value="h" ${f.unit === "h" ? "selected" : ""}>${escape(this.t("hcHours"))}</option></select></div>
@@ -416,6 +436,8 @@ export class HealthCheckUi {
     const active = this.host.shadowRoot.activeElement;
     const suffix = dlg.querySelector('[data-hc="f-suffix"]');
     if (suffix && suffix !== active && suffix.value !== f.suffix) suffix.value = f.suffix;
+    const dash = dlg.querySelector('[data-hc="f-dash"]');
+    if (dash && dash !== active && dash.value !== f.dash) dash.value = f.dash;
     const value = dlg.querySelector('[data-hc="f-value"]');
     if (value) {
       value.max = f.unit === "h" ? "24" : "1440";
@@ -445,7 +467,7 @@ export class HealthCheckUi {
     try {
       const res = await this.host._hass.callWS({
         type: "device_panel/healthcheck_save", ...(f.id ? { check_id: f.id } : {}), name: String(f.name).trim(), url: f.url.trim(), interval: this.seconds(),
-        fail_suffix: String(f.suffix || "").trim(), cases: [...f.cases],
+        fail_suffix: String(f.suffix || "").trim(), dashboard: String(f.dash || "").trim(), cases: [...f.cases],
       });
       this._apply(res);
       this.closeForm();
@@ -454,7 +476,7 @@ export class HealthCheckUi {
       this.host._hl?.afterSave?.(res.id);
     } catch (err) {
       f.saving = false;
-      const known = { invalid_name: "hcErrName", invalid_url: "hcErrUrl", invalid_suffix: "hcErrSuffix", too_many: "hcErrTooMany" }[err?.code];
+      const known = { invalid_name: "hcErrName", invalid_url: "hcErrUrl", invalid_suffix: "hcErrSuffix", invalid_dashboard: "hcErrDash", too_many: "hcErrTooMany" }[err?.code];
       f.error = known ? this.t(known) : this.t("hcSaveFailed", this.h.errText(err));
       this.renderForm();
     }
@@ -553,6 +575,13 @@ export class HealthCheckUi {
         f.value = hours ? sec / 3600 : sec / 60;
         this.refreshForm();
       }
+    } else if (f && act === "f-take-dash") {
+      const sug = suggestDash(f.url);
+      if (sug) {
+        f.dash = sug;
+        f.dashTouched = true;
+        this.refreshForm();
+      }
     } else if (f && act === "f-take") {
       const sug = suggest(f.url)?.suffix;
       if (sug) {
@@ -587,6 +616,11 @@ export class HealthCheckUi {
       f.url = el.value;
       // Vorschlag nur, solange niemand den Zusatz berührt hat: der Nutzer hat das letzte Wort
       if (!f.touched) f.suffix = suggest(f.url)?.suffix || "";
+      // ebenso der Link zum Dashboard: erkannte Dienste bekommen die Startseite, solange ihn niemand berührt hat; ein unbekannter Dienst bleibt leer
+      if (!f.dashTouched) f.dash = suggestDash(f.url);
+    } else if (act === "f-dash") {
+      f.dash = el.value;
+      f.dashTouched = true;
     } else if (act === "f-suffix") {
       f.suffix = el.value;
       f.touched = true;

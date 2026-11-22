@@ -111,23 +111,25 @@ def test_values_are_checked_one_by_one() -> None:
     items = [{"id": f"a{i}", "url": HC, "interval": 300} for i in range(7)]
     assert len(valid_items(items)) == MAX_HEALTHCHECKS
     out = valid_items([
-        {"id": "ok", "url": f" {CR} ", "interval": 5, "fail_suffix": " ?state=fail ", "cases": ["stall", "offline", "offline", "ufo", "battery"]},
+        {"id": "ok", "url": f" {CR} ", "interval": 5, "fail_suffix": " ?state=fail ", "dashboard": " https://cronitor.io/app ", "cases": ["stall", "offline", "offline", "ufo", "battery"]},
         {"id": "ftp", "url": "ftp://hc-ping.com/x", "interval": 300},
         {"id": "js", "url": "javascript:alert(1)", "interval": 300},
         {"id": "ok", "url": HC, "interval": 300},  # doppelt
         {"id": "Gross!", "url": HC, "interval": 300},
-        {"id": "lang", "url": "http://192.168.1.5:8000/ping/x", "interval": 999999, "fail_suffix": "fail", "cases": "offline"},
+        {"id": "lang", "url": "http://192.168.1.5:8000/ping/x", "interval": 999999, "fail_suffix": "fail", "dashboard": "javascript:alert(1)", "cases": "offline"},
     ])
     assert [i["id"] for i in out] == ["ok", "lang"]
     assert out[0]["url"] == CR and out[0]["interval"] == 60 and out[0]["name"] == "cronitor.link" and out[0]["fail_suffix"] == "?state=fail"
     assert out[0]["cases"] == ["offline", "stall"]  # feste Reihenfolge; doppelte, unbekannte und entfallene Art ("battery") fallen weg
     assert out[1]["interval"] == 86400 and out[1]["fail_suffix"] == "" and out[1]["cases"] == []  # Zusatz ohne "/", "?" oder "&": leer
+    assert out[0]["dashboard"] == "https://cronitor.io/app"  # der Link zum Dashboard ist frei, nur http oder https
+    assert out[1]["dashboard"] == ""  # ein ungültiger Link (kein http oder https) wird leer, der Dienst bleibt
 
 
 def test_services_from_2_236_0_are_migrated() -> None:
     """Vorher eine Zeile je Fall mit eigenem Zusatz: der erste Zusatz wird der Fehler-Zusatz, die Arten werden angekreuzt, "battery" entfällt."""
     out = valid_items([{"id": "alt", "name": "Haus", "url": HC, "interval": 300, "cases": [{"kind": "battery", "suffix": "/1"}, {"kind": "backup", "suffix": "/2"}, {"kind": "offline", "suffix": "/3"}]}])
-    assert out == [{"id": "alt", "name": "Haus", "url": HC, "interval": 300, "fail_suffix": "/1", "cases": ["offline", "backup"]}]
+    assert out == [{"id": "alt", "name": "Haus", "url": HC, "interval": 300, "fail_suffix": "/1", "dashboard": "", "cases": ["offline", "backup"]}]
 
 
 @pytest.mark.parametrize(
@@ -331,6 +333,8 @@ async def test_save_edit_delete_and_limits(hass: HomeAssistant, entry, freezer, 
     assert (await add(client, fail_suffix="fail"))["error"]["code"] == "invalid_suffix"
     assert (await add(client, fail_suffix="", cases=["offline"]))["error"]["code"] == "invalid_suffix"  # Fälle brauchen den Fehler-Zusatz
     assert (await add(client, cases=["offline", "offline"]))["error"]["code"] == "invalid_suffix"
+    for bad in ("ftp://x/y", "javascript:alert(1)", "cronitor.io/app", "https://"):
+        assert (await add(client, dashboard=bad))["error"]["code"] == "invalid_dashboard"  # ein ungültiger Link wird gemeldet, nicht still geleert
     assert (await add(client, cases=["ufo"]))["error"]["code"] == "invalid_format"
     assert (await ws(client, type=f"{DOMAIN}/healthcheck_save", name="x", url=HC, interval=5, cases=[]))["error"]["code"] == "invalid_format"
     ids = []
@@ -339,11 +343,16 @@ async def test_save_edit_delete_and_limits(hass: HomeAssistant, entry, freezer, 
         assert saved["success"], saved
         ids.append(saved["result"]["id"])
     assert (await add(client))["error"]["code"] == "too_many"
+    assert (await ws(client, type=f"{DOMAIN}/healthcheck_list"))["result"]["items"][0]["dashboard"] == ""  # ohne Angabe leer
     # Ändern: Name, Zeilen und Reihenfolge
     edited = await add(client, check_id=ids[0], name="Neu", fail_suffix="/down", cases=["stall", "cpu"])
     assert edited["success"]
     first = next(i for i in edited["result"]["items"] if i["id"] == ids[0])
     assert first["name"] == "Neu" and first["fail_suffix"] == "/down" and first["cases"] == ["cpu", "stall"]  # in fester Reihenfolge
+    with_dash = await add(client, check_id=ids[0], name="Neu", fail_suffix="/down", cases=["cpu"], dashboard=" https://healthchecks.io/ ")
+    assert next(i for i in with_dash["result"]["items"] if i["id"] == ids[0])["dashboard"] == "https://healthchecks.io/"  # getrimmt gespeichert
+    cleared = await add(client, check_id=ids[0], name="Neu", fail_suffix="/down", cases=["cpu"], dashboard="")
+    assert next(i for i in cleared["result"]["items"] if i["id"] == ids[0])["dashboard"] == ""  # leer entfernt den Link wieder
     assert (await add(client, check_id="gibtsnicht"))["error"]["code"] == "not_found"
     deleted = await ws(client, type=f"{DOMAIN}/healthcheck_delete", check_id=ids[1])
     assert deleted["success"] and len(deleted["result"]["items"]) == MAX_HEALTHCHECKS - 1
@@ -376,10 +385,10 @@ async def test_health_checks_are_part_of_the_backup(hass: HomeAssistant, entry, 
     aioclient_mock.get(HC, status=200)
     client = await hass_ws_client(hass)
     await add(client, name="Eins")
-    await add(client, name="Zwei", url=CR, fail_suffix="?state=fail", cases=["backup"])
+    await add(client, name="Zwei", url=CR, fail_suffix="?state=fail", cases=["backup"], dashboard="https://cronitor.io/app")
     file = await backup.async_export(hass, ["monitor"])
     saved = file["sections"]["monitor"]["healthchecks"]
-    assert [i["name"] for i in saved] == ["Eins", "Zwei"] and saved[1]["url"] == CR and saved[1]["fail_suffix"] == "?state=fail" and saved[1]["cases"] == ["backup"]
+    assert [i["name"] for i in saved] == ["Eins", "Zwei"] and saved[1]["url"] == CR and saved[1]["fail_suffix"] == "?state=fail" and saved[1]["cases"] == ["backup"] and saved[1]["dashboard"] == "https://cronitor.io/app" and saved[0]["dashboard"] == ""
     # Zurücksetzen
     for item in list(saved):
         await ws(client, type=f"{DOMAIN}/healthcheck_delete", check_id=item["id"])

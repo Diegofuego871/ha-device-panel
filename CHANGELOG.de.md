@@ -7,7 +7,20 @@ Alle nennenswerten Änderungen an dieser Integration stehen in dieser Datei.
 Das Format folgt [Keep a Changelog](https://keepachangelog.com/de/1.1.0/),
 die Versionsnummern folgen [Semantic Versioning](https://semver.org/lang/de/).
 
+## [2.238.0] - 2026-11-22
+
+HealthCheck-Dienste: ein Link zum Dashboard des Dienstes.
+
+### Hinzugefügt
+
+- **Link zum Dashboard (freiwillig) je Dienst:** im Formular eines Dienstes ein neues Kapitel "Dashboard" mit dem Feld "Link zum Dashboard" (die Anmeldeseite oder das Dashboard des Dienstes, http oder https). Bei einem erkannten Dienst trägt das Panel die Startseite selbst ein (Healthchecks.io, Cronitor, Better Stack; bei selbst betriebenem Healthchecks und Uptime Kuma der Rechner der URL), bei einem unbekannten Dienst bleibt das Feld leer; wie beim Fehler-Zusatz füllt ein Vorschlag das Feld nur, solange du es nicht berührt hast, sonst steht "Übernehmen" daneben. Ein ungültiger Link wird gemeldet, ein leerer entfernt ihn.
+- **Als Link in den Angaben:** im Reiter "Dienst" des Protokoll-Fensters steht das Dashboard als Zeile zwischen "Erkannt" und der Ping-URL, als Link, der in einem neuen Browser-Tab öffnet, mit einem Knopf zum Kopieren. Nur Links mit http oder https werden als Link gezeigt.
+- **Sicherung und Wiederherstellung:** der Link zum Dashboard gehört mit dem Dienst zur Sicherung.
+- **Tests:** die Python-Tests zu Speichern, Prüfen und Sicherung, die Suiten `hc-e2e` und `hclog-e2e`.
+
 ## [2.237.5] - 2026-11-22
+
+Nicht veröffentlicht; enthalten in 2.238.0.
 
 Das Protokoll-Fenster der HealthCheck-Dienste sieht oben aus wie in Alarmageddon, und die Grafik der 7 Tage ist ein Stundenraster wie bei den 30 Tagen.
 
@@ -6453,7 +6466,7 @@ Erste Vorabversion.
   GitHub Actions für die Prüfungen von HACS und hassfest sowie die Tests.
 
 [2.6.0]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v2.6.0
-[2.237.5]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v2.237.5
+[2.238.0]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v2.238.0
 [2.237.4]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v2.237.4
 [2.237.3]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v2.237.3
 [2.237.2]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v2.237.2

@@ -3186,6 +3186,8 @@ b.hl-pick.one { display: block; }
 .hl-tag { padding: 2px 8px; border-radius: 999px; background: var(--dp-hover); border: 1px solid var(--dp-divider); font-size: 12px; white-space: nowrap; }
 .hl-sec { margin: 14px 2px 8px; font-size: 13px; letter-spacing: .06em; text-transform: uppercase; color: var(--dp-text2); }
 .hl-sec:first-child { margin-top: 6px; }
+.hl-lnk { color: var(--dp-primary); text-decoration: none; }
+.hl-lnk:hover { text-decoration: underline; }
 .hl-cp { flex: none; display: inline-grid; place-items: center; width: 32px; height: 32px; padding: 0; border: 0; border-radius: 8px; background: none; color: var(--dp-text2); cursor: pointer; }
 .hl-cp:hover { background: var(--dp-hover); color: var(--dp-text); }
 .hl-card { border: 1px solid var(--dp-divider); border-radius: 16px; background: var(--dp-subtle); padding: 4px 14px; }

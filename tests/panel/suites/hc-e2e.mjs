@@ -12,8 +12,8 @@ const R = `document.querySelector("device-panel").shadowRoot`;
 const CR = "https://cronitor.link/p/0123456789abcdef/haus?hc=sample";
 const HC = "https://hc-ping.com/00000000-1111-2222-3333-444444444444";
 const T = {
-  de: { grp: "HealthCheck-Dienste", sys: "Systemmeldungen", none: "Keine Dienste eingerichtet", add: "Dienst hinzufügen", show: "Dienste anzeigen", one: "1 von 5 Diensten", known: "Erkannt: Cronitor", case_off: "Gerät ausgefallen", case_bak: "Backup fehlgeschlagen", case_cpu: "Hohe Auslastung: CPU", case_stall: "Systemstillstand", offTxt: "Die Meldung bei Ausfall ist aus.", okAll: "Kein Lebenszeichen gescheitert", about: "Was sind HealthCheck-Dienste?", nameErr: "Ein Name ist nötig.", sufErr: "Für die Fehlerfälle braucht es den Zusatz.", title: "HealthCheck-Dienste", addTitle: "Dienst hinzufügen", delTitle: "Dienst entfernen?" },
-  en: { grp: "HealthCheck services", sys: "System alerts", none: "No services set up", add: "Add service", show: "Show services", one: "1 of 5 services", known: "Recognised: Cronitor", case_off: "Device offline", case_bak: "Backup failed", case_cpu: "High load: CPU", case_stall: "System stall", offTxt: "The outage notification is off.", okAll: "No heartbeat failed", about: "What are HealthCheck services?", nameErr: "A name is required.", sufErr: "The error cases need the suffix.", title: "HealthCheck services", addTitle: "Add service", delTitle: "Remove service?" },
+  de: { grp: "HealthCheck-Dienste", sys: "Systemmeldungen", none: "Keine Dienste eingerichtet", add: "Dienst hinzufügen", show: "Dienste anzeigen", one: "1 von 5 Diensten", known: "Erkannt: Cronitor", dashChap: "Dashboard", case_off: "Gerät ausgefallen", case_bak: "Backup fehlgeschlagen", case_cpu: "Hohe Auslastung: CPU", case_stall: "Systemstillstand", offTxt: "Die Meldung bei Ausfall ist aus.", okAll: "Kein Lebenszeichen gescheitert", about: "Was sind HealthCheck-Dienste?", nameErr: "Ein Name ist nötig.", sufErr: "Für die Fehlerfälle braucht es den Zusatz.", title: "HealthCheck-Dienste", addTitle: "Dienst hinzufügen", delTitle: "Dienst entfernen?" },
+  en: { grp: "HealthCheck services", sys: "System alerts", none: "No services set up", add: "Add service", show: "Show services", one: "1 of 5 services", known: "Recognised: Cronitor", dashChap: "Dashboard", case_off: "Device offline", case_bak: "Backup failed", case_cpu: "High load: CPU", case_stall: "System stall", offTxt: "The outage notification is off.", okAll: "No heartbeat failed", about: "What are HealthCheck services?", nameErr: "A name is required.", sufErr: "The error cases need the suffix.", title: "HealthCheck services", addTitle: "Add service", delTitle: "Remove service?" },
 };
 
 for (const lang of ["de", "en"]) {
@@ -59,6 +59,8 @@ for (const lang of ["de", "en"]) {
     check(`[${tag}] Beschriftungen "${L.case_off}", "${L.case_cpu}", "${L.case_stall}"`, (await text(`${FORM} .hc-chk:nth-child(1) b`)) === L.case_off && (await text(`${FORM} .hc-chk:nth-child(3) b`)) === L.case_cpu && (await text(`${FORM} .hc-chk:nth-child(6) b`)) === L.case_stall);
     check(`[${tag}] nur ein Zusatzfeld (kein Feld je Fall), keine Zeilen zum Verschieben`, (await ev(`return r.querySelectorAll('${FORM} [data-hc="f-suffix"]').length`)) === 1 && !(await ev(`return !!r.querySelector('${FORM} [data-hc="f-up"], ${FORM} [data-hc="f-pick"]')`)));
     await type(`${FORM} [data-hc="f-name"]`, "Haus");
+    await type(`${FORM} [data-hc="f-url"]`, "https://example.org/ping/abc");
+    check(`[${tag}] Unbekannter Dienst: das Feld "Link zum Dashboard" bleibt leer, ohne Vorschlag`, await ev(`return r.querySelector('${FORM} [data-hc="f-dash"]').value === "" && !r.querySelector('${FORM} [data-hc="f-take-dash"]')`));
     await type(`${FORM} [data-hc="f-url"]`, CR);
     check(`[${tag}] Cronitor erkannt: "${L.known}"`, await wait(`return r.querySelector('${FORM} [data-hcp="known"]')?.textContent.includes(${JSON.stringify(L.known)})`));
     check(`[${tag}] Fehler-Zusatz vorgeschlagen (unberührt) und Vorschau des Aufrufs`, await wait(`return r.querySelector('${FORM} [data-hc="f-suffix"]').value === "?state=fail&message=Device+Panel+error" && r.querySelector('${FORM} .hc-prev')?.textContent.includes("state=fail")`));
@@ -67,6 +69,15 @@ for (const lang of ["de", "en"]) {
     check(`[${tag}] eigener Zusatz bleibt, Vorschlag mit "Übernehmen"`, await wait(`return !!r.querySelector('${FORM} [data-hc="f-take"]')`) && await ev(`return r.querySelector('${FORM} [data-hc="f-suffix"]').value`) === "?state=down");
     await tap(`${FORM} [data-hc="f-take"]`);
     check(`[${tag}] "Übernehmen" setzt den Vorschlag`, await ev(`return r.querySelector('${FORM} [data-hc="f-suffix"]').value`) === "?state=fail&message=Device+Panel+error");
+    check(`[${tag}] Dashboard: eigenes Kapitel nach den Fehlerfällen und vor dem Abstand, Feld mit dem Vorschlag der Startseite des erkannten Dienstes`, await ev(`const t = [...r.querySelectorAll('${FORM} .set-title')].map((x) => x.textContent); const i = t.indexOf(${JSON.stringify(L.dashChap)}); return i > 0 && i === t.length - 2 && r.querySelector('${FORM} [data-hc="f-dash"]').value === "https://cronitor.io/app" && !r.querySelector('${FORM} [data-hc="f-take-dash"]')`));
+    await type(`${FORM} [data-hc="f-dash"]`, "https://example.org/mein-dashboard");
+    check(`[${tag}] Eigener Link bleibt stehen, der Vorschlag steht mit "Übernehmen" daneben`, await wait(`return !!r.querySelector('${FORM} [data-hc="f-take-dash"]')`) && await ev(`return r.querySelector('${FORM} [data-hc="f-dash"]').value`) === "https://example.org/mein-dashboard");
+    await tap(`${FORM} [data-hc="f-take-dash"]`);
+    check(`[${tag}] "Übernehmen" setzt den Vorschlag des Dashboards`, await ev(`return r.querySelector('${FORM} [data-hc="f-dash"]').value`) === "https://cronitor.io/app");
+    await type(`${FORM} [data-hc="f-dash"]`, "kein link");
+    check(`[${tag}] Ungültiger Link: Fehler`, await wait(`return !!r.querySelector('${FORM} [data-hcp="err-dash"] .hc-err')`));
+    await type(`${FORM} [data-hc="f-dash"]`, "https://cronitor.io/app");
+    check(`[${tag}] Gültiger Link: Fehler weg`, await wait(`return !r.querySelector('${FORM} [data-hcp="err-dash"] .hc-err')`));
     // Kästchen
     await tap(`${FORM} .hc-chk input[data-kind="offline"]`);
     await tap(`${FORM} .hc-chk input[data-kind="stall"]`);
@@ -104,7 +115,7 @@ for (const lang of ["de", "en"]) {
     await p.screenshot({ path: `${outDir}/hc-form-${tag.replace("/", "-")}.png` });
     await tap(`${FORM} button[type="submit"]`);
     check(`[${tag}] Fussknöpfe des Formulars gleich breit`, await ev(`const w = [...r.querySelectorAll('${FORM} .dlg-actions .dlg-btn')].map((b) => b.getBoundingClientRect().width); return w.length === 2 && Math.abs(w[0] - w[1]) < 1`));
-    check(`[${tag}] Speichern: Formular zu, Dienst beim Server mit Zusatz, zwei Fehlerfällen und 900 s`, await wait(`return !r.querySelector('${FORM}')?.open`) && await p.evaluate(() => { const i = window.__hc[0]; return window.__hc.length === 1 && i.name === "Haus" && i.url.includes("cronitor.link") && i.interval === 900 && i.fail_suffix === "?state=fail&message=Battery+low" && i.cases.join() === "offline,stall"; }));
+    check(`[${tag}] Speichern: Formular zu, Dienst beim Server mit Zusatz, zwei Fehlerfällen und 900 s`, await wait(`return !r.querySelector('${FORM}')?.open`) && await p.evaluate(() => { const i = window.__hc[0]; return window.__hc.length === 1 && i.name === "Haus" && i.url.includes("cronitor.link") && i.interval === 900 && i.fail_suffix === "?state=fail&message=Battery+low" && i.dashboard === "https://cronitor.io/app" && i.cases.join() === "offline,stall"; }));
     check(`[${tag}] Kapitel zeigt "${L.one}"`, await wait(`return r.querySelector(".hc-sum")?.textContent.includes(${JSON.stringify(L.one)})`) && (await text(".hc-sum")).includes(L.okAll));
     await ev(`r.host._hc.openList()`);
     await wait(`return r.querySelectorAll('${LIST} .hc-row').length >= 1`);

@@ -11,6 +11,13 @@ Einstieg für jede neue Claude-Code-Session. Zuerst diese Datei lesen, dann
 
 - `charge.py` `known_rechargeable`: Lademeldung gilt (global + Gerät/Integration), oder am Gerät ausdrücklich "Ein", oder Live-Aktivität für das Gerät an; `rechargeable()` und `charging_of()` nutzen sie (vorher nur `enabled()` mit globalem Schalter). Test `test_rechargeable_by_device_charge_or_live`.
 
+## Stand (2.238.0, HealthCheck: Link zum Dashboard)
+
+- Nutzerwunsch (2026-11-22, nach dem Vorbild in Alarmageddon): je Dienst ein freiwilliger Link zum externen Dashboard; erkannte Dienste bekommen die Startseite vorgeschlagen (`KNOWN[].dash` in `healthcheck.js`, `suggestDash`), sonst leer; im Reiter "Dienst" des Protokolls als Link mit Kopierknopf.
+- Backend: Feld `dashboard` im Dienst (`healthcheck.valid_items`: nur http/https, sonst leer), WS `healthcheck_save` mit `dashboard` (leer erlaubt, ungültig: `invalid_dashboard`), Sicherung über `valid_healthcheck_items`; Tests `test_healthcheck.py`.
+- Panel: Kapitel "Dashboard" im Formular (zwischen Fehlerfällen und Abstand), Vorschlag/"Übernehmen" wie beim Fehler-Zusatz (`dashTouched`); Zeile in `healthlog.js` `_serviceHtml` (Link nur bei gültiger URL).
+- Ausserdem in 2.237.5 (nicht veröffentlicht, in 2.238.0 enthalten): Protokoll oben wie Alarmageddon, 7 Tage als Stundenraster (Mockup `docs/mockups/hl-week-v1`, Vorschlag A).
+
 ## Stand (2.237.0, HealthCheck: ein Fehler-Zusatz, Kästchen für die Fälle)
 
 - Nutzerwunsch (2026-11-21): nur ein URL-Zusatz für einen generischen Fehler, darunter Kästchen für die Fälle: Gerät ausgefallen, Backup fehlgeschlagen, hohe Auslastung (CPU, RAM, Festplatte), Systemstillstand; ausgegraut, wenn die Meldung aus ist oder kein Grenzwert besteht. Ersetzt das Fall-Zeilen-Modell von 2.236.0 (2.236.1 ohne Tag, nun "Nicht veröffentlicht; enthalten in 2.237.0").

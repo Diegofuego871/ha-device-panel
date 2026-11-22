@@ -8,7 +8,7 @@
  * nur gezeichnet. Ladeanzeige nach der Regel für Grafiken: der Reiter wechselt sofort, die alte Grafik bleibt gedimmt, die Punkte stehen darüber; überholte Antworten
  * werden verworfen, geholte Zeiträume 30 Sekunden behalten. Die URL steht ganz im Reiter "Dienst" (Ausnahme vom Geheimnis-Grundsatz); das Protokoll kennt sie nicht.
  */
-import { applySuffix, suggest } from "./healthcheck.js";
+import { applySuffix, suggest, validUrl } from "./healthcheck.js";
 
 const RANGES = [3, 12, 24, 168, 720, 4320, 8760];
 const RANGE_LABEL = { 3: "hlR3h", 12: "hlR12h", 24: "hlR1d", 168: "hlR7d", 720: "hlR30d", 4320: "hlR6m", 8760: "hlR1y" };
@@ -873,7 +873,9 @@ export class HealthLogUi {
     // Fehlerfälle gehören zum Dienst: Zusatz, der Aufruf bei Fehler und die angekreuzten Fälle stehen in derselben Karte (wie im Vorbild)
     const cases = [row(t("hcSuffix"), item.fail_suffix || t("hlSvNone"), Boolean(item.fail_suffix), Boolean(item.fail_suffix)),
       row(t("hlSvFailUrl"), item.fail_suffix ? applySuffix(item.url, item.fail_suffix) || "" : "", true), row(t("hlSvTicked"), (item.cases || []).map((k) => this._caseLabel(k)).join(", ") || t("hlSvNone"), false, false)].join("");
-    const facts = [row(t("hcName"), item.name), row(t("hlSvKnown"), known?.name, false, false), row(t("hcUrl"), item.url, true), cases, row(t("hcInterval"), this.host._fmtSeconds(item.interval, true), false, false)].join("");
+    // Dashboard des Dienstes (freiwillig): als Link, der sich öffnen und kopieren lässt; nur http und https (nie javascript:)
+    const dash = validUrl(item.dashboard) ? `<div class="hl-drow mono"><span class="hc-t2">${escape(t("hlSvDash"))}</span><b><a class="hl-lnk" href="${escape(item.dashboard)}" target="_blank" rel="noopener noreferrer">${escape(item.dashboard)}</a></b>${copy(item.dashboard, t("hlSvDash"))}</div>` : "";
+    const facts = [row(t("hcName"), item.name), row(t("hlSvKnown"), known?.name, false, false), dash, row(t("hcUrl"), item.url, true), cases, row(t("hcInterval"), this.host._fmtSeconds(item.interval, true), false, false)].join("");
     const log = [row(t("hlSvState"), this._stateText(state), false, false), row(t("hlSvLast"), lastText, false, false),
       row(t("hlSvSince"), d?.since ? new Date(d.since).toLocaleDateString(this._locale(), { day: "numeric", month: "long", year: "numeric" }) : "", false, false)].join("");
     return { fix: "", list: `<div class="hl-device"><div class="hl-sec">${escape(t("hlTab_service"))}</div><div class="hl-card">${facts}</div>

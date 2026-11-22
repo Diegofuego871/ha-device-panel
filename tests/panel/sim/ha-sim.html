@@ -2290,8 +2290,10 @@
           const suffix = String(msg.fail_suffix || "").trim();
           if (suffix && !/^[/?&]/.test(suffix)) throw err("invalid_suffix", "invalid suffix");
           if ((msg.cases || []).length && !suffix) throw err("invalid_suffix", "suffix needed");
+          const dashboard = String(msg.dashboard || "").trim();
+          if (dashboard && !/^https?:\/\/[^\s/]+/.test(dashboard)) throw err("invalid_dashboard", "invalid dashboard");
           const order = ["offline", "backup", "cpu", "ram", "disk", "stall"];
-          const entry = { name: msg.name.trim(), url, interval: msg.interval, fail_suffix: suffix, cases: order.filter((k) => (msg.cases || []).includes(k)) };
+          const entry = { name: msg.name.trim(), url, interval: msg.interval, fail_suffix: suffix, dashboard, cases: order.filter((k) => (msg.cases || []).includes(k)) };
           window.__hcSaved = JSON.parse(JSON.stringify({ ...entry, check_id: msg.check_id || null }));
           let id = msg.check_id;
           if (id) {

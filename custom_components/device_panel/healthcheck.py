@@ -159,7 +159,7 @@ def _migrate(item: dict[str, Any]) -> dict[str, Any]:
 def valid_items(value: Any) -> list[dict[str, Any]]:
     """
     Dienste: höchstens MAX_HEALTHCHECKS, jeder Eintrag einzeln geprüft (ein beschädigter fällt weg, nie die Liste).
-    {"id", "name", "url", "interval" (Sekunden), "fail_suffix" (leer erlaubt), "cases": [Arten]}. Ohne gültigen Namen heisst der Dienst wie der
+    {"id", "name", "url", "interval" (Sekunden), "fail_suffix" (leer erlaubt), "dashboard" (Link zum Dashboard des Dienstes, leer erlaubt), "cases": [Arten]}. Ohne gültigen Namen heisst der Dienst wie der
     Rechner seiner URL. Ein ungültiger Zusatz wird leer; ohne Zusatz gibt es keinen Fehler-Aufruf, die Fälle bleiben dann ohne Wirkung.
     """
     out: list[dict[str, Any]] = []
@@ -177,7 +177,7 @@ def valid_items(value: Any) -> list[dict[str, Any]]:
         interval = max(HEALTHCHECK_INTERVAL_RANGE[0], min(HEALTHCHECK_INTERVAL_RANGE[1], interval))
         seen.add(hid)
         name = valid_name(item.get("name")) or (urlsplit(url).hostname or "?")[:HEALTHCHECK_NAME_MAX]
-        out.append({"id": hid, "name": name, "url": url, "interval": interval, "fail_suffix": valid_suffix(url, item.get("fail_suffix")) or "", "cases": valid_cases(item.get("cases"))})
+        out.append({"id": hid, "name": name, "url": url, "interval": interval, "fail_suffix": valid_suffix(url, item.get("fail_suffix")) or "", "dashboard": valid_url(item.get("dashboard")) or "", "cases": valid_cases(item.get("cases"))})
     return out
 
 

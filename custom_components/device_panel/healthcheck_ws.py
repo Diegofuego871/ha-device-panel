@@ -55,6 +55,7 @@ async def ws_healthcheck_list(hass: HomeAssistant, connection: websocket_api.Act
         vol.Required("url"): vol.All(str, vol.Length(max=HEALTHCHECK_URL_MAX)),
         vol.Required("interval"): vol.All(int, vol.Range(min=HEALTHCHECK_INTERVAL_RANGE[0], max=HEALTHCHECK_INTERVAL_RANGE[1])),
         vol.Optional("fail_suffix", default=""): vol.All(str, vol.Length(max=HEALTHCHECK_SUFFIX_MAX)),
+        vol.Optional("dashboard", default=""): vol.All(str, vol.Length(max=HEALTHCHECK_URL_MAX)),
         vol.Optional("cases", default=[]): vol.All([vol.In(HEALTHCHECK_CASES)], vol.Length(max=len(HEALTHCHECK_CASES))),
     }
 )
@@ -62,7 +63,7 @@ async def ws_healthcheck_list(hass: HomeAssistant, connection: websocket_api.Act
 @websocket_api.async_response
 async def ws_healthcheck_save(hass: HomeAssistant, connection: websocket_api.ActiveConnection, msg: dict[str, Any]) -> None:
     """
-    Dienst anlegen (ohne `check_id`) oder ändern: Name (Pflicht), URL (http oder https), Abstand in Sekunden, der Fehler-Zusatz ("/…", "?…" oder "&…") und
+    Dienst anlegen (ohne `check_id`) oder ändern: Name (Pflicht), URL (http oder https), Abstand in Sekunden, der Link zum Dashboard (freiwillig), der Fehler-Zusatz ("/…", "?…" oder "&…") und
     die angekreuzten Fehlerfälle. Höchstens MAX_HEALTHCHECKS. Danach geht von diesem Dienst sofort ein Lebenszeichen hinaus.
     """
     if (healthcheck := _loaded(hass)) is None:
@@ -80,8 +81,13 @@ async def ws_healthcheck_save(hass: HomeAssistant, connection: websocket_api.Act
     if suffix is None or (msg["cases"] and not suffix) or len(set(msg["cases"])) != len(msg["cases"]):
         connection.send_error(msg["id"], "invalid_suffix", "The error suffix must start with /, ? or & (and is needed for the cases)")
         return
+    # Das Dashboard des Dienstes ist freiwillig (leer erlaubt); ein ungültiger Link wird gemeldet, nicht still geleert
+    dashboard = msg["dashboard"].strip()
+    if dashboard and valid_url(dashboard) is None:
+        connection.send_error(msg["id"], "invalid_dashboard", "The dashboard link must start with http:// or https://")
+        return
     items = [dict(i) for i in healthcheck.items()]
-    entry = {"name": valid_name(msg["name"]), "url": url, "interval": msg["interval"], "fail_suffix": suffix, "cases": list(msg["cases"])}
+    entry = {"name": valid_name(msg["name"]), "url": url, "interval": msg["interval"], "fail_suffix": suffix, "dashboard": dashboard, "cases": list(msg["cases"])}
     if "check_id" in msg:
         index = next((n for n, i in enumerate(items) if i["id"] == msg["check_id"]), None)
         if index is None:
