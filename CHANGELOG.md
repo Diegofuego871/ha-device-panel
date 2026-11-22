@@ -7,6 +7,14 @@ All notable changes to this integration are documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/).
 
+## [2.237.4] - 2026-11-22
+
+The README describes the HealthCheck services completely.
+
+### Changed
+
+- **README (English and German):** the HealthCheck services are in the list of key features, and their section describes the service list, the log with the service switcher and the backup. No change to the integration itself.
+
 ## [2.237.3] - 2026-11-22
 
 The chapter "HealthCheck services" in the settings looks like the other chapters.
@@ -6333,6 +6341,7 @@ First pre-release.
   GitHub Actions for HACS/hassfest validation and tests.
 
 [2.6.0]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v2.6.0
+[2.237.4]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v2.237.4
 [2.237.3]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v2.237.3
 [2.237.2]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v2.237.2
 [2.237.1]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v2.237.1
