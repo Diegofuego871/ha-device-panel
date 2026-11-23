@@ -7,6 +7,14 @@ All notable changes to this integration are documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/).
 
+## [2.240.1] - 2026-11-23
+
+Updates app: logos on a white background.
+
+### Fixed
+
+- **Blue background behind logos in the Updates app:** the logo of an integration (for example of Alarmageddon) stood on the blue background meant for the initials, which showed through. It now stands on white.
+
 ## [2.240.0] - 2026-11-22
 
 HealthCheck services: the summary in the settings is a traffic light like in Alarmageddon.
@@ -6389,6 +6397,7 @@ First pre-release.
   GitHub Actions for HACS/hassfest validation and tests.
 
 [2.6.0]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v2.6.0
+[2.240.1]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v2.240.1
 [2.240.0]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v2.240.0
 [2.239.0]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v2.239.0
 [2.238.0]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v2.238.0

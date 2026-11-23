@@ -7,6 +7,14 @@ Alle nennenswerten Änderungen an dieser Integration stehen in dieser Datei.
 Das Format folgt [Keep a Changelog](https://keepachangelog.com/de/1.1.0/),
 die Versionsnummern folgen [Semantic Versioning](https://semver.org/lang/de/).
 
+## [2.240.1] - 2026-11-23
+
+Updates-App: Logos auf weissem Grund.
+
+### Behoben
+
+- **Blauer Hintergrund hinter Logos in der Updates-App:** Das Logo einer Integration (zum Beispiel von Alarmageddon) stand auf dem blauen Grund, der für die Initialen gedacht ist, und er schimmerte durch. Es steht jetzt auf Weiss.
+
 ## [2.240.0] - 2026-11-22
 
 HealthCheck-Dienste: Die Zusammenfassung in den Einstellungen ist eine Ampel wie in Alarmageddon.
@@ -6490,6 +6498,7 @@ Erste Vorabversion.
   GitHub Actions für die Prüfungen von HACS und hassfest sowie die Tests.
 
 [2.6.0]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v2.6.0
+[2.240.1]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v2.240.1
 [2.240.0]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v2.240.0
 [2.239.0]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v2.239.0
 [2.238.0]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v2.238.0

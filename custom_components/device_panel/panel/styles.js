@@ -711,6 +711,8 @@ dialog.discard-dlg::backdrop { background: rgba(0,0,0,0.55); }
 .set-sec.open .opt-info, .set-sec.open .ex-row.ex-all, .set-sec.open .ibadge.has-img { background: var(--dp-subtle); }
 .ibadge img { display: block; object-fit: contain; border-radius: 4px; }
 .ibadge.type { background: var(--dp-sec-head); }
+/* Updates-App: hinter einem Logo steht weiss statt der Standardfarbe der Initialen (sonst schimmert ein blauer Grund durch) */
+.updapp-dlg .ibadge.has-img { background: #fff; }
 .opt { padding: 10px 0; border-bottom: 1px solid var(--dp-divider); }
 .opt:last-child { border-bottom: none; }
 .opt-line { display: flex; align-items: center; justify-content: space-between; gap: 12px; min-height: 36px; }

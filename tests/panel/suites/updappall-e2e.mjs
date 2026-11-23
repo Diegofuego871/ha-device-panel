@@ -57,6 +57,7 @@ for (const lang of ["de", "en"]) {
     check(`[${tag}] App mit entity_picture: das Symbol der App (/api/hassio/addons/…/icon)`, await wait(`const row = [...r.querySelectorAll("${D} .ua-row")].find((x) => x.querySelector('[data-ua-sel="${ESP}"]')); return (row?.querySelector(".ibadge img")?.getAttribute("src") || "").endsWith("/api/hassio/addons/a0d7b954_esphome/icon")`));
     await p.evaluate((id) => { const ha = document.querySelector("home-assistant").hass; ha.states[id].attributes.entity_picture = "https://fremd.example/bild.png"; window.__pushHass(); }, ESP);
     check(`[${tag}] fremde Adresse (https://…): wird nicht geladen, wieder das Logo`, await wait(`const row = [...r.querySelectorAll("${D} .ua-row")].find((x) => x.querySelector('[data-ua-sel="${ESP}"]')); return !(row?.querySelector(".ibadge img")?.getAttribute("src") || "").includes("fremd.example")`));
+    check(`[${tag}] Logos in der Updates-App stehen auf weissem Grund (nicht auf dem blauen der Initialen)`, await ev(`const b = [...r.querySelectorAll("${D} .ibadge.has-img")]; return b.length > 0 && b.every((x) => getComputedStyle(x).backgroundColor === "rgb(255, 255, 255)")`));
     // Logo einer HACS-Zeile (2.238.1): die Integration dahinter zeigt ihr eigenes Logo vom Brand-Dienst der Instanz (auch ohne Eintrag im öffentlichen Katalog);
     // ohne geladene Integration oder ohne Logo bleibt das von HACS
     const HX = "update.beispiel_karte_update";
