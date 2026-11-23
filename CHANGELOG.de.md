@@ -7,7 +7,20 @@ Alle nennenswerten Änderungen an dieser Integration stehen in dieser Datei.
 Das Format folgt [Keep a Changelog](https://keepachangelog.com/de/1.1.0/),
 die Versionsnummern folgen [Semantic Versioning](https://semver.org/lang/de/).
 
+## [2.241.0] - 2026-11-23
+
+HealthCheck-Dienste in der Übersicht: Ein gescheiterter Dienst erscheint unter dem Ausfall-Puls.
+
+### Hinzugefügt
+
+- **Rote Zeile unter dem Ausfall-Puls:** Sobald ein HealthCheck-Dienst gescheitert ist (kein Lebenszeichen angekommen), steht unter dem Puls eine rote Zeile: bei einem Dienst mit Name und Grund ("Dienst Haus: Gescheitert · HTTP 503"), bei mehreren mit der Zahl ("2 Dienste mit Fehler"). Läuft alles, kommt nichts dazu (auch auf dem Handy kein Platz); ein Dienst, der wieder läuft, verschwindet aus der Zeile. Die Kachel öffnet das Fenster auch dann, wenn kein Gerät ausgefallen ist.
+- **Abschnitt "Dienste" im Fenster "Unterbrüche in 24 Std.":** Unter den Geräten steht ein Abschnitt mit den Diensten, die jetzt gescheitert sind oder in den letzten 24 Stunden ein Lebenszeichen verloren haben, mit Pille "gescheitert", Grund, seit wann und der Zahl der Fehlschläge ("3× in 24 Std."); ein Dienst, der wieder läuft, steht dort als "wieder in Ordnung". Ein Tipp auf die Zeile öffnet das Protokoll des Dienstes. Die Summe im Kopf zählt weiterhin nur Geräte. Ohne Fehler fehlt der Abschnitt; Testknöpfe zählen nicht.
+- **Nur für Administratoren:** Die Dienste kommen mit der Geräteliste und werden nur Administratoren gezeigt.
+- **Tests:** die Python-Tests für die Zahl der gescheiterten Lebenszeichen und die Übersicht, die neue Suite `pulsehc-e2e` (rote Zeile, Fenster, Abschnitt, Protokoll; beide Sprachen, Desktop und Handy).
+
 ## [2.240.1] - 2026-11-23
+
+Nicht veröffentlicht; enthalten in 2.241.0.
 
 Updates-App: Logos auf weissem Grund.
 
@@ -6498,7 +6511,7 @@ Erste Vorabversion.
   GitHub Actions für die Prüfungen von HACS und hassfest sowie die Tests.
 
 [2.6.0]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v2.6.0
-[2.240.1]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v2.240.1
+[2.241.0]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v2.241.0
 [2.240.0]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v2.240.0
 [2.239.0]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v2.239.0
 [2.238.0]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v2.238.0

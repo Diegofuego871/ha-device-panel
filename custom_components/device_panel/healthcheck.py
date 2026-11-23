@@ -23,7 +23,7 @@ der Rechnername, auch die Meldung einer Ausnahme der Verbindung kommt nie ins Lo
 from __future__ import annotations
 
 import asyncio
-from datetime import timedelta
+from datetime import datetime, timedelta
 from functools import partial
 import logging
 import re
@@ -328,6 +328,23 @@ class HealthCheck:
     def listing(self) -> list[dict[str, Any]]:
         """Dienste für das Panel: die gespeicherten Werte (mit der URL, Entscheid des Nutzers), der letzte Aufruf und seit wann der Zustand gilt."""
         return [{**item, "status": self.status.get(item["id"]), "log": self.log.brief(item["id"])} for item in self._items]
+
+    def overview(self, now: datetime | None = None) -> list[dict[str, Any]]:
+        """
+        Dienste mit einem Fehler für die Übersicht des Panels (seit 2.241.0): die jetzt gescheitert sind oder in den letzten 24 Std. ein Lebenszeichen
+        verloren haben. Gleiche Regel wie die Ampel in den Einstellungen (Zustand aus dem Protokoll, sonst aus dem letzten Aufruf); "report" (ein Fall
+        wurde gemeldet) ist kein Fehler des Dienstes. Leer, solange alles läuft: dann zeigt die Übersicht nichts.
+        """
+        out = []
+        for item in self._items:
+            hid = item["id"]
+            status = self.status.get(hid)
+            brief = self.log.brief(hid)
+            state = brief["state"] if brief and brief["state"] else (None if status is None else "fail" if status.get("result") != "ok" else "ok")
+            fails = self.log.fails(hid, now)
+            if state == "fail" or fails:
+                out.append({"id": hid, "name": item["name"], "failing": state == "fail", "fails24": fails, "since": brief["since"] if brief else None, "status": status})
+        return out
 
     def availability(self) -> dict[str, bool]:
         """Für das Panel: welche Fehlerfälle sich ankreuzen lassen (die Meldung dafür ist an und hat einen Wert)."""

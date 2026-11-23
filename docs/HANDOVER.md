@@ -11,6 +11,13 @@ Einstieg für jede neue Claude-Code-Session. Zuerst diese Datei lesen, dann
 
 - `charge.py` `known_rechargeable`: Lademeldung gilt (global + Gerät/Integration), oder am Gerät ausdrücklich "Ein", oder Live-Aktivität für das Gerät an; `rechargeable()` und `charging_of()` nutzen sie (vorher nur `enabled()` mit globalem Schalter). Test `test_rechargeable_by_device_charge_or_live`.
 
+## Stand (2.241.0, HealthCheck in der Übersicht)
+
+- Nutzerwunsch (2026-11-23, Mockup `docs/mockups/hc-overview-v2`, Variante B mit C): ein gescheiterter Dienst erscheint als rote Zeile unter dem Ausfall-Puls, im Fenster "Unterbrüche in 24 Std." steht unter den Geräten der Abschnitt "Dienste"; läuft alles, kommt nichts dazu (kein Platz auf dem Handy). Die Summe der Geräte zählt keine Dienste.
+- Backend: `HealthLog.fails(hid)` (gescheiterte Lebenszeichen der letzten 24 Std., ohne Testknöpfe), `HealthCheck.overview()` (Dienste jetzt gescheitert oder mit Fehlern in 24 Std.), `list_devices` liefert `health` (nur Administratoren, der WS ist admin-only). Tests `test_healthcheck_log.py`.
+- Panel: `device-panel.js` `_health`, `_healthWarnHtml`, `_healthRowsHtml`, Tipp `data-pulse-svc` öffnet `_hl.open(id)`; Stile `.pwarn`, `.av.svc`; Suite `pulsehc-e2e.mjs`. Die Ausfall-Puls-Kachel bleibt auf Geräte beschränkt.
+- 2.240.1 (Logos auf Weiss in der Updates-App) ist nicht veröffentlicht und in 2.241.0 enthalten.
+
 ## Stand (2.240.0, HealthCheck: Ampel in der Zusammenfassung)
 
 - Nutzerwunsch (2026-11-22, nach dem Vorbild Alarmageddon): Zusammenfassung der Dienste in den Einstellungen mit Kachel, grünem Punkt und positivem Satz "Alles in Ordnung"; bei Fehler roter Punkt und die Meldung gleich dort. Das ersetzt die frühere Vorgabe "Kapitel ohne Symbol und Kachel" (der Strich unten und die zwei Knöpfe bleiben).

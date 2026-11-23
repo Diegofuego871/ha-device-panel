@@ -292,3 +292,45 @@ async def test_every_period_answers(hass: HomeAssistant, hours: int) -> None:
     rec(log, 0, by="start")
     out = log.history("a", hours, 300, now=T0 + timedelta(minutes=10))
     assert out["hours"] == hours and (out["points"] if hours <= 24 else out["hourly"] if hours <= 720 else out["daily"]) and out["since"] == T0.isoformat()
+
+
+def test_fails_count_only_real_failed_life_signs_of_the_last_24_hours(hass: HomeAssistant) -> None:
+    """Übersicht (2.241.0): gezählt werden gescheiterte Lebenszeichen der letzten 24 Std.; Testknöpfe und Erfolge zählen nicht, Ältere fallen heraus."""
+    log = log_with(hass)
+    rec(log, 0, result="http", code=503)  # gescheitert, aber älter als 24 Std.
+    rec(log, 60 * 25, result="timeout", code=None, ms=None)
+    rec(log, 60 * 26, result="http", code=500)
+    rec(log, 60 * 27, by="test", result="http", code=500)  # Testknopf zählt nicht
+    rec(log, 60 * 28)
+    now = T0 + timedelta(minutes=60 * 29)
+    assert log.fails("a", now) == 2 and log.fails("nicht-da", now) == 0
+    assert log.fails("a", T0 + timedelta(hours=49.5)) == 1  # der Aufruf von 25 Std. ist dann älter als 24 Std., der von 26 Std. noch nicht
+
+
+async def test_overview_lists_only_services_with_a_failure(hass: HomeAssistant, entry, freezer, hass_ws_client, aioclient_mock: AiohttpClientMocker) -> None:  # noqa: F811
+    """Übersicht (2.241.0): leer, solange alles läuft; gescheitert gilt als "failing"; danach bleibt der Dienst mit der Zahl der Fehler der letzten 24 Std. stehen."""
+    aioclient_mock.get(HC, status=200)
+    client = await hass_ws_client(hass)
+    hid = (await add(client, interval=120))["result"]["id"]
+    await advance(hass, freezer, 31)
+    healthcheck = hass.data[DATA_HEALTHCHECK]
+    assert healthcheck.overview() == []
+    # das Panel bekommt die Übersicht mit der Geräteliste (nur Administratoren)
+    assert (await ws(client, type=f"{DOMAIN}/list_devices"))["result"]["health"] == []
+    aioclient_mock.clear_requests()
+    aioclient_mock.get(HC, status=503)
+    await advance(hass, freezer, 121)
+    rows = healthcheck.overview()
+    assert len(rows) == 1 and rows[0]["id"] == hid and rows[0]["name"] == "Haus" and rows[0]["failing"] is True and rows[0]["fails24"] >= 1
+    assert rows[0]["status"]["result"] == "http" and rows[0]["status"]["code"] == 503
+    over_ws = (await ws(client, type=f"{DOMAIN}/list_devices"))["result"]["health"]
+    assert over_ws and over_ws[0]["failing"] is True and over_ws[0]["fails24"] == rows[0]["fails24"]
+    # ein Test-Aufruf macht den Dienst nicht schlechter und nicht besser
+    aioclient_mock.clear_requests()
+    aioclient_mock.get(HC, status=200)
+    await advance(hass, freezer, 121)
+    after = healthcheck.overview()
+    assert len(after) == 1 and after[0]["failing"] is False and after[0]["fails24"] >= 1
+    # nach 24 Stunden ohne Fehler verschwindet der Dienst wieder aus der Übersicht
+    await advance(hass, freezer, 25 * 3600)
+    assert healthcheck.overview() == []

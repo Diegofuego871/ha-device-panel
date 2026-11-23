@@ -248,6 +248,11 @@ button.kwarn:focus-visible { outline: 2px solid var(--dp-primary); outline-offse
 .kt.pul.tap:focus-visible { outline: 2px solid var(--dp-primary); outline-offset: 2px; }
 .kt .k .kchev { display: inline-flex; margin-left: auto; }
 .pnote.plink { display: flex; align-items: center; gap: 2px; color: var(--dp-primary); font-weight: 500; }
+/* Dienste mit einem Fehler (seit 2.241.0): rote Zeile unter dem Puls, im Fenster der Abschnitt "Dienste" */
+.pwarn { display: flex; align-items: center; gap: 8px; margin-top: 8px; padding: 7px 10px; border-radius: 10px; background: var(--dp-error-soft); color: var(--dp-error); font-size: 12.5px; font-weight: 500; line-height: 1.3; }
+.pwarn .pdot { flex: none; width: 9px; height: 9px; border-radius: 50%; background: var(--dp-error); }
+.pwarn span { min-width: 0; overflow-wrap: anywhere; }
+.av.svc { background: color-mix(in srgb, #D81B60 16%, var(--dp-card)); color: #F06292; }
 .pwin { padding: 12px 14px 8px; }
 .pwin .pchart { height: 130px; }
 .phit { fill: transparent; cursor: pointer; }
@@ -1612,6 +1617,7 @@ button.pill.live.off:hover { background: var(--dp-hover); }
   .hero .kt.pul .inc .inc-text { display: none; }
   .hero .kt.pul .pchart { grid-column: 2; grid-row: 1 / span 2; height: 38px; margin: 0; }
   .hero .kt.pul .pticks { display: none; }
+  .hero .kt.pul .pwarn { grid-column: 1 / -1; grid-row: 3; margin: 8px 0 0; }
   .pticks .minor, .avail-ticks .minor { display: none; }
   .hstrip { margin: 0 -12px; }
   .hs-in { padding: 0 14px; }

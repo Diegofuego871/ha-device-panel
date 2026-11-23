@@ -428,6 +428,11 @@ class HealthLog:
         }
         return out
 
+    def fails(self, hid: str, now: datetime | None = None, seconds: int = 86400) -> int:
+        """Zahl der gescheiterten Lebenszeichen der letzten 24 Std. (seit 2.241.0, für die Übersicht); Testknöpfe zählen nicht, sie sind kein Betrieb."""
+        since = (now or dt_util.utcnow()).timestamp() - seconds
+        return sum(1 for c in self.calls.get(hid, []) if c[0] > since and c[1] == "fail" and c[5] != "test")
+
     def brief(self, hid: str) -> dict[str, Any] | None:
         """Zustand seit wann, für die Liste der Dienste und die Auswahl im Kopf des Protokolls (jede Antwort von `data`: nur nachschlagen)."""
         state = self.state.get(hid)

@@ -58,6 +58,7 @@ from .status import StatusWatch
 from .ai_assessment import ASK_ANSWER_MAX, ASK_MAX, ASK_QUESTION_MAX, AiError, async_ask, async_assess, async_clear, async_last, async_preview
 from .ai_prompt import DEFAULT_PROMPT
 from .const import (
+    DATA_HEALTHCHECK,
     AI_PROMPT_MAX,
     DATA_PUSHLOG,
     DATA_SUMMARY,
@@ -515,6 +516,9 @@ async def _ws_list_devices(
     result = await async_list_devices(hass, hass.data.get(DATA_AVAILABILITY))
     # Zahl der offenen, startbaren Updates für den Launcher (App "Updates", seit 2.188.0: auch Apps, HACS und Home Assistant)
     result["updates"] = len(update_available(hass))
+    # Dienste mit einem Fehler (seit 2.241.0): rote Zeile unter dem Ausfall-Puls und Abschnitt "Dienste" im Fenster; nur Administratoren, leer ohne Fehler
+    healthcheck = hass.data.get(DATA_HEALTHCHECK)
+    result["health"] = healthcheck.overview() if healthcheck is not None else []
     connection.send_result(msg["id"], result)
 
 

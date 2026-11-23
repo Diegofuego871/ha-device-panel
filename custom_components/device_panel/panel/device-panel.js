@@ -865,6 +865,7 @@ class DevicePanel extends HTMLElement {
     // Welche Auswahl offen ist (seit 1.9.0): "area" oder "integ"; beide teilen Popover und Blatt.
     this._pickKind = "area";
     this._pulse = null;
+    this._health = [];
     this._incidents = [];
     // Geräte-Popup und Statistik-Fenster
     this._detailId = null;
@@ -1956,6 +1957,8 @@ class DevicePanel extends HTMLElement {
       if (this._hideConn.has(this._conn)) this._conn = "all";
       this._dropHiddenFilters();
       this._pulse = Array.isArray(result.pulse) ? result.pulse : null;
+      // HealthCheck-Dienste mit einem Fehler (seit 2.241.0, nur Administratoren): rote Zeile unter dem Puls und Abschnitt im Fenster
+      this._health = Array.isArray(result.health) ? result.health : [];
       // Kopfzeile (seit 2.62.0): Debug-Modus und Störungen des Status für die Punkte am Launcher oder an den angehefteten Apps
       this._debugOn = result.debug === true;
       this._rtFail = result.routine_fail || null;
@@ -3366,9 +3369,21 @@ class DevicePanel extends HTMLElement {
     }
     // Mit Unterbrüchen öffnet die Kachel das Fenster mit den Geräten
     // (seit 0.26.0, docs/mockups/pulse-v1, A).
-    const open = affected ? ` tap" data-pulse-open role="button" tabindex="0" aria-label="${escape(this._t("pulseOpen"))}` : "";
-    return `<div class="kt pul${this._heartOn() ? " ee" : ""}${open}"><div class="k">${mdi("pulse", 16)}${escape(this._t("pulseTitle"))}${this._scopeHtml()}${affected ? `<span class="kchev"><span class="cbtn" aria-hidden="true">${mdi("chevron", 16)}</span></span>` : ""}</div>
-      ${this._pulseChartHtml(p, incidents)}${note}</div>`;
+    // Dienste mit einem Fehler (seit 2.241.0): die Kachel öffnet das Fenster auch dann, wenn nur ein Dienst gescheitert ist
+    const svc = this._health || [];
+    const tap = affected || svc.length > 0;
+    const open = tap ? ` tap" data-pulse-open role="button" tabindex="0" aria-label="${escape(this._t("pulseOpen"))}` : "";
+    return `<div class="kt pul${this._heartOn() ? " ee" : ""}${open}"><div class="k">${mdi("pulse", 16)}${escape(this._t("pulseTitle"))}${this._scopeHtml()}${tap ? `<span class="kchev"><span class="cbtn" aria-hidden="true">${mdi("chevron", 16)}</span></span>` : ""}</div>
+      ${this._pulseChartHtml(p, incidents)}${note}${this._healthWarnHtml()}</div>`;
+  }
+
+  // Rote Zeile unter dem Puls (seit 2.241.0): nur wenn ein Dienst jetzt gescheitert ist; ein Dienst mit Name und Grund, mehrere mit der Zahl.
+  // Ein Dienst, der wieder läuft, steht nur im Fenster (nichts Rotes für Vergangenes).
+  _healthWarnHtml() {
+    const bad = (this._health || []).filter((s) => s.failing);
+    if (!bad.length) return "";
+    const text = bad.length === 1 ? this._t("pulseSvcOne", bad[0].name, this._hc.statusText(bad[0].status)) : this._t("pulseSvcMany", bad.length);
+    return `<div class="pwarn"><i class="pdot" aria-hidden="true"></i><span>${escape(text)}</span></div>`;
   }
 
   // Geräte im Kopf: mit Filter "Bereich" nur dessen, überwacht (nicht deaktiviert).
@@ -3415,7 +3430,7 @@ class DevicePanel extends HTMLElement {
     const list = (at == null ? hit : head.filter((d) => this._inPulse(d, at, p.length))).sort(
       (a, b) => (b.avail24?.outages || 0) - (a.avail24?.outages || 0) || (b.avail24?.offline || 0) - (a.avail24?.offline || 0) || String(a.name).localeCompare(String(b.name))
     );
-    const sub = hit.length ? t("pulseWinSub", outages, hit.length, this._fmtSeconds(total)) : t("pulseNone");
+    const sub = hit.length ? t("pulseWinSub", outages, hit.length, this._fmtSeconds(total)) : (this._health || []).length ? t("pulseWinSubSvc") : t("pulseNone");
     const scope = this._scopeText() ? ` · ${this._scopeText()}` : "";
     let pick = "";
     if (at != null) {
@@ -3441,10 +3456,29 @@ class DevicePanel extends HTMLElement {
         <button type="button" class="dlg-close" data-pulse-close title="${escape(t("close"))}" aria-label="${escape(t("close"))}">${mdi("close", 18)}</button></div>
       <div class="dlg-body"><div class="avail pwin">${this._pulseChartHtml(p, incidents, true, at)}${incidents.slice(0, 3).map((inc) => this._incidentHtml(inc)).join("")}</div>
         <p class="dlg-note small">${escape(t("pulseWinHint"))}</p>${pick}
-        <h3>${escape(t("pulseWinList"))}</h3>${rows ? `<div class="plist">${rows}</div>` : `<p class="dlg-note">${escape(t("pulseNone"))}</p>`}</div>
+        ${rows || !(this._health || []).length ? `<h3>${escape(t("pulseWinList"))}</h3>${rows ? `<div class="plist">${rows}</div>` : `<p class="dlg-note">${escape(t("pulseNone"))}</p>`}` : ""}
+        ${at == null ? this._healthRowsHtml() : ""}</div>
       <div class="dlg-actions"><button type="button" class="dlg-btn" data-pulse-close>${mdi("close", 18)}${escape(t("close"))}</button></div>`;
     const scroll = dlg.scrollTop;
     if (setHtml(dlg, html)) dlg.scrollTop = scroll;
+  }
+
+  // Abschnitt "Dienste" im Fenster (seit 2.241.0): Dienste, die jetzt gescheitert sind oder in den letzten 24 Std. ein Lebenszeichen verloren haben;
+  // ohne Fehler fehlt der ganze Abschnitt. Ein Tipp auf die Zeile öffnet das Protokoll des Dienstes.
+  _healthRowsHtml() {
+    const svc = this._health || [];
+    if (!svc.length) return "";
+    const t = (k, ...a) => this._t(k, ...a);
+    const rows = svc
+      .map((s) => {
+        const pill = s.failing ? `<span class="pill off sm">${escape(t("pulseSvcFailed"))}</span>` : "";
+        const sub = s.failing ? `${this._hc.statusText(s.status)}${s.since ? ` · ${t("hlSince", { time: this._fmtTime(Date.parse(s.since) / 1000, true) })}` : ""}` : t("pulseSvcOk");
+        return `<button type="button" class="prow" data-pulse-svc="${escape(s.id)}"><span class="av svc ${s.failing ? "off" : ""}">${mdi("heartPulse", 16)}<span class="dot"></span></span>
+          <span class="pname"><span class="pn">${escape(s.name)}${pill}</span><small>${escape(sub)}</small></span>
+          <span class="pval"><span><b>${escape(String(s.fails24))}×</b> <small>${escape(t("pulseSvcIn24"))}</small></span></span></button>`;
+      })
+      .join("");
+    return `<h3>${escape(t("pulseSvcTitle"))}</h3><div class="plist">${rows}</div>`;
   }
 
   _bindPulse(dlg) {
@@ -3464,6 +3498,14 @@ class DevicePanel extends HTMLElement {
       if (ev.target.closest("[data-pulse-clear]")) {
         this._pulseAt = null;
         this._renderPulse();
+        return;
+      }
+      const svc = ev.target.closest("[data-pulse-svc]");
+      if (svc) {
+        // Protokoll des Dienstes: das Fenster schliesst, das Protokoll übernimmt (die Liste der Dienste braucht es für Name und Zustand)
+        const id = svc.dataset.pulseSvc;
+        this._closePulse();
+        (this._hc.loaded ? Promise.resolve() : this._hc.load()).then(() => this._hl.open(id));
         return;
       }
       const dev = ev.target.closest("[data-pulse-dev]");
