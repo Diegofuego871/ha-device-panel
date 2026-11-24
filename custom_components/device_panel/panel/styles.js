@@ -3025,7 +3025,6 @@ dialog.learn-dlg.lrn-embed { position: relative; inset: auto; margin: 0; width: 
 .dlg-avatar.app-health { background: #D81B60; }
 .hc-sum { display: flex; flex-wrap: wrap; align-items: center; gap: 12px 14px; padding: 4px 0 14px; border: 0; border-bottom: 1px solid var(--dp-divider); background: none; }
 .hc-sum-head { flex: 1 1 100%; display: flex; align-items: center; gap: 16px; min-width: 0; }
-.hc-tile { flex: none; display: grid; place-items: center; width: 52px; height: 52px; border-radius: 15px; background: color-mix(in srgb, #D81B60 16%, var(--dp-card)); color: #F06292; }
 .hc-sum-tx { flex: 1 1 auto; min-width: 0; display: flex; flex-direction: column; gap: 3px; margin: 0; }
 .hc-sum-tx b { font-size: 16px; font-weight: 500; }
 .hc-sum-st { display: flex; align-items: baseline; gap: 8px; color: var(--dp-text2); font-size: 15px; overflow-wrap: anywhere; }

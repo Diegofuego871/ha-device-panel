@@ -7,6 +7,14 @@ Alle nennenswerten Änderungen an dieser Integration stehen in dieser Datei.
 Das Format folgt [Keep a Changelog](https://keepachangelog.com/de/1.1.0/),
 die Versionsnummern folgen [Semantic Versioning](https://semver.org/lang/de/).
 
+## [2.242.3] - 2026-11-24
+
+HealthCheck-Dienste: kein Symbol im Kapitel der Einstellungen.
+
+### Geändert
+
+- **Zusammenfassung der HealthCheck-Dienste in den Einstellungen:** Die Kachel mit dem Herz entfällt, denn die anderen Kapitel haben auch kein Symbol; der Text "1 von 5 Diensten" mit dem Ampelpunkt und die zwei Knöpfe bleiben.
+
 ## [2.242.2] - 2026-11-24
 
 Reiter "Ausfall": neues Symbol.
@@ -6537,6 +6545,7 @@ Erste Vorabversion.
   GitHub Actions für die Prüfungen von HACS und hassfest sowie die Tests.
 
 [2.6.0]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v2.6.0
+[2.242.3]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v2.242.3
 [2.242.2]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v2.242.2
 [2.242.1]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v2.242.1
 [2.242.0]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v2.242.0

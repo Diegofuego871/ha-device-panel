@@ -174,7 +174,7 @@ export class HealthCheckUi {
     // (bei einem Dienst mit Name und Grund, bei mehreren die Namen), ohne Dienste nur der Hinweis ohne Punkt
     const sub = !n ? this.t("hcNoneHint") : failed === 1 ? this.t("hcFailedOne", bad[0].name || bad[0].url, this.statusText(bad[0].status)) : failed ? this.t("hcFailed", failed, bad.map((i) => i.name || i.url).join(", ")) : this.t("hcAllOk");
     const tone = !n ? "none" : failed ? "bad" : "ok";
-    return `<div class="opt hc-sum"><div class="hc-sum-head"><span class="hc-tile" aria-hidden="true">${mdi("heartPulse", 28)}</span>
+    return `<div class="opt hc-sum"><div class="hc-sum-head">
         <div class="hc-sum-tx"><b>${escape(text)}</b><span class="hc-sum-st ${tone}">${n ? '<i class="hc-sdot"></i>' : ""}<span>${escape(sub)}</span></span></div></div>
       <div class="hc-sum-btns"><button type="button" class="dlg-btn" data-set="hc-add" ${n >= this.max ? "disabled" : ""}>${mdi("plus", 18)}<span>${escape(this.t("hcAdd"))}</span></button>
         <button type="button" class="dlg-btn" data-set="hc-open">${mdi("heartPulse", 18)}<span>${escape(this.t("hcShow"))}</span></button></div></div>`;

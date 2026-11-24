@@ -7,6 +7,14 @@ All notable changes to this integration are documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/).
 
+## [2.242.3] - 2026-11-24
+
+HealthCheck services: no icon in the settings chapter.
+
+### Changed
+
+- **Summary of the HealthCheck services in the settings:** the tile with the heart is gone, as the other chapters have no icon either; the text "1 of 5 services" with the traffic-light dot and the two buttons stay.
+
 ## [2.242.2] - 2026-11-24
 
 Tab "Outage": new icon.
@@ -6436,6 +6444,7 @@ First pre-release.
   GitHub Actions for HACS/hassfest validation and tests.
 
 [2.6.0]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v2.6.0
+[2.242.3]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v2.242.3
 [2.242.2]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v2.242.2
 [2.242.1]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v2.242.1
 [2.242.0]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v2.242.0
