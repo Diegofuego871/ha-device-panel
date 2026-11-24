@@ -1096,9 +1096,9 @@ async def test_device_tabs_options_and_routine_devices(hass: HomeAssistant, setu
         return await client.receive_json()
 
     call.n = 0
-    # Standards: beide Reiter an, kein eigener Standard-Empfänger für Magic Push (= das globale Ziel)
+    # Standards: Reiter Routinen an, Reiter Magic Push aus (seit 2.246.0), kein eigener Standard-Empfänger für Magic Push (= das globale Ziel)
     values = options_api.effective(hass)
-    assert values["show_tab_routines"] is True and values["show_tab_magic"] is True and values["notify_service_magic"] == ""
+    assert values["show_tab_routines"] is True and values["show_tab_magic"] is False and values["notify_service_magic"] == ""
     assert options_api.notify_target(values, "magic") == "notify.handy"
     # Gesetzt wird alles über set_options; ein ungültiges Ziel fällt auf "leer" zurück
     assert (await call("set_options", values={"show_tab_routines": False, "show_tab_magic": False, "notify_service_magic": "notify.tablet"}))["success"]

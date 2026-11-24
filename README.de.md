@@ -230,7 +230,7 @@ Manche Geräte melden sich nur ab und zu, zum Beispiel Bluetooth-Sensoren, und w
 
 ## Magic Push: eigene Meldungen
 
-Eigene Meldungen pro Gerät ohne Automation, im Reiter "Magic Push" des Geräts. In den Einstellungen (Abschnitt "Magic Push") schaltest du den Reiter ein oder aus und legst einen Standard-Empfänger für neue Meldungen fest (Standard: das Ziel aus "Überwachung und Meldungen"; bestehende Meldungen bleiben, wie sie sind).
+Eigene Meldungen pro Gerät ohne Automation, im Reiter "Magic Push" des Geräts. In den Einstellungen (Abschnitt "Magic Push") schaltest du den Reiter ein oder aus (standardmässig aus; eine bestehende Installation mit mindestens einer Meldung behält ihn an) und legst einen Standard-Empfänger für neue Meldungen fest (Standard: das Ziel aus "Überwachung und Meldungen"; bestehende Meldungen bleiben, wie sie sind).
 
 <p align="center"><img src="https://raw.githubusercontent.com/Diegofuego871/ha-device-panel/main/docs/screenshots/de/magic-tab.png" alt="Reiter Magic Push eines Geräts mit zwei Meldungen" width="560"></p>
 

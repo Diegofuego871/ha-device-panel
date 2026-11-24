@@ -7,6 +7,15 @@ All notable changes to this integration are documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/).
 
+## [2.246.0] - 2026-11-24
+
+The tab "Magic Push" in the device window is off by default.
+
+### Changed
+
+- **Tab "Magic Push" off by default:** the switch "Tab Magic Push in the device window" starts off. Existing installations are switched once: with at least one Magic Push notification the tab stays on, without one it goes off; a tab you switched off yourself stays off. Afterwards the switch is yours; the one-time change does not run again.
+- **Tests:** the Python tests for the new default and the one-time change (`test_tab_magic.py`).
+
 ## [2.245.0] - 2026-11-24
 
 Overview: a heart with a pulse in the corner of the tile "Availability" shows the state of the HealthCheck services.
@@ -6493,6 +6502,7 @@ First pre-release.
   GitHub Actions for HACS/hassfest validation and tests.
 
 [2.6.0]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v2.6.0
+[2.246.0]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v2.246.0
 [2.245.0]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v2.245.0
 [2.243.1]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v2.243.1
 [2.243.0]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v2.243.0

@@ -230,7 +230,7 @@ Some devices report only now and then, for example Bluetooth sensors, and would 
 
 ## Magic Push: your own messages
 
-Your own notifications per device without an automation, in the tab "Magic Push" of the device. In the settings (section "Magic Push") you switch the tab on or off and set a default recipient for new notifications (default: the target from "Monitoring and notifications"; existing notifications stay as they are).
+Your own notifications per device without an automation, in the tab "Magic Push" of the device. In the settings (section "Magic Push") you switch the tab on or off (off by default; an existing installation with at least one message keeps it on) and set a default recipient for new notifications (default: the target from "Monitoring and notifications"; existing notifications stay as they are).
 
 <p align="center"><img src="https://raw.githubusercontent.com/Diegofuego871/ha-device-panel/main/docs/screenshots/en/magic-tab.png" alt="Tab Magic Push of a device with two messages" width="560"></p>
 

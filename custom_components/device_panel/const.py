@@ -272,6 +272,8 @@ CONF_NOTIFY_SERVICE_MAGIC = "notify_service_magic"
 # Reiter "Routinen" und "Magic Push" im Geräte-Fenster zeigen (seit 2.244.0, global; Routinen nur bei Geräten mit Routinen)
 CONF_SHOW_TAB_ROUTINES = "show_tab_routines"
 CONF_SHOW_TAB_MAGIC = "show_tab_magic"
+# Marker: die einmalige Umstellung des Reiters "Magic Push" (2.246.0) ist gelaufen; kein Wert der Einstellungen, nur Merkzettel
+CONF_TAB_MAGIC_DECIDED = "tab_magic_decided"
 CONF_NOTIFY_SERVICE_STATUS = "notify_service_status"
 # Status-App (seit 2.62.0): bei Stillstand eines Teils melden (Standard an); das Ziel folgt dem globalen, wenn nichts Eigenes gewählt ist
 CONF_STATUS_NOTIFY = "status_notify"
@@ -575,6 +577,8 @@ NEW_INSTALL_OPTIONS = {
     CONF_HIDE_CHIPS: ["override"],
     # Bluetooth-Tracker legen laufend Geräte an (Handys in der Nähe): kein Push bei neuen Geräten.
     CONF_NEW_EXCLUDE: ["ibeacon"],
+    # Reiter "Magic Push" ist aus (Standard seit 2.246.0); die einmalige Umstellung für bestehende Installationen gilt hier nicht
+    CONF_TAB_MAGIC_DECIDED: True,
 }
 # Verbindungsart von Hand (Popup, wie der Typ): alle ausser "unbekannt", das
 # ist der Fall ohne Erkennung, kein Wert zum Wählen.

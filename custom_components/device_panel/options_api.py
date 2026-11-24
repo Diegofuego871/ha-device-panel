@@ -226,7 +226,7 @@ BOOL_OPTIONS: tuple[tuple[str, bool], ...] = (
     (CONF_ROUTINES_PAUSE, False),
     (CONF_ROUTINES_NOTIFY_ERROR, True),
     (CONF_SHOW_TAB_ROUTINES, True),
-    (CONF_SHOW_TAB_MAGIC, True),
+    (CONF_SHOW_TAB_MAGIC, False),
     (CONF_STATUS_NOTIFY, True),
     (CONF_STATUS_BACKUP_ALERT, True),
     (CONF_STATUS_BACKUP_AUTO, True),

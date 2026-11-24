@@ -7,6 +7,15 @@ Alle nennenswerten Änderungen an dieser Integration stehen in dieser Datei.
 Das Format folgt [Keep a Changelog](https://keepachangelog.com/de/1.1.0/),
 die Versionsnummern folgen [Semantic Versioning](https://semver.org/lang/de/).
 
+## [2.246.0] - 2026-11-24
+
+Der Reiter "Magic Push" im Geräte-Fenster ist standardmässig aus.
+
+### Geändert
+
+- **Reiter "Magic Push" standardmässig aus:** der Schalter "Reiter Magic Push im Geräte-Fenster" startet aus. Bestehende Installationen werden einmalig umgestellt: mit mindestens einer Magic-Push-Meldung bleibt der Reiter an, ohne geht er aus; ein selbst ausgeschalteter Reiter bleibt aus. Danach gehört der Schalter dir; die einmalige Umstellung läuft nicht noch einmal.
+- **Tests:** die Python-Tests für den neuen Standard und die einmalige Umstellung (`test_tab_magic.py`).
+
 ## [2.245.0] - 2026-11-24
 
 Übersicht: Ein Herz mit Puls in der Ecke der Kachel "Verfügbarkeit" zeigt den Zustand der HealthCheck-Dienste.
@@ -6594,6 +6603,7 @@ Erste Vorabversion.
   GitHub Actions für die Prüfungen von HACS und hassfest sowie die Tests.
 
 [2.6.0]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v2.6.0
+[2.246.0]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v2.246.0
 [2.245.0]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v2.245.0
 [2.243.1]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v2.243.1
 [2.243.0]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v2.243.0

@@ -60,6 +60,7 @@ from .ai_prompt import DEFAULT_PROMPT
 from .const import (
     CONF_NOTIFY_SERVICE_MAGIC,
     CONF_SHOW_TAB_MAGIC,
+    CONF_TAB_MAGIC_DECIDED,
     CONF_SHOW_TAB_ROUTINES,
     DATA_HEALTHCHECK,
     AI_PROMPT_MAX,
@@ -177,9 +178,28 @@ def _migrate_options(hass: HomeAssistant, entry: ConfigEntry) -> None:
     hass.config_entries.async_update_entry(entry, options=options)
 
 
+async def _migrate_tab_magic(hass: HomeAssistant, entry: ConfigEntry) -> None:
+    """
+    Reiter "Magic Push" im Geräte-Fenster (seit 2.246.0 standardmässig aus): einmalig für bestehende Installationen.
+    Gibt es mindestens eine Meldung, bleibt der Reiter an, sonst geht er aus. Ein bewusst ausgeschalteter Reiter bleibt aus.
+    Der Merkzettel verhindert, dass die Umstellung später einen Wert überschreibt, den der Nutzer selbst gesetzt hat.
+    """
+    if entry.options.get(CONF_TAB_MAGIC_DECIDED):
+        return
+    stored = await Store(hass, STORAGE_VERSION, MAGIC_STORE_KEY).async_load()
+    rules = stored.get("rules") if isinstance(stored, dict) else None
+    has_rules = isinstance(rules, dict) and bool(rules)
+    # Früher war der Standard "an" (2.244.0 und 2.245.0): nichts gespeichert oder "an" gilt als Standard, "aus" bleibt aus
+    current = entry.options.get(CONF_SHOW_TAB_MAGIC, True)
+    hass.config_entries.async_update_entry(
+        entry, options={**entry.options, CONF_SHOW_TAB_MAGIC: bool(current) and has_rules, CONF_TAB_MAGIC_DECIDED: True}
+    )
+
+
 async def async_setup_entry(hass: HomeAssistant, entry: ConfigEntry) -> bool:
     async_mark_start(hass)
     _migrate_options(hass, entry)
+    await _migrate_tab_magic(hass, entry)
     # Protokoll (seit 1.38.0): der Eintrag "gestartet" nennt die Version, die gerade läuft.
     integration = await async_get_integration(hass, DOMAIN)
     await activity.async_restore(hass)

@@ -11,6 +11,11 @@ Einstieg für jede neue Claude-Code-Session. Zuerst diese Datei lesen, dann
 
 - `charge.py` `known_rechargeable`: Lademeldung gilt (global + Gerät/Integration), oder am Gerät ausdrücklich "Ein", oder Live-Aktivität für das Gerät an; `rechargeable()` und `charging_of()` nutzen sie (vorher nur `enabled()` mit globalem Schalter). Test `test_rechargeable_by_device_charge_or_live`.
 
+## Stand (2.246.0, Reiter "Magic Push" standardmässig aus)
+
+- Nutzerwunsch (2026-11-24): `show_tab_magic` Standard aus (`BOOL_OPTIONS`). Bestehende Installationen einmalig (`_migrate_tab_magic` in `__init__.py`, Merkzettel `tab_magic_decided` in den Optionen): mindestens eine Meldung im Speicher von Magic Push und Wert nicht "aus" → an, sonst aus. Test `tests/test_tab_magic.py`. Der Simulator bleibt bei "an" (die Suiten brauchen den Reiter). Panel unverändert (PANEL_VERSION 560).
+- Frage des Nutzers: "Verpasste nachholen" für Magic Push? Nein: Magic Push prüft beim Start (`_resync`) den aktuellen Zustand und holt damit immer nach; offen ist nur, ob eine feste Sendezeit oder ein Zeitfenster während des Ausfalls nachgeholt wird (nicht geprüft).
+
 ## Stand (2.245.0, Herz für HealthCheck in der Kachel "Verfügbarkeit")
 
 - Nutzerwunsch (2026-11-24): Herz mit Puls oben rechts in der Kachel "Verfügbarkeit", nur mit HealthCheck-Dienst; grün = alle in Ordnung, rot + pulsierend sonst. Tipp: ein Dienst und alles gut, oder genau einer ausgefallen → dessen Protokoll; sonst die Liste.
