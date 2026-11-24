@@ -7,7 +7,19 @@ All notable changes to this integration are documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/).
 
+## [2.245.0] - 2026-11-24
+
+Overview: a heart with a pulse in the corner of the tile "Availability" shows the state of the HealthCheck services.
+
+### Added
+
+- **Heart in the tile "Availability" (administrators, only with a HealthCheck service):** a round heart with a pulse sits at the top right of the tile. Green when all services are fine; red and pulsing as soon as one has failed (no pulsing with animations off or reduced motion). A tap opens: with a single service that is fine its log; with several services that are fine the list of services; with exactly one failing service its log; with several failing services the list. Without a service the heart is not shown.
+- **Backend:** `HealthCheck.states()` and `health_services` in `list_devices`.
+- **Tests:** the Python test for the states and the new suite `healthheart-e2e` (desktop and phone, German and English).
+
 ## [2.244.0] - 2026-11-24
+
+Not released; included in 2.245.0.
 
 Device window: the tabs "Routines" and "Magic Push" are switchable, "Routines" only with routines; new section "Magic Push" with a default recipient.
 
@@ -6481,7 +6493,7 @@ First pre-release.
   GitHub Actions for HACS/hassfest validation and tests.
 
 [2.6.0]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v2.6.0
-[2.244.0]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v2.244.0
+[2.245.0]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v2.245.0
 [2.243.1]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v2.243.1
 [2.243.0]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v2.243.0
 [2.242.3]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v2.242.3

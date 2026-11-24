@@ -329,6 +329,17 @@ class HealthCheck:
         """Dienste für das Panel: die gespeicherten Werte (mit der URL, Entscheid des Nutzers), der letzte Aufruf und seit wann der Zustand gilt."""
         return [{**item, "status": self.status.get(item["id"]), "log": self.log.brief(item["id"])} for item in self._items]
 
+    def states(self) -> list[dict[str, Any]]:
+        """Alle Dienste mit ihrem Zustand für das Herz auf der Übersicht (seit 2.245.0): id, Name und ob der Dienst jetzt gescheitert ist (gleiche Regel wie `overview`)."""
+        out = []
+        for item in self._items:
+            hid = item["id"]
+            status = self.status.get(hid)
+            brief = self.log.brief(hid)
+            state = brief["state"] if brief and brief["state"] else (None if status is None else "fail" if status.get("result") != "ok" else "ok")
+            out.append({"id": hid, "name": item["name"], "failing": state == "fail"})
+        return out
+
     def overview(self, now: datetime | None = None) -> list[dict[str, Any]]:
         """
         Dienste mit einem Fehler für die Übersicht des Panels (seit 2.241.0): die jetzt gescheitert sind oder in den letzten 24 Std. ein Lebenszeichen

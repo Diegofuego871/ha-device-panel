@@ -315,6 +315,7 @@ async def test_overview_lists_only_services_with_a_failure(hass: HomeAssistant, 
     await advance(hass, freezer, 31)
     healthcheck = hass.data[DATA_HEALTHCHECK]
     assert healthcheck.overview() == []
+    assert healthcheck.states() == [{"id": hid, "name": "Haus", "failing": False}]
     # das Panel bekommt die Übersicht mit der Geräteliste (nur Administratoren)
     assert (await ws(client, type=f"{DOMAIN}/list_devices"))["result"]["health"] == []
     aioclient_mock.clear_requests()
@@ -325,6 +326,9 @@ async def test_overview_lists_only_services_with_a_failure(hass: HomeAssistant, 
     assert rows[0]["status"]["result"] == "http" and rows[0]["status"]["code"] == 503
     over_ws = (await ws(client, type=f"{DOMAIN}/list_devices"))["result"]["health"]
     assert over_ws and over_ws[0]["failing"] is True and over_ws[0]["fails24"] == rows[0]["fails24"]
+    # das Herz bekommt alle Dienste mit Zustand
+    assert healthcheck.states()[0]["failing"] is True
+    assert (await ws(client, type=f"{DOMAIN}/list_devices"))["result"]["health_services"] == [{"id": hid, "name": "Haus", "failing": True}]
     # ein Test-Aufruf macht den Dienst nicht schlechter und nicht besser
     aioclient_mock.clear_requests()
     aioclient_mock.get(HC, status=200)

@@ -11,6 +11,11 @@ Einstieg für jede neue Claude-Code-Session. Zuerst diese Datei lesen, dann
 
 - `charge.py` `known_rechargeable`: Lademeldung gilt (global + Gerät/Integration), oder am Gerät ausdrücklich "Ein", oder Live-Aktivität für das Gerät an; `rechargeable()` und `charging_of()` nutzen sie (vorher nur `enabled()` mit globalem Schalter). Test `test_rechargeable_by_device_charge_or_live`.
 
+## Stand (2.245.0, Herz für HealthCheck in der Kachel "Verfügbarkeit")
+
+- Nutzerwunsch (2026-11-24): Herz mit Puls oben rechts in der Kachel "Verfügbarkeit", nur mit HealthCheck-Dienst; grün = alle in Ordnung, rot + pulsierend sonst. Tipp: ein Dienst und alles gut, oder genau einer ausgefallen → dessen Protokoll; sonst die Liste.
+- Backend: `HealthCheck.states()` (alle Dienste mit `failing`), `list_devices` → `health_services`. Panel: `_healthHeartHtml`, `_openHealthHeart`, Klick `[data-hc-heart]`, CSS `.hc-heart` (Pulsieren aus bei `data-anim=off` und reduzierter Bewegung). Suite `healthheart-e2e.mjs`; Lage-Prüfung misst die Textbreite von `.k` per Range (der Block reicht sonst bis zum Kachelrand).
+
 ## Stand (2.244.0, Geräte-Reiter schaltbar, Abschnitt "Magic Push")
 
 - Nutzerwunsch (2026-11-24): Reiter "Routinen" und "Magic Push" im Geräte-Fenster global schaltbar; "Routinen" nur bei Geräten mit Routinen (Routinen richtet man zentral ein); neuer Abschnitt "Magic Push" in den Einstellungen mit dem Schalter und einem Standard-Empfänger (erbt das globale Ziel, überschreibbar). Nur global (bewusst keine vier Ebenen, vom Nutzer bestätigt).

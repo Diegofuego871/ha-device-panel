@@ -7,7 +7,19 @@ Alle nennenswerten Änderungen an dieser Integration stehen in dieser Datei.
 Das Format folgt [Keep a Changelog](https://keepachangelog.com/de/1.1.0/),
 die Versionsnummern folgen [Semantic Versioning](https://semver.org/lang/de/).
 
+## [2.245.0] - 2026-11-24
+
+Übersicht: Ein Herz mit Puls in der Ecke der Kachel "Verfügbarkeit" zeigt den Zustand der HealthCheck-Dienste.
+
+### Hinzugefügt
+
+- **Herz in der Kachel "Verfügbarkeit" (Administratoren, nur mit eingerichtetem HealthCheck-Dienst):** Oben rechts in der Kachel sitzt ein rundes Herz mit Puls. Grün, wenn alle Dienste in Ordnung sind; rot und pulsierend, sobald einer ausgefallen ist (kein Pulsieren bei ausgeschalteten Animationen oder reduzierter Bewegung). Ein Tipp öffnet: bei einem einzigen Dienst in Ordnung dessen Protokoll; bei mehreren Diensten in Ordnung die Liste der Dienste; bei genau einem ausgefallenen Dienst dessen Protokoll; bei mehreren ausgefallenen die Liste. Ohne Dienst erscheint das Herz nicht.
+- **Backend:** `HealthCheck.states()` und `health_services` in `list_devices`.
+- **Tests:** der Python-Test für die Zustände und die neue Suite `healthheart-e2e` (Desktop und Handy, Deutsch und Englisch).
+
 ## [2.244.0] - 2026-11-24
+
+Nicht veröffentlicht; enthalten in 2.245.0.
 
 Geräte-Fenster: Die Reiter "Routinen" und "Magic Push" sind schaltbar, "Routinen" nur mit Routinen; neuer Abschnitt "Magic Push" mit Standard-Empfänger.
 
@@ -6582,7 +6594,7 @@ Erste Vorabversion.
   GitHub Actions für die Prüfungen von HACS und hassfest sowie die Tests.
 
 [2.6.0]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v2.6.0
-[2.244.0]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v2.244.0
+[2.245.0]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v2.245.0
 [2.243.1]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v2.243.1
 [2.243.0]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v2.243.0
 [2.242.3]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v2.242.3

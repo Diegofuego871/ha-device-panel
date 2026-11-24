@@ -866,6 +866,7 @@ class DevicePanel extends HTMLElement {
     this._pickKind = "area";
     this._pulse = null;
     this._health = [];
+    this._healthSvc = [];
     this._showTabRoutines = true;
     this._showTabMagic = true;
     this._routineDevices = new Set();
@@ -1552,6 +1553,11 @@ class DevicePanel extends HTMLElement {
         this._setLabels([]);
         return;
       }
+      if (ev.target.closest("[data-hc-heart]")) {
+        ev.stopPropagation();
+        this._openHealthHeart();
+        return;
+      }
       if (ev.target.closest("[data-pulse-open]")) {
         this._openPulse();
         return;
@@ -1962,6 +1968,7 @@ class DevicePanel extends HTMLElement {
       this._pulse = Array.isArray(result.pulse) ? result.pulse : null;
       // HealthCheck-Dienste mit einem Fehler (seit 2.241.0, nur Administratoren): rote Zeile unter dem Puls und Abschnitt im Fenster
       this._health = Array.isArray(result.health) ? result.health : [];
+      this._healthSvc = Array.isArray(result.health_services) ? result.health_services : [];
       // Reiter "Routinen" und "Magic Push" im Geräte-Fenster (seit 2.244.0): zwei globale Schalter, Routinen nur bei Geräten mit Routinen
       this._showTabRoutines = result.show_tab_routines !== false;
       this._showTabMagic = result.show_tab_magic !== false;
@@ -3122,7 +3129,7 @@ class DevicePanel extends HTMLElement {
       avgHtml = `<div class="pavg">${escape(this._t("avg24"))}: <b>${escape(this._fmtPct(avg))} %</b></div>`;
     }
     const line = (color, text) => `<div><i style="background:${color}"></i>${escape(text)}</div>`;
-    const ring = `<div class="kt ring"><div class="ringwrap">${ringSvg(share, 108, 11)}<div class="c"><div><b>${online.length}</b><span>${escape(this._t("ofTotal", all.length))}</span></div></div></div>
+    const ring = `<div class="kt ring">${this._healthHeartHtml()}<div class="ringwrap">${ringSvg(share, 108, 11)}<div class="c"><div><b>${online.length}</b><span>${escape(this._t("ofTotal", all.length))}</span></div></div></div>
       <div class="rtxt"><div class="k">${escape(this._t("availability"))}${this._scopeHtml()}</div><div class="pct${avgHtml ? " with-avg" : ""}">${pctHtml}</div>${avgHtml}
       <div class="lines">${line("var(--dp-success)", this._t("linesOnline", online.length - flaky))}
       ${flaky ? line("var(--dp-warning)", this._t("linesFlaky", flaky)) : ""}
@@ -3382,6 +3389,28 @@ class DevicePanel extends HTMLElement {
     const open = tap ? ` tap" data-pulse-open role="button" tabindex="0" aria-label="${escape(this._t("pulseOpen"))}` : "";
     return `<div class="kt pul${this._heartOn() ? " ee" : ""}${open}"><div class="k">${mdi("pulse", 16)}${escape(this._t("pulseTitle"))}${this._scopeHtml()}${tap ? `<span class="kchev"><span class="cbtn" aria-hidden="true">${mdi("chevron", 16)}</span></span>` : ""}</div>
       ${this._pulseChartHtml(p, incidents)}${note}${this._healthWarnHtml()}</div>`;
+  }
+
+  // Herz in der Ecke der Kachel "Verfügbarkeit" (seit 2.245.0): nur mit mindestens einem HealthCheck-Dienst (nur Administratoren bekommen die Liste);
+  // grün, wenn alle Dienste in Ordnung sind, sonst rot und pulsierend (mit "Animationen aus" ohne Puls)
+  _healthHeartHtml() {
+    const svc = this._healthSvc || [];
+    if (!svc.length) return "";
+    const bad = svc.filter((s) => s.failing).length;
+    const label = this._t(bad === 0 ? "hcHeartOk" : bad === 1 ? "hcHeartBad" : "hcHeartBadMany", bad);
+    return `<button type="button" class="hc-heart ${bad ? "bad" : "ok"}" data-hc-heart title="${escape(label)}" aria-label="${escape(label)}">${mdi("heartPulse", 18)}</button>`;
+  }
+
+  // Tipp auf das Herz: ein Dienst (alles in Ordnung) oder genau ein Dienst mit Fehler öffnet sein Protokoll, sonst die Übersicht der Dienste
+  // (mehrere Dienste in Ordnung, mehrere Dienste mit Fehler gleichzeitig)
+  async _openHealthHeart() {
+    const svc = this._healthSvc || [];
+    const bad = svc.filter((s) => s.failing);
+    const only = bad.length === 1 ? bad[0] : !bad.length && svc.length === 1 ? svc[0] : null;
+    // Das Protokoll und die Liste lesen die Dienste aus dem Kapitel der Einstellungen: erst laden, falls noch nicht geschehen
+    if (!this._hc.loaded) await this._hc.load();
+    if (only) this._hl.open(only.id);
+    else this._hc.openList();
   }
 
   // Rote Zeile unter dem Puls (seit 2.241.0): nur wenn ein Dienst jetzt gescheitert ist; ein Dienst mit Name und Grund, mehrere mit der Zahl.

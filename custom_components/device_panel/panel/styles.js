@@ -3033,6 +3033,15 @@ dialog.learn-dlg.lrn-embed { position: relative; inset: auto; margin: 0; width: 
 .hc-sum-st .hc-sdot { flex: none; width: 10px; height: 10px; border-radius: 50%; background: var(--dp-success); transform: translateY(0); align-self: center; }
 .hc-sum-st.bad { color: var(--dp-error); }
 .hc-sum-max { font-size: 12.5px; color: var(--dp-text3); }
+/* Herz in der Ecke der Kachel "Verfügbarkeit" (seit 2.245.0): grün = alle Dienste in Ordnung, rot und pulsierend = mindestens einer mit Fehler */
+.hc-heart { position: absolute; top: 10px; right: 10px; z-index: 2; display: inline-grid; place-items: center; width: 34px; height: 34px; padding: 0; border-radius: 50%; border: 1px solid var(--dp-success-line, color-mix(in srgb, var(--dp-success) 45%, transparent));
+  background: var(--dp-success-soft); color: var(--dp-success); cursor: pointer; }
+.hc-heart.bad { border-color: var(--dp-error-line); background: var(--dp-error-soft); color: var(--dp-error); animation: hc-heart-pulse 1.6s ease-in-out infinite; }
+.hc-heart:hover { filter: brightness(1.12); }
+.hc-heart:focus-visible { outline: 2px solid var(--dp-primary); outline-offset: 2px; }
+@keyframes hc-heart-pulse { 0%, 100% { box-shadow: 0 0 0 0 color-mix(in srgb, var(--dp-error) 45%, transparent); transform: scale(1); } 50% { box-shadow: 0 0 0 7px transparent; transform: scale(1.08); } }
+:host([data-anim="off"]) .hc-heart.bad { animation: none; }
+@media (prefers-reduced-motion: reduce) { .hc-heart.bad { animation: none; } }
 .hc-sum-st.bad .hc-sdot { background: var(--dp-error); }
 .hc-bad, .hc-err { color: var(--dp-error); }
 .hc-sum-btns { flex: 1 1 100%; display: flex; flex-wrap: nowrap; gap: 8px; }

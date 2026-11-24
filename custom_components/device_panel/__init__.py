@@ -522,6 +522,8 @@ async def _ws_list_devices(
     # Dienste mit einem Fehler (seit 2.241.0): rote Zeile unter dem Ausfall-Puls und Abschnitt "Dienste" im Fenster; nur Administratoren, leer ohne Fehler
     healthcheck = hass.data.get(DATA_HEALTHCHECK)
     result["health"] = healthcheck.overview() if healthcheck is not None else []
+    # Alle Dienste mit Zustand (seit 2.245.0): das Herz in der Ecke der Kachel "Verfügbarkeit" erscheint nur, wenn es einen gibt
+    result["health_services"] = healthcheck.states() if healthcheck is not None else []
     # Geräte mit Routinen (seit 2.244.0): der Reiter "Routinen" im Geräte-Fenster erscheint nur bei ihnen (Routinen richtet man zentral ein)
     routines_manager = hass.data.get(DATA_ROUTINES)
     result["routine_devices"] = routines_manager.device_ids() if routines_manager is not None else []

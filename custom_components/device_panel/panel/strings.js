@@ -941,6 +941,9 @@ export const STRINGS = {
     // Einstellungen
     secRoutines: "Routinen",
     secMagic: "Magic Push",
+    hcHeartOk: "HealthCheck: alle Dienste in Ordnung",
+    hcHeartBad: "HealthCheck: ein Dienst hat einen Fehler",
+    hcHeartBadMany: (n) => `HealthCheck: ${n} Dienste mit Fehler`,
     sumMagicTabOn: "Meldungen je Gerät, Reiter im Geräte-Fenster",
     sumMagicTabOff: "Meldungen je Gerät, Reiter im Geräte-Fenster aus",
     optShowTabRoutines: "Reiter Routinen im Geräte-Fenster",
@@ -4281,6 +4284,9 @@ export const STRINGS = {
     // Settings
     secRoutines: "Routines",
     secMagic: "Magic Push",
+    hcHeartOk: "HealthCheck: all services are fine",
+    hcHeartBad: "HealthCheck: a service has an error",
+    hcHeartBadMany: (n) => `HealthCheck: ${n} services with an error`,
     sumMagicTabOn: "Notifications per device, tab in the device window",
     sumMagicTabOff: "Notifications per device, tab in the device window off",
     optShowTabRoutines: "Tab Routines in the device window",
