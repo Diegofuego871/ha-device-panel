@@ -870,6 +870,9 @@ class DevicePanel extends HTMLElement {
     this._showTabRoutines = true;
     this._showTabMagic = true;
     this._routineDevices = new Set();
+    this._magicDevices = new Set();
+    this._tabRoutinesOnlyUsed = true;
+    this._tabMagicOnlyUsed = true;
     this._incidents = [];
     // Geräte-Popup und Statistik-Fenster
     this._detailId = null;
@@ -1973,6 +1976,9 @@ class DevicePanel extends HTMLElement {
       this._showTabRoutines = result.show_tab_routines !== false;
       this._showTabMagic = result.show_tab_magic !== false;
       this._routineDevices = new Set(Array.isArray(result.routine_devices) ? result.routine_devices : []);
+      this._magicDevices = new Set(Array.isArray(result.magic_devices) ? result.magic_devices : []);
+      this._tabRoutinesOnlyUsed = result.tab_routines_only_used !== false;
+      this._tabMagicOnlyUsed = result.tab_magic_only_used !== false;
       // Kopfzeile (seit 2.62.0): Debug-Modus und Störungen des Status für die Punkte am Launcher oder an den angehefteten Apps
       this._debugOn = result.debug === true;
       this._rtFail = result.routine_fail || null;
@@ -5582,10 +5588,11 @@ class DevicePanel extends HTMLElement {
       // in "Einstellungen" (der Zähler nennt die eigenen), Entitäten für sich.
       const own = devOwnCount(d);
       const switches = this._switchEntities(d);
-      // Reiter Magic Push und Routinen (seit 2.244.0): der erste nach dem Schalter, der zweite nach dem Schalter und nur mit Routinen für das Gerät
-      // (Routinen richtet man zentral ein); "Routine für das Gerät" = das Gerät kommt in mindestens einer Routine vor, auch einer pausierten oder ausgeschalteten
-      const showMagic = this._showTabMagic !== false;
-      const showRoutines = this._showTabRoutines !== false && this._routineDevices.has(d.id);
+      // Reiter Magic Push und Routinen (seit 2.244.0 schaltbar; seit 2.246.0 je ein zweiter Schalter "nur bei Geräten, die vorkommen", Standard an):
+      // "vorkommen" = Routinen: das Gerät ist in mindestens einer Routine (auch einer pausierten oder ausgeschalteten); Magic Push: es hat mindestens eine Meldung.
+      // Beide legt man auch zentral an (Fenster aller Routinen bzw. Meldungen), darum fehlt der Reiter ohne Eintrag nicht als Weg.
+      const showMagic = this._showTabMagic !== false && (!this._tabMagicOnlyUsed || this._magicDevices.has(d.id) || this._magic.count(d.id) > 0);
+      const showRoutines = this._showTabRoutines !== false && (!this._tabRoutinesOnlyUsed || this._routineDevices.has(d.id));
       const tab = ["ov", "sw", "set", "ent", ...(showMagic ? ["magic"] : []), ...(showRoutines ? ["routine"] : [])].includes(this._devTab) && (this._devTab !== "sw" || switches.length) ? this._devTab : "ov";
       const magicCount = this._magic.count(d.id);
       const routineCount = this._routines.count(d.id);
@@ -7852,8 +7859,8 @@ class DevicePanel extends HTMLElement {
     return [
       ["devices", ["show_service_devices", "show_disabled_devices", ...SUB_TAB_KEYS.integrations, ...SUB_TAB_KEYS.types, ...SUB_TAB_KEYS.devs, ...SUB_TAB_KEYS.devset]],
       ["monitor", Object.values(MON_TAB_KEYS).flat()],
-      ["routines", ["routines_pause", "routines_pause_until", "routines_catch_up", "notify_service_routines", "routines_notify_error", "show_tab_routines"]],
-      ["magic", ["show_tab_magic", "notify_service_magic"]],
+      ["routines", ["routines_pause", "routines_pause_until", "routines_catch_up", "notify_service_routines", "routines_notify_error", "show_tab_routines", "tab_routines_only_used"]],
+      ["magic", ["show_tab_magic", "tab_magic_only_used", "notify_service_magic"]],
       ["ai", ["ai_assessment", "ai_task_entity", "ai_prompt"]],
       ["updates", [...SUB_TAB_KEYS.pstart, ...SUB_TAB_KEYS.pstorage, ...SUB_TAB_KEYS.pupdates]],
     ];
@@ -10445,10 +10452,12 @@ class DevicePanel extends HTMLElement {
         ui.targetRow("routines", "optRoutinesTargetShort") +
         row("routines_notify_error", t("optRoutinesNotifyError"), sw("routines_notify_error", t("optRoutinesNotifyError")), t("optRoutinesNotifyErrorShort"), t("optRoutinesNotifyErrorInfo")) +
         // Reiter "Routinen" im Geräte-Fenster (seit 2.244.0, nur global): er erscheint nur bei Geräten, die in einer Routine vorkommen
-        row("show_tab_routines", t("optShowTabRoutines"), sw("show_tab_routines", t("optShowTabRoutines")), t("optShowTabRoutinesShort"), null),
+        row("show_tab_routines", t("optShowTabRoutines"), sw("show_tab_routines", t("optShowTabRoutines")), t("optShowTabRoutinesShort"), null) +
+        row("tab_routines_only_used", t("optTabRoutinesOnlyUsed"), sw("tab_routines_only_used", t("optTabRoutinesOnlyUsed")), t("optTabRoutinesOnlyUsedShort"), null),
       // Abschnitt "Magic Push" (seit 2.244.0): Reiter im Geräte-Fenster und der Standard-Empfänger neuer Meldungen (Standard: das globale Ziel)
       magic:
         row("show_tab_magic", t("optShowTabMagic"), sw("show_tab_magic", t("optShowTabMagic")), t("optShowTabMagicShort"), null) +
+        row("tab_magic_only_used", t("optTabMagicOnlyUsed"), sw("tab_magic_only_used", t("optTabMagicOnlyUsed")), t("optTabMagicOnlyUsedShort"), null) +
         ui.targetRow("magic", "optMagicTargetShort"),
     };
     const titles = {

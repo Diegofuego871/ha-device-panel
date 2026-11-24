@@ -97,7 +97,7 @@ A tap on a device opens a pop-up with everything about it.
 - **Statistics:** availability, outages, signal and battery as tiles; each tile opens its history
 - **Details:** connection, integration, manufacturer, model, software and all entities
 - **Actions:** rename, favorite, hide, open in Home Assistant, and start an update if the device offers one
-- **Tabs:** Overview, Switches, Settings, Entities, Magic Push and Routines. Magic Push and Routines can be switched off in the settings (sections "Magic Push" and "Routines"); Routines shows only for devices that are part of a routine, since routines are set up centrally
+- **Tabs:** Overview, Switches, Settings, Entities, Magic Push and Routines. Magic Push and Routines can be switched off in the settings (sections "Magic Push" and "Routines"); by default each shows only for devices that appear in it (a routine, or at least one Magic Push notification), because both are also set up centrally; a second switch per tab shows it for every device
 
 <p align="center"><img src="https://raw.githubusercontent.com/Diegofuego871/ha-device-panel/main/docs/screenshots/en/popup.png" alt="Device pop-up with statistics, connection and device details" width="640"></p>
 
@@ -230,7 +230,7 @@ Some devices report only now and then, for example Bluetooth sensors, and would 
 
 ## Magic Push: your own messages
 
-Your own notifications per device without an automation, in the tab "Magic Push" of the device. In the settings (section "Magic Push") you switch the tab on or off (off by default; an existing installation with at least one message keeps it on) and set a default recipient for new notifications (default: the target from "Monitoring and notifications"; existing notifications stay as they are).
+Your own notifications per device without an automation, in the tab "Magic Push" of the device. In the settings (section "Magic Push") you switch the tab on or off, choose whether it shows only for devices with a notification (default) or for every device, and set a default recipient for new notifications (default: the target from "Monitoring and notifications"; existing notifications stay as they are).
 
 <p align="center"><img src="https://raw.githubusercontent.com/Diegofuego871/ha-device-panel/main/docs/screenshots/en/magic-tab.png" alt="Tab Magic Push of a device with two messages" width="560"></p>
 

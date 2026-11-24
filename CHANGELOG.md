@@ -7,6 +7,21 @@ All notable changes to this integration are documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/).
 
+## [2.247.0] - 2026-11-24
+
+Device window: a second switch per tab, "only for devices that appear in it", on by default for "Routines" and "Magic Push".
+
+### Added
+
+- **Second switch under "Tab Routines in the device window" and "Tab Magic Push in the device window":** "Only for devices with routines" and "Only for devices with notifications". On (default): the tab shows only for devices that appear in a routine (also a paused one) or have at least one Magic Push notification. Off: the tab shows for every device. Magic Push notifications can also be created centrally in the window of all notifications, so the hidden tab is no dead end.
+- **Backup and restore:** the two new switches are part of the backup (sections "Routines" and "Magic Push").
+- **Tests:** the Python tests for the devices with notifications, the defaults and the backup, and the suite `tabsetting-e2e` (new switches, tab visibility).
+
+### Changed
+
+- **Tab "Routines" and the switch "Tab Magic Push":** the switch "Tab Magic Push in the device window" is on again by default (as in 2.244.0 and 2.245.0); what 2.246.0 changed (off by default, one-time conversion of existing installations) is dropped: existing installations keep their stored values, new ones start with the defaults. The tab "Routines" was already shown only for devices in a routine; that now follows the new switch. The short description of the switch "Tab Routines" no longer mentions it.
+- **Removed:** the one-time conversion of 2.246.0 and its marker `tab_magic_decided` (an existing marker in the stored options is harmless and ignored).
+
 ## [2.246.0] - 2026-11-24
 
 The tab "Magic Push" in the device window is off by default.
@@ -6502,6 +6517,7 @@ First pre-release.
   GitHub Actions for HACS/hassfest validation and tests.
 
 [2.6.0]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v2.6.0
+[2.247.0]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v2.247.0
 [2.246.0]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v2.246.0
 [2.245.0]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v2.245.0
 [2.243.1]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v2.243.1

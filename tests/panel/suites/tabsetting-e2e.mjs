@@ -1,6 +1,7 @@
-// Reiter "Routinen" und "Magic Push" im Geräte-Fenster (2.244.0): zwei globale Schalter (Einstellungen › Routinen und der neue Abschnitt "Magic Push"),
-// der Reiter "Routinen" nur bei Geräten, die in einer Routine vorkommen, der Standard-Empfänger neuer Magic-Push-Meldungen (leer = das globale Ziel).
-// Der Simulator zeigt sonst bei allen Geräten Routinen an (window.__strictRoutineTab = wie im Betrieb). Deutsch und Englisch, Desktop und Handy.
+// Reiter "Routinen" und "Magic Push" im Geräte-Fenster (2.244.0): je ein globaler Schalter (Einstellungen › Routinen und Abschnitt "Magic Push") und
+// (2.246.0) je ein zweiter Schalter "nur bei Geräten, die vorkommen" (Standard an): Routinen in einer Routine, Magic Push mit einer Meldung.
+// Dazu der Standard-Empfänger neuer Magic-Push-Meldungen (leer = das globale Ziel).
+// Der Simulator zeigt sonst bei allen Geräten beide Reiter an (window.__strictRoutineTab = wie im Betrieb). Deutsch und Englisch, Desktop und Handy.
 import { chromium } from "playwright-core";
 import { launchOptions } from "../lib.mjs";
 
@@ -46,8 +47,10 @@ for (const lang of ["de", "en"]) {
     check(`[${tag}] Abschnitte: Routinen, dann "${T.secMagic}", dann KI`, (await ev(`return [...r.querySelectorAll(".set-sec-head")].map((h) => h.dataset.id).join(",")`)) === "devices,monitor,routines,magic,ai,updates");
     await tap('[data-set="section"][data-id="routines"]');
     check(`[${tag}] Routinen: Schalter "Reiter Routinen im Geräte-Fenster", standardmässig an`, await wait(`const i = r.querySelector('dialog.settings input[data-opt="show_tab_routines"]'); return !!i && i.checked`));
+    check(`[${tag}] Routinen: zweiter Schalter "nur bei Geräten mit Routinen" unter dem Reiter-Schalter, standardmässig an`, await wait(`const a = r.querySelector('dialog.settings input[data-opt="show_tab_routines"]'), b = r.querySelector('dialog.settings input[data-opt="tab_routines_only_used"]'); return !!b && b.checked && !!(a.compareDocumentPosition(b) & Node.DOCUMENT_POSITION_FOLLOWING)`));
     await tap('[data-set="section"][data-id="routines"]');
     await tap('[data-set="section"][data-id="magic"]');
+    check(`[${tag}] Magic Push: zweiter Schalter "nur bei Geräten mit Meldungen" unter dem Reiter-Schalter, standardmässig an`, await wait(`const a = r.querySelector('dialog.settings input[data-opt="show_tab_magic"]'), b = r.querySelector('dialog.settings input[data-opt="tab_magic_only_used"]'); return !!b && b.checked && !!(a.compareDocumentPosition(b) & Node.DOCUMENT_POSITION_FOLLOWING)`));
     check(`[${tag}] Magic Push: Schalter für den Reiter (an) und Empfänger-Auswahl mit "${T.std}" gewählt`, await wait(`const d = r.querySelector("dialog.settings"); const i = d.querySelector('input[data-opt="show_tab_magic"]'); const s = d.querySelector('select[data-opt="notify_service_magic"]'); return !!i && i.checked && !!s && s.value === "" && s.options[0].textContent.includes(${JSON.stringify(T.std)})`));
     check(`[${tag}] Abschnitt "${T.secMagic}" hat eine Zusammenfassung`, (await ev(`return r.querySelector('[data-id="magic"] .set-sec-sum').textContent.trim().length > 0`)));
     await tap('dialog.settings .dlg-actions [data-set="close"]');
@@ -58,15 +61,30 @@ for (const lang of ["de", "en"]) {
     await refetch();
     await openDevice();
     const t1 = await tabsOf();
-    check(`[${tag}] Gerät ohne Routine: kein Reiter "Routinen", "Magic Push" da`, !t1.split(",").includes("routine") && t1.split(",").includes("magic"), t1);
+    check(`[${tag}] Gerät ohne Routine und ohne Meldung: weder "Routinen" noch "Magic Push"`, !/magic|routine/.test(t1), t1);
     await closeDevice();
     // eine Routine für das Gerät (auch ausgeschaltet): der Reiter erscheint
     await p.evaluate(() => { window.__routines.list.push({ id: "tabtest", name: "Test", device_id: "d", enabled: false, entity_id: "switch.plug", action: "on", kind: "countdown" }); });
     await refetch();
     await openDevice();
     const t2 = await tabsOf();
-    check(`[${tag}] Mit einer (ausgeschalteten) Routine für das Gerät: Reiter "Routinen" als letzter`, t2.endsWith("magic,routine"), t2);
+    check(`[${tag}] Mit einer (ausgeschalteten) Routine für das Gerät: Reiter "Routinen", noch ohne "Magic Push"`, t2.endsWith("routine") && !t2.includes("magic"), t2);
     await closeDevice();
+    // eine Meldung für das Gerät: "Magic Push" erscheint vor "Routinen"
+    await p.evaluate(() => { (window.__magic ||= { rules: [], tests: [], seq: 1 }).rules.push({ id: "tabmagic", name: "Test", device_id: "d", enabled: true }); });
+    await refetch();
+    await openDevice();
+    const t2b = await tabsOf();
+    check(`[${tag}] Mit einer Meldung für das Gerät: "Magic Push" und "Routinen"`, t2b.endsWith("magic,routine"), t2b);
+    await closeDevice();
+    // zweite Schalter aus: beide Reiter bei jedem Gerät (hier ohne Routine und Meldung)
+    await p.evaluate(() => { window.__routines.list = []; window.__magic.rules = []; window.__opts.tab_routines_only_used = false; window.__opts.tab_magic_only_used = false; });
+    await refetch();
+    await openDevice();
+    const t2c = await tabsOf();
+    check(`[${tag}] "Nur bei Geräten, die vorkommen" aus: beide Reiter auch ohne Routine und Meldung`, t2c.endsWith("magic,routine"), t2c);
+    await closeDevice();
+    await p.evaluate(() => { window.__opts.tab_routines_only_used = true; window.__opts.tab_magic_only_used = true; });
 
     // --- Schalter aus: Reiter weg; ein Sprung in den ausgeblendeten Reiter landet auf der Übersicht
     await tap(".gear-btn");
@@ -92,7 +110,8 @@ for (const lang of ["de", "en"]) {
     await closeDevice();
 
     // --- Standard-Empfänger neuer Meldungen: leer = das globale Ziel, sonst vorgewählt
-    await p.evaluate((t) => { window.__opts.show_tab_magic = true; window.__opts.notify_service_magic = ""; }, TARGET);
+    // der Reiter braucht dafür eine Meldung am Gerät (Standard "nur bei Geräten mit Meldungen") oder den ausgeschalteten zweiten Schalter
+    await p.evaluate(() => { window.__opts.show_tab_magic = true; window.__opts.tab_magic_only_used = false; window.__opts.notify_service_magic = ""; });
     await refetch();
     await openDevice();
     await tap('dialog.device [data-tab="magic"]');

@@ -11,7 +11,12 @@ Einstieg für jede neue Claude-Code-Session. Zuerst diese Datei lesen, dann
 
 - `charge.py` `known_rechargeable`: Lademeldung gilt (global + Gerät/Integration), oder am Gerät ausdrücklich "Ein", oder Live-Aktivität für das Gerät an; `rechargeable()` und `charging_of()` nutzen sie (vorher nur `enabled()` mit globalem Schalter). Test `test_rechargeable_by_device_charge_or_live`.
 
-## Stand (2.246.0, Reiter "Magic Push" standardmässig aus)
+## Stand (2.247.0, zweiter Schalter "nur bei Geräten, die vorkommen")
+
+- Nutzerwunsch (2026-11-24): je Reiter ("Routinen", "Magic Push") ein zweiter Schalter `tab_routines_only_used` / `tab_magic_only_used` (Standard an) unter dem Reiter-Schalter; `show_tab_magic` wieder Standard an; die Umstellung aus 2.246.0 (`_migrate_tab_magic`, `tab_magic_decided`) entfernt, nichts wird migriert. Nur global (wie die Reiter-Schalter, vom Nutzer bestätigt).
+- Backend: `list_devices` liefert `magic_devices` (`MagicPush.device_ids`), `tab_routines_only_used`, `tab_magic_only_used`; Sicherung (`_ROUTINE_KEYS`, `_MAGIC_KEYS`). Panel: `_magicDevices`, `_tabRoutinesOnlyUsed`, `_tabMagicOnlyUsed` in `device-panel.js`, zwei Zeilen in `_settingsSections`. Simulator: `magic_devices` wie `routine_devices` (alle Geräte, ausser `window.__strictRoutineTab`). Magic Push legt man auch zentral an (`startNewFromAll`), darum ist der ausgeblendete Reiter keine Sackgasse.
+
+## Stand (2.246.0, Reiter "Magic Push" standardmässig aus; ab 2.247.0 überholt)
 
 - Nutzerwunsch (2026-11-24): `show_tab_magic` Standard aus (`BOOL_OPTIONS`). Bestehende Installationen einmalig (`_migrate_tab_magic` in `__init__.py`, Merkzettel `tab_magic_decided` in den Optionen): mindestens eine Meldung im Speicher von Magic Push und Wert nicht "aus" → an, sonst aus. Test `tests/test_tab_magic.py`. Der Simulator bleibt bei "an" (die Suiten brauchen den Reiter). Panel unverändert (PANEL_VERSION 560).
 - Frage des Nutzers: "Verpasste nachholen" für Magic Push? Nein: Magic Push prüft beim Start (`_resync`) den aktuellen Zustand und holt damit immer nach; offen ist nur, ob eine feste Sendezeit oder ein Zeitfenster während des Ausfalls nachgeholt wird (nicht geprüft).

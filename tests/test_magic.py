@@ -836,3 +836,19 @@ async def test_send_at_dropped_when_cleared_before_time(hass: HomeAssistant, set
     hass.states.async_set(sensor, "1")
     await _tick(hass, freezer, 4 * 3600)
     assert calls == []
+
+
+async def test_list_devices_names_devices_with_messages_and_tab_options(hass: HomeAssistant, setup, hass_ws_client) -> None:  # noqa: F811
+    """Reiter "Magic Push" (2.246.0): list_devices nennt die Geräte mit Meldung und die zwei Schalter (Standard an)."""
+    device = _device(hass, "Keller")
+    other = _device(hass, "Flur")
+    temp = _sensor(hass, device, "t", "20")
+    client = await hass_ws_client(hass)
+    await client.send_json({"id": 1, "type": f"{DOMAIN}/list_devices"})
+    result = (await client.receive_json())["result"]
+    assert result["magic_devices"] == [] and result["show_tab_magic"] is True
+    assert result["tab_magic_only_used"] is True and result["tab_routines_only_used"] is True
+    await hass.data[DATA_MAGIC].async_save_rule(_rule(device, temp))
+    await client.send_json({"id": 2, "type": f"{DOMAIN}/list_devices"})
+    result = (await client.receive_json())["result"]
+    assert result["magic_devices"] == [device.id] and other.id not in result["magic_devices"]

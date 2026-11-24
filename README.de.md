@@ -97,7 +97,7 @@ Ein Tipp auf ein Gerät öffnet ein Pop-up mit allem zum Gerät.
 - **Statistik:** Verfügbarkeit, Ausfälle, Empfang und Batterie als Kacheln; jede Kachel öffnet ihren Verlauf
 - **Angaben:** Verbindung, Integration, Hersteller, Modell, Softwarestand und alle Entitäten
 - **Aktionen:** umbenennen, als Favorit markieren, ausblenden, in Home Assistant öffnen und ein Update starten, wenn das Gerät eines anbietet
-- **Reiter:** Übersicht, Schalter, Einstellungen, Entitäten, Magic Push und Routinen. Magic Push und Routinen lassen sich in den Einstellungen ausschalten (Abschnitte "Magic Push" und "Routinen"); Routinen erscheint nur bei Geräten, die in einer Routine vorkommen, denn Routinen richtest du zentral ein
+- **Reiter:** Übersicht, Schalter, Einstellungen, Entitäten, Magic Push und Routinen. Magic Push und Routinen lassen sich in den Einstellungen ausschalten (Abschnitte "Magic Push" und "Routinen"); standardmässig erscheint jeder nur bei Geräten, die darin vorkommen (eine Routine, oder mindestens eine Magic-Push-Meldung), denn beides richtest du auch zentral ein; ein zweiter Schalter je Reiter zeigt ihn bei jedem Gerät
 
 <p align="center"><img src="https://raw.githubusercontent.com/Diegofuego871/ha-device-panel/main/docs/screenshots/de/popup.png" alt="Geräte-Pop-up mit Statistik, Verbindung und Geräteangaben" width="640"></p>
 
@@ -230,7 +230,7 @@ Manche Geräte melden sich nur ab und zu, zum Beispiel Bluetooth-Sensoren, und w
 
 ## Magic Push: eigene Meldungen
 
-Eigene Meldungen pro Gerät ohne Automation, im Reiter "Magic Push" des Geräts. In den Einstellungen (Abschnitt "Magic Push") schaltest du den Reiter ein oder aus (standardmässig aus; eine bestehende Installation mit mindestens einer Meldung behält ihn an) und legst einen Standard-Empfänger für neue Meldungen fest (Standard: das Ziel aus "Überwachung und Meldungen"; bestehende Meldungen bleiben, wie sie sind).
+Eigene Meldungen pro Gerät ohne Automation, im Reiter "Magic Push" des Geräts. In den Einstellungen (Abschnitt "Magic Push") schaltest du den Reiter ein oder aus, wählst, ob er nur bei Geräten mit Meldung (Standard) oder bei jedem Gerät erscheint, und legst einen Standard-Empfänger für neue Meldungen fest (Standard: das Ziel aus "Überwachung und Meldungen"; bestehende Meldungen bleiben, wie sie sind).
 
 <p align="center"><img src="https://raw.githubusercontent.com/Diegofuego871/ha-device-panel/main/docs/screenshots/de/magic-tab.png" alt="Reiter Magic Push eines Geräts mit zwei Meldungen" width="560"></p>
 

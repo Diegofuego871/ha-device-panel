@@ -7,6 +7,21 @@ Alle nennenswerten Änderungen an dieser Integration stehen in dieser Datei.
 Das Format folgt [Keep a Changelog](https://keepachangelog.com/de/1.1.0/),
 die Versionsnummern folgen [Semantic Versioning](https://semver.org/lang/de/).
 
+## [2.247.0] - 2026-11-24
+
+Geräte-Fenster: ein zweiter Schalter je Reiter, "nur bei Geräten, die darin vorkommen", für "Routinen" und "Magic Push" standardmässig an.
+
+### Hinzugefügt
+
+- **Zweiter Schalter unter "Reiter Routinen im Geräte-Fenster" und "Reiter Magic Push im Geräte-Fenster":** "Nur bei Geräten mit Routinen" und "Nur bei Geräten mit Meldungen". An (Standard): der Reiter erscheint nur bei Geräten, die in einer Routine vorkommen (auch einer pausierten) oder mindestens eine Magic-Push-Meldung haben. Aus: der Reiter erscheint bei jedem Gerät. Magic-Push-Meldungen lassen sich auch zentral im Fenster aller Meldungen anlegen, der ausgeblendete Reiter ist also keine Sackgasse.
+- **Sicherung und Wiederherstellung:** die zwei neuen Schalter gehören zur Sicherung (Bereiche "Routinen" und "Magic Push").
+- **Tests:** die Python-Tests für die Geräte mit Meldungen, die Standards und die Sicherung, und die Suite `tabsetting-e2e` (neue Schalter, Sichtbarkeit der Reiter).
+
+### Geändert
+
+- **Reiter "Routinen" und Schalter "Reiter Magic Push":** der Schalter "Reiter Magic Push im Geräte-Fenster" ist standardmässig wieder an (wie in 2.244.0 und 2.245.0); was 2.246.0 geändert hat (standardmässig aus, einmalige Umstellung bestehender Installationen) entfällt: bestehende Installationen behalten ihre gespeicherten Werte, neue starten mit den Standards. Der Reiter "Routinen" erschien schon bisher nur bei Geräten in einer Routine; das folgt jetzt dem neuen Schalter. Die Kurzbeschreibung des Schalters "Reiter Routinen" erwähnt es nicht mehr.
+- **Entfernt:** die einmalige Umstellung aus 2.246.0 und ihr Merkzettel `tab_magic_decided` (ein vorhandener Merkzettel in den gespeicherten Optionen ist harmlos und wird ignoriert).
+
 ## [2.246.0] - 2026-11-24
 
 Der Reiter "Magic Push" im Geräte-Fenster ist standardmässig aus.
@@ -6603,6 +6618,7 @@ Erste Vorabversion.
   GitHub Actions für die Prüfungen von HACS und hassfest sowie die Tests.
 
 [2.6.0]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v2.6.0
+[2.247.0]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v2.247.0
 [2.246.0]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v2.246.0
 [2.245.0]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v2.245.0
 [2.243.1]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v2.243.1

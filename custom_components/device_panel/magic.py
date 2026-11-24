@@ -933,6 +933,10 @@ class MagicPush:
         out = [r for r in self._rules.values() if device_id is None or r["device_id"] == device_id]
         return sorted(out, key=lambda r: (r["name"].casefold(), r["id"]))
 
+    def device_ids(self) -> list[str]:
+        """Geräte mit mindestens einer Meldung (seit 2.246.0 für den Reiter \"Magic Push\" im Geräte-Fenster)."""
+        return sorted({r["device_id"] for r in self._rules.values() if r.get("device_id")})
+
     def get(self, rule_id: str) -> dict[str, Any] | None:
         return self._rules.get(rule_id)
 
