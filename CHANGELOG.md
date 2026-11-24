@@ -7,6 +7,19 @@ All notable changes to this integration are documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/).
 
+## [2.243.0] - 2026-11-24
+
+Tabs of the device window on the phone like the other tab bars; the charge chart uses the full width.
+
+### Changed
+
+- **Tabs of the device window on the phone:** like the tab bars of the settings: three columns, two rows, the icon above the text and all labels visible (before only the icons and the text of the chosen tab). The number stands below ("Entities · 16", "3 own"). The bar no longer sticks to the top on the phone (two rows would be too high); on the desktop nothing changes.
+
+### Fixed
+
+- **Chart in the window "Charges" uses the full width:** the curve left empty margins on both sides in wide windows. It is now drawn in the width of the card (and again after the window is resized), the height grows with it up to 230 px; the labels keep their size.
+- **Tests:** `levels-e2e` (tab bar on the phone and the desktop), `charges-e2e` (chart fills the card).
+
 ## [2.242.3] - 2026-11-24
 
 HealthCheck services: no icon in the settings chapter.
@@ -6444,6 +6457,7 @@ First pre-release.
   GitHub Actions for HACS/hassfest validation and tests.
 
 [2.6.0]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v2.6.0
+[2.243.0]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v2.243.0
 [2.242.3]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v2.242.3
 [2.242.2]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v2.242.2
 [2.242.1]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v2.242.1

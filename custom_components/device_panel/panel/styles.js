@@ -2259,16 +2259,18 @@ dialog.magic-dlg[open] > .mgw-body.two { display: flex; gap: 22px; overflow: hid
 .dev-tabs .sub-tab.two { display: grid; grid-template-columns: auto auto; grid-template-rows: auto auto; justify-content: center; align-content: center; column-gap: 0; row-gap: 1px; }
 .dev-tabs .sub-tab.two::before { grid-row: 1 / span 2; align-self: center; }
 .dev-tabs .sub-tab.two .tab-l, .dev-tabs .sub-tab.two .tab-s { grid-column: 2; }
+/* Handy (seit 2.243.0, docs/mockups/dev-tabs-v1, Variante A): die Reiter des Geräte-Fensters wie die Leisten der Einstellungen: drei Spalten, zwei Zeilen,
+   Symbol über der Beschriftung, alle Beschriftungen sichtbar (mit der Zahl darunter). Die Leiste klebt dort nicht mehr oben (zwei Zeilen wären zu hoch). */
 @media (max-width: 600px) {
-  .dev-tabs .sub-tabs { display: flex; gap: 2px; }
-  .dev-tabs .sub-tab { flex: 1 1 0; min-width: 0; padding: 0 4px; font-size: 0; }
-  .dev-tabs .sub-tab::before { margin-right: 0; font-size: 18px; }
-  .dev-tabs .sub-tab.two { display: flex; }
-  .dev-tabs .sub-tab.two:not(.on) > * { display: none; }
-  .dev-tabs .sub-tab.on { flex: 2.8 1 0; gap: 6px; font-size: 13.5px; }
-  .dev-tabs .sub-tab.on::before { margin-right: 0; }
-  .dev-tabs .sub-tab.on.two::before { display: none; }
-  .dev-tabs .sub-tab.on.two .tab-l { font-size: 13px; }
+  .dev-tabs { position: static; }
+  dialog.device .dev-tabs .sub-tabs { display: grid; grid-auto-flow: row; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 2px; }
+  .dev-tabs .sub-tab { flex-direction: column; gap: 5px; min-height: 56px; padding: 0 4px; font-size: 12.5px; font-weight: 500; line-height: 1.15; }
+  .dev-tabs .sub-tab::before { margin: 0; font-size: 15px; }
+  .dev-tabs .sub-tab.on { font-weight: 600; }
+  .dev-tabs .sub-tab.two { display: flex; flex-direction: column; gap: 2px; }
+  .dev-tabs .sub-tab.two::before { grid-row: auto; margin-bottom: 3px; }
+  .dev-tabs .sub-tab.two .tab-l, .dev-tabs .sub-tab.two .tab-s { grid-column: auto; }
+  .dev-tabs .sub-tab.two .tab-l { font-size: 12.5px; }
 }
 /* Reiter "Schalter" (seit 2.58.0, docs/mockups/switches-v1, Variante C): kompakte Kacheln, drei Spalten (Handy und Desktop) */
 .sw-grid { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 8px; }
@@ -2808,7 +2810,7 @@ dialog.updapp-dlg .dlg-error { font-size: 15px; }
 /* Fenster "Ladungen" (seit 2.204.0, docs/mockups/charges-v1, A): Kurve, vier Kacheln, Liste der letzten 20 Ladungen */
 .dlg-avatar.app-charges { background: var(--dp-success); }
 .cg-card { margin-top: 4px; padding: 10px 8px 4px; border: 1px solid var(--dp-divider); border-radius: 14px; background: var(--dp-bg); }
-.cg-svg { display: block; width: 100%; height: auto; max-height: 230px; }
+.cg-svg { display: block; width: 100%; height: auto; }
 .cg-grid { stroke: var(--dp-divider); stroke-width: 1; }
 .cg-ax { fill: var(--dp-text3); font-size: 9px; }
 .cg-ax.w { fill: var(--dp-warning); }

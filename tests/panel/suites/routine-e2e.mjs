@@ -63,14 +63,15 @@ for (const lang of ["de", "en"]) {
     await wait(`return r.querySelector("dialog.device")?.open && r.querySelector('dialog.device [data-tab="routine"]')`);
     const tabs = await ev(`return [...r.querySelectorAll("dialog.device .sub-tabs > button")].map((b) => b.dataset.tab).join()`);
     check(`[${tag}] sechs Reiter (Schalter an zweiter Stelle), Routine als letzter`, tabs === "ov,sw,set,ent,magic,routine", tabs);
-    const fit = await ev(`const bar = r.querySelector("dialog.device .sub-tabs"); return [bar.scrollWidth <= bar.clientWidth + 1, [...bar.querySelectorAll("button")].every((b) => b.getBoundingClientRect().top === bar.querySelector("button").getBoundingClientRect().top)]`);
-    check(`[${tag}] alle Reiter in einer Zeile ohne Überlauf`, fit[0] && fit[1], JSON.stringify(fit));
+    // Desktop: alle sechs in einer Zeile; Handy (2.243.0, Variante A): drei Spalten, zwei Zeilen; in beiden Fällen ohne Überlauf
+    const fit = await ev(`const bar = r.querySelector("dialog.device .sub-tabs"); const tops = new Set([...bar.querySelectorAll("button")].map((b) => Math.round(b.getBoundingClientRect().top))).size; return [bar.scrollWidth <= bar.clientWidth + 1, tops === ${mobile ? 2 : 1}]`);
+    check(`[${tag}] ${mobile ? "Handy: Reiter in zwei Zeilen (drei Spalten)" : "alle Reiter in einer Zeile"} ohne Überlauf`, fit[0] && fit[1], JSON.stringify(fit));
     await tap('dialog.device [data-tab="routine"]');
     check(`[${tag}] Reiter "${T.tab}": Kopf und Hinweis`, await wait(`return r.querySelector(".rt-root h3")?.textContent === ${JSON.stringify(T.tab)} && r.querySelector(".rt-root .mg-add")`));
     check(`[${tag}] leer: "${T.empty}"`, (await cardsText()).includes(T.empty));
     if (mobile) {
-      const lab = await ev(`const on = r.querySelector('dialog.device .sub-tab.on'); const other = r.querySelector('dialog.device .sub-tab[data-tab="ent"]'); return [on.textContent.trim(), getComputedStyle(other).fontSize, getComputedStyle(on, "::before").content]`);
-      check(`[${tag}] Handy: gewählter Reiter mit Beschriftung, die anderen nur Symbol`, lab[0] === T.tab && lab[1] === "0px", JSON.stringify(lab));
+      const lab = await ev(`const on = r.querySelector('dialog.device .sub-tab.on'); const other = r.querySelector('dialog.device .sub-tab[data-tab="ent"]'); return [on.textContent.trim(), getComputedStyle(other).fontSize, getComputedStyle(on, "::before").content, other.textContent.trim().length > 0, getComputedStyle(on).flexDirection]`);
+      check(`[${tag}] Handy: alle Reiter mit Beschriftung, das Symbol über dem Text`, lab[0] === T.tab && parseFloat(lab[1]) > 12 && lab[3] && lab[4] === "column", JSON.stringify(lab));
     }
 
     // --- Assistent: Schritt 1 ------------------------------------------------------------------------------------

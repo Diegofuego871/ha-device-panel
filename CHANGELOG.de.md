@@ -7,6 +7,19 @@ Alle nennenswerten Änderungen an dieser Integration stehen in dieser Datei.
 Das Format folgt [Keep a Changelog](https://keepachangelog.com/de/1.1.0/),
 die Versionsnummern folgen [Semantic Versioning](https://semver.org/lang/de/).
 
+## [2.243.0] - 2026-11-24
+
+Reiter des Geräte-Fensters auf dem Handy wie die anderen Reiterleisten; die Ladungs-Grafik nutzt die ganze Breite.
+
+### Geändert
+
+- **Reiter des Geräte-Fensters auf dem Handy:** wie die Reiterleisten der Einstellungen: drei Spalten, zwei Zeilen, das Symbol über dem Text und alle Beschriftungen sichtbar (vorher nur die Symbole und der Text des gewählten Reiters). Die Zahl steht darunter ("Entitäten · 16", "3 eigene"). Die Leiste klebt auf dem Handy nicht mehr oben (zwei Zeilen wären zu hoch); auf dem Desktop ändert sich nichts.
+
+### Behoben
+
+- **Grafik im Fenster "Ladungen" nutzt die ganze Breite:** Die Kurve liess in breiten Fenstern links und rechts einen leeren Rand. Sie wird jetzt in der Breite der Karte gezeichnet (und nach einer Grössenänderung des Fensters neu), die Höhe wächst mit bis 230 px; die Beschriftung behält ihre Grösse.
+- **Tests:** `levels-e2e` (Reiterleiste auf Handy und Desktop), `charges-e2e` (Grafik füllt die Karte).
+
 ## [2.242.3] - 2026-11-24
 
 HealthCheck-Dienste: kein Symbol im Kapitel der Einstellungen.
@@ -6545,6 +6558,7 @@ Erste Vorabversion.
   GitHub Actions für die Prüfungen von HACS und hassfest sowie die Tests.
 
 [2.6.0]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v2.6.0
+[2.243.0]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v2.243.0
 [2.242.3]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v2.242.3
 [2.242.2]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v2.242.2
 [2.242.1]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v2.242.1

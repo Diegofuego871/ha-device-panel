@@ -4,8 +4,10 @@
  * keine Fussnoten. Die Daten kommen von device_panel/charges (charge.py, nur Administratoren); Watt sind Schätzungen und nur mit eingestellter Akku-Grösse da.
  */
 
-const W = 320;
-const H = 150;
+// Grundmasse der Grafik: Breite und Höhe richten sich nach dem Fenster (seit 2.243.0), damit die Grafik die ganze Breite nutzt
+const W_MIN = 320;
+const H_MIN = 150;
+const H_MAX = 230;
 const PAD = { l: 30, r: 34, t: 8, b: 22 };
 
 export class ChargesUi {
@@ -61,6 +63,11 @@ export class ChargesUi {
   }
 
   bind(dlg) {
+    // Ändert sich die Breite des Fensters (Drehen, Grösse), zeichnet sich die Grafik neu in der neuen Breite
+    window.addEventListener("resize", () => {
+      const body = this.dlg?.querySelector("[data-cg-body]");
+      if (this.dlg?.open && this.data && body && Math.abs(this.plotWidth(body) - (this._lastW || 0)) > 8) this.render();
+    });
     dlg.addEventListener("click", (ev) => {
       if (ev.target === dlg) {
         const r = dlg.getBoundingClientRect();
@@ -89,7 +96,14 @@ export class ChargesUi {
   }
 
   // Kurve der gewählten Ladung: x in Minuten, links 0 bis 100 % (Stand), rechts Watt (nur mit Leistung)
-  chart(c) {
+  // Innenbreite der Karte: Breite des Fensterinhalts ohne dessen Innenabstand und ohne Rand und Innenabstand der Karte (.cg-card: 1 + 8 px je Seite)
+  plotWidth(body) {
+    const cs = getComputedStyle(body);
+    const inner = (body.clientWidth || 0) - (parseFloat(cs.paddingLeft) || 0) - (parseFloat(cs.paddingRight) || 0) - 18;
+    return Math.round(inner) > 0 ? Math.round(inner) : W_MIN;
+  }
+
+  chart(c, W = W_MIN, H = H_MIN) {
     const { escape } = this.h;
     const pw = W - PAD.l - PAD.r;
     const ph = H - PAD.t - PAD.b;
@@ -151,7 +165,11 @@ export class ChargesUi {
           <span class="cg-w">${x.avg_w != null ? `${w(x.avg_w)}` : escape(host._fmtSeconds(x.minutes * 60))}</span></button>`
       )
       .join("");
-    body.innerHTML = `<div class="cg-card">${this.chart(c)}</div>
+    // Breite der Grafik = Breite der Karte (Innenmass), Höhe wächst mit, höchstens H_MAX: kein leerer Rand links und rechts auf dem Desktop
+    const cw = Math.max(W_MIN, this.plotWidth(body));
+    const ch = Math.round(Math.min(H_MAX, Math.max(H_MIN, cw * 0.28)));
+    this._lastW = cw;
+    body.innerHTML = `<div class="cg-card">${this.chart(c, cw, ch)}</div>
       <div class="cg-tiles" style="--n:${tiles.length}">${tiles.join("")}</div>
       <div class="cg-list">${rows}</div>`;
   }

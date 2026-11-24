@@ -58,6 +58,10 @@ for (const lang of ["de", "en"]) {
     check(`[${tag}] Kachel "${L.tile}" mit Anzahl 5`, (await wait(`return !!r.querySelector('${tileSel}')`)) && /5/.test(await text(`${tileSel} .st-v`)) && (await text(`${tileSel} .st-k`)) === L.tile);
     await tap(tileSel);
     check(`[${tag}] Fenster öffnet: Titel "${L.title}", Kurve und fünf Zeilen`, (await wait(`return r.querySelector('${C}')?.open && r.querySelectorAll('${C} .cg-row').length === 5 && !!r.querySelector('${C} .cg-svg .cg-l')`)) && (await text(`${C} h2`)) === L.title);
+
+    // Grafik nutzt die ganze Breite der Karte (2.243.0): kein leerer Rand links und rechts, Achsentext bleibt in der Schriftgrösse (Massstab 1:1)
+    const gm = JSON.parse(await ev(`const card = r.querySelector('${C} .cg-card'), svg = card.querySelector(".cg-svg"); const vb = svg.viewBox.baseVal; const cs = getComputedStyle(card); return JSON.stringify({ w: svg.getBoundingClientRect().width, inner: card.clientWidth - parseFloat(cs.paddingLeft) - parseFloat(cs.paddingRight), vb: vb.width, h: svg.getBoundingClientRect().height })`));
+    check(`[${tag}] Grafik füllt die Karte in der Breite (kein Rand links und rechts), Beschriftung im Massstab 1:1`, Math.abs(gm.w - gm.inner) < 1.5 && Math.abs(gm.w / gm.vb - 1) < 0.03 && gm.vb >= 300, JSON.stringify(gm));
     check(`[${tag}] vier Kacheln mit Leistung (Dauer, Stand, ${L.avg}, ${L.peak}), Watt-Kurve gestrichelt`, (await ev(`return r.querySelectorAll('${C} .cg-tile').length === 4 && !!r.querySelector('${C} .cg-wl')`)) && (await text(`${C} .cg-tiles`)).includes(L.avg));
     check(`[${tag}] neueste Ladung gewählt (19 → 80 %)`, (await text(`${C} .cg-row.on .cg-p`)).includes("19 → 80"));
     await tap(`${C} .cg-row:nth-child(2)`);
