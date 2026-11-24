@@ -866,6 +866,9 @@ class DevicePanel extends HTMLElement {
     this._pickKind = "area";
     this._pulse = null;
     this._health = [];
+    this._showTabRoutines = true;
+    this._showTabMagic = true;
+    this._routineDevices = new Set();
     this._incidents = [];
     // Geräte-Popup und Statistik-Fenster
     this._detailId = null;
@@ -1959,6 +1962,10 @@ class DevicePanel extends HTMLElement {
       this._pulse = Array.isArray(result.pulse) ? result.pulse : null;
       // HealthCheck-Dienste mit einem Fehler (seit 2.241.0, nur Administratoren): rote Zeile unter dem Puls und Abschnitt im Fenster
       this._health = Array.isArray(result.health) ? result.health : [];
+      // Reiter "Routinen" und "Magic Push" im Geräte-Fenster (seit 2.244.0): zwei globale Schalter, Routinen nur bei Geräten mit Routinen
+      this._showTabRoutines = result.show_tab_routines !== false;
+      this._showTabMagic = result.show_tab_magic !== false;
+      this._routineDevices = new Set(Array.isArray(result.routine_devices) ? result.routine_devices : []);
       // Kopfzeile (seit 2.62.0): Debug-Modus und Störungen des Status für die Punkte am Launcher oder an den angehefteten Apps
       this._debugOn = result.debug === true;
       this._rtFail = result.routine_fail || null;
@@ -5546,7 +5553,11 @@ class DevicePanel extends HTMLElement {
       // in "Einstellungen" (der Zähler nennt die eigenen), Entitäten für sich.
       const own = devOwnCount(d);
       const switches = this._switchEntities(d);
-      const tab = ["ov", "sw", "set", "ent", "magic", "routine"].includes(this._devTab) && (this._devTab !== "sw" || switches.length) ? this._devTab : "ov";
+      // Reiter Magic Push und Routinen (seit 2.244.0): der erste nach dem Schalter, der zweite nach dem Schalter und nur mit Routinen für das Gerät
+      // (Routinen richtet man zentral ein); "Routine für das Gerät" = das Gerät kommt in mindestens einer Routine vor, auch einer pausierten oder ausgeschalteten
+      const showMagic = this._showTabMagic !== false;
+      const showRoutines = this._showTabRoutines !== false && this._routineDevices.has(d.id);
+      const tab = ["ov", "sw", "set", "ent", ...(showMagic ? ["magic"] : []), ...(showRoutines ? ["routine"] : [])].includes(this._devTab) && (this._devTab !== "sw" || switches.length) ? this._devTab : "ov";
       const magicCount = this._magic.count(d.id);
       const routineCount = this._routines.count(d.id);
       const tabs = `<div class="sub-tabs" role="tablist">${[
@@ -5557,9 +5568,9 @@ class DevicePanel extends HTMLElement {
         ["set", this._t("devTabSettings"), own > 0, own ? this._t("devTabOwnCount", own) : ""],
         ["ent", this._t("devTabEntities", ents.count), false],
         // Magic Push: mit eingeschalteten Meldungen ebenfalls zweizeilig (Name, darunter klein die Zahl)
-        ["magic", this._t("mgTab"), false, magicCount ? this._t("mgTabActive", magicCount) : ""],
+        ...(showMagic ? [["magic", this._t("mgTab"), false, magicCount ? this._t("mgTabActive", magicCount) : ""]] : []),
         // Routine (seit 2.21.0): ebenfalls zweizeilig mit der Zahl der eingeschalteten
-        ["routine", this._t("rtTab"), false, routineCount ? this._t("rtTabActive", routineCount) : ""],
+        ...(showRoutines ? [["routine", this._t("rtTab"), false, routineCount ? this._t("rtTabActive", routineCount) : ""]] : []),
       ]
         .map(([id, label, chg, sub]) => `<button type="button" role="tab" class="sub-tab${sub ? " two" : ""}${id === tab ? " on" : ""}${chg ? " chg" : ""}" data-dlg="tab" data-tab="${id}" aria-selected="${id === tab}"${sub ? ` aria-label="${escape(id === "magic" ? this._t("mgTabAria", magicCount) : id === "routine" ? this._t("rtTabAria", routineCount) : this._t("devTabSettingsOwn", own))}"` : ""}>${
           sub ? `<span class="tab-l">${escape(label)}</span> <span class="tab-s">${escape(sub)}</span>` : escape(label)
@@ -7812,7 +7823,8 @@ class DevicePanel extends HTMLElement {
     return [
       ["devices", ["show_service_devices", "show_disabled_devices", ...SUB_TAB_KEYS.integrations, ...SUB_TAB_KEYS.types, ...SUB_TAB_KEYS.devs, ...SUB_TAB_KEYS.devset]],
       ["monitor", Object.values(MON_TAB_KEYS).flat()],
-      ["routines", ["routines_pause", "routines_pause_until", "routines_catch_up", "notify_service_routines", "routines_notify_error"]],
+      ["routines", ["routines_pause", "routines_pause_until", "routines_catch_up", "notify_service_routines", "routines_notify_error", "show_tab_routines"]],
+      ["magic", ["show_tab_magic", "notify_service_magic"]],
       ["ai", ["ai_assessment", "ai_task_entity", "ai_prompt"]],
       ["updates", [...SUB_TAB_KEYS.pstart, ...SUB_TAB_KEYS.pstorage, ...SUB_TAB_KEYS.pupdates]],
     ];
@@ -8106,6 +8118,7 @@ class DevicePanel extends HTMLElement {
       const base = d.ai_assessment ? this._t("sumAiOn", task?.name || d.ai_task_entity || "") : this._t("sumAiOff");
       return d.ai_prompt ? `${base} · ${this._t("sumAiPrompt")}` : base;
     }
+    if (id === "magic") return this._t(d.show_tab_magic ? "sumMagicTabOn" : "sumMagicTabOff");
     if (id === "routines") {
       if (d.routines_pause && d.routines_pause_until > 0) return this._t("sumRoutinesPausedUntil", this._fmtTime(d.routines_pause_until, true, true));
       return this._t(d.routines_pause ? "sumRoutinesPaused" : "sumRoutinesIdle");
@@ -10401,10 +10414,16 @@ class DevicePanel extends HTMLElement {
         pauseUntilRow() +
         row("routines_catch_up", t("optRoutinesCatchUp"), num("routines_catch_up", t("minuteUnit"), t("optRoutinesCatchUp")), t("optRoutinesCatchUpShort"), null) +
         ui.targetRow("routines", "optRoutinesTargetShort") +
-        row("routines_notify_error", t("optRoutinesNotifyError"), sw("routines_notify_error", t("optRoutinesNotifyError")), t("optRoutinesNotifyErrorShort"), t("optRoutinesNotifyErrorInfo")),
+        row("routines_notify_error", t("optRoutinesNotifyError"), sw("routines_notify_error", t("optRoutinesNotifyError")), t("optRoutinesNotifyErrorShort"), t("optRoutinesNotifyErrorInfo")) +
+        // Reiter "Routinen" im Geräte-Fenster (seit 2.244.0, nur global): er erscheint nur bei Geräten, die in einer Routine vorkommen
+        row("show_tab_routines", t("optShowTabRoutines"), sw("show_tab_routines", t("optShowTabRoutines")), t("optShowTabRoutinesShort"), null),
+      // Abschnitt "Magic Push" (seit 2.244.0): Reiter im Geräte-Fenster und der Standard-Empfänger neuer Meldungen (Standard: das globale Ziel)
+      magic:
+        row("show_tab_magic", t("optShowTabMagic"), sw("show_tab_magic", t("optShowTabMagic")), t("optShowTabMagicShort"), null) +
+        ui.targetRow("magic", "optMagicTargetShort"),
     };
     const titles = {
-      devices: "secDevices", monitor: "secMonitor", routines: "secRoutines", ai: "secAiSettings", updates: "secPanel",
+      devices: "secDevices", monitor: "secMonitor", routines: "secRoutines", magic: "secMagic", ai: "secAiSettings", updates: "secPanel",
     };
     // Dialog "Ansicht": nur der Block der Filter-Chips (Rahmen und Reiter baut _viewBodyHtml)
     if (st.mode === "view") return fields.chips;

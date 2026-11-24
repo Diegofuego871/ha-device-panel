@@ -13,7 +13,7 @@ PANEL_HTML_FILE = "panel.html"
 STATIC_URL_PATH = f"/{DOMAIN}"
 PANEL_STATIC_URL_PATH = f"{STATIC_URL_PATH}/panel"
 # Cache-Buster: bei jeder Änderung unter panel/ von Hand erhöhen.
-PANEL_VERSION = "558"
+PANEL_VERSION = "559"
 PANEL_PAGE_URL = f"{PANEL_STATIC_URL_PATH}/{PANEL_HTML_FILE}?v={PANEL_VERSION}"
 # Dashboard-Karten (seit 2.216.0): ES-Modul im Ordner des Panels; ?v= ist der Cache-Buster
 CARD_URL = f"{PANEL_STATIC_URL_PATH}/card.js?v={PANEL_VERSION}"
@@ -267,6 +267,11 @@ CONF_NOTIFY_SERVICE_NEW = "notify_service_new"
 CONF_NOTIFY_SERVICE_UPDATES = "notify_service_updates"
 CONF_NOTIFY_SERVICE_PANELUPDATE = "notify_service_panelupdate"
 CONF_NOTIFY_SERVICE_ROUTINES = "notify_service_routines"
+# Standard-Empfänger der Magic-Push-Meldungen (seit 2.244.0): neuen Meldungen im Assistenten vorgewählt; leer = das globale Ziel
+CONF_NOTIFY_SERVICE_MAGIC = "notify_service_magic"
+# Reiter "Routinen" und "Magic Push" im Geräte-Fenster zeigen (seit 2.244.0, global; Routinen nur bei Geräten mit Routinen)
+CONF_SHOW_TAB_ROUTINES = "show_tab_routines"
+CONF_SHOW_TAB_MAGIC = "show_tab_magic"
 CONF_NOTIFY_SERVICE_STATUS = "notify_service_status"
 # Status-App (seit 2.62.0): bei Stillstand eines Teils melden (Standard an); das Ziel folgt dem globalen, wenn nichts Eigenes gewählt ist
 CONF_STATUS_NOTIFY = "status_notify"
@@ -367,6 +372,7 @@ NOTIFY_TOPICS = {
     "new": CONF_NOTIFY_SERVICE_NEW,
     "updates": CONF_NOTIFY_SERVICE_UPDATES,
     "routines": CONF_NOTIFY_SERVICE_ROUTINES,
+    "magic": CONF_NOTIFY_SERVICE_MAGIC,
     "status": CONF_NOTIFY_SERVICE_STATUS,
     "panelupdate": CONF_NOTIFY_SERVICE_PANELUPDATE,
 }

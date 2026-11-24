@@ -47,7 +47,7 @@ async def test_export_roundtrip_is_all_unchanged(hass: HomeAssistant, setup) -> 
     assert report["totals"]["skipped"] == 0, report
     assert report["totals"]["unchanged"] > 20
     # Optionen werden auf die Bereiche verteilt, keiner fehlt und keiner doppelt
-    parts = [backup.section_keys(s) for s in ("monitor", "display", "devices", "ai", "routines")]
+    parts = [backup.section_keys(s) for s in ("monitor", "display", "devices", "ai", "routines", "magic")]
     assert sum(len(p) for p in parts) == len(backup._SCHEMA_KEYS) == len(set().union(*parts))
 
 
@@ -208,7 +208,7 @@ async def test_routines_and_magic_roundtrip(hass: HomeAssistant, setup) -> None:
     assert report["sections"]["routines"]["changes"][0]["detail"] == f"{plug} · on"
     assert report["sections"]["magic"]["changes"][0]["detail"] == f"{sensor.entity_id} · below 12.0"
     again = await backup.async_import(hass, file, ["routines", "magic"], dry_run=True)
-    assert again["totals"]["changed"] == 0 and again["totals"]["skipped"] == 0 and again["sections"]["magic"]["unchanged"] == 1
+    assert again["totals"]["changed"] == 0 and again["totals"]["skipped"] == 0 and again["sections"]["magic"]["unchanged"] == 3  # die Meldung und seit 2.244.0 die zwei Optionen des Bereichs
     # Ändert eine fremde Datei bei einer bestehenden Routine die Aktion, zeigt die Vorschau alt → neu
     swapped = {**file, "sections": {"routines": {**file["sections"]["routines"], "items": [{**file["sections"]["routines"]["items"][0], "action": "off"}]}}}
     changed = await backup.async_import(hass, swapped, ["routines"], dry_run=True)

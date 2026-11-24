@@ -1085,7 +1085,8 @@ export class MagicPush {
       // Uhrzeit "HH:MM": die Meldung wird bis dahin zurückgehalten; "" = sofort. sendAt: Wahl "zu einer Uhrzeit" (auch noch ohne Zeit)
       send_at: "",
       sendAt: false,
-      target: "",
+      // Standard-Empfänger neuer Meldungen (seit 2.244.0, Einstellungen › Magic Push): vorgewählt; leer = das globale Ziel (folgt ihm weiter)
+      target: this.data?.new_target || "",
       critical: false,
       critical_volume: VOLUME_MAX,
       name: "",

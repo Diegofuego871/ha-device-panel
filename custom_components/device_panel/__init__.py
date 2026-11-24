@@ -58,6 +58,9 @@ from .status import StatusWatch
 from .ai_assessment import ASK_ANSWER_MAX, ASK_MAX, ASK_QUESTION_MAX, AiError, async_ask, async_assess, async_clear, async_last, async_preview
 from .ai_prompt import DEFAULT_PROMPT
 from .const import (
+    CONF_NOTIFY_SERVICE_MAGIC,
+    CONF_SHOW_TAB_MAGIC,
+    CONF_SHOW_TAB_ROUTINES,
     DATA_HEALTHCHECK,
     AI_PROMPT_MAX,
     DATA_PUSHLOG,
@@ -519,6 +522,13 @@ async def _ws_list_devices(
     # Dienste mit einem Fehler (seit 2.241.0): rote Zeile unter dem Ausfall-Puls und Abschnitt "Dienste" im Fenster; nur Administratoren, leer ohne Fehler
     healthcheck = hass.data.get(DATA_HEALTHCHECK)
     result["health"] = healthcheck.overview() if healthcheck is not None else []
+    # Geräte mit Routinen (seit 2.244.0): der Reiter "Routinen" im Geräte-Fenster erscheint nur bei ihnen (Routinen richtet man zentral ein)
+    routines_manager = hass.data.get(DATA_ROUTINES)
+    result["routine_devices"] = routines_manager.device_ids() if routines_manager is not None else []
+    # Reiter im Geräte-Fenster (seit 2.244.0, global)
+    tabs = options_api.effective(hass)
+    result["show_tab_routines"] = tabs[CONF_SHOW_TAB_ROUTINES]
+    result["show_tab_magic"] = tabs[CONF_SHOW_TAB_MAGIC]
     connection.send_result(msg["id"], result)
 
 
@@ -663,6 +673,7 @@ def _ws_magic_get(hass: HomeAssistant, connection: websocket_api.ActiveConnectio
         return
     rules = push_rules.rules(msg["device_id"])
     default = options_api.effective(hass)[CONF_NOTIFY_SERVICE]
+    new_target = options_api.effective(hass)[CONF_NOTIFY_SERVICE_MAGIC]
     connection.send_result(
         msg["id"],
         {
@@ -674,8 +685,10 @@ def _ws_magic_get(hass: HomeAssistant, connection: websocket_api.ActiveConnectio
                 for eid in sorted({e for r in rules for e in magic.rule_entities(r)} - {e["entity_id"] for e in own})
                 if hass.states.get(eid) is not None or er.async_get(hass).async_get(eid) is not None
             ],
-            "targets": magic.targets_payload(hass, [r["target"] for r in rules if r.get("target")]),
+            "targets": magic.targets_payload(hass, [r["target"] for r in rules if r.get("target")] + ([new_target] if new_target else [])),
             "default_target": default,
+            # Standard-Empfänger neuer Meldungen (seit 2.244.0): leer = das globale Ziel (die Meldung folgt ihm weiter)
+            "new_target": new_target,
             "limits": {"per_device": magic.MAX_PER_DEVICE, "name": magic.NAME_MAX, "text": magic.TEXT_MAX, "for": magic.FOR_MAX, "repeat": magic.REPEAT_MAX, "leaves": magic.MAX_LEAVES, "groups": magic.MAX_GROUPS},
             "variables": {"common": magic.VARIABLES_COMMON, **magic.VARIABLES},
         },

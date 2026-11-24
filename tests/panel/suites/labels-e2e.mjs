@@ -50,7 +50,7 @@ for (const lang of ["de", "en"]) {
       check(`[${tag}] ohne Label kein Chip "${L.chip}"`, !(await s.ev(`return !!r.querySelector(".chips [data-label-open]")`)));
       await s.tap(".gear-btn");
       await s.wait(`return !!r.querySelector("dialog.settings .set-sec")`);
-      check(`[${tag}] Register "${L.section}" steht hinter "Integrationen", kein eigener Abschnitt`, await s.ev(`const t=[...r.querySelectorAll("dialog.settings .set-sec-head")].map(x=>x.dataset.id); return t.join() === "devices,monitor,routines,ai,updates"`), await s.ev(`return [...r.querySelectorAll("dialog.settings .set-sec-head")].map(x=>x.dataset.id).join()`));
+      check(`[${tag}] Register "${L.section}" steht hinter "Integrationen", kein eigener Abschnitt`, await s.ev(`const t=[...r.querySelectorAll("dialog.settings .set-sec-head")].map(x=>x.dataset.id); return t.join() === "devices,monitor,routines,magic,ai,updates"`), await s.ev(`return [...r.querySelectorAll("dialog.settings .set-sec-head")].map(x=>x.dataset.id).join()`));
       await s.tap('[data-set="section"][data-id="monitor"]');
       await s.tap('.mon-tab[data-key="labels"]');
       check(`[${tag}] leer: Hinweis und "${L.add}"`, await s.wait(`return !!r.querySelector(".label-add") && r.querySelector(".mon-empty")`) && (await s.text(".label-add")) === L.add);

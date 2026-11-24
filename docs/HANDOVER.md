@@ -11,6 +11,13 @@ Einstieg für jede neue Claude-Code-Session. Zuerst diese Datei lesen, dann
 
 - `charge.py` `known_rechargeable`: Lademeldung gilt (global + Gerät/Integration), oder am Gerät ausdrücklich "Ein", oder Live-Aktivität für das Gerät an; `rechargeable()` und `charging_of()` nutzen sie (vorher nur `enabled()` mit globalem Schalter). Test `test_rechargeable_by_device_charge_or_live`.
 
+## Stand (2.244.0, Geräte-Reiter schaltbar, Abschnitt "Magic Push")
+
+- Nutzerwunsch (2026-11-24): Reiter "Routinen" und "Magic Push" im Geräte-Fenster global schaltbar; "Routinen" nur bei Geräten mit Routinen (Routinen richtet man zentral ein); neuer Abschnitt "Magic Push" in den Einstellungen mit dem Schalter und einem Standard-Empfänger (erbt das globale Ziel, überschreibbar). Nur global (bewusst keine vier Ebenen, vom Nutzer bestätigt).
+- Backend: Optionen `show_tab_routines`, `show_tab_magic`, `notify_service_magic` (`NOTIFY_TOPICS["magic"]`, `notify_target(opts, "magic")`), Sicherung (`_MAGIC_KEYS`, Bereich "magic" trägt jetzt Optionen), `list_devices` liefert `routine_devices` (`RoutineManager.device_ids`, auch pausierte), `show_tab_*`; `magic_get` liefert `new_target`.
+- Panel: Schalter und Abschnitt in `device-panel.js` (`_settingsSections`, `fields.magic`), Reiter-Logik (`_routineDevices`, `_showTabMagic`), Sprung in einen ausgeblendeten Reiter landet auf "ov"; `magic-push.js` `newDraft().target = data.new_target`. Eine in der UI gespeicherte Routine trägt das Gerät sofort in `_routineDevices` ein.
+- Simulator: zeigt Routinen bei allen Geräten, ausser `window.__strictRoutineTab = true`; Suite `tabsetting-e2e.mjs`.
+
 ## Stand (2.242.0, Fensterbreite und Symbole in Reitern)
 
 - Nutzerwunsch (2026-11-24): Fenster über dem Geräte-Popup (stat-dlg, dazu pulse-dlg) auf dem Desktop gleich breit wie dieses (880 px, `styles.js` Zeile um 551); Symbole (Emoji per `::before`, wie `.dev-tabs`) vor den Reitern von "Überwachung und Meldungen", der Geräte-Einstellungen und der Integrationen (`.mon-tab[data-key]`, `.lvl-tabs .sub-tab[data-stab|data-key]`); auf dem Handy über dem Text. prompt-dlg, notes-dlg und area-sheet bleiben schmal.

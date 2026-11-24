@@ -1111,6 +1111,10 @@ class RoutineManager:
         out = [t for t in self._routines.values() if device_id is None or device_id in involved_devices(t)]
         return sorted(out, key=lambda t: (t["name"].casefold(), t["id"]))
 
+    def device_ids(self) -> list[str]:
+        """Geräte, die in mindestens einer Routine vorkommen (auch pausierte und ausgeschaltete; seit 2.244.0 für den Reiter "Routinen" im Geräte-Fenster)."""
+        return sorted({d for t in self._routines.values() for d in involved_devices(t)})
+
     def overdue_s(self, now: float) -> float:
         """Seit wie vielen Sekunden die am längsten überfällige Ausführung oder Rückstellung fällig wäre (0 = nichts überfällig; für die Status-App)."""
         worst = 0.0

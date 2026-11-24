@@ -260,7 +260,7 @@ for (const lang of ["de", "en"]) {
     await tap(".gear-btn");
     await wait(`return !!r.querySelector("dialog.settings .set-sec")`);
     const order = await ev(`return [...r.querySelectorAll(".set-sec-head")].map(h=>h.dataset.id).join(",")`);
-    check(`[${tag}] Abschnitte (notify-v3)`, order === "devices,monitor,routines,ai,updates", order);
+    check(`[${tag}] Abschnitte (notify-v3)`, order === "devices,monitor,routines,magic,ai,updates", order);
     check(`[${tag}] Überwachung und Meldungen zusammengefasst`, (await text('[data-id="monitor"] .set-sec-title')) === T.secMon && (await text('[data-id="monitor"] .set-sec-sum')) === T.sumMon(2), await text('[data-id="monitor"] .set-sec-sum'));
     await tap('[data-set="section"][data-id="monitor"]');
     // Symbole vor den Reitern (2.242.0): jeder Reiter hat eins, auch auf dem Handy läuft keine Beschriftung über

@@ -209,6 +209,7 @@ export class RoutineUi {
     return this.data.routines.filter((x) => x.enabled).length;
   }
 
+
   // --- Laden ------------------------------------------------------------------
 
   editWhenLoaded(routineId) {
@@ -1614,6 +1615,8 @@ export class RoutineUi {
         else list.push(r.routine);
         list.sort((a, b) => a.name.localeCompare(b.name));
       }
+      // Der Reiter "Routinen" im Geräte-Fenster gilt gleich für die beteiligten Geräte (die Liste der Geräte zieht beim nächsten Abruf nach)
+      for (const id of [r.routine.device_id, ...(r.routine.more || []).map((x) => x.device_id)]) if (id) this.host._routineDevices?.add(id);
       this.ui.flash = this.t("rtSaved");
       w.saving = false;
       w.snap = JSON.stringify(w.draft);

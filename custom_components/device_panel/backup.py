@@ -103,7 +103,8 @@ _DISPLAY_KEYS = {
     "type_integrations",
 }
 _DEVICE_KEYS = {CONF_EXCLUDE_DEVICES}
-_ROUTINE_KEYS = {"routines_catch_up", "routines_notify_error", "routines_pause", "routines_pause_until", "notify_service_routines"}
+_ROUTINE_KEYS = {"routines_catch_up", "routines_notify_error", "routines_pause", "routines_pause_until", "notify_service_routines", "show_tab_routines"}
+_MAGIC_KEYS = {"notify_service_magic", "show_tab_magic"}
 # Der Zustand des Einrichtungsassistenten gehört zur Installation, nicht zu den Einstellungen: er steht nicht in der Sicherung
 _WIZARD_KEYS = {"wizard_state", "wizard_done_at", "wizard_draft"}
 _SCHEMA_KEYS = {str(k.schema) for k in options_api.PANEL_SCHEMA.schema} - _WIZARD_KEYS
@@ -151,8 +152,10 @@ def section_keys(section: str) -> set[str]:
         return set(_DEVICE_KEYS)
     if section == "routines":
         return set(_ROUTINE_KEYS)
+    if section == "magic":
+        return set(_MAGIC_KEYS)
     if section == "monitor":
-        return _SCHEMA_KEYS - _AI_KEYS - _DISPLAY_KEYS - _DEVICE_KEYS - _ROUTINE_KEYS
+        return _SCHEMA_KEYS - _AI_KEYS - _DISPLAY_KEYS - _DEVICE_KEYS - _ROUTINE_KEYS - _MAGIC_KEYS
     return set()
 
 

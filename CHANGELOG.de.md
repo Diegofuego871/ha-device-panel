@@ -7,6 +7,21 @@ Alle nennenswerten Änderungen an dieser Integration stehen in dieser Datei.
 Das Format folgt [Keep a Changelog](https://keepachangelog.com/de/1.1.0/),
 die Versionsnummern folgen [Semantic Versioning](https://semver.org/lang/de/).
 
+## [2.244.0] - 2026-11-24
+
+Geräte-Fenster: Die Reiter "Routinen" und "Magic Push" sind schaltbar, "Routinen" nur mit Routinen; neuer Abschnitt "Magic Push" mit Standard-Empfänger.
+
+### Hinzugefügt
+
+- **Abschnitt "Magic Push" in den Einstellungen:** zwischen "Routinen" und "KI-Einschätzung". Er enthält den Schalter "Reiter Magic Push im Geräte-Fenster" und den **Standard-Empfänger** neuer Magic-Push-Meldungen: beim Anlegen vorgewählt, in der Meldung änderbar. Standardmässig folgt er dem Ziel aus "Überwachung und Meldungen" ("Standard"); ein eigenes Ziel überschreibt es. Bestehende Meldungen bleiben, wie sie sind; eine neue Meldung speichert den Empfänger nur, wenn du einen eigenen Standard gesetzt hast (sonst folgt sie weiter dem globalen Ziel).
+- **Schalter "Reiter Routinen im Geräte-Fenster"** im Abschnitt "Routinen".
+- **Sicherung und Wiederherstellung:** die zwei Schalter und der Standard-Empfänger gehören zur Sicherung (Bereiche "Routinen" und "Magic Push").
+- **Tests:** die Python-Tests für die Optionen, die Geräte mit Routinen, den Standard-Empfänger und die Sicherung sowie die neue Suite `tabsetting-e2e`.
+
+### Geändert
+
+- **Reiter "Routinen" im Geräte-Fenster nur bei Geräten mit Routinen:** Der Reiter erscheint nur, wenn das Gerät in mindestens einer Routine vorkommt (auch einer pausierten oder ausgeschalteten); Routinen richtet man zentral ein. Bei ausgeschaltetem Schalter fehlt der Reiter bei allen Geräten. Der Reiter "Magic Push" bleibt sichtbar, solange sein Schalter an ist (dort legst du Meldungen an). Ein Sprung in einen ausgeblendeten Reiter (zum Beispiel "Gerät öffnen" aus der Routinen-Übersicht) landet auf der Übersicht.
+
 ## [2.243.1] - 2026-11-24
 
 HealthCheck-Dienste: keine Zahl im Kapitel der Einstellungen.
@@ -6567,6 +6582,7 @@ Erste Vorabversion.
   GitHub Actions für die Prüfungen von HACS und hassfest sowie die Tests.
 
 [2.6.0]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v2.6.0
+[2.244.0]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v2.244.0
 [2.243.1]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v2.243.1
 [2.243.0]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v2.243.0
 [2.242.3]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v2.242.3

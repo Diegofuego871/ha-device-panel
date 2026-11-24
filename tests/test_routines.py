@@ -1073,3 +1073,66 @@ async def test_pause_until_survives_backup_and_resets_on_switch_off(hass: HomeAs
     opts = options_api.effective(hass)
     assert opts["routines_pause"] is True and opts["routines_pause_until"] == until
     assert options_api.values_from(entry.options)["routines_pause_until"] == until
+
+
+# -- Geräte-Reiter und Standard-Empfänger von Magic Push (2.244.0) ----------------------------------------
+
+
+async def test_device_tabs_options_and_routine_devices(hass: HomeAssistant, setup, hass_ws_client) -> None:  # noqa: F811
+    """Reiter "Routinen" und "Magic Push" im Geräte-Fenster: Schalter global (Standard an), Geräte mit Routinen kommen mit der Geräteliste (auch pausierte)."""
+    from custom_components.device_panel import options_api
+
+    async_mock_service(hass, "notify", "handy")
+    async_mock_service(hass, "notify", "tablet")
+    await _options(hass, notify_service="notify.handy")
+    with_routine = _device(hass, "Steckdose")
+    without = _device(hass, "Leuchte")
+    plug = _switch(hass, with_routine)
+    client = await hass_ws_client(hass)
+
+    async def call(command: str, **payload: Any) -> dict[str, Any]:
+        call.n += 1
+        await client.send_json({"id": call.n, "type": f"{DOMAIN}/{command}", **payload})
+        return await client.receive_json()
+
+    call.n = 0
+    # Standards: beide Reiter an, kein eigener Standard-Empfänger für Magic Push (= das globale Ziel)
+    values = options_api.effective(hass)
+    assert values["show_tab_routines"] is True and values["show_tab_magic"] is True and values["notify_service_magic"] == ""
+    assert options_api.notify_target(values, "magic") == "notify.handy"
+    # Gesetzt wird alles über set_options; ein ungültiges Ziel fällt auf "leer" zurück
+    assert (await call("set_options", values={"show_tab_routines": False, "show_tab_magic": False, "notify_service_magic": "notify.tablet"}))["success"]
+    values = options_api.effective(hass)
+    assert values["show_tab_routines"] is False and values["show_tab_magic"] is False and options_api.notify_target(values, "magic") == "notify.tablet"
+    assert not (await call("set_options", values={"notify_service_magic": "kein-ziel"}))["success"]
+    assert (await call("set_options", values={"show_tab_routines": True, "show_tab_magic": True, "notify_service_magic": ""}))["success"]
+    assert options_api.notify_target(options_api.effective(hass), "magic") == "notify.handy"
+    # Geräte mit Routinen: keines ohne Routine; mit einer (auch ausgeschalteter) Routine das Gerät, andere Geräte bleiben draussen
+    assert (await call("list_devices"))["result"]["routine_devices"] == []
+    saved = await call("routine_save", routine=_raw(with_routine, plug))
+    assert saved["success"]
+    assert (await call("list_devices"))["result"]["routine_devices"] == [with_routine.id]
+    assert (await call("routine_save", routine={**_raw(with_routine, plug), "id": saved["result"]["routine"]["id"], "enabled": False}))["success"]
+    assert (await call("list_devices"))["result"]["routine_devices"] == [with_routine.id]
+    assert without.id not in (await call("list_devices"))["result"]["routine_devices"]
+
+
+async def test_magic_get_names_the_default_target_for_new_messages(hass: HomeAssistant, setup, hass_ws_client) -> None:  # noqa: F811
+    """Magic Push: "new_target" ist der Standard-Empfänger neuer Meldungen (leer = das globale Ziel); "default_target" bleibt das globale Ziel."""
+    async_mock_service(hass, "notify", "handy")
+    async_mock_service(hass, "notify", "tablet")
+    await _options(hass, notify_service="notify.handy")
+    device = _device(hass, "Steckdose")
+    client = await hass_ws_client(hass)
+
+    async def call(command: str, **payload: Any) -> dict[str, Any]:
+        call.n += 1
+        await client.send_json({"id": call.n, "type": f"{DOMAIN}/{command}", **payload})
+        return await client.receive_json()
+
+    call.n = 0
+    got = (await call("magic_get", device_id=device.id))["result"]
+    assert got["default_target"] == "notify.handy" and got["new_target"] == ""
+    assert (await call("set_options", values={"notify_service_magic": "notify.tablet"}))["success"]
+    got = (await call("magic_get", device_id=device.id))["result"]
+    assert got["default_target"] == "notify.handy" and got["new_target"] == "notify.tablet"
