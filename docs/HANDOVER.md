@@ -11,6 +11,10 @@ Einstieg für jede neue Claude-Code-Session. Zuerst diese Datei lesen, dann
 
 - `charge.py` `known_rechargeable`: Lademeldung gilt (global + Gerät/Integration), oder am Gerät ausdrücklich "Ein", oder Live-Aktivität für das Gerät an; `rechargeable()` und `charging_of()` nutzen sie (vorher nur `enabled()` mit globalem Schalter). Test `test_rechargeable_by_device_charge_or_live`.
 
+## Stand (2.242.0, Fensterbreite und Symbole in Reitern)
+
+- Nutzerwunsch (2026-11-24): Fenster über dem Geräte-Popup (stat-dlg, dazu pulse-dlg) auf dem Desktop gleich breit wie dieses (880 px, `styles.js` Zeile um 551); Symbole (Emoji per `::before`, wie `.dev-tabs`) vor den Reitern von "Überwachung und Meldungen", der Geräte-Einstellungen und der Integrationen (`.mon-tab[data-key]`, `.lvl-tabs .sub-tab[data-stab|data-key]`); auf dem Handy über dem Text. prompt-dlg, notes-dlg und area-sheet bleiben schmal.
+
 ## Stand (2.241.0, HealthCheck in der Übersicht)
 
 - Nutzerwunsch (2026-11-23, Mockup `docs/mockups/hc-overview-v2`, Variante B mit C): ein gescheiterter Dienst erscheint als rote Zeile unter dem Ausfall-Puls, im Fenster "Unterbrüche in 24 Std." steht unter den Geräten der Abschnitt "Dienste"; läuft alles, kommt nichts dazu (kein Platz auf dem Handy). Die Summe der Geräte zählt keine Dienste.

@@ -87,6 +87,8 @@ for (const lang of ["de", "en"]) for (const mobile of [false, true]) {
   const devTabs = T_.dev.split("|").slice(0, 3).join("|");
   check(`[${tag}] Popup mit Reiterleiste: kein Titel`, await ev(`return !r.querySelector("dialog.device .lvl-title")`));
   check(`[${tag}] Popup: Reiter ${devTabs} (ohne Empfang kein Reiter "Empfang")`, (await tabsOf("dialog.device .lvl-tabs .sub-tab")) === devTabs, await tabsOf("dialog.device .lvl-tabs .sub-tab"));
+  check(`[${tag}] Popup: jeder Reiter (Ausfall, Batterie, Laden, Empfang) trägt ein Symbol, nichts läuft über`, await ev(`const t = [...r.querySelectorAll("dialog.device .lvl-tabs .sub-tab")]; return t.length >= 2 && t.every((b) => { const c = getComputedStyle(b, "::before").content; return c && c !== "none" && c !== "normal" && b.scrollWidth <= b.clientWidth + 1; })`));
+  check(`[${tag}] Integration: jeder Reiter trägt ein Symbol, nichts läuft über`, await ev(`const t = [...r.querySelectorAll(".lvl-tabs .sub-tab")].filter((b) => !b.closest("dialog.device")); return t.length === 0 || t.every((b) => { const c = getComputedStyle(b, "::before").content; return c && c !== "none" && c !== "normal" && b.scrollWidth <= b.clientWidth + 1; })`));
   check(`[${tag}] Popup: zuerst "Ausfall" mit Grafik und Zeile "Ausgefallen nach"`, await ev(`return r.querySelector('dialog.device .lvl-tabs .sub-tab.on').dataset.stab === "out" && !!r.querySelector("dialog.device .lvl-body .ptl") && !!r.querySelector('select[data-dlg="dev-off"]')`));
   for (const [key, graph, row] of [["bat", ".mtl", "dev-bat"], ["chg", ".mtl", "dev-charge"]]) {
     await tap(`dialog.device [data-stab="${key}"]`);

@@ -548,9 +548,10 @@ dialog.device, dialog.stat-dlg, dialog.settings, dialog.area-sheet, dialog.pulse
 *::-webkit-scrollbar-thumb:hover { background: color-mix(in srgb, var(--dp-text2) 65%, transparent); background-clip: padding-box; }
 @supports not selector(::-webkit-scrollbar) { dialog { scrollbar-width: thin; } }
 /* Grosse Fenster auf dem Desktop einheitlich (seit 2.28.5, Wunsch des Nutzers): Geräte-Popup, Einstellungen, Routinen und Protokoll gleich gross */
-dialog.device, dialog.settings { width: min(880px, calc(100vw - 48px)); }
+/* Auf dem Desktop gleich breit wie das Geräte-Popup dahinter (seit 2.242.0): Fenster "Verfügbarkeit" & Co. (stat-dlg) und "Unterbrüche in 24 Std." */
+dialog.device, dialog.settings, dialog.stat-dlg, dialog.pulse-dlg { width: min(880px, calc(100vw - 48px)); }
 dialog.area-sheet { width: min(420px, calc(100vw - 32px)); }
-dialog.stat-dlg, dialog.pulse-dlg, dialog.prompt-dlg, dialog.notes-dlg { width: min(560px, calc(100vw - 32px)); }
+dialog.prompt-dlg, dialog.notes-dlg { width: min(560px, calc(100vw - 32px)); }
 dialog.device::backdrop, dialog.settings::backdrop, dialog.area-sheet::backdrop, dialog.pulse-dlg::backdrop, dialog.prompt-dlg::backdrop, dialog.notes-dlg::backdrop { background: rgba(0,0,0,0.5); }
 /* Dialog dahinter stark gedimmt und unscharf, sein X ausgeblendet: so ist
    klar, welches Fenster gerade gilt. */
@@ -2233,6 +2234,24 @@ dialog.magic-dlg[open] > .mgw-body.two { display: flex; gap: 22px; overflow: hid
 .dev-tabs .sub-tab[data-tab="ent"]::before { content: "🧩"; }
 .dev-tabs .sub-tab[data-tab="magic"]::before { content: "🔔"; }
 .dev-tabs .sub-tab[data-tab="routine"]::before { content: "⚡"; }
+/* Reiter der Überwachung (Einstellungen), der Geräte-Einstellungen und der Integrationen (seit 2.242.0): wie im Geräte-Popup ein Symbol vor der Beschriftung.
+   Auf dem Handy steht es über der Beschriftung, damit auch die vier Spalten ("Integrationen") nicht überlaufen. */
+.mon-tabs .mon-tab::before, .lvl-tabs .sub-tab::before { margin-right: 6px; font-size: 16px; line-height: 1; }
+.mon-tab[data-key="overview"]::before { content: "📋"; }
+.mon-tab[data-key="outage"]::before, .lvl-tabs .sub-tab[data-stab="out"]::before, .lvl-tabs .sub-tab[data-key="out"]::before { content: "📴"; }
+.mon-tab[data-key="battery"]::before, .lvl-tabs .sub-tab[data-stab="bat"]::before, .lvl-tabs .sub-tab[data-key="bat"]::before { content: "🔋"; }
+.mon-tab[data-key="charge"]::before, .lvl-tabs .sub-tab[data-stab="chg"]::before, .lvl-tabs .sub-tab[data-key="chg"]::before { content: "🔌"; }
+.mon-tab[data-key="new"]::before, .lvl-tabs .sub-tab[data-key="new"]::before { content: "✨"; }
+.mon-tab[data-key="updates"]::before, .lvl-tabs .sub-tab[data-key="upd"]::before { content: "🔄"; }
+.mon-tab[data-key="sig"]::before, .lvl-tabs .sub-tab[data-stab="sig"]::before, .lvl-tabs .sub-tab[data-key="sig"]::before { content: "📶"; }
+.mon-tab[data-key="integ"]::before { content: "🔗"; }
+.mon-tab[data-key="labels"]::before { content: "🏷️"; }
+.lvl-tabs .sub-tab[data-key="dev"]::before { content: "📱"; }
+.lvl-tabs .sub-tab[data-key="kind"]::before { content: "🧩"; }
+@media (max-width: 600px) {
+  .mon-tabs .mon-tab, .lvl-tabs .sub-tab { flex-direction: column; gap: 1px; min-height: 52px; font-size: 12.5px; line-height: 1.15; }
+  .mon-tabs .mon-tab::before, .lvl-tabs .sub-tab::before { margin: 0; font-size: 15px; }
+}
 /* Zweizeilige Reiter (Name, darunter die Zahl): das Emoji steht links über beide Zeilen */
 .dev-tabs .sub-tab.two { display: grid; grid-template-columns: auto auto; grid-template-rows: auto auto; justify-content: center; align-content: center; column-gap: 0; row-gap: 1px; }
 .dev-tabs .sub-tab.two::before { grid-row: 1 / span 2; align-self: center; }

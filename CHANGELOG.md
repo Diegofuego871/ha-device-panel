@@ -7,6 +7,16 @@ All notable changes to this integration are documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/).
 
+## [2.242.0] - 2026-11-24
+
+Windows and tabs look more alike.
+
+### Changed
+
+- **Windows over the device window are as wide as it:** on the desktop the window "Availability" (and its siblings for signal, battery and charge) and the window "Outages in 24 h" are now as wide as the device window behind them and the large windows (880 px) instead of narrow (560 px). On the phone nothing changes (full width).
+- **Icons before the tabs:** the tabs of "Monitoring and notifications" in the settings (General, Outage, Battery, Charge, New, Updates, Signal, Integrations, Labels), of the device settings (Outage, Battery, Charge, Signal) and of an integration or label carry an icon before the text, like the tabs of the device window. On the phone the icon stands above the text so that nothing runs over.
+- **Tests:** `dlgheight-e2e` (widths), `settings-e2e` and `levels-e2e` (icons, nothing runs over).
+
 ## [2.241.0] - 2026-11-23
 
 HealthCheck services on the overview: a failed service shows up under the outage pulse.
@@ -6410,6 +6420,7 @@ First pre-release.
   GitHub Actions for HACS/hassfest validation and tests.
 
 [2.6.0]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v2.6.0
+[2.242.0]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v2.242.0
 [2.241.0]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v2.241.0
 [2.240.0]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v2.240.0
 [2.239.0]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v2.239.0

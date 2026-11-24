@@ -53,6 +53,8 @@ for (const mobile of [false, true]) {
     st.push(await h("stat-dlg"));
   }
   same("Statistik-Fenster", st);
+  // Breite (2.242.0): auf dem Desktop ist das Statistik-Fenster so breit wie das Geräte-Popup dahinter, auf dem Handy volle Breite
+  check(`[${tag}] Statistik-Fenster gleich breit wie das Geräte-Popup dahinter`, await ev(`const a = r.querySelector("dialog.stat-dlg").getBoundingClientRect().width, d = r.querySelector("dialog.device").getBoundingClientRect().width; return Math.abs(a - d) < 1 && (${mobile} || Math.abs(a - Math.min(880, innerWidth - 48)) < 1)`));
   await tap('dialog.stat-dlg [data-stat="close"]');
   await tap('dialog.device [data-dlg="close"]');
   await wait(`return !r.querySelector("dialog.device").open`);
@@ -79,6 +81,7 @@ for (const mobile of [false, true]) {
   await ev(`r.host._openPulse()`);
   await wait(`return r.querySelector("dialog.pulse-dlg")?.open`);
   const pu = [await h("pulse-dlg")];
+  check(`[${tag}] Puls-Fenster auf dem Desktop so breit wie die grossen Fenster (880 px)`, await ev(`const w = r.querySelector("dialog.pulse-dlg").getBoundingClientRect().width; return ${mobile} ? Math.abs(w - innerWidth) < 1 : Math.abs(w - Math.min(880, innerWidth - 48)) < 1`));
   if (await ev(`return !!r.querySelector("dialog.pulse-dlg [data-pulse-at]")`)) {
     await ev(`r.querySelector("dialog.pulse-dlg [data-pulse-at]").dispatchEvent(new MouseEvent("click", { bubbles: true }))`);
     await p.waitForTimeout(200);

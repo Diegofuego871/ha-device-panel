@@ -7,6 +7,16 @@ Alle nennenswerten Änderungen an dieser Integration stehen in dieser Datei.
 Das Format folgt [Keep a Changelog](https://keepachangelog.com/de/1.1.0/),
 die Versionsnummern folgen [Semantic Versioning](https://semver.org/lang/de/).
 
+## [2.242.0] - 2026-11-24
+
+Fenster und Reiter sehen sich ähnlicher.
+
+### Geändert
+
+- **Fenster über dem Geräte-Fenster sind so breit wie dieses:** Auf dem Desktop sind das Fenster "Verfügbarkeit" (und seine Geschwister für Empfang, Batterie und Laden) und das Fenster "Unterbrüche in 24 Std." jetzt so breit wie das Geräte-Fenster dahinter und die grossen Fenster (880 px) statt schmal (560 px). Auf dem Handy ändert sich nichts (volle Breite).
+- **Symbole vor den Reitern:** Die Reiter von "Überwachung und Meldungen" in den Einstellungen (Allgemein, Ausfall, Batterie, Laden, Neu, Updates, Empfang, Integrationen, Labels), der Geräte-Einstellungen (Ausfall, Batterie, Laden, Empfang) und einer Integration oder eines Labels tragen wie die Reiter des Geräte-Fensters ein Symbol vor dem Text. Auf dem Handy steht das Symbol über dem Text, damit nichts überläuft.
+- **Tests:** `dlgheight-e2e` (Breiten), `settings-e2e` und `levels-e2e` (Symbole, nichts läuft über).
+
 ## [2.241.0] - 2026-11-23
 
 HealthCheck-Dienste in der Übersicht: Ein gescheiterter Dienst erscheint unter dem Ausfall-Puls.
@@ -6511,6 +6521,7 @@ Erste Vorabversion.
   GitHub Actions für die Prüfungen von HACS und hassfest sowie die Tests.
 
 [2.6.0]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v2.6.0
+[2.242.0]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v2.242.0
 [2.241.0]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v2.241.0
 [2.240.0]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v2.240.0
 [2.239.0]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v2.239.0

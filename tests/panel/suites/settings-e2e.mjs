@@ -263,6 +263,10 @@ for (const lang of ["de", "en"]) {
     check(`[${tag}] Abschnitte (notify-v3)`, order === "devices,monitor,routines,ai,updates", order);
     check(`[${tag}] Überwachung und Meldungen zusammengefasst`, (await text('[data-id="monitor"] .set-sec-title')) === T.secMon && (await text('[data-id="monitor"] .set-sec-sum')) === T.sumMon(2), await text('[data-id="monitor"] .set-sec-sum'));
     await tap('[data-set="section"][data-id="monitor"]');
+    // Symbole vor den Reitern (2.242.0): jeder Reiter hat eins, auch auf dem Handy läuft keine Beschriftung über
+    check(`[${tag}] Reiter der Überwachung: jeder trägt ein Symbol vor der Beschriftung, nichts läuft über`, await ev(`const t = [...r.querySelectorAll(".mon-tabs .mon-tab")]; return t.length >= 8 && t.every((b) => { const c = getComputedStyle(b, "::before").content; return c && c !== "none" && c !== "normal" && b.scrollWidth <= b.clientWidth + 1; })`));
+    await ev(`r.querySelector(".mon-tabs").scrollIntoView({ block: "center" })`);
+    await p.screenshot({ path: `${outDir}/settings-tabicons-${tag.replace("/", "-")}.png` });
     check(`[${tag}] Reiter "Allgemein" zuerst, ohne Übersichtskarten (die stehen seit 2.96.0 in den Reitern)`, await wait(`return r.querySelector('.mon-tab.on')?.dataset.key === "overview" && r.querySelectorAll(".lane").length === 0`));
     await tab("outage");
     check(`[${tag}] fünf Zahlenfelder (seit 2.94.0 mit "Zusammenfassen ab"), zwei im Zeitstrahl`, (await ev(`return r.querySelectorAll('.set-sec-body input[type="number"]').length`)) === 5 && (await ev(`return [...r.querySelectorAll('.mtl input[type="number"]')].map(i=>i.dataset.opt).join()`)) === "offline_after,notify_delay");
