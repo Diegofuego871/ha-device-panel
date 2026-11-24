@@ -3032,6 +3032,7 @@ dialog.learn-dlg.lrn-embed { position: relative; inset: auto; margin: 0; width: 
 .hc-sum-st { display: flex; align-items: baseline; gap: 8px; color: var(--dp-text2); font-size: 15px; overflow-wrap: anywhere; }
 .hc-sum-st .hc-sdot { flex: none; width: 10px; height: 10px; border-radius: 50%; background: var(--dp-success); transform: translateY(0); align-self: center; }
 .hc-sum-st.bad { color: var(--dp-error); }
+.hc-sum-max { font-size: 12.5px; color: var(--dp-text3); }
 .hc-sum-st.bad .hc-sdot { background: var(--dp-error); }
 .hc-bad, .hc-err { color: var(--dp-error); }
 .hc-sum-btns { flex: 1 1 100%; display: flex; flex-wrap: nowrap; gap: 8px; }

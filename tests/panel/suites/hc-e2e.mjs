@@ -116,7 +116,7 @@ for (const lang of ["de", "en"]) {
     await tap(`${FORM} button[type="submit"]`);
     check(`[${tag}] Fussknöpfe des Formulars gleich breit`, await ev(`const w = [...r.querySelectorAll('${FORM} .dlg-actions .dlg-btn')].map((b) => b.getBoundingClientRect().width); return w.length === 2 && Math.abs(w[0] - w[1]) < 1`));
     check(`[${tag}] Speichern: Formular zu, Dienst beim Server mit Zusatz, zwei Fehlerfällen und 900 s`, await wait(`return !r.querySelector('${FORM}')?.open`) && await p.evaluate(() => { const i = window.__hc[0]; return window.__hc.length === 1 && i.name === "Haus" && i.url.includes("cronitor.link") && i.interval === 900 && i.fail_suffix === "?state=fail&message=Battery+low" && i.dashboard === "https://cronitor.io/app" && i.cases.join() === "offline,stall"; }));
-    check(`[${tag}] Kapitel zeigt "${L.one}"`, await wait(`return r.querySelector(".hc-sum")?.textContent.includes(${JSON.stringify(L.one)})`) && (await text(".hc-sum")).includes(L.allOk));
+    check(`[${tag}] Kapitel zeigt "${L.allOk}" (die Zahl der Dienste steht nicht mehr dort)`, await wait(`return r.querySelector(".hc-sum")?.textContent.includes(${JSON.stringify(L.allOk)}) && !r.querySelector(".hc-sum").textContent.includes(${JSON.stringify(L.one)})`));
     await ev(`r.querySelector(".hc-sum").scrollIntoView({ block: "center" })`);
     await p.screenshot({ path: `${outDir}/hc-chapter-ok-${tag.replace("/", "-")}.png` });
     await ev(`r.host._hc.openList()`);
@@ -137,7 +137,15 @@ for (const lang of ["de", "en"]) {
     check(`[${tag}] Testknopf "Fehler senden": der Server bekommt "error", Zustand orange`, await wait(`return r.querySelector('${LIST} .hc-state')?.classList.contains("warn")`) && (await p.evaluate(() => JSON.stringify(window.__hcPing.map((x) => x.kind)))) === JSON.stringify(["error"]));
     await tap(`${LIST} .hc-ib[data-hc="test"][data-kind="ok"]`);
     check(`[${tag}] Testknopf OK: Zustand wieder grün`, await wait(`return r.querySelector('${LIST} .hc-state')?.classList.contains("ok")`));
-    check(`[${tag}] Zusammenfassung wie in Alarmageddon, aber ohne Symbol (wie die anderen Kapitel): "${L.one}", grüner Punkt mit "${L.allOk}" (positiv formuliert)`, await wait(`const st = r.querySelector(".hc-sum .hc-sum-st"); return !r.querySelector(".hc-sum .hc-tile") && r.querySelector(".hc-sum .hc-sum-tx b")?.textContent.trim() === ${JSON.stringify(L.one)} && st?.textContent.trim() === ${JSON.stringify(L.allOk)} && !st.classList.contains("bad") && getComputedStyle(st.querySelector(".hc-sdot")).backgroundColor !== getComputedStyle(st).color`));
+    check(`[${tag}] Zusammenfassung wie in Alarmageddon, ohne Symbol und ohne Zahl "${L.one}" (wie die anderen Kapitel): grüner Punkt mit "${L.allOk}" (positiv formuliert)`, await wait(`const st = r.querySelector(".hc-sum .hc-sum-st"); return !r.querySelector(".hc-sum .hc-tile") && !r.querySelector(".hc-sum .hc-sum-tx b") && !r.querySelector(".hc-sum").textContent.includes(${JSON.stringify(L.one)}) && st?.textContent.trim() === ${JSON.stringify(L.allOk)} && !st.classList.contains("bad") && getComputedStyle(st.querySelector(".hc-sdot")).backgroundColor !== getComputedStyle(st).color`));
+    // Fünf Dienste (Höchstzahl): "Dienst hinzufügen" grau, ein Hinweis sagt warum; mit weniger ist der Knopf frei und es steht kein Hinweis da
+    check(`[${tag}] Unter der Höchstzahl: "Dienst hinzufügen" frei, kein Hinweis`, await ev(`return !r.querySelector('[data-set="hc-add"]').disabled && !r.querySelector(".hc-sum .hc-sum-max")`));
+    await p.evaluate(() => { window.__hcKeep = window.__hc.slice(); for (let k = window.__hc.length; k < 5; k++) window.__hc.push({ id: `fill${k}`, name: `Fuell ${k}`, url: `https://hc-ping.com/00000000-1111-2222-3333-44444444444${k}`, interval: 300, cases: [], fail_suffix: "", status: null, log: null }); });
+    await ev(`return r.host._hc.load().then(() => true)`);
+    check(`[${tag}] Fünf Dienste: "Dienst hinzufügen" grau (gesperrt), Hinweis auf die Höchstzahl`, await wait(`return r.querySelector('[data-set="hc-add"]').disabled && !!r.querySelector(".hc-sum .hc-sum-max")?.textContent.includes("5")`));
+    await p.evaluate(() => { window.__hc.splice(0, window.__hc.length, ...window.__hcKeep); });
+    await ev(`return r.host._hc.load().then(() => true)`);
+    check(`[${tag}] Wieder unter der Höchstzahl: Knopf frei, Hinweis weg`, await wait(`return !r.querySelector('[data-set="hc-add"]').disabled && !r.querySelector(".hc-sum .hc-sum-max")`));
     await p.evaluate(() => { window.__hcFail = { [window.__hc[0].id]: true }; });
     await tap(`${LIST} .hc-ib[data-hc="test"][data-kind="error"]`);
     check(`[${tag}] gescheiterter Test: Zustand rot mit HTTP 503`, await wait(`return r.querySelector('${LIST} .hc-state')?.classList.contains("err") && r.querySelector('${LIST} .hc-state').textContent.includes("503")`));

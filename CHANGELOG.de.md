@@ -7,6 +7,15 @@ Alle nennenswerten Änderungen an dieser Integration stehen in dieser Datei.
 Das Format folgt [Keep a Changelog](https://keepachangelog.com/de/1.1.0/),
 die Versionsnummern folgen [Semantic Versioning](https://semver.org/lang/de/).
 
+## [2.243.1] - 2026-11-24
+
+HealthCheck-Dienste: keine Zahl im Kapitel der Einstellungen.
+
+### Geändert
+
+- **Kapitel "HealthCheck-Dienste" in den Einstellungen:** Die Zeile "1 von 5 Diensten" entfällt; die Ampelzeile ("Alles in Ordnung" oder der Fehler) bleibt. Ohne Dienste bleiben die Überschrift "Keine Dienste eingerichtet" und der Hinweis. Sind alle Plätze belegt, ist "Dienst hinzufügen" grau, und ein Hinweis unter dem Status sagt warum ("Höchstens 5 Dienste: zum Hinzufügen zuerst einen entfernen.").
+- **Tests:** `hc-e2e` (keine Zahl, Knopf und Hinweis bei fünf Diensten).
+
 ## [2.243.0] - 2026-11-24
 
 Reiter des Geräte-Fensters auf dem Handy wie die anderen Reiterleisten; die Ladungs-Grafik nutzt die ganze Breite.
@@ -6558,6 +6567,7 @@ Erste Vorabversion.
   GitHub Actions für die Prüfungen von HACS und hassfest sowie die Tests.
 
 [2.6.0]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v2.6.0
+[2.243.1]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v2.243.1
 [2.243.0]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v2.243.0
 [2.242.3]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v2.242.3
 [2.242.2]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v2.242.2

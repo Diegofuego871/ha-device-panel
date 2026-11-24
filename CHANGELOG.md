@@ -7,6 +7,15 @@ All notable changes to this integration are documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/).
 
+## [2.243.1] - 2026-11-24
+
+HealthCheck services: no count in the settings chapter.
+
+### Changed
+
+- **Chapter "HealthCheck services" in the settings:** the line "1 of 5 services" is gone; the traffic-light line ("All good" or the error) stays. Without services the heading "No services set up" and the hint stay. When all places are used, "Add service" is greyed out and a hint under the status says why ("At most 5 services: remove one first to add another.").
+- **Tests:** `hc-e2e` (no count, button and hint with five services).
+
 ## [2.243.0] - 2026-11-24
 
 Tabs of the device window on the phone like the other tab bars; the charge chart uses the full width.
@@ -6457,6 +6466,7 @@ First pre-release.
   GitHub Actions for HACS/hassfest validation and tests.
 
 [2.6.0]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v2.6.0
+[2.243.1]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v2.243.1
 [2.243.0]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v2.243.0
 [2.242.3]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v2.242.3
 [2.242.2]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v2.242.2

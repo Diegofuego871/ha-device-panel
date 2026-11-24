@@ -169,14 +169,17 @@ export class HealthCheckUi {
     if (!this.loaded) return `<div class="opt hc-sum"><div class="opt-short">${escape(this.t(this.error ? "hcLoadError" : "hcLoading", this.error))}</div></div>`;
     const bad = this.items.filter((i) => i.status && i.status.result !== "ok");
     const failed = bad.length;
-    const text = n ? this.t("hcSummary", n, this.max) : this.t("hcNone");
+    // Die Zahl der Dienste steht nicht mehr im Kapitel (seit 2.243.1); ohne Dienste bleibt die Überschrift "Keine Dienste eingerichtet".
+    // Sind alle Plätze belegt, ist "Dienst hinzufügen" grau, und ein Hinweis sagt warum.
+    const text = this.t("hcNone");
+    const full = n >= this.max;
     // Ampel wie in Alarmageddon (seit 2.240.0): grüner Punkt mit positivem Satz; bei einem Fehler roter Punkt und die Meldung gleich hier
     // (bei einem Dienst mit Name und Grund, bei mehreren die Namen), ohne Dienste nur der Hinweis ohne Punkt
     const sub = !n ? this.t("hcNoneHint") : failed === 1 ? this.t("hcFailedOne", bad[0].name || bad[0].url, this.statusText(bad[0].status)) : failed ? this.t("hcFailed", failed, bad.map((i) => i.name || i.url).join(", ")) : this.t("hcAllOk");
     const tone = !n ? "none" : failed ? "bad" : "ok";
     return `<div class="opt hc-sum"><div class="hc-sum-head">
-        <div class="hc-sum-tx"><b>${escape(text)}</b><span class="hc-sum-st ${tone}">${n ? '<i class="hc-sdot"></i>' : ""}<span>${escape(sub)}</span></span></div></div>
-      <div class="hc-sum-btns"><button type="button" class="dlg-btn" data-set="hc-add" ${n >= this.max ? "disabled" : ""}>${mdi("plus", 18)}<span>${escape(this.t("hcAdd"))}</span></button>
+        <div class="hc-sum-tx">${n ? "" : `<b>${escape(text)}</b>`}<span class="hc-sum-st ${tone}">${n ? '<i class="hc-sdot"></i>' : ""}<span>${escape(sub)}</span></span>${full ? `<span class="hc-sum-max">${escape(this.t("hcMaxHint", this.max))}</span>` : ""}</div></div>
+      <div class="hc-sum-btns"><button type="button" class="dlg-btn" data-set="hc-add" ${full ? "disabled" : ""}>${mdi("plus", 18)}<span>${escape(this.t("hcAdd"))}</span></button>
         <button type="button" class="dlg-btn" data-set="hc-open">${mdi("heartPulse", 18)}<span>${escape(this.t("hcShow"))}</span></button></div></div>`;
   }
 
