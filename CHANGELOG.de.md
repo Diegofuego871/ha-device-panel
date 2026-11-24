@@ -7,6 +7,14 @@ Alle nennenswerten Änderungen an dieser Integration stehen in dieser Datei.
 Das Format folgt [Keep a Changelog](https://keepachangelog.com/de/1.1.0/),
 die Versionsnummern folgen [Semantic Versioning](https://semver.org/lang/de/).
 
+## [2.242.2] - 2026-11-24
+
+Reiter "Ausfall": neues Symbol.
+
+### Geändert
+
+- **Symbol des Reiters "Ausfall":** ein rotes Kreuz statt des Telefons mit "OFF" (in den Einstellungen, den Geräte-Einstellungen und bei den Integrationen).
+
 ## [2.242.1] - 2026-11-24
 
 Reiter: mehr Abstand zwischen Symbol und Text, kräftigerer Text.
@@ -6529,6 +6537,7 @@ Erste Vorabversion.
   GitHub Actions für die Prüfungen von HACS und hassfest sowie die Tests.
 
 [2.6.0]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v2.6.0
+[2.242.2]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v2.242.2
 [2.242.1]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v2.242.1
 [2.242.0]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v2.242.0
 [2.241.0]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v2.241.0

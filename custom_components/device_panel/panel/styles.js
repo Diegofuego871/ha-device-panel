@@ -2241,7 +2241,7 @@ dialog.magic-dlg[open] > .mgw-body.two { display: flex; gap: 22px; overflow: hid
 .mon-tabs .mon-tab, .lvl-tabs .sub-tab { font-weight: 500; }
 .mon-tabs .mon-tab.on, .lvl-tabs .sub-tab.on { font-weight: 600; }
 .mon-tab[data-key="overview"]::before { content: "📋"; }
-.mon-tab[data-key="outage"]::before, .lvl-tabs .sub-tab[data-stab="out"]::before, .lvl-tabs .sub-tab[data-key="out"]::before { content: "📴"; }
+.mon-tab[data-key="outage"]::before, .lvl-tabs .sub-tab[data-stab="out"]::before, .lvl-tabs .sub-tab[data-key="out"]::before { content: "❌"; }
 .mon-tab[data-key="battery"]::before, .lvl-tabs .sub-tab[data-stab="bat"]::before, .lvl-tabs .sub-tab[data-key="bat"]::before { content: "🔋"; }
 .mon-tab[data-key="charge"]::before, .lvl-tabs .sub-tab[data-stab="chg"]::before, .lvl-tabs .sub-tab[data-key="chg"]::before { content: "🔌"; }
 .mon-tab[data-key="new"]::before, .lvl-tabs .sub-tab[data-key="new"]::before { content: "✨"; }

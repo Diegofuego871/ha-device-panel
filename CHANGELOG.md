@@ -7,6 +7,14 @@ All notable changes to this integration are documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/).
 
+## [2.242.2] - 2026-11-24
+
+Tab "Outage": new icon.
+
+### Changed
+
+- **Icon of the tab "Outage":** a red cross instead of the phone with "OFF" (in the settings, the device settings and for integrations).
+
 ## [2.242.1] - 2026-11-24
 
 Tabs: more space between icon and text, bolder text.
@@ -6428,6 +6436,7 @@ First pre-release.
   GitHub Actions for HACS/hassfest validation and tests.
 
 [2.6.0]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v2.6.0
+[2.242.2]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v2.242.2
 [2.242.1]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v2.242.1
 [2.242.0]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v2.242.0
 [2.241.0]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v2.241.0
