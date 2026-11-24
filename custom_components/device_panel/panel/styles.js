@@ -2237,6 +2237,9 @@ dialog.magic-dlg[open] > .mgw-body.two { display: flex; gap: 22px; overflow: hid
 /* Reiter der Überwachung (Einstellungen), der Geräte-Einstellungen und der Integrationen (seit 2.242.0): wie im Geräte-Popup ein Symbol vor der Beschriftung.
    Auf dem Handy steht es über der Beschriftung, damit auch die vier Spalten ("Integrationen") nicht überlaufen. */
 .mon-tabs .mon-tab::before, .lvl-tabs .sub-tab::before { margin-right: 6px; font-size: 16px; line-height: 1; }
+/* Beschriftung etwas kräftiger (seit 2.242.1), der gewählte Reiter noch etwas mehr */
+.mon-tabs .mon-tab, .lvl-tabs .sub-tab { font-weight: 500; }
+.mon-tabs .mon-tab.on, .lvl-tabs .sub-tab.on { font-weight: 600; }
 .mon-tab[data-key="overview"]::before { content: "📋"; }
 .mon-tab[data-key="outage"]::before, .lvl-tabs .sub-tab[data-stab="out"]::before, .lvl-tabs .sub-tab[data-key="out"]::before { content: "📴"; }
 .mon-tab[data-key="battery"]::before, .lvl-tabs .sub-tab[data-stab="bat"]::before, .lvl-tabs .sub-tab[data-key="bat"]::before { content: "🔋"; }
@@ -2249,7 +2252,7 @@ dialog.magic-dlg[open] > .mgw-body.two { display: flex; gap: 22px; overflow: hid
 .lvl-tabs .sub-tab[data-key="dev"]::before { content: "📱"; }
 .lvl-tabs .sub-tab[data-key="kind"]::before { content: "🧩"; }
 @media (max-width: 600px) {
-  .mon-tabs .mon-tab, .lvl-tabs .sub-tab { flex-direction: column; gap: 1px; min-height: 52px; font-size: 12.5px; line-height: 1.15; }
+  .mon-tabs .mon-tab, .lvl-tabs .sub-tab { flex-direction: column; gap: 5px; min-height: 56px; font-size: 12.5px; line-height: 1.15; }
   .mon-tabs .mon-tab::before, .lvl-tabs .sub-tab::before { margin: 0; font-size: 15px; }
 }
 /* Zweizeilige Reiter (Name, darunter die Zahl): das Emoji steht links über beide Zeilen */

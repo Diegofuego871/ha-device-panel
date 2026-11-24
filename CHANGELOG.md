@@ -7,6 +7,14 @@ All notable changes to this integration are documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/).
 
+## [2.242.1] - 2026-11-24
+
+Tabs: more space between icon and text, bolder text.
+
+### Changed
+
+- **Tabs with icons:** on the phone the text stands further below the icon (it was too close), and the text of the tabs of "Monitoring and notifications", of the device settings and of an integration is a little bolder (the chosen tab a little more).
+
 ## [2.242.0] - 2026-11-24
 
 Windows and tabs look more alike.
@@ -6420,6 +6428,7 @@ First pre-release.
   GitHub Actions for HACS/hassfest validation and tests.
 
 [2.6.0]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v2.6.0
+[2.242.1]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v2.242.1
 [2.242.0]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v2.242.0
 [2.241.0]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v2.241.0
 [2.240.0]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v2.240.0
