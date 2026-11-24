@@ -90,10 +90,15 @@ for (const lang of ["de", "en"]) {
     await tap(".gear-btn");
     await wait(`return !!r.querySelector("dialog.settings .set-sec")`);
     await tap('[data-set="section"][data-id="routines"]');
+    const subState = (key) => ev(`const i = r.querySelector('dialog.settings input[data-opt="${key}"]'); const o = i?.closest(".opt"); return !!i && o.classList.contains("sub") && o.classList.contains("locked") === i.disabled && i.disabled`);
+    check(`[${tag}] Routinen: Unter-Schalter eingerückt (.opt.sub), frei solange der Reiter-Schalter an ist`, await ev(`const i = r.querySelector('dialog.settings input[data-opt="tab_routines_only_used"]'); return !!i && i.closest(".opt").classList.contains("sub") && !i.disabled`));
     await tap('dialog.settings input[data-opt="show_tab_routines"]');
+    check(`[${tag}] Routinen: Reiter-Schalter aus → Unter-Schalter ausgegraut`, await subState("tab_routines_only_used"));
     await tap('[data-set="section"][data-id="routines"]');
     await tap('[data-set="section"][data-id="magic"]');
     await tap('dialog.settings input[data-opt="show_tab_magic"]');
+    check(`[${tag}] Magic Push: Reiter-Schalter aus → Unter-Schalter ausgegraut`, await subState("tab_magic_only_used"));
+    await p.screenshot({ path: `output/tabsetting-sub-${tag.replace("/", "-")}.png` });
     await tap('dialog.settings [data-set="save"]');
     await wait(`return r.querySelector("dialog.settings .set-count.saved")`);
     const saved = await p.evaluate(() => window.__wsCalls.filter((m) => m.type === "device_panel/set_options").at(-1)?.values);

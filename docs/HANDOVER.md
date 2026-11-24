@@ -11,6 +11,10 @@ Einstieg für jede neue Claude-Code-Session. Zuerst diese Datei lesen, dann
 
 - `charge.py` `known_rechargeable`: Lademeldung gilt (global + Gerät/Integration), oder am Gerät ausdrücklich "Ein", oder Live-Aktivität für das Gerät an; `rechargeable()` und `charging_of()` nutzen sie (vorher nur `enabled()` mit globalem Schalter). Test `test_rechargeable_by_device_charge_or_live`.
 
+## Stand (2.247.1, Unter-Schalter in den Einstellungen)
+
+- Nutzerwunsch (2026-11-24): der zweite Schalter je Reiter als Unter-Schalter. `subRow(key, parent, label, short)` in `_settingsSections` (`device-panel.js`): Klasse `.opt.sub` (eingerückt, Führungslinie, `styles.js`), `.locked` und deaktiviert, solange der Haupt-Schalter (`show_tab_routines`/`show_tab_magic`) aus ist; dessen Änderung zeichnet die Einstellungen neu. Suite `tabsetting-e2e` prüft es.
+
 ## Stand (2.247.0, zweiter Schalter "nur bei Geräten, die vorkommen")
 
 - Nutzerwunsch (2026-11-24): je Reiter ("Routinen", "Magic Push") ein zweiter Schalter `tab_routines_only_used` / `tab_magic_only_used` (Standard an) unter dem Reiter-Schalter; `show_tab_magic` wieder Standard an; die Umstellung aus 2.246.0 (`_migrate_tab_magic`, `tab_magic_decided`) entfernt, nichts wird migriert. Nur global (wie die Reiter-Schalter, vom Nutzer bestätigt).

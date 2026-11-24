@@ -7,6 +7,15 @@ All notable changes to this integration are documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/).
 
+## [2.247.1] - 2026-11-24
+
+Settings: the second switch of the tabs "Routines" and "Magic Push" is a sub-switch.
+
+### Changed
+
+- **Sub-switch instead of a second equal row:** "Only for devices with routines" and "Only for devices with notifications" sit indented under the switch of their tab with a guide line, a shorter text, and are greyed out while the tab switch is off (they have no effect then). Switching the tab on frees them again.
+- **Tests:** `tabsetting-e2e` checks the indentation and the greyed-out state.
+
 ## [2.247.0] - 2026-11-24
 
 Device window: a second switch per tab, "only for devices that appear in it", on by default for "Routines" and "Magic Push".
@@ -6517,6 +6526,7 @@ First pre-release.
   GitHub Actions for HACS/hassfest validation and tests.
 
 [2.6.0]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v2.6.0
+[2.247.1]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v2.247.1
 [2.247.0]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v2.247.0
 [2.246.0]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v2.246.0
 [2.245.0]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v2.245.0

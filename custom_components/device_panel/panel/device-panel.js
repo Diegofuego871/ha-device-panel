@@ -10086,6 +10086,11 @@ class DevicePanel extends HTMLElement {
       const control = `<label class="switch"><input type="checkbox" data-start-panel ${on ? "checked" : ""}${st.extra ? "" : " disabled"} aria-label="${escape(t("optStart"))}"><span></span></label>`;
       return row("start_panel", t("optStart"), control, t("optStartShort"), null).replace('class="opt', changed ? 'class="opt changed' : 'class="opt');
     };
+    // Unter-Schalter (seit 2.248.0): eingerückt unter dem Schalter, zu dem er gehört; ausgegraut, solange der Haupt-Schalter aus ist
+    const subRow = (key, parent, label, short) => {
+      const locked = !d[parent];
+      return row(key, label, sw(key, label, locked), short, null).replace('class="opt', `class="opt sub${locked ? " locked" : ""}`);
+    };
     const sw = (key, label, locked = false) => `<label class="switch"><input type="checkbox" data-opt="${key}" ${d[key] ? "checked" : ""}${locked ? " disabled" : ""} aria-label="${escape(label)}"><span></span></label>`;
     // Automatisch installieren (seit 2.22.0): Panel-Einstellung der Instanz (wie "Vorabversionen"), nur mit der täglichen Prüfung
     // Vorabversionen (seit 2.153.0 im Reiter "Updates", vorher unter dem Versionskasten): Entwurf in st.extra.prerelease, gilt für die ganze Instanz
@@ -10453,11 +10458,11 @@ class DevicePanel extends HTMLElement {
         row("routines_notify_error", t("optRoutinesNotifyError"), sw("routines_notify_error", t("optRoutinesNotifyError")), t("optRoutinesNotifyErrorShort"), t("optRoutinesNotifyErrorInfo")) +
         // Reiter "Routinen" im Geräte-Fenster (seit 2.244.0, nur global): er erscheint nur bei Geräten, die in einer Routine vorkommen
         row("show_tab_routines", t("optShowTabRoutines"), sw("show_tab_routines", t("optShowTabRoutines")), t("optShowTabRoutinesShort"), null) +
-        row("tab_routines_only_used", t("optTabRoutinesOnlyUsed"), sw("tab_routines_only_used", t("optTabRoutinesOnlyUsed")), t("optTabRoutinesOnlyUsedShort"), null),
+        subRow("tab_routines_only_used", "show_tab_routines", t("optTabRoutinesOnlyUsed"), t("optTabRoutinesOnlyUsedShort")),
       // Abschnitt "Magic Push" (seit 2.244.0): Reiter im Geräte-Fenster und der Standard-Empfänger neuer Meldungen (Standard: das globale Ziel)
       magic:
         row("show_tab_magic", t("optShowTabMagic"), sw("show_tab_magic", t("optShowTabMagic")), t("optShowTabMagicShort"), null) +
-        row("tab_magic_only_used", t("optTabMagicOnlyUsed"), sw("tab_magic_only_used", t("optTabMagicOnlyUsed")), t("optTabMagicOnlyUsedShort"), null) +
+        subRow("tab_magic_only_used", "show_tab_magic", t("optTabMagicOnlyUsed"), t("optTabMagicOnlyUsedShort")) +
         ui.targetRow("magic", "optMagicTargetShort"),
     };
     const titles = {
@@ -11049,6 +11054,11 @@ class DevicePanel extends HTMLElement {
       } else if (el.dataset.opt === "routines_pause") {
         st.draft.routines_pause = el.checked;
         if (!el.checked) st.draft.routines_pause_until = 0;
+        this._renderSettings();
+        return;
+      } else if (el.dataset.opt === "show_tab_routines" || el.dataset.opt === "show_tab_magic") {
+        // Der Unter-Schalter darunter wird ausgegraut oder frei (seit 2.248.0)
+        st.draft[el.dataset.opt] = el.checked;
         this._renderSettings();
         return;
       } else if (el.dataset.opt) st.draft[el.dataset.opt] = el.checked;

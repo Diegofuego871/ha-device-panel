@@ -774,6 +774,10 @@ button.ai-head:focus-visible { outline: 2px solid #7c4dff; outline-offset: -2px;
 .origin.std { background: var(--dp-subtle); color: var(--dp-text2); }
 .origin.integ { background: color-mix(in srgb, #7c4dff 16%, transparent); color: color-mix(in srgb, #7c4dff 65%, var(--dp-text)); }
 .origin.own { background: var(--dp-primary-soft); color: var(--dp-primary); }
+.opt:has(+ .opt.sub) { border-bottom: none; padding-bottom: 2px; }
+.opt.sub { margin-left: 10px; padding: 6px 0 10px 14px; border-left: 2px solid var(--dp-divider); }
+.opt.sub .opt-label { color: var(--dp-text2); }
+.opt.sub.locked { opacity: 0.55; }
 .opt-short { margin-top: 3px; color: var(--dp-text2); font-size: 12px; line-height: 1.35; }
 .opt-info { margin-top: 6px; padding: 8px 10px; border-radius: 8px; background: var(--dp-subtle); color: var(--dp-text2); font-size: 12px; line-height: 1.45; }
 /* Zahlenfeld mit Einheit (wie unifi_dynamic); rot bei Wert ausserhalb des Bereichs. */

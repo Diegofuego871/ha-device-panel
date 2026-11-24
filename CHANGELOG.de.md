@@ -7,6 +7,15 @@ Alle nennenswerten Änderungen an dieser Integration stehen in dieser Datei.
 Das Format folgt [Keep a Changelog](https://keepachangelog.com/de/1.1.0/),
 die Versionsnummern folgen [Semantic Versioning](https://semver.org/lang/de/).
 
+## [2.247.1] - 2026-11-24
+
+Einstellungen: Der zweite Schalter der Reiter "Routinen" und "Magic Push" ist ein Unter-Schalter.
+
+### Geändert
+
+- **Unter-Schalter statt einer zweiten gleichen Zeile:** "Nur bei Geräten mit Routinen" und "Nur bei Geräten mit Meldungen" stehen eingerückt unter dem Schalter ihres Reiters, mit einer Führungslinie und kürzerem Text, und sind ausgegraut, solange der Reiter-Schalter aus ist (dann haben sie keine Wirkung). Schaltest du den Reiter ein, sind sie wieder frei.
+- **Tests:** `tabsetting-e2e` prüft die Einrückung und das Ausgrauen.
+
 ## [2.247.0] - 2026-11-24
 
 Geräte-Fenster: ein zweiter Schalter je Reiter, "nur bei Geräten, die darin vorkommen", für "Routinen" und "Magic Push" standardmässig an.
@@ -6618,6 +6627,7 @@ Erste Vorabversion.
   GitHub Actions für die Prüfungen von HACS und hassfest sowie die Tests.
 
 [2.6.0]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v2.6.0
+[2.247.1]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v2.247.1
 [2.247.0]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v2.247.0
 [2.246.0]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v2.246.0
 [2.245.0]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v2.245.0
