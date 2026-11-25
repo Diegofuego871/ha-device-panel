@@ -1484,7 +1484,9 @@ def signal_weak(signal: dict[str, Any], setting: Any) -> bool:
     Schwacher Empfang wie im Panel (devSigLevel; seit 2.120.0 hier, für die KI und das Geräteprotokoll): Empfang-Warnung "off" ist nie
     schwach, eine eigene Schwelle heisst "schwach unter X", sonst der Standard.
     """
-    value = signal["value"]
+    value = signal.get("value")
+    if value is None:
+        return False
     if setting == SIGNAL_OFF:
         return False
     if isinstance(setting, int) and not isinstance(setting, bool):
